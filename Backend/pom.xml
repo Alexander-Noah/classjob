@@ -22,6 +22,12 @@
     <modules>
         <module>legacy-app</module>
         <module>platform/kernel</module>
+        <module>modules/identity-access</module>
+        <module>modules/teaching-schedule</module>
+        <module>modules/lab-resource</module>
+        <module>modules/reservation</module>
+        <module>modules/environment-readiness</module>
+        <module>modules/teaching-coordination</module>
     </modules>
     <build>
         <pluginManagement>
