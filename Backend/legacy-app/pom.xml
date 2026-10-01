@@ -76,11 +76,15 @@
         </dependency>
     </dependencies>
     <build>
+        <directory>${maven.multiModuleProjectDirectory}/target</directory>
+        <finalName>Backend-0.0.1-SNAPSHOT</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <skip>false</skip>
+                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
