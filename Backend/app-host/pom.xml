@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>org.example</groupId><artifactId>smart-lab-parent</artifactId><version>0.0.1-SNAPSHOT</version><relativePath>../pom.xml</relativePath></parent>
+    <artifactId>app-host</artifactId>
+    <dependencies>
+        <dependency><groupId>org.example</groupId><artifactId>platform-kernel</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>platform-security</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>platform-web-support</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>identity-access</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>teaching-schedule</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>lab-resource</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>reservation</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>environment-readiness</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>teaching-coordination</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>reservation-lab-resource-bridge</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>coordination-schedule-bridge</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>coordination-reservation-bridge</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>coordination-environment-bridge</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>integration-academic-system</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
+        </plugins>
+    </build>
+</project>

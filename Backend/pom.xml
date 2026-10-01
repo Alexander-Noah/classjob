@@ -22,6 +22,8 @@
     <modules>
         <module>legacy-app</module>
         <module>platform/kernel</module>
+        <module>platform/security</module>
+        <module>platform/web-support</module>
         <module>modules/identity-access</module>
         <module>modules/teaching-schedule</module>
         <module>modules/lab-resource</module>
@@ -32,6 +34,8 @@
         <module>bridges/coordination-schedule-bridge</module>
         <module>bridges/coordination-reservation-bridge</module>
         <module>bridges/coordination-environment-bridge</module>
+        <module>integrations/academic-system</module>
+        <module>app-host</module>
     </modules>
     <build>
         <pluginManagement>
