@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DatabaseSchemaInitializerCompatibilityTest {
     @Test
     void phaseOneMigrationDocumentsDeviceRuntimeLabAccessAndIotTables() throws IOException {
-        String migration = Files.readString(Path.of("..", "web", "database", "migrations", "20260702_device_runtime_iot_phase1.sql"));
+        String migration = Files.readString(Path.of("..", "..", "web", "database", "migrations", "20260702_device_runtime_iot_phase1.sql"));
 
         assertAll(
                 () -> assertTrue(migration.contains("ALTER TABLE device")),
