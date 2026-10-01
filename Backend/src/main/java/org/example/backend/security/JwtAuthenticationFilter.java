@@ -1,0 +1,147 @@
+package org.example.backend.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 20)
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    public static final String AUTH_USERNAME_ATTRIBUTE = "authUsername";
+    public static final String AUTH_ROLE_ATTRIBUTE = "authRole";
+    public static final String AUTH_USER_ID_ATTRIBUTE = "authUserId";
+
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+            "/auth/login",
+            "/auth/logout",
+            "/ai-assistant/ws",
+            "/ws/ai-assistant",
+            "/error",
+            "/favicon.ico",
+            "/actuator/health",
+            "/activation-codes/verify"
+    );
+
+    private static final String[] PUBLIC_PREFIXES = {
+            "/public/",
+            "/teacher-hosts",
+            "/student-clients",
+            "/api/teacher-hosts",
+            "/api/student-clients"
+    };
+
+    private final JwtService jwtService;
+    private final boolean enabled;
+
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            @Value("${smart-lab.security.jwt.enabled:true}") boolean enabled
+    ) {
+        this.jwtService = jwtService;
+        this.enabled = enabled;
+    }
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        if (!enabled || shouldSkip(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = resolveToken(request);
+        if (token.isBlank()) {
+            writeUnauthorized(response, "未授权或会话已过期");
+            return;
+        }
+
+        try {
+            JwtService.JwtClaims claims = jwtService.validateToken(token);
+            request.setAttribute(AUTH_USERNAME_ATTRIBUTE, claims.username());
+            request.setAttribute(AUTH_ROLE_ATTRIBUTE, claims.roleCode());
+            request.setAttribute(AUTH_USER_ID_ATTRIBUTE, claims.userId());
+            filterChain.doFilter(request, response);
+        } catch (IllegalArgumentException exception) {
+            writeUnauthorized(response, "会话无效，请重新登录");
+        }
+    }
+
+    private boolean shouldSkip(HttpServletRequest request) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        String path = request.getServletPath();
+        if (path == null || path.isBlank()) {
+            path = request.getRequestURI();
+        }
+
+        if (PUBLIC_PATHS.contains(path)) {
+            return true;
+        }
+
+        for (String prefix : PUBLIC_PREFIXES) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization == null || authorization.isBlank()) {
+            return "";
+        }
+        if (!authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return "";
+        }
+        return authorization.substring(7).trim();
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write("{\"code\":401,\"message\":\"" + escapeJson(message) + "\",\"data\":{}}");
+    }
+
+    private String escapeJson(String value) {
+        StringBuilder escaped = new StringBuilder();
+        for (int index = 0; index < value.length(); index++) {
+            char current = value.charAt(index);
+            switch (current) {
+                case '"' -> escaped.append("\\\"");
+                case '\\' -> escaped.append("\\\\");
+                case '\b' -> escaped.append("\\b");
+                case '\f' -> escaped.append("\\f");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> {
+                    if (current < 0x20) {
+                        escaped.append(String.format("\\u%04x", (int) current));
+                    } else {
+                        escaped.append(current);
+                    }
+                }
+            }
+        }
+        return escaped.toString();
+    }
+}

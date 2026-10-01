@@ -1,0 +1,42 @@
+# impeccable-live-ignore-start
+.impeccable/hook.cache.json
+.impeccable/live/server.json
+.impeccable/live/sessions/
+.impeccable/live/previews/
+.impeccable/live/annotations/
+.impeccable/live/cache/
+.impeccable/live/manual-edit-apply-transaction.json
+.impeccable/live/manual-edit-events.jsonl
+.impeccable/live/manual-edit-evidence/
+.impeccable/live/pending-manual-edits.json
+.impeccable/live/deferred-svelte-component-accepts.json
+.impeccable-live.json
+.impeccable-live/
+node_modules/.impeccable-live/
+src/lib/impeccable/ImpeccableLiveRoot.svelte
+src/lib/impeccable/__runtime.js
+src/lib/impeccable/[0-9a-f]*/
+# impeccable-live-ignore-end
+
+# Smart Lab local runtime
+logs/
+Backend/.local-dev-secrets.properties
+Backend/target/
+Backend/logs/
+Backend/data/
+
+# Monorepo-local metadata and generated artifacts
+.nested-git-backup/
+.impeccable/
+**/node_modules/
+**/target/
+**/dist/
+**/.idea/
+**/.vs/
+**/__pycache__/
+*.py[cod]
+*.tmp
+~$*
+
+# Source archives are local backups and exceed GitHub's normal file limit
+*.zip

@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.backend.mapper.ClassTimetableMapper">
+
+    <select id="listTimetables" resultType="org.example.backend.entity.ClassTimetableEntity">
+        select
+        id,
+        semester,
+        row_class_name as rowClassName,
+        class_name as className,
+        weekday,
+        section_code as sectionCode,
+        section_text as sectionText,
+        start_section as startSection,
+        end_section as endSection,
+        course_name as courseName,
+        teacher,
+        week_raw as weekRaw,
+        week_text as weekText,
+        week_expanded as weekExpanded,
+        classroom,
+        create_time as createTime
+        from class_timetable
+        <where>
+            <if test="semester != null and semester != ''">
+                and semester = #{semester}
+            </if>
+
+            <if test="teacher != null and teacher != ''">
+                and teacher like concat('%', #{teacher}, '%')
+            </if>
+
+            <if test="className != null and className != ''">
+                and (
+                class_name like concat('%', #{className}, '%')
+                or row_class_name like concat('%', #{className}, '%')
+                )
+            </if>
+
+            <if test="classroom != null and classroom != ''">
+                and classroom like concat('%', #{classroom}, '%')
+            </if>
+
+            <if test="courseName != null and courseName != ''">
+                and course_name like concat('%', #{courseName}, '%')
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                and (
+                course_name like concat('%', #{keyword}, '%')
+                or teacher like concat('%', #{keyword}, '%')
+                or class_name like concat('%', #{keyword}, '%')
+                or row_class_name like concat('%', #{keyword}, '%')
+                or classroom like concat('%', #{keyword}, '%')
+                )
+            </if>
+
+            <if test="week != null">
+                and find_in_set(
+                convert(cast(#{week} as char) using utf8mb4) collate utf8mb4_general_ci,
+                convert(week_expanded using utf8mb4) collate utf8mb4_general_ci
+                ) &gt; 0
+            </if>
+        </where>
+        order by id desc
+        limit #{limit}
+    </select>
+
+    <select id="getSummary" resultType="java.util.Map">
+        select
+        count(*) as total,
+        count(distinct class_name) as classCount,
+        count(distinct teacher) as teacherCount,
+        count(distinct classroom) as classroomCount,
+        max(create_time) as latestSyncAt
+        from class_timetable
+    </select>
+
+    <select id="listSemesters" resultType="java.lang.String">
+        select semester
+        from class_timetable
+        where semester is not null
+        and semester != ''
+        group by semester
+        order by max(create_time) desc, semester desc
+    </select>
+
+    <update id="createClassTimetableTableIfNotExists">
+        create table if not exists class_timetable (
+        id bigint primary key auto_increment,
+        semester varchar(50) comment '学年学期',
+        row_class_name varchar(100) comment '原始行班级',
+        class_name varchar(100) comment '班级',
+        weekday varchar(20) comment '星期',
+        section_code varchar(20) comment '节次代码',
+        section_text varchar(50) comment '节次',
+        start_section int comment '开始节次',
+        end_section int comment '结束节次',
+        course_name varchar(200) comment '课程名称',
+        teacher varchar(100) comment '教师',
+        week_raw varchar(100) comment '周次原文',
+        week_text varchar(100) comment '周次',
+        week_expanded varchar(255) comment '展开周次',
+        classroom varchar(200) comment '教室',
+        create_time datetime default current_timestamp
+        ) engine=InnoDB default charset=utf8mb4
+    </update>
+
+    <delete id="deleteBySemester">
+        delete from class_timetable
+        where semester = #{semester}
+    </delete>
+
+    <insert id="insertTimetable" parameterType="org.example.backend.entity.ClassTimetableEntity">
+        insert into class_timetable (
+        semester,
+        row_class_name,
+        class_name,
+        weekday,
+        section_code,
+        section_text,
+        start_section,
+        end_section,
+        course_name,
+        teacher,
+        week_raw,
+        week_text,
+        week_expanded,
+        classroom
+        ) values (
+        #{semester},
+        #{rowClassName},
+        #{className},
+        #{weekday},
+        #{sectionCode},
+        #{sectionText},
+        #{startSection},
+        #{endSection},
+        #{courseName},
+        #{teacher},
+        #{weekRaw},
+        #{weekText},
+        #{weekExpanded},
+        #{classroom}
+        )
+    </insert>
+
+    <update id="createCrawlerConfigTableIfNotExists">
+        create table if not exists timetable_crawler_config (
+        config_key varchar(80) primary key,
+        schedule_enabled tinyint(1) not null default 0,
+        cron_expression varchar(120) not null,
+        semester_start_date varchar(20),
+        updated_at datetime default current_timestamp on update current_timestamp
+        ) engine=InnoDB default charset=utf8mb4
+    </update>
+
+    <select id="getCrawlerConfig" resultType="java.util.Map">
+        select
+        config_key as configKey,
+        schedule_enabled as scheduleEnabled,
+        cron_expression as cron,
+        semester_start_date as semesterStartDate,
+        date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+        from timetable_crawler_config
+        where config_key = #{configKey}
+    </select>
+
+    <insert id="upsertCrawlerConfig">
+        insert into timetable_crawler_config (
+        config_key,
+        schedule_enabled,
+        cron_expression,
+        semester_start_date,
+        updated_at
+        ) values (
+        #{configKey},
+        #{scheduleEnabled},
+        #{cronExpression},
+        #{semesterStartDate},
+        now()
+        )
+        on duplicate key update
+        schedule_enabled = values(schedule_enabled),
+        cron_expression = values(cron_expression),
+        semester_start_date = values(semester_start_date),
+        updated_at = now()
+    </insert>
+
+    <update id="createCrawlerTaskTableIfNotExists">
+        create table if not exists timetable_crawler_task (
+        id bigint primary key,
+        trigger_type varchar(20) not null,
+        status varchar(20) not null,
+        scope varchar(50),
+        source varchar(80),
+        success_account varchar(120),
+        attempts int default 0,
+        updated_count int default 0,
+        started_at datetime,
+        finished_at datetime,
+        error_message text,
+        output mediumtext,
+        log_path varchar(500),
+        created_at datetime default current_timestamp
+        ) engine=InnoDB default charset=utf8mb4
+    </update>
+
+    <select id="listCrawlerTasks" resultType="java.util.Map">
+        select
+        id,
+        trigger_type as triggerType,
+        status,
+        scope,
+        source,
+        success_account as successAccount,
+        attempts,
+        updated_count as updatedCount,
+        date_format(started_at, '%Y-%m-%d %H:%i:%s') as startedAt,
+        date_format(finished_at, '%Y-%m-%d %H:%i:%s') as finishedAt,
+        error_message as error,
+        output,
+        log_path as logPath
+        from timetable_crawler_task
+        order by started_at desc, id desc
+        limit #{limit}
+    </select>
+
+    <insert id="insertCrawlerTask" parameterType="java.util.Map">
+        insert into timetable_crawler_task (
+        id,
+        trigger_type,
+        status,
+        scope,
+        source,
+        success_account,
+        attempts,
+        updated_count,
+        started_at,
+        finished_at,
+        error_message,
+        output,
+        log_path
+        ) values (
+        #{id},
+        #{triggerType},
+        #{status},
+        #{scope},
+        #{source},
+        #{successAccount},
+        #{attempts},
+        #{updatedCount},
+        #{startedAt},
+        #{finishedAt},
+        #{error},
+        #{output},
+        #{logPath}
+        )
+    </insert>
+
+    <update id="updateCrawlerTask" parameterType="java.util.Map">
+        update timetable_crawler_task
+        set
+        status = #{status},
+        success_account = #{successAccount},
+        attempts = #{attempts},
+        updated_count = #{updatedCount},
+        finished_at = #{finishedAt},
+        error_message = #{error},
+        output = #{output},
+        log_path = #{logPath}
+        where id = #{id}
+    </update>
+
+    <delete id="clearCrawlerTasks">
+        delete from timetable_crawler_task
+    </delete>
+
+    <update id="createCredentialTableIfNotExists">
+        create table if not exists timetable_academic_credential (
+        credential_key varchar(80) primary key,
+        username_cipher text not null,
+        password_cipher text not null,
+        updated_at datetime default current_timestamp on update current_timestamp
+        ) engine=InnoDB default charset=utf8mb4
+    </update>
+
+    <select id="getCrawlerCredential" resultType="java.util.Map">
+        select
+        credential_key as credentialKey,
+        username_cipher as usernameCipher,
+        password_cipher as passwordCipher,
+        date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+        from timetable_academic_credential
+        where credential_key = #{credentialKey}
+    </select>
+
+    <insert id="upsertCrawlerCredential">
+        insert into timetable_academic_credential (
+        credential_key,
+        username_cipher,
+        password_cipher,
+        updated_at
+        ) values (
+        #{credentialKey},
+        #{usernameCipher},
+        #{passwordCipher},
+        now()
+        )
+        on duplicate key update
+        username_cipher = values(username_cipher),
+        password_cipher = values(password_cipher),
+        updated_at = now()
+    </insert>
+
+    <delete id="deleteCrawlerCredential">
+        delete from timetable_academic_credential
+        where credential_key = #{credentialKey}
+    </delete>
+
+</mapper>

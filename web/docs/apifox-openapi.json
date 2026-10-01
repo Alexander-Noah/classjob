@@ -1,0 +1,3160 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Smart Lab Platform Basic API",
+    "version": "1.0.0",
+    "description": "Swagger 2.0 JSON for Apifox import. Covers phase 1 core backend APIs and current frontend compatibility endpoints."
+  },
+  "host": "localhost:8080",
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Use format: Bearer {token}"
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Dashboard"
+    },
+    {
+      "name": "Labs"
+    },
+    {
+      "name": "Devices"
+    },
+    {
+      "name": "Software"
+    },
+    {
+      "name": "CourseEnvironment"
+    },
+    {
+      "name": "Environment Templates"
+    },
+    {
+      "name": "Reservations"
+    },
+    {
+      "name": "Repairs"
+    },
+    {
+      "name": "UsageRecords"
+    },
+    {
+      "name": "Notices"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Compatibility"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "security": [],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current user profile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProfileResponse"
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/overview": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get dashboard overview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DashboardOverviewResponse"
+            }
+          }
+        }
+      }
+    },
+    "/labs": {
+      "get": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Get lab list",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "building",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Create lab",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Lab"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/labs/{id}": {
+      "get": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Get lab detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Update lab",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Lab"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Delete lab",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/labs/batch": {
+      "put": {
+        "tags": [
+          "Labs"
+        ],
+        "summary": "Replace lab records in batch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LabBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Get device list",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "lab",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DeviceListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Create device",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DeviceDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/devices/{id}": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Get device detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DeviceDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Update device",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeviceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DeviceDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Delete device",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/devices/batch": {
+      "put": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Replace device records in batch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeviceBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DeviceListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/lab-software": {
+      "get": {
+        "tags": [
+          "Software"
+        ],
+        "summary": "Get software environment list",
+        "parameters": [
+          {
+            "name": "labId",
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabSoftwareListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Software"
+        ],
+        "summary": "Create software environment record",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LabSoftware"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabSoftwareDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/lab-software/{id}": {
+      "put": {
+        "tags": [
+          "Software"
+        ],
+        "summary": "Update software environment record",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LabSoftware"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LabSoftwareDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Software"
+        ],
+        "summary": "Delete software environment record",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/course-environment-requests": {
+      "get": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Get course environment request list",
+        "parameters": [
+          {
+            "name": "teacherUserId",
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "processStatus",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "confirmStatus",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequestListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Create course environment request",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequestDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/course-environment-requests/{id}": {
+      "get": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Get course environment request detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequestDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Update course environment request",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentRequestDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Delete course environment request",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/course-environment-requests/{id}/confirm": {
+      "post": {
+        "tags": [
+          "CourseEnvironment"
+        ],
+        "summary": "Confirm course environment",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CourseEnvironmentConfirmRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reservations": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get reservation list",
+        "parameters": [
+          {
+            "name": "labId",
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "applicantUserId",
+            "in": "query",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ReservationListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Create reservation",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Reservation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ReservationDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reservations/{id}": {
+      "get": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Get reservation detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ReservationDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Update reservation",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Reservation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ReservationDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Delete reservation",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reservations/{id}/approve": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Approve reservation",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/ReservationApproveRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/reservations/{id}/reject": {
+      "post": {
+        "tags": [
+          "Reservations"
+        ],
+        "summary": "Reject reservation",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReservationRejectRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/repairs": {
+      "get": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Get repair order list",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "priorityLevel",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "assigneeName",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RepairOrderListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Create repair order",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RepairOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RepairOrderDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/repairs/{id}": {
+      "get": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Get repair order detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RepairOrderDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Update repair order",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RepairOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/RepairOrderDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Delete repair order",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/repairs/{id}/assign": {
+      "post": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Assign repair order",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AssignRepairRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/repairs/{id}/submit-acceptance": {
+      "post": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Submit repair order for acceptance",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/RepairProgressRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/repairs/{id}/complete": {
+      "post": {
+        "tags": [
+          "Repairs"
+        ],
+        "summary": "Complete repair order",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/RepairProgressRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/usage-records": {
+      "get": {
+        "tags": [
+          "UsageRecords"
+        ],
+        "summary": "Get usage record list",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "scene",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UsageRecordListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/usage-records/batch": {
+      "put": {
+        "tags": [
+          "UsageRecords"
+        ],
+        "summary": "Replace usage records in batch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UsageRecordBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UsageRecordListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/notices": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Get notice list",
+        "parameters": [
+          {
+            "name": "targetRole",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "publishStatus",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/NoticeListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Create notice",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Notice"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/NoticeDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/notices/{id}": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Get notice detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/NoticeDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Update notice",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Notice"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/NoticeDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Delete notice",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user list",
+        "parameters": [
+          {
+            "name": "roleCode",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UserListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create user",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UserDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user detail",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UserDetailResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/UserDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete user",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/status": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user status",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserStatusRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/{moduleName}": {
+      "get": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Get generic module records",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ModuleNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/{moduleName}/batch": {
+      "put": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Replace generic module records",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ModuleNamePath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GenericModuleBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/{moduleName}/reset": {
+      "post": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Reset generic module records",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ModuleNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/labadminnoticecenter": {
+      "get": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Compatibility endpoint for lab admin notice page",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/labadminnoticecenter/batch": {
+      "put": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Compatibility batch endpoint for lab admin notice page",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GenericModuleBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/systemadminnoticecenter": {
+      "get": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Compatibility endpoint for system admin notice page",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/modules/systemadminnoticecenter/batch": {
+      "put": {
+        "tags": [
+          "Compatibility"
+        ],
+        "summary": "Compatibility batch endpoint for system admin notice page",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GenericModuleBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GenericModuleListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/environment-templates": {
+      "get": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "List environment templates",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateListResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "Create environment template",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateDetailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/environment-templates/{id}": {
+      "put": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "Update environment template",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateDetailResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "Delete environment template",
+        "parameters": [
+          {
+            "$ref": "#/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/environment-templates/batch": {
+      "put": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "Replace environment templates",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateBatchRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/environment-templates/reset": {
+      "post": {
+        "tags": [
+          "Environment Templates"
+        ],
+        "summary": "Reset environment templates to defaults",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/EnvironmentTemplateListResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "IdPath": {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "integer",
+      "format": "int64"
+    },
+    "ModuleNamePath": {
+      "name": "moduleName",
+      "in": "path",
+      "required": true,
+      "type": "string",
+      "description": "Environment page uses lab-software-environments, course-environment-requests, environment-templates."
+    }
+  },
+  "definitions": {
+    "BaseResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    },
+    "UserProfile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 2
+        },
+        "username": {
+          "type": "string",
+          "example": "labadmin"
+        },
+        "realName": {
+          "type": "string",
+          "example": "Zhang Ming"
+        },
+        "phone": {
+          "type": "string",
+          "example": "13800000002"
+        },
+        "email": {
+          "type": "string",
+          "example": "labadmin@smartlab.com"
+        },
+        "roleCode": {
+          "type": "string",
+          "example": "labAdmin"
+        },
+        "roleName": {
+          "type": "string",
+          "example": "Lab Administrator"
+        },
+        "status": {
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "required": [
+        "username",
+        "password",
+        "role"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "labadmin"
+        },
+        "password": {
+          "type": "string",
+          "example": "123456"
+        },
+        "role": {
+          "type": "string",
+          "example": "labAdmin"
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "token": {
+              "type": "string",
+              "example": "jwt-token"
+            },
+            "role": {
+              "type": "string",
+              "example": "labAdmin"
+            },
+            "user": {
+              "$ref": "#/definitions/UserProfile"
+            }
+          }
+        }
+      }
+    },
+    "ProfileResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/UserProfile"
+        }
+      }
+    },
+    "DashboardStat": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "trend": {
+          "type": "string"
+        }
+      }
+    },
+    "DashboardShortcut": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "DashboardOverviewResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "stats": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DashboardStat"
+              }
+            },
+            "shortcuts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DashboardShortcut"
+              }
+            },
+            "labUsage": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "deviceStatus": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "notices": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Lab": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "labCode": {
+          "type": "string",
+          "example": "A101"
+        },
+        "labName": {
+          "type": "string",
+          "example": "A101 Cloud Computing Lab"
+        },
+        "building": {
+          "type": "string",
+          "example": "Information Building"
+        },
+        "floor": {
+          "type": "string",
+          "example": "1F"
+        },
+        "roomNo": {
+          "type": "string",
+          "example": "A101"
+        },
+        "labType": {
+          "type": "string",
+          "example": "Teaching Practice"
+        },
+        "capacity": {
+          "type": "integer",
+          "example": 72
+        },
+        "managerUserId": {
+          "type": "integer",
+          "example": 2
+        },
+        "managerName": {
+          "type": "string",
+          "example": "张明"
+        },
+        "openStatus": {
+          "type": "string",
+          "example": "Open"
+        },
+        "deviceCount": {
+          "type": "integer",
+          "example": 78
+        },
+        "remark": {
+          "type": "string",
+          "example": "Phase 1 sample lab"
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2026-04-23 10:00:00"
+        },
+        "updatedAt": {
+          "type": "string",
+          "example": "2026-04-23 10:00:00"
+        }
+      },
+      "description": "Lab response object. The frontend maps labCode/labName/roomNo/labType/openStatus/deviceCount to code/name/room/type/status/devices."
+    },
+    "LabListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Lab"
+              }
+            }
+          }
+        }
+      }
+    },
+    "LabDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Lab"
+        }
+      }
+    },
+    "LabBatchRequest": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "example": "labs"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Lab"
+          }
+        }
+      }
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "deviceCode": {
+          "type": "string",
+          "example": "PC-A101-018"
+        },
+        "deviceName": {
+          "type": "string",
+          "example": "图形工作站"
+        },
+        "category": {
+          "type": "string",
+          "example": "计算终端"
+        },
+        "labId": {
+          "type": "integer",
+          "example": 1
+        },
+        "labName": {
+          "type": "string",
+          "example": "A101 云计算实验室"
+        },
+        "location": {
+          "type": "string",
+          "example": "A101 第 2 排"
+        },
+        "ownerUserId": {
+          "type": "integer",
+          "example": 2
+        },
+        "ownerUsername": {
+          "type": "string",
+          "example": "张明"
+        },
+        "status": {
+          "type": "string",
+          "example": "正常"
+        },
+        "specs": {
+          "type": "string",
+          "example": "i7 / 32GB / RTX 4070"
+        },
+        "purchaseDate": {
+          "type": "string",
+          "example": "2024-09-12"
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2026-04-23 10:00:00"
+        },
+        "updatedAt": {
+          "type": "string",
+          "example": "2026-04-23 10:00:00"
+        }
+      },
+      "description": "Device response object. The frontend maps deviceCode/deviceName/labName/ownerUsername to code/name/lab/owner for display. health, online, inventoryDate, warranty, usageHours, and maintenance are frontend-only display extensions."
+    },
+    "DeviceRequest": {
+      "type": "object",
+      "properties": {
+        "deviceCode": {
+          "type": "string",
+          "example": "PC-A101-018"
+        },
+        "deviceName": {
+          "type": "string",
+          "example": "图形工作站"
+        },
+        "category": {
+          "type": "string",
+          "example": "计算终端"
+        },
+        "labId": {
+          "type": "integer",
+          "example": 1
+        },
+        "location": {
+          "type": "string",
+          "example": "A101 第 2 排"
+        },
+        "ownerUserId": {
+          "type": "integer",
+          "example": 2
+        },
+        "status": {
+          "type": "string",
+          "example": "正常"
+        },
+        "specs": {
+          "type": "string",
+          "example": "i7 / 32GB / RTX 4070"
+        },
+        "purchaseDate": {
+          "type": "string",
+          "example": "2024-09-12"
+        }
+      }
+    },
+    "DeviceListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Device"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DeviceDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Device"
+        }
+      }
+    },
+    "DeviceBatchRequest": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "example": "devices"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Device"
+          }
+        }
+      }
+    },
+    "LabSoftware": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "labId": {
+          "type": "integer",
+          "example": 1
+        },
+        "softwareName": {
+          "type": "string",
+          "example": "IDEA"
+        },
+        "softwareVersion": {
+          "type": "string",
+          "example": "2025.1"
+        },
+        "installPath": {
+          "type": "string",
+          "example": "D:/IDEA"
+        },
+        "licenseInfo": {
+          "type": "string",
+          "example": "Education License"
+        },
+        "installTime": {
+          "type": "string",
+          "example": "2026-04-20 10:00:00"
+        },
+        "remark": {
+          "type": "string",
+          "example": "Java Web environment"
+        }
+      }
+    },
+    "LabSoftwareListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/LabSoftware"
+              }
+            }
+          }
+        }
+      }
+    },
+    "LabSoftwareDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/LabSoftware"
+        }
+      }
+    },
+    "CourseEnvironmentRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "courseName": {
+          "type": "string",
+          "example": "Java Web Programming"
+        },
+        "teacherUserId": {
+          "type": "integer",
+          "example": 3
+        },
+        "className": {
+          "type": "string",
+          "example": "Software Engineering Class 2"
+        },
+        "useTime": {
+          "type": "string",
+          "example": "2026-05-08 08:00-10:00"
+        },
+        "labType": {
+          "type": "string",
+          "example": "Development Lab"
+        },
+        "softwareRequirements": {
+          "type": "string",
+          "example": "JDK 21, IDEA, MySQL"
+        },
+        "systemRequirements": {
+          "type": "string",
+          "example": "Windows 11"
+        },
+        "specialRequirements": {
+          "type": "string",
+          "example": "Import demo data in advance"
+        },
+        "processStatus": {
+          "type": "string",
+          "example": "PendingConfig"
+        },
+        "assignedLabId": {
+          "type": "integer",
+          "example": 1
+        },
+        "confirmStatus": {
+          "type": "string",
+          "example": "PendingConfirm"
+        }
+      }
+    },
+    "CourseEnvironmentRequestListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CourseEnvironmentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CourseEnvironmentRequestDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/CourseEnvironmentRequest"
+        }
+      }
+    },
+    "CourseEnvironmentConfirmRequest": {
+      "type": "object",
+      "properties": {
+        "confirmStatus": {
+          "type": "string",
+          "example": "confirmed"
+        },
+        "comment": {
+          "type": "string",
+          "example": "Environment is ready for class"
+        }
+      }
+    },
+    "Reservation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "applicant": {
+          "type": "string",
+          "example": "软件工程 2 班"
+        },
+        "department": {
+          "type": "string",
+          "example": "软件学院"
+        },
+        "contact": {
+          "type": "string",
+          "example": "刘老师"
+        },
+        "lab": {
+          "type": "string",
+          "example": "A101 云计算实验室"
+        },
+        "date": {
+          "type": "string",
+          "example": "2026-04-23"
+        },
+        "attendees": {
+          "type": "integer",
+          "example": 68
+        },
+        "reviewer": {
+          "type": "string",
+          "example": "待审核"
+        },
+        "note": {
+          "type": "string",
+          "example": "待管理员审核。"
+        },
+        "applicantUserId": {
+          "type": "integer",
+          "example": 3
+        },
+        "applicantName": {
+          "type": "string",
+          "example": "Li Teacher"
+        },
+        "labId": {
+          "type": "integer",
+          "example": 1
+        },
+        "labName": {
+          "type": "string",
+          "example": "A101 云计算实验室"
+        },
+        "reservationDate": {
+          "type": "string",
+          "example": "2026-05-08"
+        },
+        "timeRange": {
+          "type": "string",
+          "example": "08:00-10:00"
+        },
+        "scene": {
+          "type": "string",
+          "example": "Course"
+        },
+        "attendeeCount": {
+          "type": "integer",
+          "example": 68
+        },
+        "reason": {
+          "type": "string",
+          "example": "Java Web lab class"
+        },
+        "status": {
+          "type": "string",
+          "example": "PendingReview"
+        },
+        "reviewerName": {
+          "type": "string",
+          "example": "Zhang Ming"
+        },
+        "reviewRemark": {
+          "type": "string",
+          "example": "Approved"
+        }
+      },
+      "description": "Reservation response object. The frontend prefers applicant/department/contact/lab/date/attendees/reviewer/note and also supports applicantName/labName/reservationDate/attendeeCount/reviewerName/reviewRemark."
+    },
+    "ReservationListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Reservation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ReservationDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Reservation"
+        }
+      }
+    },
+    "ReservationApproveRequest": {
+      "type": "object",
+      "properties": {
+        "reviewerName": {
+          "type": "string",
+          "example": "Zhang Ming"
+        },
+        "reviewRemark": {
+          "type": "string",
+          "example": "Approved"
+        }
+      }
+    },
+    "ReservationRejectRequest": {
+      "type": "object",
+      "properties": {
+        "reviewerName": {
+          "type": "string",
+          "example": "Zhang Ming"
+        },
+        "reviewRemark": {
+          "type": "string",
+          "example": "Time slot conflict"
+        }
+      }
+    },
+    "RepairOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "ticket": {
+          "type": "string",
+          "example": "R20260423001"
+        },
+        "reporter": {
+          "type": "string",
+          "example": "张明"
+        },
+        "contact": {
+          "type": "string",
+          "example": "132****2210"
+        },
+        "lab": {
+          "type": "string",
+          "example": "B203 网络安全实验室"
+        },
+        "device": {
+          "type": "string",
+          "example": "核心交换机"
+        },
+        "priority": {
+          "type": "string",
+          "example": "高"
+        },
+        "assignee": {
+          "type": "string",
+          "example": "待分配"
+        },
+        "deadline": {
+          "type": "string",
+          "example": "今日 18:00"
+        },
+        "result": {
+          "type": "string",
+          "example": "待维修人员接单。"
+        },
+        "orderNo": {
+          "type": "string",
+          "example": "R20260423001"
+        },
+        "reporterUserId": {
+          "type": "integer",
+          "example": 2
+        },
+        "reporterName": {
+          "type": "string",
+          "example": "Zhang Ming"
+        },
+        "labId": {
+          "type": "integer",
+          "example": 2
+        },
+        "labName": {
+          "type": "string",
+          "example": "B203 网络安全实验室"
+        },
+        "deviceId": {
+          "type": "integer",
+          "example": 2
+        },
+        "deviceName": {
+          "type": "string",
+          "example": "核心交换机"
+        },
+        "faultType": {
+          "type": "string",
+          "example": "Network"
+        },
+        "priorityLevel": {
+          "type": "string",
+          "example": "High"
+        },
+        "status": {
+          "type": "string",
+          "example": "Processing"
+        },
+        "assigneeName": {
+          "type": "string",
+          "example": "Zhou Gong"
+        },
+        "description": {
+          "type": "string",
+          "example": "Switch port is down"
+        },
+        "resultDesc": {
+          "type": "string",
+          "example": "Cable checked, replacement in progress"
+        }
+      },
+      "description": "Repair order response object. The frontend prefers ticket/reporter/contact/lab/device/priority/assignee/result and also supports orderNo/reporterName/labName/deviceName/priorityLevel/assigneeName/resultDesc."
+    },
+    "RepairOrderListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RepairOrder"
+              }
+            }
+          }
+        }
+      }
+    },
+    "RepairOrderDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/RepairOrder"
+        }
+      }
+    },
+    "AssignRepairRequest": {
+      "type": "object",
+      "properties": {
+        "assignee": {
+          "type": "string",
+          "example": "Zhou Gong"
+        }
+      }
+    },
+    "RepairProgressRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "PendingAcceptance"
+        },
+        "resultDesc": {
+          "type": "string",
+          "example": "Repair completed and waiting for review"
+        }
+      }
+    },
+    "UsageRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "person": {
+          "type": "string",
+          "example": "Software Engineering Class 2"
+        },
+        "resource": {
+          "type": "string",
+          "example": "A101 Cloud Computing Lab"
+        },
+        "scene": {
+          "type": "string",
+          "example": "Course"
+        },
+        "time": {
+          "type": "string",
+          "example": "2026-04-26 08:00:00"
+        },
+        "status": {
+          "type": "string",
+          "example": "Normal"
+        }
+      }
+    },
+    "UsageRecordListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UsageRecord"
+              }
+            }
+          }
+        }
+      }
+    },
+    "UsageRecordBatchRequest": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "example": "usage-records"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UsageRecord"
+          }
+        }
+      }
+    },
+    "Notice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "title": {
+          "type": "string",
+          "example": "A101 environment pending confirmation"
+        },
+        "noticeType": {
+          "type": "string",
+          "example": "Environment Confirmation"
+        },
+        "targetRole": {
+          "type": "string",
+          "example": "teacher"
+        },
+        "content": {
+          "type": "string",
+          "example": "Please confirm the course environment after login."
+        },
+        "publishStatus": {
+          "type": "string",
+          "example": "Published"
+        },
+        "publishTime": {
+          "type": "string",
+          "example": "2026-04-26 09:00:00"
+        },
+        "createdBy": {
+          "type": "integer",
+          "example": 2
+        }
+      }
+    },
+    "NoticeListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Notice"
+              }
+            }
+          }
+        }
+      }
+    },
+    "NoticeDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Notice"
+        }
+      }
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "username": {
+          "type": "string",
+          "example": "sysadmin"
+        },
+        "password": {
+          "type": "string",
+          "example": "123456"
+        },
+        "realName": {
+          "type": "string",
+          "example": "Chen Teacher"
+        },
+        "phone": {
+          "type": "string",
+          "example": "13800000001"
+        },
+        "email": {
+          "type": "string",
+          "example": "sysadmin@smartlab.com"
+        },
+        "status": {
+          "type": "integer",
+          "example": 1
+        },
+        "roleCode": {
+          "type": "string",
+          "example": "systemAdmin"
+        },
+        "roleName": {
+          "type": "string",
+          "example": "系统管理员"
+        },
+        "name": {
+          "type": "string",
+          "example": "陈老师"
+        },
+        "department": {
+          "type": "string",
+          "example": "信息中心"
+        },
+        "contact": {
+          "type": "string",
+          "example": "13800000001"
+        },
+        "enabled": {
+          "type": "boolean",
+          "example": true
+        }
+      },
+      "description": "User response object. Lab, device, and account dialogs need at least id/username/realName/roleName for selects."
+    },
+    "UserListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          }
+        }
+      }
+    },
+    "UserDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "UserCreateRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "teacher01"
+        },
+        "password": {
+          "type": "string",
+          "example": "123456"
+        },
+        "realName": {
+          "type": "string",
+          "example": "Li Teacher"
+        },
+        "phone": {
+          "type": "string",
+          "example": "13800000003"
+        },
+        "email": {
+          "type": "string",
+          "example": "teacher01@smartlab.com"
+        },
+        "status": {
+          "type": "integer",
+          "example": 1
+        },
+        "roleCode": {
+          "type": "string",
+          "example": "teacher"
+        }
+      }
+    },
+    "UserUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "realName": {
+          "type": "string",
+          "example": "Li Teacher"
+        },
+        "phone": {
+          "type": "string",
+          "example": "13800000003"
+        },
+        "email": {
+          "type": "string",
+          "example": "teacher01@smartlab.com"
+        },
+        "status": {
+          "type": "integer",
+          "example": 1
+        },
+        "roleCode": {
+          "type": "string",
+          "example": "teacher"
+        }
+      }
+    },
+    "UserStatusRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "GenericModuleRecord": {
+      "type": "object"
+    },
+    "GenericModuleListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GenericModuleRecord"
+              }
+            }
+          }
+        }
+      }
+    },
+    "GenericModuleBatchRequest": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "example": "LabAdminEnvironmentManagement"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericModuleRecord"
+          }
+        }
+      }
+    },
+    "EnvironmentTemplate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "Java Web Standard Environment"
+        },
+        "course": {
+          "type": "string",
+          "example": "Java Web Programming"
+        },
+        "os": {
+          "type": "string",
+          "example": "Windows 11"
+        },
+        "softwareList": {
+          "type": "string",
+          "example": "JDK, IDEA, Tomcat, MySQL"
+        },
+        "labs": {
+          "type": "string",
+          "example": "A101, A102"
+        },
+        "status": {
+          "type": "string",
+          "example": "Reusable"
+        },
+        "tagType": {
+          "type": "string",
+          "example": "success"
+        }
+      }
+    },
+    "EnvironmentTemplateBatchRequest": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "example": "环境模板"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnvironmentTemplate"
+          }
+        }
+      }
+    },
+    "EnvironmentTemplateListResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnvironmentTemplate"
+          }
+        }
+      }
+    },
+    "EnvironmentTemplateDetailResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/EnvironmentTemplate"
+        }
+      }
+    }
+  }
+}

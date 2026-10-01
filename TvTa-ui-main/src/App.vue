@@ -1,0 +1,129 @@
+<script setup lang="ts">
+import { zhCN, dateZhCN, darkTheme } from 'naive-ui'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { LogicalSize, getCurrentWindow } from '@tauri-apps/api/window'
+import { useThemeStore } from '@/stores/theme'
+import { useAuthStore } from '@/stores/auth'
+import { useMonitorStore } from '@/stores/monitor'
+import { useActivationStore } from '@/stores/activation'
+import MainLayout from '@/layouts/MainLayout.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
+import ActivationPage from '@/components/ActivationPage.vue'
+
+const themeStore = useThemeStore()
+const authStore = useAuthStore()
+const monitorStore = useMonitorStore()
+const activationStore = useActivationStore()
+const theme = computed(() => themeStore.isDark ? darkTheme : null)
+const activationPromptDismissed = ref(false)
+const loginVisible = computed(() => !authStore.isAuthenticated)
+const activationVisible = computed(() => {
+  if (!authStore.isAuthenticated) return false
+  if (!activationStore.isLicensed) return !activationPromptDismissed.value || !activationStore.isTrialActive
+  return false
+})
+const appVisible = computed(() => {
+  if (!authStore.isAuthenticated) return false
+  if (activationStore.isLicensed) return true
+  return activationStore.isTrialActive && activationPromptDismissed.value
+})
+const loginLoading = computed(() => false)
+const loginError = ref('')
+
+authStore.hydrate()
+monitorStore.hydrate()
+activationStore.hydrate()
+
+const LOGIN_WINDOW_SIZE = new LogicalSize(520, 500)
+const ACTIVATION_WINDOW_SIZE = new LogicalSize(560, 620)
+const APP_WINDOW_SIZE = new LogicalSize(1440, 810)
+let licenseTimer: number | undefined
+
+async function syncWindowSize(view: 'login' | 'activation' | 'app') {
+  if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
+
+  try {
+    const appWindow = getCurrentWindow()
+    if (view === 'app') {
+      await appWindow.setMinSize(new LogicalSize(800, 600))
+      await appWindow.setResizable(true)
+      await appWindow.setSize(APP_WINDOW_SIZE)
+    } else {
+      const targetSize = view === 'login' ? LOGIN_WINDOW_SIZE : ACTIVATION_WINDOW_SIZE
+      await appWindow.setMinSize(targetSize)
+      await appWindow.setSize(targetSize)
+      await appWindow.setResizable(false)
+    }
+    await appWindow.center()
+  } catch {
+    // Browser preview has no native window to resize.
+  }
+}
+
+watch(
+  () => [loginVisible.value, activationVisible.value, appVisible.value] as const,
+  () => {
+    const view = appVisible.value ? 'app' : activationVisible.value ? 'activation' : 'login'
+    void syncWindowSize(view)
+  },
+  { immediate: true }
+)
+
+function handleLogin(payload: { username: string; password: string }) {
+  loginError.value = ''
+  const ok = authStore.login(payload.username, payload.password)
+
+  if (!ok) {
+    loginError.value = '账号或密码错误'
+    return
+  }
+  activationPromptDismissed.value = false
+}
+
+function handleLogout() {
+  activationPromptDismissed.value = false
+  authStore.logout()
+}
+
+function handleActivationContinue() {
+  if (!activationStore.isTrialActive) return
+  activationPromptDismissed.value = true
+}
+
+onMounted(() => {
+  licenseTimer = window.setInterval(() => {
+    activationStore.verifyStoredActivation()
+  }, 60000)
+  activationStore.verifyStoredActivation()
+})
+
+onBeforeUnmount(() => {
+  if (licenseTimer) {
+    window.clearInterval(licenseTimer)
+  }
+})
+</script>
+
+<template>
+  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="theme">
+    <n-global-style />
+    <n-loading-bar-provider>
+      <n-message-provider>
+        <n-notification-provider>
+          <n-dialog-provider>
+            <LoginDialog
+              v-if="loginVisible"
+              :visible="loginVisible"
+              :loading="loginLoading"
+              :error-message="loginError"
+              @submit="handleLogin"
+              @cancel="handleLogout"
+            />
+            <ActivationPage v-if="activationVisible" @logout="handleLogout" @continue="handleActivationContinue" />
+            <MainLayout v-if="appVisible" />
+          </n-dialog-provider>
+        </n-notification-provider>
+      </n-message-provider>
+    </n-loading-bar-provider>
+  </n-config-provider>
+</template>
