@@ -37,6 +37,31 @@ class LocalDevelopmentSecretsInitializerTest {
     }
 
     @Test
+    void createsRequiredSecretsWhenRunningFromAggregatorDirectory() throws Exception {
+        Path projectDir = newTestDirectory().resolve("Backend");
+        Files.createDirectories(projectDir.resolve("legacy-app/src/main/java/org/example/backend"));
+        Files.writeString(
+                projectDir.resolve("legacy-app/src/main/java/org/example/backend/BackendApplication.java"),
+                "package org.example.backend;"
+        );
+        Files.writeString(projectDir.resolve("pom.xml"), "<project />");
+
+        ensureLocalDevelopmentSecrets(projectDir);
+
+        Path secretsPath = projectDir.resolve(".local-dev-secrets.properties");
+        assertTrue(Files.exists(secretsPath), "aggregator startup should create the Backend-root secrets file");
+        Properties properties = new Properties();
+        try (var inputStream = Files.newInputStream(secretsPath)) {
+            properties.load(inputStream);
+        }
+
+        assertAll(
+                () -> assertTrue(properties.getProperty("SMART_LAB_JWT_SECRET", "").length() >= 32),
+                () -> assertTrue(properties.getProperty("ACADEMIC_CREDENTIAL_SECRET", "").length() >= 32)
+        );
+    }
+
+    @Test
     void doesNotCreateSecretsOutsideDevelopmentDirectory() throws Exception {
         Path tempDir = newTestDirectory();
 

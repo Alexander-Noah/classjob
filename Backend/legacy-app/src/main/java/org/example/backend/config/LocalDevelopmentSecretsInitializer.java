@@ -47,8 +47,13 @@ public final class LocalDevelopmentSecretsInitializer {
 
     private static boolean isDevelopmentDirectory(Path directory) {
         return Files.isRegularFile(directory.resolve("pom.xml"))
-                && Files.isDirectory(directory.resolve("src/main"))
-                && Files.isRegularFile(directory.resolve("src/main/java/org/example/backend/BackendApplication.java"));
+                && (containsBackendApplication(directory.resolve("src/main"))
+                || containsBackendApplication(directory.resolve("legacy-app/src/main")));
+    }
+
+    private static boolean containsBackendApplication(Path sourceRoot) {
+        return Files.isDirectory(sourceRoot)
+                && Files.isRegularFile(sourceRoot.resolve("java/org/example/backend/BackendApplication.java"));
     }
 
     private static Properties readSecrets(Path secretsPath) {
