@@ -10,7 +10,12 @@ import org.example.backend.labresource.application.port.out.DeviceCountPort;
 import org.example.backend.labresource.application.port.out.ManagerNamePort;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Arrays;
 
@@ -44,5 +49,30 @@ class LabResourceRuntimeConfigurationTest {
         assertInstanceOf(DefaultLabCatalogQuery.class, catalog);
         assertInstanceOf(DefaultLabAvailabilityQuery.class, configuration.labAvailabilityQuery(readPort));
         assertInstanceOf(LabQueryController.class, configuration.labQueryController(catalog));
+    }
+
+    @Test
+    void catalogCanBeProxiedForOneReadOnlyTransaction() {
+        try (var context = new AnnotationConfigApplicationContext(TransactionProxyConfiguration.class)) {
+            assertNotNull(context.getBean(LabCatalogQuery.class));
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableTransactionManagement(proxyTargetClass = true)
+    static class TransactionProxyConfiguration {
+        @Bean
+        PlatformTransactionManager transactionManager() {
+            return mock(PlatformTransactionManager.class);
+        }
+
+        @Bean
+        DefaultLabCatalogQuery labCatalogQuery() {
+            return new DefaultLabCatalogQuery(
+                    new MyBatisLabRecordReadAdapter(mock(LabRecordReadMapper.class)),
+                    managerUserIds -> java.util.Map.of(),
+                    labIds -> java.util.Map.of()
+            );
+        }
     }
 }

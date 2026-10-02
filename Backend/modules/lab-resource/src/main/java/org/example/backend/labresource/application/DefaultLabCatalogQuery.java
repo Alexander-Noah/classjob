@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Transactional(readOnly = true)
-public final class DefaultLabCatalogQuery implements LabCatalogQuery {
+public class DefaultLabCatalogQuery implements LabCatalogQuery {
     private final LabRecordReadPort records;
     private final ManagerNamePort managerNames;
     private final DeviceCountPort deviceCounts;
