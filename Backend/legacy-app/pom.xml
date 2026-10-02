@@ -25,6 +25,11 @@
         </dependency>
         <dependency>
             <groupId>org.example</groupId>
+            <artifactId>platform-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.example</groupId>
             <artifactId>teaching-schedule</artifactId>
             <version>${project.version}</version>
         </dependency>
