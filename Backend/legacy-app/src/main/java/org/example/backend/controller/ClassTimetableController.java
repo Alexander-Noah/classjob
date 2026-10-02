@@ -23,39 +23,6 @@ public class ClassTimetableController {
         this.classTimetableService = classTimetableService;
     }
 
-    @GetMapping("/class-timetables")
-    public Result listTimetables(
-            @RequestParam(required = false) String semester,
-            @RequestParam(required = false) String teacher,
-            @RequestParam(required = false) String className,
-            @RequestParam(required = false) String classroom,
-            @RequestParam(required = false) String courseName,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer week,
-            @RequestParam(required = false) Integer limit
-    ) {
-        return Result.success(classTimetableService.listTimetables(
-                semester,
-                teacher,
-                className,
-                classroom,
-                courseName,
-                keyword,
-                week,
-                limit
-        ));
-    }
-
-    @GetMapping("/class-timetables/summary")
-    public Result getSummary() {
-        return Result.success(classTimetableService.getSummary());
-    }
-
-    @GetMapping("/class-timetables/semesters")
-    public Result listSemesters() {
-        return Result.success(classTimetableService.listSemesters());
-    }
-
     @PostMapping("/class-timetables/crawl")
     public Result triggerCrawler() {
         log.info("触发课表爬虫脚本");

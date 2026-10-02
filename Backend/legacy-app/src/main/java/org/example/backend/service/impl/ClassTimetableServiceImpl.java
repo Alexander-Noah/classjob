@@ -6,6 +6,7 @@ import org.example.backend.entity.AcademicCredentialView;
 import org.example.backend.entity.ClassTimetableEntity;
 import org.example.backend.mapper.ClassTimetableMapper;
 import org.example.backend.service.ClassTimetableService;
+import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -42,8 +43,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 @Slf4j
 public class ClassTimetableServiceImpl implements ClassTimetableService {
-    private static final int DEFAULT_LIMIT = 500;
-    private static final int MAX_LIMIT = 5000;
     private static final int DEFAULT_TASK_LIMIT = 50;
     private static final int MAX_TASK_LIMIT = 200;
     private static final int IV_LENGTH = 12;
@@ -56,6 +55,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     private final SecureRandom secureRandom = new SecureRandom();
     private final ClassTimetableMapper classTimetableMapper;
+    private final TeachingScheduleQuery teachingScheduleQuery;
     private final Environment environment;
     private final SecretKeySpec secretKey;
     private final ThreadPoolTaskScheduler taskScheduler;
@@ -65,11 +65,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     public ClassTimetableServiceImpl(
             ClassTimetableMapper classTimetableMapper,
+            TeachingScheduleQuery teachingScheduleQuery,
             Environment environment,
             ThreadPoolTaskScheduler classTimetableTaskScheduler,
             @Value("${timetable.crawler.credential-secret:${ACADEMIC_CREDENTIAL_SECRET:}}") String secret
     ) {
         this.classTimetableMapper = classTimetableMapper;
+        this.teachingScheduleQuery = teachingScheduleQuery;
         this.environment = environment;
         this.taskScheduler = classTimetableTaskScheduler;
         this.secretKey = buildSecretKey(requireStrongSecret(secret, "timetable.crawler.credential-secret"));
@@ -98,45 +100,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         } catch (RuntimeException exception) {
             log.warn("课表定时抓取初始化失败，保存配置后会再次尝试初始化", exception);
         }
-    }
-
-    @Override
-    public List<ClassTimetableEntity> listTimetables(
-            String semester,
-            String teacher,
-            String className,
-            String classroom,
-            String courseName,
-            String keyword,
-            Integer week,
-            Integer limit
-    ) {
-        return classTimetableMapper.listTimetables(
-                trimToNull(semester),
-                trimToNull(teacher),
-                trimToNull(className),
-                trimToNull(classroom),
-                trimToNull(courseName),
-                trimToNull(keyword),
-                week,
-                normalizeLimit(limit)
-        );
-    }
-
-    @Override
-    public Map<String, Object> getSummary() {
-        Map<String, Object> summary = new LinkedHashMap<>();
-        Map<String, Object> databaseSummary = classTimetableMapper.getSummary();
-        if (databaseSummary != null) {
-            summary.putAll(databaseSummary);
-        }
-        summary.put("semesters", classTimetableMapper.listSemesters());
-        return summary;
-    }
-
-    @Override
-    public List<String> listSemesters() {
-        return classTimetableMapper.listSemesters();
     }
 
     @Override
@@ -266,7 +229,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             }
 
             result.put("output", readLogTail(logPath));
-            result.put("summary", getSummary());
+            result.put("summary", teachingScheduleQuery.summary());
             result.put("finishedAt", LocalDateTime.now().toString());
             updateFinishedCrawlerTask(task, result, credential, logPath);
             return result;
@@ -897,13 +860,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             return username.charAt(0) + "***";
         }
         return username.substring(0, 2) + "****" + username.substring(username.length() - 2);
-    }
-
-    private int normalizeLimit(Integer limit) {
-        if (limit == null || limit <= 0) {
-            return DEFAULT_LIMIT;
-        }
-        return Math.min(limit, MAX_LIMIT);
     }
 
     private String trimToNull(String value) {

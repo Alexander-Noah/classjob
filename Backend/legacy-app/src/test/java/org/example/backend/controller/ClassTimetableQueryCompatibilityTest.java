@@ -1,18 +1,18 @@
 package org.example.backend.controller;
 
-import org.example.backend.entity.ClassTimetableEntity;
-import org.example.backend.service.ClassTimetableService;
+import org.example.backend.teachingschedule.adapter.in.web.TeachingScheduleQueryController;
+import org.example.backend.teachingschedule.api.ScheduleEntryView;
+import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
+import org.example.backend.teachingschedule.api.ScheduleSummaryView;
+import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,27 +21,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ClassTimetableQueryCompatibilityTest {
-    private ClassTimetableService service;
+    private TeachingScheduleQuery query;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        service = mock(ClassTimetableService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new ClassTimetableController(service)).build();
+        query = mock(TeachingScheduleQuery.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new TeachingScheduleQueryController(query)).build();
     }
 
     @Test
     void preservesTimetableSearchContract() throws Exception {
-        when(service.listTimetables(
-                eq(" 2026-Spring "),
-                eq(" Alice "),
-                eq("Class 1"),
-                eq("Lab 201"),
-                eq("Networks"),
-                eq("net"),
-                eq(3),
-                eq(8000)
-        )).thenReturn(List.of(scheduleEntry()));
+        when(query.search(eq(new ScheduleSearchCriteria(
+                " 2026-Spring ",
+                " Alice ",
+                "Class 1",
+                "Lab 201",
+                "Networks",
+                "net",
+                3,
+                8000
+        )))).thenReturn(List.of(scheduleEntry()));
 
         mockMvc.perform(get("/class-timetables")
                         .param("semester", " 2026-Spring ")
@@ -75,15 +75,16 @@ class ClassTimetableQueryCompatibilityTest {
 
     @Test
     void preservesSummaryAndSemesterContracts() throws Exception {
-        Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("total", 1L);
-        summary.put("classCount", 1L);
-        summary.put("teacherCount", 1L);
-        summary.put("classroomCount", 1L);
-        summary.put("latestSyncAt", LocalDateTime.of(2026, 2, 23, 8, 0));
-        summary.put("semesters", List.of("2026-Spring"));
-        when(service.getSummary()).thenReturn(summary);
-        when(service.listSemesters()).thenReturn(List.of("2026-Spring"));
+        ScheduleSummaryView summary = new ScheduleSummaryView(
+                1,
+                1,
+                1,
+                1,
+                LocalDateTime.of(2026, 2, 23, 8, 0),
+                List.of("2026-Spring")
+        );
+        when(query.summary()).thenReturn(summary);
+        when(query.listSemesters()).thenReturn(List.of("2026-Spring"));
 
         mockMvc.perform(get("/class-timetables/summary"))
                 .andExpect(status().isOk())
@@ -101,24 +102,24 @@ class ClassTimetableQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data[0]").value("2026-Spring"));
     }
 
-    private ClassTimetableEntity scheduleEntry() {
-        ClassTimetableEntity entry = new ClassTimetableEntity();
-        entry.setId(7L);
-        entry.setSemester("2026-Spring");
-        entry.setRowClassName("Class 1 (row)");
-        entry.setClassName("Class 1");
-        entry.setWeekday("Monday");
-        entry.setSectionCode("1-2");
-        entry.setSectionText("第1-2节");
-        entry.setStartSection(1);
-        entry.setEndSection(2);
-        entry.setCourseName("Networks");
-        entry.setTeacher("Alice");
-        entry.setWeekRaw("1-16");
-        entry.setWeekText("第1-16周");
-        entry.setWeekExpanded("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16");
-        entry.setClassroom("Lab 201");
-        entry.setCreateTime(LocalDateTime.of(2026, 2, 23, 8, 0));
-        return entry;
+    private ScheduleEntryView scheduleEntry() {
+        return new ScheduleEntryView(
+                7L,
+                "2026-Spring",
+                "Class 1 (row)",
+                "Class 1",
+                "Monday",
+                "1-2",
+                "第1-2节",
+                1,
+                2,
+                "Networks",
+                "Alice",
+                "1-16",
+                "第1-16周",
+                "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16",
+                "Lab 201",
+                LocalDateTime.of(2026, 2, 23, 8, 0)
+        );
     }
 }

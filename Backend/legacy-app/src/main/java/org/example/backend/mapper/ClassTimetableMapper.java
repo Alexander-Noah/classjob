@@ -10,21 +10,6 @@ import java.util.Map;
 @Mapper
 public interface ClassTimetableMapper {
 
-    List<ClassTimetableEntity> listTimetables(
-            @Param("semester") String semester,
-            @Param("teacher") String teacher,
-            @Param("className") String className,
-            @Param("classroom") String classroom,
-            @Param("courseName") String courseName,
-            @Param("keyword") String keyword,
-            @Param("week") Integer week,
-            @Param("limit") Integer limit
-    );
-
-    Map<String, Object> getSummary();
-
-    List<String> listSemesters();
-
     void createClassTimetableTableIfNotExists();
 
     int deleteBySemester(@Param("semester") String semester);
