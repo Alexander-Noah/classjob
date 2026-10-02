@@ -16,6 +16,10 @@ buildNumber.properties
 *.iml
 *.ipr
 out/
+!**/src/main/java/**/out/
+!**/src/main/java/**/out/**
+!**/src/test/java/**/out/
+!**/src/test/java/**/out/**
 
 # Eclipse
 .classpath
