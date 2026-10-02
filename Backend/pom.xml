@@ -38,6 +38,7 @@
         <module>app-host</module>
         <module>architecture-tests</module>
         <module>removal-tests/without-environment-readiness</module>
+        <module>removal-tests/without-teaching-schedule</module>
         <module>removal-tests/without-reservation</module>
         <module>removal-tests/without-academic-system</module>
     </modules>
