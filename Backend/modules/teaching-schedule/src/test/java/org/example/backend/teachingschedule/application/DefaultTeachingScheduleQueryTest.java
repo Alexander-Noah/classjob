@@ -1,10 +1,10 @@
 package org.example.backend.teachingschedule.application;
 
-import org.example.backend.teachingschedule.adapter.out.persistence.ScheduleSummaryRow;
-import org.example.backend.teachingschedule.adapter.out.persistence.TeachingScheduleReadMapper;
 import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.example.backend.teachingschedule.api.ScheduleSummaryView;
+import org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData;
+import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DefaultTeachingScheduleQueryTest {
-    private final FakeTeachingScheduleReadMapper mapper = new FakeTeachingScheduleReadMapper();
+    private final FakeTeachingScheduleReadPort mapper = new FakeTeachingScheduleReadPort();
     private final DefaultTeachingScheduleQuery query = new DefaultTeachingScheduleQuery(mapper);
 
     @Test
@@ -56,7 +56,7 @@ class DefaultTeachingScheduleQueryTest {
     @Test
     void assemblesSummaryWithAnImmutableSemesterList() {
         LocalDateTime latestSyncAt = LocalDateTime.of(2026, 2, 23, 8, 0);
-        mapper.summary = new ScheduleSummaryRow(8, 3, 2, 4, latestSyncAt);
+        mapper.summary = new ScheduleSummaryData(8, 3, 2, 4, latestSyncAt);
         mapper.semesters = new ArrayList<>(List.of("2026-Spring", "2025-Fall"));
 
         ScheduleSummaryView summary = query.summary();
@@ -92,10 +92,10 @@ class DefaultTeachingScheduleQueryTest {
         return new ScheduleSearchCriteria(null, null, null, null, null, null, null, limit);
     }
 
-    private static final class FakeTeachingScheduleReadMapper implements TeachingScheduleReadMapper {
+    private static final class FakeTeachingScheduleReadPort implements TeachingScheduleReadPort {
         private ScheduleSearchCriteria lastCriteria;
         private List<ScheduleEntryView> entries = List.of();
-        private ScheduleSummaryRow summary = new ScheduleSummaryRow(0, 0, 0, 0, null);
+        private ScheduleSummaryData summary = new ScheduleSummaryData(0, 0, 0, 0, null);
         private List<String> semesters = List.of();
 
         @Override
@@ -105,7 +105,7 @@ class DefaultTeachingScheduleQueryTest {
         }
 
         @Override
-        public ScheduleSummaryRow summary() {
+        public ScheduleSummaryData summary() {
             return summary;
         }
 

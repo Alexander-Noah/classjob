@@ -24,8 +24,8 @@
         </constructor>
     </resultMap>
 
-    <resultMap id="scheduleSummaryRow"
-               type="org.example.backend.teachingschedule.adapter.out.persistence.ScheduleSummaryRow">
+    <resultMap id="scheduleSummaryData"
+               type="org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData">
         <constructor>
             <arg column="total" name="total" javaType="_long"/>
             <arg column="class_count" name="classCount" javaType="_long"/>
@@ -96,7 +96,7 @@
     </select>
 
     <select id="summary"
-            resultMap="scheduleSummaryRow">
+            resultMap="scheduleSummaryData">
         select
         count(*) as total,
         count(distinct class_name) as class_count,

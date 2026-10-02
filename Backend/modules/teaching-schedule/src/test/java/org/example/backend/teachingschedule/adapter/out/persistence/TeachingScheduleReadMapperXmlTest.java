@@ -104,7 +104,7 @@ class TeachingScheduleReadMapperXmlTest {
         ), columnByProperty);
 
         ResultMap summaryResultMap = configuration.getResultMap(
-                TeachingScheduleReadMapper.class.getName() + ".scheduleSummaryRow"
+                TeachingScheduleReadMapper.class.getName() + ".scheduleSummaryData"
         );
         Map<String, String> summaryColumnByProperty = summaryResultMap.getResultMappings().stream()
                 .collect(Collectors.toMap(ResultMapping::getProperty, ResultMapping::getColumn));

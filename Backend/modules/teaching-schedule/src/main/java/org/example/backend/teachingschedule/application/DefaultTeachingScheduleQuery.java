@@ -1,11 +1,11 @@
 package org.example.backend.teachingschedule.application;
 
-import org.example.backend.teachingschedule.adapter.out.persistence.ScheduleSummaryRow;
-import org.example.backend.teachingschedule.adapter.out.persistence.TeachingScheduleReadMapper;
 import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.example.backend.teachingschedule.api.ScheduleSummaryView;
 import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
+import org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData;
+import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
 
 import java.util.List;
 
@@ -13,10 +13,10 @@ public final class DefaultTeachingScheduleQuery implements TeachingScheduleQuery
     static final int DEFAULT_LIMIT = 500;
     static final int MAX_LIMIT = 5000;
 
-    private final TeachingScheduleReadMapper mapper;
+    private final TeachingScheduleReadPort readPort;
 
-    public DefaultTeachingScheduleQuery(TeachingScheduleReadMapper mapper) {
-        this.mapper = mapper;
+    public DefaultTeachingScheduleQuery(TeachingScheduleReadPort readPort) {
+        this.readPort = readPort;
     }
 
     @Override
@@ -31,13 +31,13 @@ public final class DefaultTeachingScheduleQuery implements TeachingScheduleQuery
                 criteria.week(),
                 normalizeLimit(criteria.limit())
         );
-        return immutableList(mapper.search(normalized));
+        return immutableList(readPort.search(normalized));
     }
 
     @Override
     public ScheduleSummaryView summary() {
-        ScheduleSummaryRow row = mapper.summary();
-        List<String> semesters = immutableList(mapper.listSemesters());
+        ScheduleSummaryData row = readPort.summary();
+        List<String> semesters = immutableList(readPort.listSemesters());
         if (row == null) {
             return new ScheduleSummaryView(0, 0, 0, 0, null, semesters);
         }
@@ -53,7 +53,7 @@ public final class DefaultTeachingScheduleQuery implements TeachingScheduleQuery
 
     @Override
     public List<String> listSemesters() {
-        return immutableList(mapper.listSemesters());
+        return immutableList(readPort.listSemesters());
     }
 
     private int normalizeLimit(Integer limit) {
