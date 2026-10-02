@@ -21,6 +21,10 @@ class ExplicitModuleWiringTest {
             "org.example.backend.controller.ClassTimetableController";
     private static final String MODULE_CONTROLLER =
             "org.example.backend.teachingschedule.adapter.in.web.TeachingScheduleQueryController";
+    private static final String LEGACY_LAB_CONTROLLER =
+            "org.example.backend.controller.LabController";
+    private static final String MODULE_LAB_CONTROLLER =
+            "org.example.backend.labresource.adapter.in.web.LabQueryController";
 
     @Test
     void hostUsesExplicitLegacyScanAndImportsModuleRuntimeConfiguration() {
@@ -43,10 +47,24 @@ class ExplicitModuleWiringTest {
         assertTrue(importedTypes.contains(
                 "org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration"
         ));
+        assertTrue(importedTypes.contains(
+                "org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration"
+        ));
 
         MapperScan mapperScan = BackendApplication.class.getAnnotation(MapperScan.class);
         assertNotNull(mapperScan);
         assertEquals(Set.of("org.example.backend.mapper"), Set.of(mapperScan.basePackages()));
+    }
+
+    @Test
+    void labReadRoutesHaveOneModuleOwnerWhileWriteAndDeviceRoutesStayLegacy() throws Exception {
+        Class<?> legacyController = Class.forName(LEGACY_LAB_CONTROLLER);
+        Class<?> moduleController = Class.forName(MODULE_LAB_CONTROLLER);
+
+        assertEquals(1, countGetMappings("/labs", legacyController, moduleController));
+        assertEquals(1, countGetMappings("/labs/{id:\\d+}", legacyController, moduleController));
+        assertEquals(1, countGetMappings("/labs/{id:\\d+}/devices", legacyController, moduleController));
+        assertEquals(0, countGetMappings("/labs/{id:\\d+}/devices", moduleController));
     }
 
     @Test

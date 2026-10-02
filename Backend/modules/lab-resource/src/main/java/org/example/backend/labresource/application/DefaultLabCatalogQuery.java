@@ -7,6 +7,7 @@ import org.example.backend.labresource.application.port.out.DeviceCountPort;
 import org.example.backend.labresource.application.port.out.LabRecord;
 import org.example.backend.labresource.application.port.out.LabRecordReadPort;
 import org.example.backend.labresource.application.port.out.ManagerNamePort;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+@Transactional(readOnly = true)
 public final class DefaultLabCatalogQuery implements LabCatalogQuery {
     private final LabRecordReadPort records;
     private final ManagerNamePort managerNames;

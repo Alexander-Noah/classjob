@@ -1,8 +1,10 @@
 package org.example.backend.controller;
 
-import org.example.backend.entity.LabEntity;
-import org.example.backend.service.DevicesService;
-import org.example.backend.service.LabService;
+import org.example.backend.labresource.adapter.in.web.LabQueryController;
+import org.example.backend.labresource.api.LabAccessScope;
+import org.example.backend.labresource.api.LabCatalogQuery;
+import org.example.backend.labresource.api.LabView;
+import org.example.backend.platform.security.AuthenticationAttributes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,21 +23,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class LabQueryCompatibilityTest {
-    private LabService labService;
+    private LabCatalogQuery query;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        labService = mock(LabService.class);
-        DevicesService devicesService = mock(DevicesService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new LabController(labService, devicesService)).build();
+        query = mock(LabCatalogQuery.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new LabQueryController(query)).build();
     }
 
     @Test
     void preservesSystemAdministratorListContractAndAllDisplayFields() throws Exception {
-        when(labService.getLabs(null)).thenReturn(List.of(lab()));
+        when(query.list(any())).thenReturn(List.of(lab()));
 
-        mockMvc.perform(get("/labs").requestAttr("authRole", "systemAdmin"))
+        mockMvc.perform(get("/labs").requestAttr(AuthenticationAttributes.ROLE, "systemAdmin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("查询实验室列表成功"))
@@ -54,26 +56,26 @@ class LabQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data[0].createdAt").value("2026-03-01T08:00:00"))
                 .andExpect(jsonPath("$.data[0].updatedAt").value("2026-09-01T09:30:00"));
 
-        verify(labService).getLabs(null);
+        verify(query).list(LabAccessScope.all());
     }
 
     @Test
     void scopesNonSystemAdministratorListToAuthenticatedUser() throws Exception {
-        when(labService.getLabs(42)).thenReturn(List.of(lab()));
+        when(query.list(any())).thenReturn(List.of(lab()));
 
         mockMvc.perform(get("/labs")
-                        .requestAttr("authRole", "labAdmin")
-                        .requestAttr("authUserId", 42))
+                        .requestAttr(AuthenticationAttributes.ROLE, "labAdmin")
+                        .requestAttr(AuthenticationAttributes.USER_ID, 42))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].managerUserId").value(42));
 
-        verify(labService).getLabs(42);
+        verify(query).list(LabAccessScope.managedBy(42L));
     }
 
     @Test
     void preservesDetailAndMissingLabContracts() throws Exception {
-        when(labService.getLabById(7)).thenReturn(lab());
-        when(labService.getLabById(999)).thenReturn(null);
+        when(query.findById(7)).thenReturn(lab());
+        when(query.findById(999)).thenReturn(null);
 
         mockMvc.perform(get("/labs/7"))
                 .andExpect(status().isOk())
@@ -89,23 +91,11 @@ class LabQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data").value(nullValue()));
     }
 
-    private LabEntity lab() {
-        LabEntity lab = new LabEntity();
-        lab.setId(7);
-        lab.setLabCode("LAB-007");
-        lab.setLabName("网络实验室");
-        lab.setBuilding("实训楼");
-        lab.setFloor("3");
-        lab.setRoomNo("305");
-        lab.setLabType("网络");
-        lab.setCapacity(48);
-        lab.setManagerUserId(42);
-        lab.setManagerName("实验室管理员");
-        lab.setOpenStatus("开放");
-        lab.setDeviceCount(36);
-        lab.setRemark("核心教学实验室");
-        lab.setCreatedAt(LocalDateTime.of(2026, 3, 1, 8, 0));
-        lab.setUpdatedAt(LocalDateTime.of(2026, 9, 1, 9, 30));
-        return lab;
+    private LabView lab() {
+        return new LabView(
+                7L, "LAB-007", "网络实验室", "实训楼", "3", "305", "网络", 48,
+                42L, "实验室管理员", "开放", 36, "核心教学实验室",
+                LocalDateTime.of(2026, 3, 1, 8, 0), LocalDateTime.of(2026, 9, 1, 9, 30)
+        );
     }
 }

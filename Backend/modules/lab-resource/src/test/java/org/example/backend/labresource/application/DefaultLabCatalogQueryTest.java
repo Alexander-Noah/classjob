@@ -6,6 +6,7 @@ import org.example.backend.labresource.application.port.out.LabRecord;
 import org.example.backend.labresource.application.port.out.LabRecordReadPort;
 import org.example.backend.labresource.application.port.out.ManagerNamePort;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -17,8 +18,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultLabCatalogQueryTest {
+    @Test
+    void readsBaseAndMetadataInsideOneReadOnlyTransaction() {
+        Transactional transaction = DefaultLabCatalogQuery.class.getAnnotation(Transactional.class);
+
+        assertTrue(transaction.readOnly());
+    }
+
     @Test
     void mergesEnrichmentByIdentifiersInsteadOfResultOrder() {
         LabRecord first = lab(1L, 101L, "LAB-001");
