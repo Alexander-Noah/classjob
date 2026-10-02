@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.LabResourceMetadataMapper">
+    <resultMap id="managerNameRow" type="org.example.backend.adapter.labmetadata.ManagerNameRow">
+        <constructor>
+            <arg column="manager_user_id" javaType="java.lang.Long"/>
+            <arg column="manager_name" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="deviceCountRow" type="org.example.backend.adapter.labmetadata.DeviceCountRow">
+        <constructor>
+            <arg column="lab_id" javaType="java.lang.Long"/>
+            <arg column="device_count" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findManagerNames" resultMap="managerNameRow">
+        select id as manager_user_id, real_name as manager_name
+        from sys_user
+        where id in
+        <foreach collection="managerUserIds" item="managerUserId" open="(" separator="," close=")">
+            #{managerUserId}
+        </foreach>
+    </select>
+
+    <select id="countDevicesByLabIds" resultMap="deviceCountRow">
+        select lab_id, count(*) as device_count
+        from device
+        where lab_id in
+        <foreach collection="labIds" item="labId" open="(" separator="," close=")">
+            #{labId}
+        </foreach>
+        group by lab_id
+    </select>
+</mapper>
