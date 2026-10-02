@@ -2,6 +2,8 @@ package org.example.backend.teachingschedule.adapter.out.persistence;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.ResultMap;
+import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.session.Configuration;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,6 +65,56 @@ class TeachingScheduleReadMapperXmlTest {
                 .collect(Collectors.toSet());
 
         assertEquals(Set.of("class_timetable"), tables);
+    }
+
+    @Test
+    void mapsEveryDatabaseColumnExplicitlyToTheApiView() throws IOException {
+        byte[] xml = mapperXml();
+        Configuration configuration = new Configuration();
+        new XMLMapperBuilder(
+                new ByteArrayInputStream(xml),
+                configuration,
+                RESOURCE,
+                configuration.getSqlFragments()
+        ).parse();
+
+        ResultMap resultMap = configuration.getResultMap(
+                TeachingScheduleReadMapper.class.getName() + ".scheduleEntryView"
+        );
+        Map<String, String> columnByProperty = resultMap.getResultMappings().stream()
+                .collect(Collectors.toMap(ResultMapping::getProperty, ResultMapping::getColumn));
+
+        assertEquals(Map.ofEntries(
+                Map.entry("id", "id"),
+                Map.entry("semester", "semester"),
+                Map.entry("rowClassName", "row_class_name"),
+                Map.entry("className", "class_name"),
+                Map.entry("weekday", "weekday"),
+                Map.entry("sectionCode", "section_code"),
+                Map.entry("sectionText", "section_text"),
+                Map.entry("startSection", "start_section"),
+                Map.entry("endSection", "end_section"),
+                Map.entry("courseName", "course_name"),
+                Map.entry("teacher", "teacher"),
+                Map.entry("weekRaw", "week_raw"),
+                Map.entry("weekText", "week_text"),
+                Map.entry("weekExpanded", "week_expanded"),
+                Map.entry("classroom", "classroom"),
+                Map.entry("createTime", "create_time")
+        ), columnByProperty);
+
+        ResultMap summaryResultMap = configuration.getResultMap(
+                TeachingScheduleReadMapper.class.getName() + ".scheduleSummaryRow"
+        );
+        Map<String, String> summaryColumnByProperty = summaryResultMap.getResultMappings().stream()
+                .collect(Collectors.toMap(ResultMapping::getProperty, ResultMapping::getColumn));
+        assertEquals(Map.of(
+                "total", "total",
+                "classCount", "class_count",
+                "teacherCount", "teacher_count",
+                "classroomCount", "classroom_count",
+                "latestSyncAt", "latest_sync_at"
+        ), summaryColumnByProperty);
     }
 
     private byte[] mapperXml() throws IOException {

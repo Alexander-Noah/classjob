@@ -3,26 +3,58 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.example.backend.teachingschedule.adapter.out.persistence.TeachingScheduleReadMapper">
+    <resultMap id="scheduleEntryView" type="org.example.backend.teachingschedule.api.ScheduleEntryView">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.lang.Long"/>
+            <arg column="semester" name="semester" javaType="java.lang.String"/>
+            <arg column="row_class_name" name="rowClassName" javaType="java.lang.String"/>
+            <arg column="class_name" name="className" javaType="java.lang.String"/>
+            <arg column="weekday" name="weekday" javaType="java.lang.String"/>
+            <arg column="section_code" name="sectionCode" javaType="java.lang.String"/>
+            <arg column="section_text" name="sectionText" javaType="java.lang.String"/>
+            <arg column="start_section" name="startSection" javaType="java.lang.Integer"/>
+            <arg column="end_section" name="endSection" javaType="java.lang.Integer"/>
+            <arg column="course_name" name="courseName" javaType="java.lang.String"/>
+            <arg column="teacher" name="teacher" javaType="java.lang.String"/>
+            <arg column="week_raw" name="weekRaw" javaType="java.lang.String"/>
+            <arg column="week_text" name="weekText" javaType="java.lang.String"/>
+            <arg column="week_expanded" name="weekExpanded" javaType="java.lang.String"/>
+            <arg column="classroom" name="classroom" javaType="java.lang.String"/>
+            <arg column="create_time" name="createTime" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduleSummaryRow"
+               type="org.example.backend.teachingschedule.adapter.out.persistence.ScheduleSummaryRow">
+        <constructor>
+            <arg column="total" name="total" javaType="_long"/>
+            <arg column="class_count" name="classCount" javaType="_long"/>
+            <arg column="teacher_count" name="teacherCount" javaType="_long"/>
+            <arg column="classroom_count" name="classroomCount" javaType="_long"/>
+            <arg column="latest_sync_at" name="latestSyncAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
     <select id="search"
             parameterType="org.example.backend.teachingschedule.api.ScheduleSearchCriteria"
-            resultType="org.example.backend.teachingschedule.api.ScheduleEntryView">
+            resultMap="scheduleEntryView">
         select
         id,
         semester,
-        row_class_name as rowClassName,
-        class_name as className,
+        row_class_name,
+        class_name,
         weekday,
-        section_code as sectionCode,
-        section_text as sectionText,
-        start_section as startSection,
-        end_section as endSection,
-        course_name as courseName,
+        section_code,
+        section_text,
+        start_section,
+        end_section,
+        course_name,
         teacher,
-        week_raw as weekRaw,
-        week_text as weekText,
-        week_expanded as weekExpanded,
+        week_raw,
+        week_text,
+        week_expanded,
         classroom,
-        create_time as createTime
+        create_time
         from class_timetable
         <where>
             <if test="semester != null and semester != ''">
@@ -64,13 +96,13 @@
     </select>
 
     <select id="summary"
-            resultType="org.example.backend.teachingschedule.adapter.out.persistence.ScheduleSummaryRow">
+            resultMap="scheduleSummaryRow">
         select
         count(*) as total,
-        count(distinct class_name) as classCount,
-        count(distinct teacher) as teacherCount,
-        count(distinct classroom) as classroomCount,
-        max(create_time) as latestSyncAt
+        count(distinct class_name) as class_count,
+        count(distinct teacher) as teacher_count,
+        count(distinct classroom) as classroom_count,
+        max(create_time) as latest_sync_at
         from class_timetable
     </select>
 
