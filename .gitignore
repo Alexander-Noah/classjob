@@ -27,6 +27,7 @@ Backend/data/
 
 # Monorepo-local metadata and generated artifacts
 .nested-git-backup/
+.worktrees/
 .impeccable/
 **/node_modules/
 **/target/
