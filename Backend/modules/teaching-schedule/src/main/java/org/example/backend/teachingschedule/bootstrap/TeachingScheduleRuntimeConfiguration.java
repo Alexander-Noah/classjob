@@ -9,9 +9,11 @@ import org.example.backend.teachingschedule.application.port.out.TeachingSchedul
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 @Configuration(proxyBeanMethods = false)
 @MapperScan(basePackageClasses = TeachingScheduleReadMapper.class)
+@Import(TeachingScheduleModuleConfiguration.class)
 public class TeachingScheduleRuntimeConfiguration {
     @Bean
     public TeachingScheduleReadPort teachingScheduleReadPort(TeachingScheduleReadMapper mapper) {
