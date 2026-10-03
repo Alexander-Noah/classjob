@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.backend.platform.security.AuthenticationAttributes;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -19,9 +20,9 @@ import java.util.Set;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    public static final String AUTH_USERNAME_ATTRIBUTE = "authUsername";
-    public static final String AUTH_ROLE_ATTRIBUTE = "authRole";
-    public static final String AUTH_USER_ID_ATTRIBUTE = "authUserId";
+    public static final String AUTH_USERNAME_ATTRIBUTE = AuthenticationAttributes.USERNAME;
+    public static final String AUTH_ROLE_ATTRIBUTE = AuthenticationAttributes.ROLE;
+    public static final String AUTH_USER_ID_ATTRIBUTE = AuthenticationAttributes.USER_ID;
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/login",

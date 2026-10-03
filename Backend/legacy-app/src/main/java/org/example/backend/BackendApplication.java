@@ -1,7 +1,9 @@
 package org.example.backend;
 
 import org.example.backend.config.LocalDevelopmentSecretsInitializer;
+import org.example.backend.config.LabResourceHostConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
+import org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -20,7 +22,12 @@ import java.nio.file.Path;
         "org.example.backend.websocket"
 })
 @MapperScan(basePackages = "org.example.backend.mapper")
-@Import({KernelConfiguration.class, TeachingScheduleRuntimeConfiguration.class})
+@Import({
+        KernelConfiguration.class,
+        TeachingScheduleRuntimeConfiguration.class,
+        LabResourceHostConfiguration.class,
+        LabResourceRuntimeConfiguration.class
+})
 public class BackendApplication {
 
     public static void main(String[] args) {

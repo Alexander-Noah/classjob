@@ -24,19 +24,6 @@ public class LabController {
         this.deviceService = deviceService;
     }
 
-    @GetMapping("/labs")
-    public Result getLabs(HttpServletRequest request) {
-        Integer managerUserId = resolveScopedManagerId(request);
-        List<LabEntity> labs = labService.getLabs(managerUserId);
-        log.info("查询实验室列表，负责人范围 {}，返回 {} 条记录", managerUserId, labs == null ? 0 : labs.size());
-        return Result.success("查询实验室列表成功", labs);
-    }
-
-    @GetMapping("/labs/{id:\\d+}")
-    public Result getLabById(@PathVariable Integer id) {
-        return Result.success("查询实验室详情成功", labService.getLabById(id));
-    }
-
     @GetMapping("/labs/{id:\\d+}/devices")
     public Result getLabDevices(@PathVariable Integer id) {
         log.info("查询实验室设备列表，实验室ID：{}", id);
