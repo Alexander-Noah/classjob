@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @RestControllerAdvice
@@ -36,6 +37,22 @@ public class GlobalExceptionHandler {
                 exception.getMostSpecificCause().getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(Result.error(message));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Result> handleResponseStatusException(ResponseStatusException exception, HttpServletRequest request) {
+        String message = exception.getReason() == null || exception.getReason().isBlank()
+                ? "请求被拒绝"
+                : exception.getReason();
+        log.warn("request rejected method={} uri={} requestId={} status={} message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                MDC.get("requestId"),
+                exception.getStatusCode().value(),
+                message);
+        return ResponseEntity
+                .status(exception.getStatusCode())
                 .body(Result.error(message));
     }
 

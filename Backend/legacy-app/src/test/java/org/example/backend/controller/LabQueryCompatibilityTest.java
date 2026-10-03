@@ -1,5 +1,6 @@
 package org.example.backend.controller;
 
+import org.example.backend.config.GlobalExceptionHandler;
 import org.example.backend.labresource.adapter.in.web.LabQueryController;
 import org.example.backend.labresource.api.LabAccessScope;
 import org.example.backend.labresource.api.LabCatalogQuery;
@@ -30,7 +31,9 @@ class LabQueryCompatibilityTest {
     @BeforeEach
     void setUp() {
         query = mock(LabCatalogQuery.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new LabQueryController(query)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new LabQueryController(query))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -92,6 +95,13 @@ class LabQueryCompatibilityTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("查询实验室详情成功"))
                 .andExpect(jsonPath("$.data").value(nullValue()));
+    }
+
+    @Test
+    void preservesForbiddenStatusWhenAuthenticationIdentityIsMissing() throws Exception {
+        mockMvc.perform(get("/labs")
+                        .requestAttr(AuthenticationAttributes.ROLE, "labAdmin"))
+                .andExpect(status().isForbidden());
     }
 
     private LabView lab() {
