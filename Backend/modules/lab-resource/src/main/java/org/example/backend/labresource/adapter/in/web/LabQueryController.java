@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
 
@@ -27,8 +29,8 @@ public final class LabQueryController {
     }
 
     @GetMapping("/labs/{id:\\d+}")
-    public Result getLabById(@PathVariable long id) {
-        return Result.success("查询实验室详情成功", query.findById(id));
+    public Result getLabById(@PathVariable long id, HttpServletRequest request) {
+        return Result.success("查询实验室详情成功", query.findById(id, resolveScope(request)));
     }
 
     private LabAccessScope resolveScope(HttpServletRequest request) {
@@ -39,12 +41,20 @@ public final class LabQueryController {
 
         Object rawUserId = request.getAttribute(AuthenticationAttributes.USER_ID);
         if (rawUserId == null) {
-            return LabAccessScope.all();
+            throw forbiddenIdentity();
         }
         try {
-            return LabAccessScope.managedBy(Long.parseLong(String.valueOf(rawUserId)));
+            long userId = Long.parseLong(String.valueOf(rawUserId));
+            if (userId <= 0) {
+                throw forbiddenIdentity();
+            }
+            return LabAccessScope.managedBy(userId);
         } catch (NumberFormatException exception) {
-            return LabAccessScope.all();
+            throw forbiddenIdentity();
         }
+    }
+
+    private ResponseStatusException forbiddenIdentity() {
+        return new ResponseStatusException(HttpStatus.FORBIDDEN, "Authenticated user id is required");
     }
 }

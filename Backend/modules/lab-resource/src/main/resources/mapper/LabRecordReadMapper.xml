@@ -52,6 +52,11 @@
     <select id="findById" resultMap="labRecord">
         select <include refid="ownedColumns"/>
         from lab
-        where id = #{id}
+        <where>
+            id = #{id}
+            <if test="managerUserId != null">
+                and manager_user_id = #{managerUserId}
+            </if>
+        </where>
     </select>
 </mapper>

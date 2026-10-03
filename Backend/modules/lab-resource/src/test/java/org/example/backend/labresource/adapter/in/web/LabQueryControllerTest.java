@@ -15,7 +15,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,15 +69,31 @@ class LabQueryControllerTest {
 
     @Test
     void exposesCompatibleDetailResponse() throws Exception {
-        when(query.findById(7)).thenReturn(lab());
+        when(query.findById(eq(7L), any())).thenReturn(lab());
 
-        mockMvc.perform(get("/labs/7"))
+        mockMvc.perform(get("/labs/7")
+                        .requestAttr(AuthenticationAttributes.ROLE, "labAdmin")
+                        .requestAttr(AuthenticationAttributes.USER_ID, 42))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("查询实验室详情成功"))
                 .andExpect(jsonPath("$.data.id").value(7));
 
-        verify(query).findById(7);
+        verify(query).findById(7L, LabAccessScope.managedBy(42L));
+    }
+
+    @Test
+    void rejectsMissingOrMalformedUserIdentityInsteadOfFallingBackToAllLabs() throws Exception {
+        mockMvc.perform(get("/labs")
+                        .requestAttr(AuthenticationAttributes.ROLE, "labAdmin"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/labs")
+                        .requestAttr(AuthenticationAttributes.ROLE, "labAdmin")
+                        .requestAttr(AuthenticationAttributes.USER_ID, "not-a-number"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(query);
     }
 
     private LabView lab() {

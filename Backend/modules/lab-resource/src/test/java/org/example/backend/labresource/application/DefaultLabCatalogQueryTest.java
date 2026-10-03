@@ -108,7 +108,7 @@ class DefaultLabCatalogQueryTest {
             }
 
             @Override
-            public LabRecord findById(long id) {
+            public LabRecord findById(long id, Long managerUserId) {
                 return null;
             }
         };
@@ -118,7 +118,19 @@ class DefaultLabCatalogQueryTest {
                 ids -> { throw new AssertionError("device enrichment must not run"); }
         );
 
-        assertNull(query.findById(999L));
+        assertNull(query.findById(999L, LabAccessScope.managedBy(42L)));
+    }
+
+    @Test
+    void detailReadIsRestrictedToTheAuthenticatedManagerScope() {
+        var query = new DefaultLabCatalogQuery(
+                records(List.of(lab(7L, 42L, "LAB-007"))),
+                ids -> Map.of(42L, "Alice"),
+                ids -> Map.of(7L, 5)
+        );
+
+        assertNull(query.findById(7L, LabAccessScope.managedBy(99L)));
+        assertEquals(7L, query.findById(7L, LabAccessScope.managedBy(42L)).id());
     }
 
     private LabRecordReadPort records(List<LabRecord> records) {
@@ -129,8 +141,12 @@ class DefaultLabCatalogQueryTest {
             }
 
             @Override
-            public LabRecord findById(long id) {
-                return records.stream().filter(record -> record.id() == id).findFirst().orElse(null);
+            public LabRecord findById(long id, Long managerUserId) {
+                return records.stream()
+                        .filter(record -> record.id() == id)
+                        .filter(record -> managerUserId == null || managerUserId.equals(record.managerUserId()))
+                        .findFirst()
+                        .orElse(null);
             }
         };
     }

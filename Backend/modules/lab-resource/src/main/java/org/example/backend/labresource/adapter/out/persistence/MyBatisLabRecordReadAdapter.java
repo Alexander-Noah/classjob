@@ -20,7 +20,7 @@ public final class MyBatisLabRecordReadAdapter implements LabRecordReadPort {
     }
 
     @Override
-    public LabRecord findById(long id) {
-        return mapper.findById(id);
+    public LabRecord findById(long id, Long managerUserId) {
+        return mapper.findById(id, managerUserId);
     }
 }

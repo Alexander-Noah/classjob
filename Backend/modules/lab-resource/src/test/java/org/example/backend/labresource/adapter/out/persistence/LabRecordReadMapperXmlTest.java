@@ -21,6 +21,7 @@ class LabRecordReadMapperXmlTest {
         }
         assertTrue(xml.contains("order by id asc"));
         assertTrue(xml.contains("manager_user_id = #{managerUserId}"));
+        assertTrue(xml.contains("and manager_user_id = #{managerUserId}"));
     }
 
     @Test

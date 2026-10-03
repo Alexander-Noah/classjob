@@ -66,7 +66,7 @@ class DefaultLabAvailabilityQueryTest {
             }
 
             @Override
-            public LabRecord findById(long id) {
+            public LabRecord findById(long id, Long managerUserId) {
                 reads.incrementAndGet();
                 return lab(48, "开放");
             }
@@ -88,7 +88,7 @@ class DefaultLabAvailabilityQueryTest {
             }
 
             @Override
-            public LabRecord findById(long id) {
+            public LabRecord findById(long id, Long managerUserId) {
                 return record;
             }
         };

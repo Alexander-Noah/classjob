@@ -40,8 +40,9 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
     }
 
     @Override
-    public LabView findById(long id) {
-        LabRecord found = records.findById(id);
+    public LabView findById(long id, LabAccessScope scope) {
+        Objects.requireNonNull(scope, "scope");
+        LabRecord found = records.findById(id, scope.managerUserId());
         if (found == null) {
             return null;
         }

@@ -31,7 +31,7 @@ public final class DefaultLabAvailabilityQuery implements LabAvailabilityQuery {
             Instant endsAt
     ) {
         validate(labId, expectedCapacity, startsAt, endsAt);
-        LabRecord record = records.findById(labId);
+        LabRecord record = records.findById(labId, null);
         if (record == null) {
             return CapabilityResult.available(new LabAvailabilityView(labId, 0, false));
         }

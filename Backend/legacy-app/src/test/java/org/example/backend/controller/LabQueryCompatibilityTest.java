@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,17 +75,19 @@ class LabQueryCompatibilityTest {
 
     @Test
     void preservesDetailAndMissingLabContracts() throws Exception {
-        when(query.findById(7)).thenReturn(lab());
-        when(query.findById(999)).thenReturn(null);
+        when(query.findById(eq(7L), any())).thenReturn(lab());
+        when(query.findById(eq(999L), any())).thenReturn(null);
 
-        mockMvc.perform(get("/labs/7"))
+        mockMvc.perform(get("/labs/7")
+                        .requestAttr(AuthenticationAttributes.ROLE, "systemAdmin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("查询实验室详情成功"))
                 .andExpect(jsonPath("$.data.id").value(7))
                 .andExpect(jsonPath("$.data.labCode").value("LAB-007"));
 
-        mockMvc.perform(get("/labs/999"))
+        mockMvc.perform(get("/labs/999")
+                        .requestAttr(AuthenticationAttributes.ROLE, "systemAdmin"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("查询实验室详情成功"))
