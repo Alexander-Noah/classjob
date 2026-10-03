@@ -8,6 +8,7 @@ import java.util.Set;
 public record ReservationReviewUpdate(
         long reservationId,
         ReservationStatus status,
+        boolean conflictFlag,
         String reviewerName,
         String reviewRemark,
         Set<ReservationStatus> allowedCurrentStatuses

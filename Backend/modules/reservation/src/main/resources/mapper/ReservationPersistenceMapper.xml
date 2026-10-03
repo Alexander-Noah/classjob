@@ -123,6 +123,7 @@
     <update id="updateReview">
         update lab_reservation
         set status = #{update.status,typeHandler=org.example.backend.reservation.adapter.out.persistence.ReservationStatusTypeHandler},
+            conflict_flag = #{update.conflictFlag},
             reviewer_name = #{update.reviewerName},
             review_remark = #{update.reviewRemark},
             updated_at = now()

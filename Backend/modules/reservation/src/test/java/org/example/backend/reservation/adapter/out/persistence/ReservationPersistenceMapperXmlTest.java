@@ -42,6 +42,14 @@ class ReservationPersistenceMapperXmlTest {
         assertFalse(xml.contains("sys_user"));
     }
 
+    @Test
+    void conditionallyUpdatesReviewConflictFlagInTheSameStatement() throws IOException {
+        String xml = mapperXml();
+
+        assertTrue(xml.contains("<update id=\"updateReview\">"));
+        assertTrue(xml.contains("conflict_flag = #{update.conflictFlag}"));
+    }
+
     private String mapperXml() throws IOException {
         try (var input = getClass().getResourceAsStream("/mapper/ReservationPersistenceMapper.xml")) {
             if (input == null) {

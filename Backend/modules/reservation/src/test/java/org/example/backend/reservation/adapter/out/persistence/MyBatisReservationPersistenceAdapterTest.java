@@ -9,6 +9,7 @@ import org.example.backend.reservation.domain.ReservationStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -19,6 +20,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MyBatisReservationPersistenceAdapterTest {
+    @Test
+    void reviewUpdateCarriesTheTargetConflictFlag() {
+        assertTrue(Arrays.stream(ReservationReviewUpdate.class.getRecordComponents())
+                .anyMatch(component -> component.getName().equals("conflictFlag")
+                        && component.getType().equals(boolean.class)));
+    }
+
     @Test
     void normalizesNullListsAndDelegatesScopeUnchanged() {
         RecordingMapper mapper = new RecordingMapper();
@@ -72,7 +80,7 @@ class MyBatisReservationPersistenceAdapterTest {
     }
 
     private ReservationReviewUpdate reviewUpdate() {
-        return new ReservationReviewUpdate(3L, ReservationStatus.APPROVED, "李老师", "通过",
+        return new ReservationReviewUpdate(3L, ReservationStatus.APPROVED, false, "李老师", "通过",
                 Set.of(ReservationStatus.PENDING, ReservationStatus.CONFLICT));
     }
 
