@@ -2,6 +2,7 @@ package org.example.backend.reservation.api;
 
 import org.example.backend.reservation.domain.ReservationStatus;
 import org.example.backend.reservation.application.CreateReservationCommand;
+import org.example.backend.reservation.application.ReviewReservationCommand;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -37,6 +38,21 @@ class ReservationContractsTest {
         assertEquals(ReservationActorRole.TEACHER, ReservationActor.teacher(1L).role());
         assertEquals(ReservationActorRole.LABORATORY_ADMINISTRATOR, ReservationActor.laboratoryAdministrator(2L).role());
         assertEquals(ReservationActorRole.SYSTEM_ADMINISTRATOR, ReservationActor.systemAdministrator(3L).role());
+    }
+
+    @Test
+    void keepsOneArgumentActorFactoriesAndNormalizesOptionalTrustedDisplayNames() {
+        assertEquals(null, ReservationActor.teacher(1L).displayName());
+        assertEquals("管理员", ReservationActor.systemAdministrator(2L, " 管理员 ").displayName());
+        assertEquals("实验室管理员", ReservationActor.laboratoryAdministrator(3L, "实验室管理员").displayName());
+    }
+
+    @Test
+    void reviewCommandContainsOnlyReservationIdAndRemark() {
+        assertEquals(2, ReviewReservationCommand.class.getRecordComponents().length);
+        ReviewReservationCommand command = new ReviewReservationCommand(41L, "备注");
+        assertEquals(41L, command.reservationId());
+        assertEquals("备注", command.reviewRemark());
     }
 
     @Test

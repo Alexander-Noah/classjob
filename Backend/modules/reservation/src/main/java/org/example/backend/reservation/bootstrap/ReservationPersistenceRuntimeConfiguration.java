@@ -5,6 +5,8 @@ import org.example.backend.reservation.adapter.out.persistence.ReservationPersis
 import org.example.backend.reservation.api.ReservationCatalogQuery;
 import org.example.backend.reservation.application.DefaultReservationCatalogQuery;
 import org.example.backend.reservation.application.DefaultReservationCreationService;
+import org.example.backend.reservation.application.DefaultReservationCommandHandler;
+import org.example.backend.reservation.application.DefaultReservationReviewService;
 import org.example.backend.reservation.application.LabAvailabilityPort;
 import org.example.backend.reservation.application.ScheduleConflictPort;
 import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
@@ -42,5 +44,21 @@ public class ReservationPersistenceRuntimeConfiguration {
             ScheduleConflictPort scheduleConflicts
     ) {
         return new DefaultReservationCreationService(reservations, catalog, managedLaboratoryIds, labAvailability, scheduleConflicts);
+    }
+
+    @Bean
+    public DefaultReservationReviewService reservationReviewService(
+            ReservationPersistencePort reservations,
+            ReservationCatalogQuery catalog
+    ) {
+        return new DefaultReservationReviewService(reservations, catalog);
+    }
+
+    @Bean
+    public DefaultReservationCommandHandler reservationCommandHandler(
+            DefaultReservationCreationService creation,
+            DefaultReservationReviewService review
+    ) {
+        return new DefaultReservationCommandHandler(creation, review);
     }
 }

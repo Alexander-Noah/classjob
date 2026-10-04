@@ -8,6 +8,7 @@ import org.example.backend.reservation.api.ReservationView;
 import org.example.backend.reservation.application.CreateReservationCommand;
 import org.example.backend.reservation.application.DefaultReservationCatalogQuery;
 import org.example.backend.reservation.application.DefaultReservationCreationService;
+import org.example.backend.reservation.application.DefaultReservationReviewService;
 import org.example.backend.reservation.application.LabAvailabilityPort;
 import org.example.backend.reservation.application.LabAvailabilitySnapshot;
 import org.example.backend.reservation.application.ScheduleConflictPort;
@@ -50,12 +51,15 @@ class ReservationTransactionalProxyTest {
     void transactionalReservationServicesAreClassProxiedAndIntercepted() {
         try (var context = new AnnotationConfigApplicationContext(TransactionProxyConfiguration.class)) {
             DefaultReservationCreationService creation = context.getBean(DefaultReservationCreationService.class);
+            DefaultReservationReviewService review = context.getBean(DefaultReservationReviewService.class);
             DefaultReservationCatalogQuery catalog = context.getBean(DefaultReservationCatalogQuery.class);
             TrackingTransactionManager transactions = context.getBean(TrackingTransactionManager.class);
 
             assertTrue(AopUtils.isCglibProxy(creation));
+            assertTrue(AopUtils.isCglibProxy(review));
             assertTrue(AopUtils.isCglibProxy(catalog));
             assertTrue(hasTransactionAdvisor(creation));
+            assertTrue(hasTransactionAdvisor(review));
             assertTrue(hasTransactionAdvisor(catalog));
 
             creation.create(command(), ReservationActor.teacher(7L));
@@ -136,6 +140,12 @@ class ReservationTransactionalProxyTest {
                                                                       LabAvailabilityPort laboratoryAvailability,
                                                                       ScheduleConflictPort scheduleConflicts) {
             return new DefaultReservationCreationService(reservations, catalog, managedLaboratories, laboratoryAvailability, scheduleConflicts);
+        }
+
+        @Bean
+        DefaultReservationReviewService reservationReviewService(ReservationPersistencePort reservations,
+                                                                 ReservationCatalogQuery catalog) {
+            return new DefaultReservationReviewService(reservations, catalog);
         }
     }
 
