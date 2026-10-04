@@ -1,5 +1,6 @@
 package org.example.backend.reservation.bootstrap;
 
+import org.example.backend.reservation.adapter.in.web.ReservationController;
 import org.example.backend.reservation.adapter.out.persistence.MyBatisReservationPersistenceAdapter;
 import org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper;
 import org.example.backend.reservation.api.ReservationCatalogQuery;
@@ -60,5 +61,13 @@ public class ReservationPersistenceRuntimeConfiguration {
             DefaultReservationReviewService review
     ) {
         return new DefaultReservationCommandHandler(creation, review);
+    }
+
+    @Bean
+    public ReservationController reservationController(
+            ReservationCatalogQuery catalog,
+            DefaultReservationCommandHandler commands
+    ) {
+        return new ReservationController(catalog, commands);
     }
 }

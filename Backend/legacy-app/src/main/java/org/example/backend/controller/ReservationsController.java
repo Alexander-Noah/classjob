@@ -19,17 +19,6 @@ public class ReservationsController {
         this.reservationsService = reservationsService;
     }
 
-    @GetMapping("/reservations")
-    public Result getReservations() {
-        return Result.success("获取预约列表成功", reservationsService.getReservations());
-    }
-
-    @PostMapping("/reservations")
-    public Result insertReservation(@RequestBody ReservationsEntity reservationsEntity) {
-        reservationsService.insertReservation(reservationsEntity);
-        return Result.success("新增预约成功", reservationsEntity);
-    }
-
     @GetMapping("/public/labs/{id:\\d+}/reservation-profile")
     public Result getScanReservationProfile(
             @PathVariable("id") Integer id,
@@ -49,11 +38,6 @@ public class ReservationsController {
             @RequestParam(value = "contact", required = false) String contact
     ) {
         return Result.success("获取扫码预约状态成功", reservationsService.getScanReservationStatus(id, contact));
-    }
-
-    @GetMapping("/reservations/{id:\\d+}")
-    public Result getReservation(@PathVariable("id") Integer id) {
-        return Result.success("获取预约详情成功", reservationsService.getReservation(id));
     }
 
     @PutMapping("/reservations/{id:\\d+}")
@@ -79,16 +63,6 @@ public class ReservationsController {
     @PostMapping("/reservations/reset")
     public Result resetReservations() {
         return Result.success("重置预约数据成功", reservationsService.getReservations());
-    }
-
-    @PostMapping("/reservations/{id:\\d+}/approve")
-    public Result getApproved(@PathVariable("id") Integer id, @RequestBody(required = false) ReservationsEntity reservationsEntity) {
-        return Result.success("通过预约成功", reservationsService.getApproved(id, reservationsEntity == null ? new ReservationsEntity() : reservationsEntity));
-    }
-
-    @PostMapping("/reservations/{id:\\d+}/reject")
-    public Result getRejected(@PathVariable("id") Integer id, @RequestBody(required = false) ReservationsEntity reservationsEntity) {
-        return Result.success("驳回预约成功", reservationsService.getRejected(id, reservationsEntity == null ? new ReservationsEntity() : reservationsEntity));
     }
 
     public static class ReservationBatchRequest {

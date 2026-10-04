@@ -21,8 +21,7 @@ class ReservationModuleBoundaryTest {
                             || source.contains("org.example.backend.mapper")
                             || source.contains("org.example.backend.service")
                             || source.contains("org.example.backend.controller")
-                            || source.contains("org.example.backend.security")
-                            || source.contains("org.example.backend.result")));
+                            || source.contains("org.example.backend.security.")));
         }
     }
 

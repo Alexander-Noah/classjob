@@ -6,6 +6,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -25,6 +26,10 @@ class ExplicitModuleWiringTest {
             "org.example.backend.controller.LabController";
     private static final String MODULE_LAB_CONTROLLER =
             "org.example.backend.labresource.adapter.in.web.LabQueryController";
+    private static final String LEGACY_RESERVATION_CONTROLLER =
+            "org.example.backend.controller.ReservationsController";
+    private static final String MODULE_RESERVATION_CONTROLLER =
+            "org.example.backend.reservation.adapter.in.web.ReservationController";
 
     @Test
     void hostUsesExplicitLegacyScanAndImportsModuleRuntimeConfiguration() {
@@ -89,6 +94,26 @@ class ExplicitModuleWiringTest {
     }
 
     @Test
+    void coreReservationRoutesHaveOneModuleOwnerWhileNonMvpRoutesStayLegacy() throws Exception {
+        Class<?> legacyController = Class.forName(LEGACY_RESERVATION_CONTROLLER);
+        Class<?> moduleController = Class.forName(MODULE_RESERVATION_CONTROLLER);
+
+        assertEquals(1, countGetMappings("/reservations", legacyController, moduleController));
+        assertEquals(1, countGetMappings("/reservations/{id:\\d+}", legacyController, moduleController));
+        assertEquals(1, countPostMappings("/reservations", legacyController, moduleController));
+        assertEquals(1, countPostMappings("/reservations/{id:\\d+}/approve", legacyController, moduleController));
+        assertEquals(1, countPostMappings("/reservations/{id:\\d+}/reject", legacyController, moduleController));
+
+        assertEquals(1, countGetMappings("/public/labs/{id:\\d+}/reservation-profile", legacyController, moduleController));
+        assertEquals(1, countPostMappings("/public/reservations/scan", legacyController, moduleController));
+        assertEquals(1, countGetMappings("/public/reservations/{id:\\d+}/status", legacyController, moduleController));
+        assertEquals(1, countPostMappings("/reservations/reset", legacyController, moduleController));
+        assertEquals(0, countGetMappings("/public/labs/{id:\\d+}/reservation-profile", moduleController));
+        assertEquals(0, countPostMappings("/public/reservations/scan", moduleController));
+        assertEquals(0, countPostMappings("/reservations/reset", moduleController));
+    }
+
+    @Test
     void legacyMapperRemainsAWriteSideMapperWithoutReadQueries() throws Exception {
         Class<?> mapper = Class.forName("org.example.backend.mapper.ClassTimetableMapper");
         assertNotNull(mapper.getAnnotation(Mapper.class));
@@ -106,6 +131,16 @@ class ExplicitModuleWiringTest {
         return Arrays.stream(controllers)
                 .flatMap(controller -> Arrays.stream(controller.getDeclaredMethods()))
                 .map(method -> method.getAnnotation(GetMapping.class))
+                .filter(mapping -> mapping != null)
+                .flatMap(mapping -> Arrays.stream(mapping.value()))
+                .filter(path::equals)
+                .count();
+    }
+
+    private long countPostMappings(String path, Class<?>... controllers) {
+        return Arrays.stream(controllers)
+                .flatMap(controller -> Arrays.stream(controller.getDeclaredMethods()))
+                .map(method -> method.getAnnotation(PostMapping.class))
                 .filter(mapping -> mapping != null)
                 .flatMap(mapping -> Arrays.stream(mapping.value()))
                 .filter(path::equals)
