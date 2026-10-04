@@ -2,8 +2,11 @@ package org.example.backend;
 
 import org.example.backend.config.LocalDevelopmentSecretsInitializer;
 import org.example.backend.config.LabResourceHostConfiguration;
+import org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration;
+import org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
 import org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration;
+import org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -26,7 +29,10 @@ import java.nio.file.Path;
         KernelConfiguration.class,
         TeachingScheduleRuntimeConfiguration.class,
         LabResourceHostConfiguration.class,
-        LabResourceRuntimeConfiguration.class
+        LabResourceRuntimeConfiguration.class,
+        ReservationLabResourceBridgeConfiguration.class,
+        ReservationTeachingScheduleBridgeConfiguration.class,
+        ReservationPersistenceRuntimeConfiguration.class
 })
 public class BackendApplication {
 

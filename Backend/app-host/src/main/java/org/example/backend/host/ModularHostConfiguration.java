@@ -4,6 +4,7 @@ import org.example.backend.bridge.coordinationenvironment.CoordinationEnvironmen
 import org.example.backend.bridge.coordinationreservation.CoordinationReservationBridgeConfiguration;
 import org.example.backend.bridge.coordinationschedule.CoordinationScheduleBridgeConfiguration;
 import org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration;
+import org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration;
 import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
 import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
 import org.example.backend.integration.academic.AcademicSystemIntegrationConfiguration;
@@ -12,6 +13,7 @@ import org.example.backend.labresource.bootstrap.LabResourceModuleConfiguration;
 import org.example.backend.platform.security.SecurityPlatformConfiguration;
 import org.example.backend.platform.websupport.WebSupportConfiguration;
 import org.example.backend.reservation.bootstrap.ReservationModuleConfiguration;
+import org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration;
 import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ import org.springframework.context.annotation.Import;
 @Configuration(proxyBeanMethods = false)
 @Import({
         ReservationLabResourceBridgeConfiguration.class,
+        ReservationTeachingScheduleBridgeConfiguration.class,
+        ReservationPersistenceRuntimeConfiguration.class,
         CoordinationScheduleBridgeConfiguration.class,
         CoordinationReservationBridgeConfiguration.class,
         CoordinationEnvironmentBridgeConfiguration.class,

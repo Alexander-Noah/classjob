@@ -14,6 +14,7 @@
         <dependency><groupId>org.example</groupId><artifactId>environment-readiness</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.example</groupId><artifactId>teaching-coordination</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.example</groupId><artifactId>reservation-lab-resource-bridge</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.example</groupId><artifactId>reservation-teaching-schedule-bridge</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.example</groupId><artifactId>coordination-schedule-bridge</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.example</groupId><artifactId>coordination-reservation-bridge</artifactId><version>${project.version}</version></dependency>
         <dependency><groupId>org.example</groupId><artifactId>coordination-environment-bridge</artifactId><version>${project.version}</version></dependency>

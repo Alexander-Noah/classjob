@@ -31,6 +31,7 @@
         <module>modules/environment-readiness</module>
         <module>modules/teaching-coordination</module>
         <module>bridges/reservation-lab-resource-bridge</module>
+        <module>bridges/reservation-teaching-schedule-bridge</module>
         <module>bridges/coordination-schedule-bridge</module>
         <module>bridges/coordination-reservation-bridge</module>
         <module>bridges/coordination-environment-bridge</module>

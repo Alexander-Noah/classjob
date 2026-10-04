@@ -11,6 +11,7 @@ import org.example.backend.reservation.application.LabAvailabilitySnapshot;
 import org.example.backend.reservation.application.port.out.LaboratorySummary;
 import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
 import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,6 +36,7 @@ public class ReservationLabResourceBridgeConfiguration {
     }
 
     @Bean
+    @ConditionalOnBean(LabCatalogQuery.class)
     public ManagedLaboratoryIdsPort bridgedManagedLaboratoryIdsPort(LabCatalogQuery query) {
         return managerUserId -> {
             List<LabView> labs = requireLabs(query.list(LabAccessScope.managedBy(managerUserId)));
@@ -50,6 +52,7 @@ public class ReservationLabResourceBridgeConfiguration {
     }
 
     @Bean
+    @ConditionalOnBean(LabCatalogQuery.class)
     public LaboratorySummaryPort bridgedLaboratorySummaryPort(LabCatalogQuery query) {
         return laboratoryIds -> {
             if (laboratoryIds == null) {

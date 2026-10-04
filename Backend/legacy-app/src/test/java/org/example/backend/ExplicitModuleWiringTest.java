@@ -50,6 +50,15 @@ class ExplicitModuleWiringTest {
         assertTrue(importedTypes.contains(
                 "org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration"
         ));
+        assertTrue(importedTypes.contains(
+                "org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration"
+        ));
+        assertTrue(importedTypes.contains(
+                "org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration"
+        ));
+        assertTrue(importedTypes.contains(
+                "org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration"
+        ));
 
         MapperScan mapperScan = BackendApplication.class.getAnnotation(MapperScan.class);
         assertNotNull(mapperScan);
