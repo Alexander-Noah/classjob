@@ -5,6 +5,7 @@ import org.example.backend.kernel.module.ModuleDescriptor;
 import org.example.backend.kernel.module.ModuleId;
 import org.example.backend.reservation.api.ReservationSnapshotQuery;
 import org.example.backend.reservation.application.LabAvailabilityPort;
+import org.example.backend.reservation.application.ScheduleConflictPort;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,12 @@ public class ReservationModuleConfiguration {
     @ConditionalOnMissingBean(LabAvailabilityPort.class)
     public LabAvailabilityPort unavailableLabAvailabilityPort() {
         return (labId, expectedCapacity, timeRange) -> CapabilityResult.unavailable("lab-resource capability is unavailable");
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ScheduleConflictPort.class)
+    public ScheduleConflictPort unavailableScheduleConflictPort() {
+        return (labId, reservationDate, timeRange) -> CapabilityResult.unavailable("schedule capability is unavailable");
     }
 
     @Bean

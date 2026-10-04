@@ -4,6 +4,9 @@ import org.example.backend.reservation.adapter.out.persistence.MyBatisReservatio
 import org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper;
 import org.example.backend.reservation.api.ReservationCatalogQuery;
 import org.example.backend.reservation.application.DefaultReservationCatalogQuery;
+import org.example.backend.reservation.application.DefaultReservationCreationService;
+import org.example.backend.reservation.application.LabAvailabilityPort;
+import org.example.backend.reservation.application.ScheduleConflictPort;
 import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
 import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
 import org.example.backend.reservation.application.port.out.ReservationPersistencePort;
@@ -28,5 +31,16 @@ public class ReservationPersistenceRuntimeConfiguration {
             LaboratorySummaryPort laboratorySummaries
     ) {
         return new DefaultReservationCatalogQuery(reservations, managedLaboratoryIds, laboratorySummaries);
+    }
+
+    @Bean
+    public DefaultReservationCreationService reservationCreationService(
+            ReservationPersistencePort reservations,
+            ReservationCatalogQuery catalog,
+            ManagedLaboratoryIdsPort managedLaboratoryIds,
+            LabAvailabilityPort labAvailability,
+            ScheduleConflictPort scheduleConflicts
+    ) {
+        return new DefaultReservationCreationService(reservations, catalog, managedLaboratoryIds, labAvailability, scheduleConflicts);
     }
 }
