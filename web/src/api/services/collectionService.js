@@ -1,5 +1,6 @@
 import http from '../http'
 import { API_USE_MOCK } from '../config'
+import { requireAuthoritativeRecord } from './authoritativeRecord'
 
 const cloneRecords = (records) => JSON.parse(JSON.stringify(records || []))
 
@@ -41,7 +42,7 @@ const normalizeRecordResponse = (data, fallbackRecord) => {
   return fallbackRecord
 }
 
-export function createCollectionService({ endpoints, resourceName, storageKey }) {
+export function createCollectionService({ endpoints, resourceName, storageKey, serverAuthoritativeRecords = false }) {
   const list = async ({ fallbackRecords = [] } = {}) => {
     if (API_USE_MOCK) {
       return cloneRecords(readLocalRecords(storageKey) || fallbackRecords)
@@ -91,7 +92,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey })
     }
 
     const { data } = await http.post(endpoints.list, nextRecord)
-    return normalizeRecordResponse(data, nextRecord)
+    return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'create') : normalizeRecordResponse(data, nextRecord)
   }
 
   const update = async (id, record) => {
@@ -105,7 +106,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey })
     }
 
     const { data } = await http.put(`${endpoints.list}/${id}`, nextRecord)
-    return normalizeRecordResponse(data, nextRecord)
+    return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'update') : normalizeRecordResponse(data, nextRecord)
   }
 
   const reset = async ({ fallbackRecords = [] } = {}) => {
@@ -154,7 +155,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey })
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/approve`, payload)
-    return normalizeRecordResponse(data, payload)
+    return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'approve') : normalizeRecordResponse(data, payload)
   }
 
   const reject = async (id, payload = {}) => {
@@ -178,7 +179,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey })
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/reject`, payload)
-    return normalizeRecordResponse(data, payload)
+    return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'reject') : normalizeRecordResponse(data, payload)
   }
 
   const action = async (id, actionName, payload = {}) => {
@@ -197,7 +198,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey })
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/${actionName}`, payload)
-    return normalizeRecordResponse(data, payload)
+    return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'action') : normalizeRecordResponse(data, payload)
   }
 
   return {

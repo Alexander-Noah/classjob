@@ -1,7 +1,8 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { labResourceService, reservationResourceService, usageRecordResourceService } from '../api/services/basicResources'
+import { labResourceService, reservationResourceService } from '../api/services/basicResources'
 import { API_USE_MOCK } from '../api/config'
+import { applyAuthoritativeReservationRecord } from '../api/services/authoritativeRecord'
 import { getClassTimetableSemesters, listClassTimetables } from '../api/services/classTimetable'
 import { exportTableToExcel } from '../utils/exportExcel'
 import { formatLabDisplayName } from '../utils/labDisplay'
@@ -321,32 +322,6 @@ const formatTimetableConflict = (record = {}) =>
     .filter(Boolean)
     .join(' · ')
 
-const formatUsageDateTime = (dateText, timeText) => {
-  const match = String(dateText || '').match(/^\d{4}-(\d{2})-(\d{2})$/)
-  return match ? `${match[1]}-${match[2]} ${timeText}` : [dateText, timeText].filter(Boolean).join(' ')
-}
-
-const formatDuration = (range) => {
-  if (!range) return '-'
-  const minutes = Math.max(0, range.end - range.start)
-  if (!minutes) return '-'
-  if (minutes % 60 === 0) return `${minutes / 60} 小时`
-  if (minutes > 60) return `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分钟`
-  return `${minutes} 分钟`
-}
-
-const sceneUsageTypeMap = {
-  课程: '课程上机',
-  自主: '自主使用',
-  考试: '课程上机',
-  竞赛: '自主使用',
-}
-
-const createUsageRecordId = (reservationId) =>
-  `UR-${String(reservationId || Date.now())
-    .replace(/^RSV-?/i, '')
-    .replace(/[^0-9A-Za-z-]/g, '')}`
-
 export function useReservationManagement() {
   const reservations = ref([])
   const selectedReservationId = ref('')
@@ -409,6 +384,11 @@ export function useReservationManagement() {
       lab: getCanonicalLabValue(record.lab) || record.lab,
     })
   const normalizeReservationRecords = (records = []) => records.map(normalizeReservationRecord)
+  const applyAuthoritativeReservation = (reservation, { insertIfMissing = false, expectedId } = {}) => {
+    const normalizedReservation = normalizeReservationRecord(reservation)
+    reservations.value = applyAuthoritativeReservationRecord(reservations.value, normalizedReservation, { insertIfMissing, expectedId })
+    return normalizedReservation
+  }
   const hasDisplayStatusChanges = (records = [], normalizedRecords = []) =>
     records.some((record, index) => {
       const normalizedRecord = normalizedRecords[index]
@@ -718,6 +698,7 @@ export function useReservationManagement() {
 
     formSubmitting.value = true
     const previousReservations = [...reservations.value]
+    const previousSelectedReservationId = selectedReservationId.value
     const payload = {
       applicant: normalizeInputText(formModel.applicant),
       department: normalizeInputText(formModel.department) || '未填写',
@@ -743,11 +724,8 @@ export function useReservationManagement() {
           submittedAt: getCurrentLabel(),
           reviewedAt: '-',
         })
-        await loadReservations()
-        selectedReservationId.value = savedReservation?.id || reservations.value[0]?.id || ''
-        dialogVisible.value = false
-        ElMessage.success('新增预约成功')
-        return
+        const displayedReservation = applyAuthoritativeReservation(savedReservation, { insertIfMissing: true })
+        selectedReservationId.value = displayedReservation.id
       } else {
         const currentRecord = reservations.value.find((item) => String(item.id) === String(editingId.value))
         if (!currentRecord) throw new Error('未找到要更新的预约记录')
@@ -761,14 +739,16 @@ export function useReservationManagement() {
           reviewedAt: currentRecord.status === '已通过' ? '-' : currentRecord.reviewedAt,
         }
 
-        await reservationResourceService.update(editingId.value, nextRecord)
-        await loadReservations()
+        const savedReservation = await reservationResourceService.update(editingId.value, nextRecord)
+        const displayedReservation = applyAuthoritativeReservation(savedReservation, { expectedId: editingId.value })
+        selectedReservationId.value = displayedReservation.id
       }
 
       dialogVisible.value = false
       ElMessage.success(`${dialogMode.value === 'create' ? '新增' : '更新'}预约成功`)
     } catch (error) {
       reservations.value = previousReservations
+      selectedReservationId.value = previousSelectedReservationId
       ElMessage.error(error?.message || '保存预约失败')
     } finally {
       formSubmitting.value = false
@@ -786,44 +766,6 @@ export function useReservationManagement() {
     note,
     reviewRemark: note,
   })
-
-  const upsertUsageRecordForReservation = async (reservation) => {
-    const timeRange = parseTimeRange(reservation.timeRange)
-    const [startTime, endTime] = String(reservation.timeRange || '').split('-')
-    const recordId = createUsageRecordId(reservation.id)
-    const usageRecord = {
-      id: recordId,
-      reservationId: reservation.id,
-      person: reservation.applicant,
-      role: reservation.scene === '课程' || reservation.scene === '考试' ? '课程班级' : '预约用户',
-      resource: reservation.lab,
-      lab: reservation.lab,
-      type: sceneUsageTypeMap[reservation.scene] || '自主使用',
-      entryTime: formatUsageDateTime(reservation.date, startTime),
-      leaveTime: formatUsageDateTime(reservation.date, endTime),
-      duration: formatDuration(timeRange),
-      status: '正常',
-      tagType: 'success',
-      accessResult: '预约审核通过，门禁与使用记录已同步',
-      reviewer: '系统',
-      abnormalReason: '-',
-      note: `来源预约 ${reservation.id}：${reservation.reason || '实验室预约'}`,
-    }
-
-    const records = await usageRecordResourceService.list({ fallbackRecords: [] })
-    const existingRecord = records.find((item) => item.reservationId === reservation.id || item.id === recordId)
-
-    if (existingRecord) {
-      await usageRecordResourceService.update(existingRecord.id, {
-        ...existingRecord,
-        ...usageRecord,
-        id: existingRecord.id,
-      })
-      return
-    }
-
-    await usageRecordResourceService.create(usageRecord)
-  }
 
   const approveReservation = async (reservation = selectedReservation.value) => {
     if (!reservation) return
@@ -860,6 +802,8 @@ export function useReservationManagement() {
       return
     }
 
+    const previousReservations = [...reservations.value]
+    const previousSelectedReservationId = selectedReservationId.value
     try {
       await ElMessageBox.confirm(`确认通过“${currentReservation.applicant}”的预约申请吗？`, '通过预约', {
         type: 'success',
@@ -870,15 +814,12 @@ export function useReservationManagement() {
         currentReservation.id,
         buildReviewPayload('管理员审核通过，已同步门禁与课表。'),
       )
-      try {
-        await upsertUsageRecordForReservation(approvedReservation?.id ? approvedReservation : currentReservation)
-      } catch {
-        ElMessage.warning('预约已通过，但使用记录生成失败，请稍后在使用记录中补录')
-      }
-      await loadReservations()
-      selectedReservationId.value = currentReservation.id
+      const displayedReservation = applyAuthoritativeReservation(approvedReservation, { expectedId: currentReservation.id })
+      selectedReservationId.value = displayedReservation.id
       ElMessage.success('已通过预约申请')
     } catch (error) {
+      reservations.value = previousReservations
+      selectedReservationId.value = previousSelectedReservationId
       if (error !== 'cancel' && error !== 'close') {
         ElMessage.error(error?.message || '通过预约失败')
       }
@@ -896,6 +837,8 @@ export function useReservationManagement() {
 
     if (currentReservation.status === RESERVATION_STATUS.expired) return
 
+    const previousReservations = [...reservations.value]
+    const previousSelectedReservationId = selectedReservationId.value
     try {
       const { value } = await ElMessageBox.prompt('请填写驳回原因', '驳回预约', {
         confirmButtonText: '驳回',
@@ -908,11 +851,13 @@ export function useReservationManagement() {
         ElMessage.warning('请填写驳回原因')
         return
       }
-      await reservationResourceService.reject(currentReservation.id, buildReviewPayload(reason))
-      await loadReservations()
-      selectedReservationId.value = currentReservation.id
+      const rejectedReservation = await reservationResourceService.reject(currentReservation.id, buildReviewPayload(reason))
+      const displayedReservation = applyAuthoritativeReservation(rejectedReservation, { expectedId: currentReservation.id })
+      selectedReservationId.value = displayedReservation.id
       ElMessage.success('已驳回预约申请')
     } catch (error) {
+      reservations.value = previousReservations
+      selectedReservationId.value = previousSelectedReservationId
       if (error !== 'cancel' && error !== 'close') {
         ElMessage.error(error?.message || '驳回预约失败')
       }
@@ -928,6 +873,8 @@ export function useReservationManagement() {
       return
     }
 
+    const previousReservations = [...reservations.value]
+    const previousSelectedReservationId = selectedReservationId.value
     try {
       const { value } = await ElMessageBox.prompt(`请填写取消“${currentReservation.applicant}”预约的原因`, '取消预约', {
         confirmButtonText: '取消预约',
@@ -940,7 +887,7 @@ export function useReservationManagement() {
         ElMessage.warning('请填写取消原因')
         return
       }
-      await reservationResourceService.update(currentReservation.id, {
+      const cancelledReservation = await reservationResourceService.update(currentReservation.id, {
         ...currentReservation,
         status: '已取消',
         tagType: 'info',
@@ -950,10 +897,12 @@ export function useReservationManagement() {
         cancelReason: reason,
         note: `取消原因：${reason}`,
       })
-      await loadReservations()
-      selectedReservationId.value = currentReservation.id
+      const displayedReservation = applyAuthoritativeReservation(cancelledReservation, { expectedId: currentReservation.id })
+      selectedReservationId.value = displayedReservation.id
       ElMessage.success('预约已取消')
     } catch (error) {
+      reservations.value = previousReservations
+      selectedReservationId.value = previousSelectedReservationId
       if (error !== 'cancel' && error !== 'close') {
         ElMessage.error(error?.message || '取消预约失败')
       }
