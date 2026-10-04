@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Transactional
-public final class DefaultReservationCreationService {
+public class DefaultReservationCreationService {
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Pattern TIME_RANGE = Pattern.compile("^(\\d{2}):(\\d{2})-(\\d{2}):(\\d{2})$");
     private static final Set<ReservationStatus> TERMINAL_OVERLAP_EXCLUSIONS = EnumSet.of(

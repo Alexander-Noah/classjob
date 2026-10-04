@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Transactional(readOnly = true)
-public final class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
+public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
     private final ReservationPersistencePort reservations;
     private final ManagedLaboratoryIdsPort managedLaboratoryIds;
     private final LaboratorySummaryPort laboratorySummaries;
