@@ -175,8 +175,8 @@ class ReservationTeachingScheduleBridgeConfigurationTest {
 
     private static TimeRange timeRange(LocalTime start, LocalTime end) {
         return new TimeRange(
-                LocalDate.of(2026, 3, 30).atTime(start).toInstant(java.time.ZoneOffset.UTC),
-                LocalDate.of(2026, 3, 30).atTime(end).toInstant(java.time.ZoneOffset.UTC)
+                LocalDate.of(2026, 3, 30).atTime(start).atZone(java.time.ZoneId.of("Asia/Shanghai")).toInstant(),
+                LocalDate.of(2026, 3, 30).atTime(end).atZone(java.time.ZoneId.of("Asia/Shanghai")).toInstant()
         );
     }
 

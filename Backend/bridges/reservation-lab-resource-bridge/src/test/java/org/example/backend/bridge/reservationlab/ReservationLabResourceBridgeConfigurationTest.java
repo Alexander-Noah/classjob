@@ -93,13 +93,15 @@ class ReservationLabResourceBridgeConfigurationTest {
     }
 
     @Test
-    void rejectsProviderLaboratoryIdsOutsideTheRequest() {
+    void ignoresNormalUnrequestedLaboratoriesWhenListingTheFullCatalog() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ProviderFixture.class,
                 OutsideRequestedLabsFixture.class,
                 ReservationLabResourceBridgeConfiguration.class
         )) {
-            assertThrows(IllegalStateException.class, () -> context.getBean(LaboratorySummaryPort.class).findByIds(Set.of(3L)));
+            assertEquals(Map.of(
+                    3L, new org.example.backend.reservation.application.port.out.LaboratorySummary("材料实验室", "MAT-3")
+            ), context.getBean(LaboratorySummaryPort.class).findByIds(Set.of(3L)));
         }
     }
 
@@ -108,6 +110,17 @@ class ReservationLabResourceBridgeConfigurationTest {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ProviderFixture.class,
                 NullCatalogFixture.class,
+                ReservationLabResourceBridgeConfiguration.class
+        )) {
+            assertThrows(IllegalStateException.class, () -> context.getBean(LaboratorySummaryPort.class).findByIds(Set.of(3L)));
+        }
+    }
+
+    @Test
+    void rejectsMalformedCatalogRecordsInsteadOfSkippingThem() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+                ProviderFixture.class,
+                MalformedCatalogFixture.class,
                 ReservationLabResourceBridgeConfiguration.class
         )) {
             assertThrows(IllegalStateException.class, () -> context.getBean(LaboratorySummaryPort.class).findByIds(Set.of(3L)));
@@ -186,6 +199,14 @@ class ReservationLabResourceBridgeConfigurationTest {
         @Bean
         LabCatalogQuery labCatalogQuery() {
             return catalog(null);
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class MalformedCatalogFixture {
+        @Bean
+        LabCatalogQuery labCatalogQuery() {
+            return catalog(java.util.Collections.singletonList(null));
         }
     }
 

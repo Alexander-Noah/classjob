@@ -19,7 +19,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +29,7 @@ import java.util.Map;
 public class ReservationTeachingScheduleBridgeConfiguration {
     private static final String DEFAULT_SEMESTER_START_DATE = "2026-03-02";
     private static final int MAX_SEARCH_LIMIT = 5000;
+    private static final ZoneId RESERVATION_TIME_ZONE = ZoneId.of("Asia/Shanghai");
     private static final Map<Integer, LocalTime> SECTION_STARTS = Map.of(
             1, LocalTime.of(8, 30),
             3, LocalTime.of(10, 20),
@@ -172,8 +173,8 @@ public class ReservationTeachingScheduleBridgeConfiguration {
     private boolean overlaps(LocalDate reservationDate, TimeRange request, ScheduleEntryView entry) {
         LocalDateTime classStart = LocalDateTime.of(reservationDate, SECTION_STARTS.get(sectionPairStart(entry.startSection())));
         LocalDateTime classEnd = LocalDateTime.of(reservationDate, SECTION_ENDS.get(sectionPairEnd(entry.endSection())));
-        LocalDateTime requestStart = LocalDateTime.ofInstant(request.startsAt(), ZoneOffset.UTC);
-        LocalDateTime requestEnd = LocalDateTime.ofInstant(request.endsAt(), ZoneOffset.UTC);
+        LocalDateTime requestStart = LocalDateTime.ofInstant(request.startsAt(), RESERVATION_TIME_ZONE);
+        LocalDateTime requestEnd = LocalDateTime.ofInstant(request.endsAt(), RESERVATION_TIME_ZONE);
         return requestStart.isBefore(classEnd) && classStart.isBefore(requestEnd);
     }
 

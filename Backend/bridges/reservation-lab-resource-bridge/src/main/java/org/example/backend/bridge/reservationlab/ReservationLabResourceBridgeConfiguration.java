@@ -69,8 +69,11 @@ public class ReservationLabResourceBridgeConfiguration {
             for (LabView lab : requireLabs(query.list(LabAccessScope.all()))) {
                 LabView resolvedLab = requireLab(lab);
                 Long labId = resolvedLab.id();
-                if (labId == null || !laboratoryIds.contains(labId)) {
-                    throw new IllegalStateException("lab catalog returned an id outside the requested set");
+                if (labId == null) {
+                    throw new IllegalStateException("lab catalog returned malformed laboratory data");
+                }
+                if (!laboratoryIds.contains(labId)) {
+                    continue;
                 }
                 if (summaries.putIfAbsent(labId, new LaboratorySummary(resolvedLab.labName(), resolvedLab.labCode())) != null) {
                     throw new IllegalStateException("lab catalog returned a duplicate laboratory id");
