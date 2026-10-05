@@ -1,14 +1,42 @@
 package org.example.backend.reservation.adapter.out.persistence;
 
+import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.session.Configuration;
+import org.example.backend.reservation.application.port.out.ReservationRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class ReservationPersistenceMapperXmlTest {
+    @Test
+    void parsesTheRecordConstructorResultMapWithMyBatisRuntimeRules() {
+        assertDoesNotThrow(this::parseMapper);
+    }
+
+    @Test
+    void configuresTheRecordConstructorWithItsPrimitiveBooleanParameter() throws Exception {
+        Configuration configuration = parseMapper();
+        Class<?>[] constructorTypes = constructorTypes(configuration, "reservationRecord");
+
+        assertEquals(boolean.class, constructorTypes[12]);
+        assertDoesNotThrow(() -> ReservationRecord.class.getDeclaredConstructor(constructorTypes));
+    }
+
+    @Test
+    void configuresTheOverlapRecordConstructorWithItsPrimitiveLongParameter() throws Exception {
+        Class<?>[] constructorTypes = constructorTypes(parseMapper(), "overlapCount");
+
+        assertArrayEquals(new Class<?>[]{long.class}, constructorTypes);
+        assertDoesNotThrow(() -> ReservationOverlapCount.class.getDeclaredConstructor(constructorTypes));
+    }
+
     @Test
     void mapsEveryOwnedColumnWithConstructorResultMapAndStableListOrdering() throws IOException {
         String xml = mapperXml();
@@ -59,5 +87,25 @@ class ReservationPersistenceMapperXmlTest {
                     .replaceAll("\\s+", " ")
                     .trim();
         }
+    }
+
+    private Configuration parseMapper() throws IOException {
+        Configuration configuration = new Configuration();
+        try (var input = getClass().getResourceAsStream("/mapper/ReservationPersistenceMapper.xml")) {
+            if (input == null) {
+                throw new IOException("ReservationPersistenceMapper.xml not found");
+            }
+            new XMLMapperBuilder(input, configuration, "ReservationPersistenceMapper.xml",
+                    configuration.getSqlFragments()).parse();
+        }
+        return configuration;
+    }
+
+    private Class<?>[] constructorTypes(Configuration configuration, String resultMapId) {
+        return configuration.getResultMap(
+                        "org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper." + resultMapId)
+                .getConstructorResultMappings().stream()
+                .map(mapping -> mapping.getJavaType())
+                .toArray(Class<?>[]::new);
     }
 }
