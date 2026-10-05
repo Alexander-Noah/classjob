@@ -94,7 +94,7 @@ class ModularBackendApplicationTest {
                 org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration.class,
                 ReservationModuleConfiguration.class
         )) {
-            TimeRange range = new TimeRange(Instant.parse("2026-03-30T09:00:00Z"), Instant.parse("2026-03-30T09:30:00Z"));
+            TimeRange range = new TimeRange(Instant.parse("2026-03-30T00:30:00Z"), Instant.parse("2026-03-30T01:00:00Z"));
             var result = context.getBean(ScheduleConflictPort.class).check(9L, java.time.LocalDate.of(2026, 3, 30), range);
 
             assertEquals(CapabilityStatus.AVAILABLE, result.status());
