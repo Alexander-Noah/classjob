@@ -6,6 +6,7 @@ import { applyAuthoritativeReservationRecord } from '../api/services/authoritati
 import { getClassTimetableSemesters, listClassTimetables } from '../api/services/classTimetable'
 import { exportTableToExcel } from '../utils/exportExcel'
 import { formatLabDisplayName } from '../utils/labDisplay'
+import { resolveReservationLabId } from '../utils/reservationLabId'
 import { getContactError, getMeaningfulTextError, normalizeInputText } from '../utils/reservationValidation'
 import {
   RESERVATION_STATUS,
@@ -354,6 +355,7 @@ export function useReservationManagement() {
 
   const selectedReservation = computed(() => reservations.value.find((item) => item.id === selectedReservationId.value) || reservations.value[0] || null)
   const selectedLabMeta = computed(() => labMetaMap.value[formModel.lab] || normalizeLabMeta({ name: formModel.lab }))
+  const selectedLabId = computed(() => resolveReservationLabId(selectedLabMeta.value))
   const getCanonicalLabValue = (labName) => labMetaMap.value[labName]?.displayName || labName
   const getLabMatchTokens = (labName) => {
     const labMeta = labMetaMap.value[labName] || normalizeLabMeta({ name: labName })
@@ -643,6 +645,11 @@ export function useReservationManagement() {
       return false
     }
 
+    if (!API_USE_MOCK && !selectedLabId.value) {
+      ElMessage.warning('实验室标识加载异常，请刷新实验室列表后重试')
+      return false
+    }
+
     if (!formModel.date) {
       ElMessage.warning('请选择预约日期')
       return false
@@ -704,6 +711,7 @@ export function useReservationManagement() {
       department: normalizeInputText(formModel.department) || '未填写',
       contact: normalizeInputText(formModel.contact) || '未填写',
       lab: formModel.lab,
+      ...(API_USE_MOCK ? {} : { labId: selectedLabId.value }),
       date: formModel.date,
       timeRange: String(formModel.timeRange || '').trim(),
       scene: formModel.scene,
