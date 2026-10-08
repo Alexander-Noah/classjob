@@ -15,6 +15,7 @@ import org.example.backend.reservation.application.port.out.ReservationReviewUpd
 import org.example.backend.reservation.domain.ReservationStatus;
 import org.example.backend.reservation.domain.TimeRange;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -202,8 +203,10 @@ class DefaultReservationCreationServiceTest {
     }
 
     @Test
-    void runsCreationUseCaseInsideTransaction() {
-        assertTrue(DefaultReservationCreationService.class.isAnnotationPresent(Transactional.class));
+    void runsCreationUseCaseInsideSerializableTransaction() {
+        Transactional transaction = DefaultReservationCreationService.class.getAnnotation(Transactional.class);
+
+        assertEquals(Isolation.SERIALIZABLE, transaction.isolation());
     }
 
     private static final LocalDate DATE = LocalDate.of(2026, 10, 5);

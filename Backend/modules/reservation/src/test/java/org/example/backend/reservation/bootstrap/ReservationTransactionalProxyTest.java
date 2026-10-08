@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReservationTransactionalProxyTest {
@@ -67,6 +68,7 @@ class ReservationTransactionalProxyTest {
             creation.create(command(), ReservationActor.teacher(7L));
             catalog.list(ReservationAccessScope.forActor(ReservationActor.teacher(7L)));
 
+            assertEquals(TransactionDefinition.ISOLATION_SERIALIZABLE, transactions.firstIsolationLevel);
             assertTrue(transactions.started > 0);
             assertTrue(transactions.committed > 0);
         }
@@ -161,9 +163,13 @@ class ReservationTransactionalProxyTest {
     static final class TrackingTransactionManager implements PlatformTransactionManager {
         private int started;
         private int committed;
+        private int firstIsolationLevel = TransactionDefinition.ISOLATION_DEFAULT;
 
         @Override
         public TransactionStatus getTransaction(TransactionDefinition definition) {
+            if (started == 0) {
+                firstIsolationLevel = definition.getIsolationLevel();
+            }
             started++;
             return new SimpleTransactionStatus();
         }

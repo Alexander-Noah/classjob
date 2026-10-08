@@ -10,13 +10,14 @@ import org.example.backend.reservation.application.port.out.NewReservationRecord
 import org.example.backend.reservation.application.port.out.ReservationPersistencePort;
 import org.example.backend.reservation.domain.ReservationStateMachine;
 import org.example.backend.reservation.domain.ReservationStatus;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
 
-@Transactional
+@Transactional(isolation = Isolation.SERIALIZABLE)
 public class DefaultReservationCreationService {
     private final ReservationPersistencePort reservations;
     private final ReservationCatalogQuery catalog;
