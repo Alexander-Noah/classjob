@@ -15,6 +15,8 @@ import os
 import urllib.parse
 import urllib.request
 
+from timetable_navigation import wait_for_target_window
+
 
 # =========================
 # 基础配置
@@ -29,6 +31,7 @@ RESULT_URL = "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb_ifr"
 USERNAME = os.environ.get("TIMETABLE_USERNAME", "").strip()
 PASSWORD = os.environ.get("TIMETABLE_PASSWORD", "").strip()
 HEADLESS = os.environ.get("TIMETABLE_HEADLESS", "true").strip().lower() != "false"
+NAVIGATION_TIMEOUT_SECONDS = float(os.environ.get("TIMETABLE_NAVIGATION_TIMEOUT_SECONDS", "90"))
 
 # 导出文件夹：当前 Python 文件同目录下的“课表导出结果”
 OUTPUT_DIR = Path(__file__).resolve().parent / "课表导出结果"
@@ -138,22 +141,6 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
             return True
 
     raise Exception(f"没有找到可见元素：{element_id}")
-
-
-def switch_to_latest_window(driver):
-    """
-    切换到最新打开的窗口 / 标签页
-    """
-    time.sleep(2)
-
-    handles = driver.window_handles
-    print("当前窗口数量：", len(handles))
-
-    driver.switch_to.window(handles[-1])
-
-    print("已切换到最新窗口")
-    print("当前地址：", driver.current_url)
-    print("当前标题：", driver.title)
 
 
 # =========================
@@ -477,19 +464,14 @@ def login_portal_and_enter_jw(driver):
         print("请你手动点击进入教务系统。")
         input("进入教务系统后，回到这里按回车继续：")
 
-    # 5. 教务系统会打开新窗口，所以必须切换
-    switch_to_latest_window(driver)
+    # 5. 教务系统可能打开新窗口，也可能先经过 aTrust 零信任网关。
+    print("正在等待教务系统窗口，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
+    target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
+    wait_for_target_window(driver, target_host, NAVIGATION_TIMEOUT_SECONDS)
 
-    # 6. 确认进入教务系统
+    # 6. 已确认进入教务系统
     print("进入教务系统后的地址：", driver.current_url)
     print("进入教务系统后的标题：", driver.title)
-
-    if "jw.hniu.cn" not in driver.current_url:
-        print("当前可能还没有进入教务系统。")
-        if HEADLESS:
-            raise Exception("后台无头模式下未进入教务系统，请检查账号密码或门户跳转")
-        input("请你手动进入教务系统后，回到这里按回车继续：")
-        switch_to_latest_window(driver)
 
 
 # =========================
