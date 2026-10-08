@@ -6,6 +6,7 @@ import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.session.Configuration;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
+import org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -42,6 +43,8 @@ class TeachingScheduleReadMapperXmlTest {
         assertTrue(configuration.hasStatement(mapperName + ".search"));
         assertTrue(configuration.hasStatement(mapperName + ".summary"));
         assertTrue(configuration.hasStatement(mapperName + ".listSemesters"));
+        assertTrue(configuration.hasStatement(mapperName + ".findActiveCalendar"));
+        assertTrue(configuration.hasStatement(mapperName + ".findOccupancyCandidates"));
 
         BoundSql boundSql = configuration.getMappedStatement(mapperName + ".search").getBoundSql(
                 new ScheduleSearchCriteria(
@@ -54,6 +57,15 @@ class TeachingScheduleReadMapperXmlTest {
         assertTrue(sql.contains("find_in_set"));
         assertTrue(sql.contains("order by id desc"));
         assertTrue(sql.contains("limit ?"));
+
+        BoundSql occupancySql = configuration.getMappedStatement(mapperName + ".findOccupancyCandidates")
+                .getBoundSql(new ScheduleOccupancyCriteria("2026-2027-1", 6, "星期四"));
+        String occupancy = occupancySql.getSql().replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);
+        assertTrue(occupancy.contains("from class_timetable"));
+        assertTrue(occupancy.contains("semester = ?"));
+        assertTrue(occupancy.contains("weekday = ?"));
+        assertTrue(occupancy.contains("find_in_set"));
+        assertTrue(!occupancy.contains("limit"), "occupancy arbitration must inspect every candidate row");
     }
 
     @Test
@@ -64,7 +76,7 @@ class TeachingScheduleReadMapperXmlTest {
                 .map(result -> result.group(1).toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
 
-        assertEquals(Set.of("class_timetable"), tables);
+        assertEquals(Set.of("class_timetable", "timetable_crawler_config"), tables);
     }
 
     @Test
@@ -115,6 +127,19 @@ class TeachingScheduleReadMapperXmlTest {
                 "classroomCount", "classroom_count",
                 "latestSyncAt", "latest_sync_at"
         ), summaryColumnByProperty);
+
+        ResultMap calendar = configuration.getResultMap(mapperName() + ".scheduleCalendarData");
+        assertEquals(Map.of("semester", "semester", "semesterStartDate", "semester_start_date"),
+                calendar.getResultMappings().stream()
+                        .collect(Collectors.toMap(ResultMapping::getProperty, ResultMapping::getColumn)));
+        ResultMap occupancy = configuration.getResultMap(mapperName() + ".scheduleOccupancyRow");
+        assertEquals(Map.of("classroom", "classroom", "startSection", "start_section", "endSection", "end_section"),
+                occupancy.getResultMappings().stream()
+                        .collect(Collectors.toMap(ResultMapping::getProperty, ResultMapping::getColumn)));
+    }
+
+    private String mapperName() {
+        return TeachingScheduleReadMapper.class.getName();
     }
 
     private byte[] mapperXml() throws IOException {

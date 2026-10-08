@@ -35,6 +35,50 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="scheduleCalendarData"
+               type="org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData">
+        <constructor>
+            <arg column="semester" name="semester" javaType="java.lang.String"/>
+            <arg column="semester_start_date" name="semesterStartDate" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduleOccupancyRow"
+               type="org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow">
+        <constructor>
+            <arg column="classroom" name="classroom" javaType="java.lang.String"/>
+            <arg column="start_section" name="startSection" javaType="java.lang.Integer"/>
+            <arg column="end_section" name="endSection" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findActiveCalendar" resultMap="scheduleCalendarData">
+        select
+        (select semester
+         from class_timetable
+         where semester is not null and semester != ''
+         order by create_time desc, id desc
+         limit 1) as semester,
+        (select semester_start_date
+         from timetable_crawler_config
+         where config_key = 'lab-admin-class-timetable'
+         limit 1) as semester_start_date
+    </select>
+
+    <select id="findOccupancyCandidates"
+            parameterType="org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria"
+            resultMap="scheduleOccupancyRow">
+        select classroom, start_section, end_section
+        from class_timetable
+        where semester = #{semester}
+        and weekday = #{weekday}
+        and find_in_set(
+            convert(cast(#{academicWeek} as char) using utf8mb4) collate utf8mb4_general_ci,
+            convert(week_expanded using utf8mb4) collate utf8mb4_general_ci
+        ) &gt; 0
+        order by id
+    </select>
+
     <select id="search"
             parameterType="org.example.backend.teachingschedule.api.ScheduleSearchCriteria"
             resultMap="scheduleEntryView">

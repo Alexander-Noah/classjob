@@ -4,6 +4,8 @@ import org.example.backend.teachingschedule.adapter.in.web.TeachingScheduleQuery
 import org.example.backend.teachingschedule.adapter.out.persistence.MyBatisTeachingScheduleReadAdapter;
 import org.example.backend.teachingschedule.adapter.out.persistence.TeachingScheduleReadMapper;
 import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
+import org.example.backend.teachingschedule.api.ScheduleOccupancyQuery;
+import org.example.backend.teachingschedule.application.DefaultScheduleOccupancyQuery;
 import org.example.backend.teachingschedule.application.DefaultTeachingScheduleQuery;
 import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
 import org.mybatis.spring.annotation.MapperScan;
@@ -23,6 +25,11 @@ public class TeachingScheduleRuntimeConfiguration {
     @Bean
     public TeachingScheduleQuery teachingScheduleQuery(TeachingScheduleReadPort readPort) {
         return new DefaultTeachingScheduleQuery(readPort);
+    }
+
+    @Bean
+    public ScheduleOccupancyQuery scheduleOccupancyQuery(TeachingScheduleReadPort readPort) {
+        return new DefaultScheduleOccupancyQuery(readPort);
     }
 
     @Bean

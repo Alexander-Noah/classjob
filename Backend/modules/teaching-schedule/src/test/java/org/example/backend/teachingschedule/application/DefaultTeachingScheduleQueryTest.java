@@ -99,6 +99,17 @@ class DefaultTeachingScheduleQueryTest {
         private List<String> semesters = List.of();
 
         @Override
+        public org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData findActiveCalendar() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow> findOccupancyCandidates(
+                org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria criteria) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public List<ScheduleEntryView> search(ScheduleSearchCriteria criteria) {
             lastCriteria = criteria;
             return entries;

@@ -10,10 +10,8 @@ import org.example.backend.reservation.application.ScheduleConflictPort;
 import org.example.backend.reservation.application.LabAvailabilityPort;
 import org.example.backend.reservation.bootstrap.ReservationModuleConfiguration;
 import org.example.backend.reservation.domain.TimeRange;
-import org.example.backend.teachingschedule.api.ScheduleEntryView;
-import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
-import org.example.backend.teachingschedule.api.ScheduleSummaryView;
-import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
+import org.example.backend.teachingschedule.api.ScheduleOccupancyQuery;
+import org.example.backend.teachingschedule.api.ScheduleOccupancyView;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
 import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
 import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
@@ -139,23 +137,9 @@ class ModularBackendApplicationTest {
         }
 
         @Bean
-        TeachingScheduleQuery teachingScheduleQuery() {
-            return new TeachingScheduleQuery() {
-                @Override
-                public java.util.List<ScheduleEntryView> search(ScheduleSearchCriteria criteria) {
-                    return java.util.List.of(new ScheduleEntryView(1L, null, null, null, "星期一", null, null, 1, 2, null, null, null, null, null, "LAB-01", null));
-                }
-
-                @Override
-                public ScheduleSummaryView summary() {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public java.util.List<String> listSemesters() {
-                    throw new UnsupportedOperationException();
-                }
-            };
+        ScheduleOccupancyQuery scheduleOccupancyQuery() {
+            return request -> org.example.backend.kernel.capability.CapabilityResult.available(
+                    new ScheduleOccupancyView(true));
         }
     }
 }
