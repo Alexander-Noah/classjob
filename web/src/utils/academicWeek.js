@@ -22,4 +22,3 @@ export const calculateAcademicWeek = (date, semesterStartDate, maximumWeek = 25)
   const diffDays = Math.floor((currentDay.getTime() - startDate.getTime()) / DAY_MILLISECONDS)
   return Math.min(maximumWeek, Math.max(1, Math.floor(diffDays / 7) + 1))
 }
-

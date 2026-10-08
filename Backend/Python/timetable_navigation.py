@@ -53,4 +53,3 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1)
 
     detail = f"；已观察到：{', '.join(observed_urls)}" if observed_urls else ""
     raise TargetSystemUnavailable(f"等待教务系统 {target_host} 超时{detail}")
-
