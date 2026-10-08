@@ -28,6 +28,17 @@ test('rejects missing and non-positive-integer laboratory identifiers', () => {
   }
 })
 
+test('rejects unsafe numeric and decimal-string laboratory identifiers', () => {
+  for (const lab of [
+    { id: Number.MAX_SAFE_INTEGER + 1 },
+    { id: String(Number.MAX_SAFE_INTEGER + 1) },
+    { labId: Number.MAX_SAFE_INTEGER + 1 },
+    { labId: String(Number.MAX_SAFE_INTEGER + 1) },
+  ]) {
+    assert.equal(resolveReservationLabId(lab), null)
+  }
+})
+
 test('real reservation creation validates selected metadata id and submits canonical labId', () => {
   const reservationManagement = readSource('../src/composables/useReservationManagement.js')
 

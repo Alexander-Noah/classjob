@@ -32,10 +32,18 @@ test('authoritative real-mode record operations require an HTTP record instead o
 })
 
 test('authoritative record parser accepts only direct or enveloped records with valid ids', () => {
-  assert.deepEqual(requireAuthoritativeRecord({ id: 'RSV-1' }, 'reservations', 'create'), { id: 'RSV-1' })
   assert.deepEqual(requireAuthoritativeRecord({ code: 0, message: 'ok', data: { id: 2 } }, 'reservations', 'create'), { id: 2 })
   for (const response of [[], null, {}, { status: 200 }, { requestId: 'x' }, { data: [] }, { data: null }, { data: {} }, { data: { id: '' } }, { data: { id: Number.NaN } }]) {
     assert.throws(() => requireAuthoritativeRecord(response, 'reservations', 'approve'), /reservations approve/)
+  }
+})
+
+test('authoritative real-mode records require positive safe integer identifiers', () => {
+  assert.deepEqual(requireAuthoritativeRecord({ id: 42 }, 'reservations', 'create'), { id: 42 })
+  assert.deepEqual(requireAuthoritativeRecord({ data: { id: '42' } }, 'reservations', 'create'), { id: '42' })
+
+  for (const id of [0, -1, 1.5, 'error', '007', String(Number.MAX_SAFE_INTEGER) + '0', Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => requireAuthoritativeRecord({ id }, 'reservations', 'create'), /reservations create/)
   }
 })
 
