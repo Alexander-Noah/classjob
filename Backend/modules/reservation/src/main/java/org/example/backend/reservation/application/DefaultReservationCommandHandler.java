@@ -2,10 +2,12 @@ package org.example.backend.reservation.application;
 
 import org.example.backend.reservation.api.ReservationActor;
 import org.example.backend.reservation.api.ReservationView;
+import org.springframework.dao.PessimisticLockingFailureException;
 
 import java.util.Objects;
 
 public class DefaultReservationCommandHandler implements ReservationCommandHandler {
+    private static final int MAX_CREATION_ATTEMPTS = 3;
     private final DefaultReservationCreationService creation;
     private final DefaultReservationReviewService review;
 
@@ -16,7 +18,16 @@ public class DefaultReservationCommandHandler implements ReservationCommandHandl
 
     @Override
     public ReservationView create(CreateReservationCommand command, ReservationActor actor) {
-        return creation.create(command, actor);
+        for (int attempt = 1; attempt <= MAX_CREATION_ATTEMPTS; attempt++) {
+            try {
+                return creation.create(command, actor);
+            } catch (PessimisticLockingFailureException exception) {
+                if (attempt == MAX_CREATION_ATTEMPTS) {
+                    throw exception;
+                }
+            }
+        }
+        throw new IllegalStateException("reservation creation retry loop exhausted");
     }
 
     @Override

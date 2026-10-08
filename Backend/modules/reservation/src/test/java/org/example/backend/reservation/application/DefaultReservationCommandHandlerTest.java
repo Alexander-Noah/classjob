@@ -12,6 +12,7 @@ import org.example.backend.reservation.application.port.out.ReservationRecord;
 import org.example.backend.reservation.application.port.out.ReservationRecordScope;
 import org.example.backend.reservation.application.port.out.ReservationReviewUpdate;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.CannotAcquireLockException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,6 +46,20 @@ class DefaultReservationCommandHandlerTest {
         assertEquals(actor, review.actor);
     }
 
+    @Test
+    void retriesCreationInANewTransactionAfterTransientSerializationFailure() {
+        ReservationView created = view(4L);
+        RetryableCreation creation = new RetryableCreation(created, 1);
+        DefaultReservationCommandHandler handler = new DefaultReservationCommandHandler(
+                creation, new RecordingReview(view(2L), view(3L)));
+        ReservationActor actor = ReservationActor.systemAdministrator(1L, "管理员");
+        CreateReservationCommand command = new CreateReservationCommand("王老师", "计算机学院", "13800000000", 7L,
+                LocalDate.of(2026, 10, 5), "09:00-11:00", "课程", 30, "使用");
+
+        assertEquals(created, handler.create(command, actor));
+        assertEquals(2, creation.attempts);
+    }
+
     private ReservationView view(long id) {
         return new ReservationView(id, 7L, "王老师", "学院", "1", 7L, LocalDate.of(2026, 10, 5), "09:00-11:00",
                 "课程", 30, "使用", org.example.backend.reservation.domain.ReservationStatus.PENDING, false, null, null,
@@ -76,6 +91,27 @@ class DefaultReservationCommandHandlerTest {
         }
         @Override public ReservationView approve(ReviewReservationCommand command, ReservationActor authenticatedActor) { approveCommand = command; actor = authenticatedActor; return approved; }
         @Override public ReservationView reject(ReviewReservationCommand command, ReservationActor authenticatedActor) { rejectCommand = command; actor = authenticatedActor; return rejected; }
+    }
+
+    private static final class RetryableCreation extends DefaultReservationCreationService {
+        private final ReservationView result;
+        private int failuresRemaining;
+        private int attempts;
+
+        private RetryableCreation(ReservationView result, int failuresRemaining) {
+            super(noOpReservations(), noOpCatalog(), userId -> Set.of(), request -> { throw new UnsupportedOperationException(); });
+            this.result = result;
+            this.failuresRemaining = failuresRemaining;
+        }
+
+        @Override
+        public ReservationView create(CreateReservationCommand command, ReservationActor actor) {
+            attempts++;
+            if (failuresRemaining-- > 0) {
+                throw new CannotAcquireLockException("deadlock victim");
+            }
+            return result;
+        }
     }
 
     private static ReservationCatalogQuery noOpCatalog() {
