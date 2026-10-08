@@ -4,9 +4,14 @@ import { useRouter } from 'vue-router'
 import TablePagination from '../../components/common/TablePagination.vue'
 import { getLabDevices } from '../../api/services/lab'
 import { reservationResourceService } from '../../api/services/basicResources'
-import { getClassTimetableSemesters, listClassTimetables } from '../../api/services/classTimetable'
+import {
+  getClassTimetableCrawlerConfig,
+  getClassTimetableSemesters,
+  listClassTimetables,
+} from '../../api/services/classTimetable'
 import { useLabManagement } from '../../composables/useLabManagement'
 import { useTablePagination } from '../../composables/useTablePagination'
+import { calculateAcademicWeek } from '../../utils/academicWeek'
 
 import LabAssetPreviewPanel from './components/LabAssetPreviewPanel.vue'
 import LabDetailPanel from './components/LabDetailPanel.vue'
@@ -29,7 +34,7 @@ const scheduleRows = ref([])
 const reservationRows = ref([])
 const semesters = ref([])
 const scheduleLoading = ref(false)
-const semesterStartDate = '2026-03-02'
+const semesterStartDate = ref('')
 const now = ref(new Date())
 let clockTimer = null
 const router = useRouter()
@@ -45,9 +50,7 @@ const sectionTimeRanges = [
 ]
 
 const getCurrentAcademicWeek = (date = now.value) => {
-  const start = new Date(`${semesterStartDate}T00:00:00`)
-  const diffDays = Math.floor((date.getTime() - start.getTime()) / 86400000)
-  return Math.min(25, Math.max(1, Math.floor(diffDays / 7) + 1))
+  return calculateAcademicWeek(date, semesterStartDate.value)
 }
 
 const currentWeekday = (date = now.value) => date.getDay() || 7
@@ -203,6 +206,12 @@ const loadSemesters = async () => {
   }
 }
 
+const loadScheduleConfiguration = async () => {
+  const config = (await getClassTimetableCrawlerConfig()) || {}
+  semesterStartDate.value = String(config.semesterStartDate || '').trim()
+  scheduleFilters.week = getCurrentAcademicWeek()
+}
+
 const loadScheduleRows = async () => {
   scheduleLoading.value = true
   try {
@@ -238,6 +247,7 @@ onMounted(async () => {
   clockTimer = window.setInterval(() => {
     now.value = new Date()
   }, 60000)
+  await loadScheduleConfiguration()
   await loadSemesters()
   await loadScheduleRows()
 })
