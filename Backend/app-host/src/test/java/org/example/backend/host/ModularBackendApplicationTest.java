@@ -19,6 +19,9 @@ import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfigur
 import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
 import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +33,31 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModularBackendApplicationTest {
+    @Test
+    void startsInfrastructureFreeAndRegistersAllMvpModules() {
+        try (ConfigurableApplicationContext context = new SpringApplicationBuilder(ModularBackendApplication.class)
+                .web(WebApplicationType.NONE)
+                .properties("spring.main.web-application-type=none", "server.port=-1")
+                .run()) {
+            Set<String> moduleIds = context.getBean(ModuleCatalog.class).list().stream()
+                    .map(descriptor -> descriptor.id().value())
+                    .collect(Collectors.toSet());
+
+            assertEquals(Set.of(
+                    "identity-access",
+                    "teaching-schedule",
+                    "lab-resource",
+                    "reservation",
+                    "environment-readiness",
+                    "teaching-coordination"
+            ), moduleIds);
+        }
+    }
+
     @Test
     void startsWithoutInfrastructureAndRegistersAllMvpModules() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
@@ -72,19 +97,13 @@ class ModularBackendApplicationTest {
     }
 
     @Test
-    void explicitlyComposesReservationRuntimeAndRealConflictBridges() {
+    void keepsReservationBridgesAndLeavesPersistenceRuntimeUnimported() {
         Import imported = ModularHostConfiguration.class.getAnnotation(Import.class);
         Set<String> importedTypes = Arrays.stream(imported.value()).map(Class::getName).collect(Collectors.toSet());
 
-        assertEquals(Set.of(
-                "org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration",
-                "org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration",
-                "org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration"
-        ), Set.of(
-                "org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration",
-                "org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration",
-                "org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration"
-        ).stream().filter(importedTypes::contains).collect(Collectors.toSet()));
+        assertTrue(importedTypes.contains("org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration"));
+        assertTrue(importedTypes.contains("org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration"));
+        assertFalse(importedTypes.contains("org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration"));
     }
 
     @Test

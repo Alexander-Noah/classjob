@@ -13,7 +13,6 @@ import org.example.backend.labresource.bootstrap.LabResourceModuleConfiguration;
 import org.example.backend.platform.security.SecurityPlatformConfiguration;
 import org.example.backend.platform.websupport.WebSupportConfiguration;
 import org.example.backend.reservation.bootstrap.ReservationModuleConfiguration;
-import org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration;
 import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +22,6 @@ import org.springframework.context.annotation.Import;
 @Import({
         ReservationLabResourceBridgeConfiguration.class,
         ReservationTeachingScheduleBridgeConfiguration.class,
-        ReservationPersistenceRuntimeConfiguration.class,
         CoordinationScheduleBridgeConfiguration.class,
         CoordinationReservationBridgeConfiguration.class,
         CoordinationEnvironmentBridgeConfiguration.class,
