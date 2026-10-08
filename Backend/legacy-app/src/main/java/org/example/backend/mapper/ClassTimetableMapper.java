@@ -18,12 +18,17 @@ public interface ClassTimetableMapper {
 
     void createCrawlerConfigTableIfNotExists();
 
+    int countCrawlerConfigSemesterColumn();
+
+    void addCrawlerConfigSemesterColumn();
+
     Map<String, Object> getCrawlerConfig(@Param("configKey") String configKey);
 
     int upsertCrawlerConfig(
             @Param("configKey") String configKey,
             @Param("scheduleEnabled") Boolean scheduleEnabled,
             @Param("cronExpression") String cronExpression,
+            @Param("semester") String semester,
             @Param("semesterStartDate") String semesterStartDate
     );
 

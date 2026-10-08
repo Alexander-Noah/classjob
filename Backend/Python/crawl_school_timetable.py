@@ -31,6 +31,7 @@ RESULT_URL = "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb_ifr"
 USERNAME = os.environ.get("TIMETABLE_USERNAME", "").strip()
 PASSWORD = os.environ.get("TIMETABLE_PASSWORD", "").strip()
 HEADLESS = os.environ.get("TIMETABLE_HEADLESS", "true").strip().lower() != "false"
+SEMESTER = os.environ.get("TIMETABLE_SEMESTER", "").strip()
 NAVIGATION_TIMEOUT_SECONDS = float(os.environ.get("TIMETABLE_NAVIGATION_TIMEOUT_SECONDS", "90"))
 
 # 导出文件夹：当前 Python 文件同目录下的“课表导出结果”
@@ -258,7 +259,7 @@ def export_tables(html, output_excel):
 
 def build_big_table_payload():
     return {
-        "xnxq01id": "2025-2026-2",
+        "xnxq01id": SEMESTER,
         "kbjcmsid": "67FB3A89FDC146ADA865DCC81B9EC143",
 
         # 下面这些为空，表示不筛选，尽量查大范围
@@ -495,6 +496,8 @@ def create_driver():
 def main():
     if not USERNAME or not PASSWORD:
         raise RuntimeError("缺少教务系统账号或密码，请先在课表抓取页面保存账号配置")
+    if not SEMESTER:
+        raise RuntimeError("缺少课表学期，请先保存课表采集配置")
 
     driver = create_driver()
 

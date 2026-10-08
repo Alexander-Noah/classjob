@@ -117,9 +117,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         ensureCrawlerTables();
         boolean scheduleEnabled = toBoolean(payload == null ? null : payload.get("scheduleEnabled"), true);
         String cron = normalizeCron(stringValue(payload == null ? null : payload.get("cron")));
+        String semester = trimToNull(stringValue(payload == null ? null : payload.get("semester")));
+        if (semester == null) {
+            throw new IllegalArgumentException("请选择课表学期");
+        }
         String semesterStartDate = normalizeSemesterStartDate(stringValue(payload == null ? null : payload.get("semesterStartDate")));
 
-        classTimetableMapper.upsertCrawlerConfig(CRAWLER_CONFIG_KEY, scheduleEnabled, cron, semesterStartDate);
+        classTimetableMapper.upsertCrawlerConfig(CRAWLER_CONFIG_KEY, scheduleEnabled, cron, semester, semesterStartDate);
         rescheduleCrawler();
         return getCrawlerConfig();
     }
@@ -188,6 +192,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         crawlerEnv.put("TIMETABLE_USERNAME", credential.username());
         crawlerEnv.put("TIMETABLE_PASSWORD", credential.password());
         crawlerEnv.put("TIMETABLE_HEADLESS", environment.getProperty("timetable.crawler.headless", "true"));
+        crawlerEnv.put("TIMETABLE_SEMESTER", stringValue(crawlerConfig.get("semester")));
         crawlerEnv.put("TIMETABLE_SEMESTER_START_DATE", stringValue(crawlerConfig.get("semesterStartDate")));
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -205,7 +210,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             result.put("crawlExitCode", crawlExitCode);
 
             if (crawlExitCode == 0) {
-                int importExitCode = runPythonScript(python, importScriptPath, workingDir, logPath, timeoutSeconds, true, Map.of());
+                int importExitCode = runPythonScript(python, importScriptPath, workingDir, logPath, timeoutSeconds, true, crawlerEnv);
                 result.put("importExitCode", importExitCode);
                 if (importExitCode == 0) {
                     int javaImportCount = importStandardCsv(workingDir, logPath);
@@ -400,6 +405,9 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     private void ensureCrawlerTables() {
         classTimetableMapper.createCrawlerConfigTableIfNotExists();
+        if (classTimetableMapper.countCrawlerConfigSemesterColumn() == 0) {
+            classTimetableMapper.addCrawlerConfigSemesterColumn();
+        }
         classTimetableMapper.createCrawlerTaskTableIfNotExists();
     }
 
@@ -409,6 +417,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
                     CRAWLER_CONFIG_KEY,
                     true,
                     DEFAULT_CRON,
+                    latestSemester(),
                     DEFAULT_SEMESTER_START_DATE
             );
         }
@@ -419,11 +428,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         config.put("configKey", CRAWLER_CONFIG_KEY);
         config.put("scheduleEnabled", true);
         config.put("cron", DEFAULT_CRON);
+        config.put("semester", "");
         config.put("semesterStartDate", DEFAULT_SEMESTER_START_DATE);
         config.put("updatedAt", "");
         if (row != null) {
             config.put("scheduleEnabled", toBoolean(row.get("scheduleEnabled"), true));
             config.put("cron", isBlank(stringValue(row.get("cron"))) ? DEFAULT_CRON : stringValue(row.get("cron")));
+            config.put("semester", stringValue(row.get("semester")));
             config.put(
                     "semesterStartDate",
                     isBlank(stringValue(row.get("semesterStartDate")))
@@ -433,6 +444,15 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             config.put("updatedAt", stringValue(row.get("updatedAt")));
         }
         return config;
+    }
+
+    private String latestSemester() {
+        try {
+            List<String> semesters = teachingScheduleQuery.listSemesters();
+            return semesters == null || semesters.isEmpty() ? null : trimToNull(semesters.get(0));
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 
     private String computeNextRunAt(Map<String, Object> config) {

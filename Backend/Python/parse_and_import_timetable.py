@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import pandas as pd
 import re
+import os
 from pathlib import Path
 
 try:
@@ -25,7 +26,9 @@ HTML_FILE = OUTPUT_DIR / "班级课表大表结果.html"
 OUTPUT_EXCEL = OUTPUT_DIR / "班级课表标准数据.xlsx"
 OUTPUT_CSV = OUTPUT_DIR / "班级课表标准数据.csv"
 
-SEMESTER = "2025-2026-2"
+SEMESTER = os.getenv("TIMETABLE_SEMESTER", "").strip()
+if not SEMESTER:
+    raise RuntimeError("缺少 TIMETABLE_SEMESTER，无法保证课表与学期配置一致")
 
 
 # =========================

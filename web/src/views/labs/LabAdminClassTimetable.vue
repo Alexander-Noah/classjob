@@ -39,6 +39,7 @@ const configForm = reactive({
   weeklyDay: 'MON',
   weeklyTime: '02:00',
   cron: '0 0 */6 * * *',
+  semester: '',
   semesterStartDate: '2026-03-02',
   nextRunAt: '',
 })
@@ -182,6 +183,7 @@ const applyCrawlerConfig = (config = {}) => {
       ? configForm.scheduleEnabled
       : config.scheduleEnabled === true || config.scheduleEnabled === 1 || config.scheduleEnabled === '1'
   configForm.cron = config.cron || configForm.cron
+  configForm.semester = config.semester || configForm.semester
   configForm.semesterStartDate = config.semesterStartDate || configForm.semesterStartDate
   configForm.nextRunAt = config.nextRunAt || ''
   parseCronToForm(configForm.cron)
@@ -212,6 +214,10 @@ const refreshAll = async () => {
 }
 
 const saveConfig = async () => {
+  if (!configForm.semester) {
+    ElMessage.warning('请选择课表学期')
+    return
+  }
   if (!configForm.semesterStartDate) {
     ElMessage.warning('请选择学期起始日期')
     return
@@ -222,6 +228,7 @@ const saveConfig = async () => {
     const config = await saveClassTimetableCrawlerConfig({
       scheduleEnabled: configForm.scheduleEnabled,
       cron: buildCronFromConfig(),
+      semester: configForm.semester,
       semesterStartDate: configForm.semesterStartDate,
     })
     applyCrawlerConfig(config)
@@ -473,6 +480,23 @@ onMounted(async () => {
               type="date"
               value-format="YYYY-MM-DD"
             />
+          </el-form-item>
+
+          <el-form-item label="课表学期">
+            <el-select
+              v-model="configForm.semester"
+              allow-create
+              filterable
+              default-first-option
+              placeholder="选择或输入学期，如 2026-2027-1"
+            >
+              <el-option
+                v-for="semester in summary.semesters || []"
+                :key="semester"
+                :label="semester"
+                :value="semester"
+              />
+            </el-select>
           </el-form-item>
         </el-form>
       </div>

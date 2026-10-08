@@ -70,9 +70,22 @@
         config_key varchar(80) primary key,
         schedule_enabled tinyint(1) not null default 0,
         cron_expression varchar(120) not null,
+        semester varchar(40),
         semester_start_date varchar(20),
         updated_at datetime default current_timestamp on update current_timestamp
         ) engine=InnoDB default charset=utf8mb4
+    </update>
+
+    <select id="countCrawlerConfigSemesterColumn" resultType="int">
+        select count(*)
+        from information_schema.columns
+        where table_schema = database()
+        and table_name = 'timetable_crawler_config'
+        and column_name = 'semester'
+    </select>
+
+    <update id="addCrawlerConfigSemesterColumn">
+        alter table timetable_crawler_config add column semester varchar(40) null after cron_expression
     </update>
 
     <select id="getCrawlerConfig" resultType="java.util.Map">
@@ -80,6 +93,7 @@
         config_key as configKey,
         schedule_enabled as scheduleEnabled,
         cron_expression as cron,
+        semester,
         semester_start_date as semesterStartDate,
         date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
         from timetable_crawler_config
@@ -91,18 +105,21 @@
         config_key,
         schedule_enabled,
         cron_expression,
+        semester,
         semester_start_date,
         updated_at
         ) values (
         #{configKey},
         #{scheduleEnabled},
         #{cronExpression},
+        #{semester},
         #{semesterStartDate},
         now()
         )
         on duplicate key update
         schedule_enabled = values(schedule_enabled),
         cron_expression = values(cron_expression),
+        semester = values(semester),
         semester_start_date = values(semester_start_date),
         updated_at = now()
     </insert>

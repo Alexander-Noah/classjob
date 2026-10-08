@@ -46,6 +46,11 @@ class TeachingScheduleReadMapperXmlTest {
         assertTrue(configuration.hasStatement(mapperName + ".findActiveCalendar"));
         assertTrue(configuration.hasStatement(mapperName + ".findOccupancyCandidates"));
 
+        String calendarSql = configuration.getMappedStatement(mapperName + ".findActiveCalendar")
+                .getBoundSql(null).getSql().replaceAll("\\s+", " ").trim().toLowerCase(Locale.ROOT);
+        assertTrue(calendarSql.contains("select semester, semester_start_date from timetable_crawler_config"));
+        assertTrue(!calendarSql.contains("class_timetable"), "calendar fields must come from one atomic row");
+
         BoundSql boundSql = configuration.getMappedStatement(mapperName + ".search").getBoundSql(
                 new ScheduleSearchCriteria(
                         "2026-Spring", "Alice", "Class 1", "Lab 201", "Networks", "net", 3, 500

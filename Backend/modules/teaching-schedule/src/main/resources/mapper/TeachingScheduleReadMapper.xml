@@ -53,16 +53,9 @@
     </resultMap>
 
     <select id="findActiveCalendar" resultMap="scheduleCalendarData">
-        select
-        (select semester
-         from class_timetable
-         where semester is not null and semester != ''
-         order by create_time desc, id desc
-         limit 1) as semester,
-        (select semester_start_date
-         from timetable_crawler_config
-         where config_key = 'lab-admin-class-timetable'
-         limit 1) as semester_start_date
+        select semester, semester_start_date
+        from timetable_crawler_config
+        where config_key = 'lab-admin-class-timetable'
     </select>
 
     <select id="findOccupancyCandidates"

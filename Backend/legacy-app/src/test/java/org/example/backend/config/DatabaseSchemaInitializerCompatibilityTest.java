@@ -56,4 +56,19 @@ class DatabaseSchemaInitializerCompatibilityTest {
                 () -> assertTrue(initializer.contains("iot_telemetry_latest"))
         );
     }
+
+    @Test
+    void timetableCalendarMigrationKeepsSemesterAndStartDateAtomic() throws IOException {
+        String mapper = Files.readString(Path.of("src", "main", "resources", "mapper", "ClassTimetableMapper.xml"));
+        String implementation = Files.readString(Path.of("src", "main", "java", "org", "example", "backend",
+                "service", "impl", "ClassTimetableServiceImpl.java"));
+
+        assertAll(
+                () -> assertTrue(mapper.contains("countCrawlerConfigSemesterColumn")),
+                () -> assertTrue(mapper.contains("add column semester varchar(40)")),
+                () -> assertTrue(mapper.contains("semester = values(semester)")),
+                () -> assertTrue(implementation.contains("TIMETABLE_SEMESTER")),
+                () -> assertTrue(implementation.contains("crawlerConfig.get(\"semester\")"))
+        );
+    }
 }
