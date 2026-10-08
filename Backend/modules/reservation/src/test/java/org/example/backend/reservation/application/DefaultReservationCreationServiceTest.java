@@ -162,6 +162,24 @@ class DefaultReservationCreationServiceTest {
     }
 
     @Test
+    void derivesInitialPendingOrConflictStatusFromTheCentralAvailabilityEvaluator() {
+        for (boolean conflict : List.of(false, true)) {
+            RecordingReservations reservations = new RecordingReservations(0);
+            CapturingAvailability availability = new CapturingAvailability(conflict);
+            DefaultReservationCreationService service = service(reservations,
+                    new RecordingCatalog(view(41L, 7L, conflict ? ReservationStatus.CONFLICT : ReservationStatus.PENDING, conflict)),
+                    managed(7L), availability);
+
+            service.create(command(), ReservationActor.teacher(7L));
+
+            assertEquals(conflict, reservations.inserted.conflictFlag());
+            assertEquals(conflict ? ReservationStatus.CONFLICT : ReservationStatus.PENDING, reservations.inserted.status());
+            assertEquals(7L, availability.request.labId());
+            assertNull(availability.request.excludingReservationId());
+        }
+    }
+
+    @Test
     void usesExactlyTheSpecifiedTerminalExclusionsAndRejectsNegativeOverlapCounts() {
         RecordingReservations normalReservations = new RecordingReservations(0);
         var normal = service(normalReservations, new RecordingCatalog(view(41L, 7L, ReservationStatus.PENDING, false)), managed(7L), availableLab(), clearSchedule());
@@ -193,7 +211,13 @@ class DefaultReservationCreationServiceTest {
     private DefaultReservationCreationService service(RecordingReservations reservations, ReservationCatalogQuery catalog,
                                                       ManagedLaboratoryIdsPort managed, LabAvailabilityPort labs,
                                                       ScheduleConflictPort schedules) {
-        return new DefaultReservationCreationService(reservations, catalog, managed, labs, schedules);
+        return new DefaultReservationCreationService(reservations, catalog, managed,
+                new DefaultReservationAvailabilityEvaluator(reservations, labs, schedules));
+    }
+
+    private DefaultReservationCreationService service(RecordingReservations reservations, ReservationCatalogQuery catalog,
+                                                      ManagedLaboratoryIdsPort managed, ReservationAvailabilityEvaluator availability) {
+        return new DefaultReservationCreationService(reservations, catalog, managed, availability);
     }
 
     private CreateReservationCommand command() {
@@ -240,6 +264,14 @@ class DefaultReservationCreationServiceTest {
             timeRange = requestedTimeRange;
             return CapabilityResult.available(snapshot);
         }
+    }
+
+    private static final class CapturingAvailability implements ReservationAvailabilityEvaluator {
+        private final boolean conflict;
+        private ReservationAvailabilityRequest request;
+
+        private CapturingAvailability(boolean conflict) { this.conflict = conflict; }
+        @Override public boolean hasConflict(ReservationAvailabilityRequest value) { request = value; return conflict; }
     }
 
     private static final class RecordingCatalog implements ReservationCatalogQuery {

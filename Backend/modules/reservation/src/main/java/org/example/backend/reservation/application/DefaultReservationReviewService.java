@@ -21,10 +21,13 @@ public class DefaultReservationReviewService {
 
     private final ReservationPersistencePort reservations;
     private final ReservationCatalogQuery catalog;
+    private final ReservationAvailabilityEvaluator availability;
 
-    public DefaultReservationReviewService(ReservationPersistencePort reservations, ReservationCatalogQuery catalog) {
+    public DefaultReservationReviewService(ReservationPersistencePort reservations, ReservationCatalogQuery catalog,
+                                           ReservationAvailabilityEvaluator availability) {
         this.reservations = Objects.requireNonNull(reservations, "reservations");
         this.catalog = Objects.requireNonNull(catalog, "catalog");
+        this.availability = Objects.requireNonNull(availability, "availability");
     }
 
     public ReservationView approve(ReviewReservationCommand command, ReservationActor actor) {
@@ -51,6 +54,9 @@ public class DefaultReservationReviewService {
         if (!allowedCurrentStatuses.contains(current.status())) {
             throw new IllegalStateException("Reservation is not in a reviewable status");
         }
+        if (target == ReservationStatus.APPROVED) {
+            assertCurrentlyAvailable(current);
+        }
         transition(current.status(), target);
         String remark = normalizedRemark(command.reviewRemark(), defaultRemark);
         ReservationReviewUpdate update = new ReservationReviewUpdate(command.reservationId(), target, false, reviewerName,
@@ -64,6 +70,19 @@ public class DefaultReservationReviewService {
             throw new IllegalStateException("Reservation review result could not be authoritatively verified");
         }
         return reviewed;
+    }
+
+    private void assertCurrentlyAvailable(ReservationView current) {
+        ReservationTimeRangeParser.ParsedReservationTimeRange parsed;
+        try {
+            parsed = ReservationTimeRangeParser.parse(current.timeRange(), current.reservationDate());
+            if (availability.hasConflict(new ReservationAvailabilityRequest(current.labId(), current.reservationDate(),
+                    parsed.normalized(), parsed.timeRange(), current.attendeeCount(), current.id()))) {
+                throw new IllegalStateException("Reservation can no longer be approved because it conflicts with current availability");
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("Reservation contains invalid availability data", exception);
+        }
     }
 
     private String requiredReviewerName(ReservationActor actor) {

@@ -57,8 +57,7 @@ class DefaultReservationCommandHandlerTest {
         private ReservationActor actor;
         private RecordingCreation(ReservationView result) {
             super(noOpReservations(), noOpCatalog(), userId -> Set.of(),
-                    (labId, attendees, range) -> { throw new UnsupportedOperationException(); },
-                    (labId, date, range) -> { throw new UnsupportedOperationException(); });
+                    request -> { throw new UnsupportedOperationException(); });
             this.result = result;
         }
         @Override public ReservationView create(CreateReservationCommand value, ReservationActor authenticatedActor) { command = value; actor = authenticatedActor; return result; }
@@ -71,7 +70,7 @@ class DefaultReservationCommandHandlerTest {
         private ReviewReservationCommand rejectCommand;
         private ReservationActor actor;
         private RecordingReview(ReservationView approved, ReservationView rejected) {
-            super(noOpReservations(), noOpCatalog());
+            super(noOpReservations(), noOpCatalog(), request -> { throw new UnsupportedOperationException(); });
             this.approved = approved;
             this.rejected = rejected;
         }

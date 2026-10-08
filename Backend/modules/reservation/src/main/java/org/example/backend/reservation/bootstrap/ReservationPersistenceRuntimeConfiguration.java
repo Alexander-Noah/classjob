@@ -5,10 +5,12 @@ import org.example.backend.reservation.adapter.out.persistence.MyBatisReservatio
 import org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper;
 import org.example.backend.reservation.api.ReservationCatalogQuery;
 import org.example.backend.reservation.application.DefaultReservationCatalogQuery;
+import org.example.backend.reservation.application.DefaultReservationAvailabilityEvaluator;
 import org.example.backend.reservation.application.DefaultReservationCreationService;
 import org.example.backend.reservation.application.DefaultReservationCommandHandler;
 import org.example.backend.reservation.application.DefaultReservationReviewService;
 import org.example.backend.reservation.application.LabAvailabilityPort;
+import org.example.backend.reservation.application.ReservationAvailabilityEvaluator;
 import org.example.backend.reservation.application.ScheduleConflictPort;
 import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
 import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
@@ -37,22 +39,31 @@ public class ReservationPersistenceRuntimeConfiguration {
     }
 
     @Bean
+    public ReservationAvailabilityEvaluator reservationAvailabilityEvaluator(
+            ReservationPersistencePort reservations,
+            LabAvailabilityPort labAvailability,
+            ScheduleConflictPort scheduleConflicts
+    ) {
+        return new DefaultReservationAvailabilityEvaluator(reservations, labAvailability, scheduleConflicts);
+    }
+
+    @Bean
     public DefaultReservationCreationService reservationCreationService(
             ReservationPersistencePort reservations,
             ReservationCatalogQuery catalog,
             ManagedLaboratoryIdsPort managedLaboratoryIds,
-            LabAvailabilityPort labAvailability,
-            ScheduleConflictPort scheduleConflicts
+            ReservationAvailabilityEvaluator availability
     ) {
-        return new DefaultReservationCreationService(reservations, catalog, managedLaboratoryIds, labAvailability, scheduleConflicts);
+        return new DefaultReservationCreationService(reservations, catalog, managedLaboratoryIds, availability);
     }
 
     @Bean
     public DefaultReservationReviewService reservationReviewService(
             ReservationPersistencePort reservations,
-            ReservationCatalogQuery catalog
+            ReservationCatalogQuery catalog,
+            ReservationAvailabilityEvaluator availability
     ) {
-        return new DefaultReservationReviewService(reservations, catalog);
+        return new DefaultReservationReviewService(reservations, catalog, availability);
     }
 
     @Bean
