@@ -1,0 +1,53 @@
+import importlib.util
+import unittest
+from pathlib import Path
+
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "browser_interaction.py"
+
+
+def load_module(test_case):
+    test_case.assertTrue(MODULE_PATH.exists(), "browser_interaction.py must exist")
+    spec = importlib.util.spec_from_file_location("browser_interaction", MODULE_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class FakeActions:
+    def __init__(self):
+        self.calls = []
+
+    def move_to_element(self, element):
+        self.calls.append(("move", element))
+        return self
+
+    def pause(self, seconds):
+        self.calls.append(("pause", seconds))
+        return self
+
+    def click(self):
+        self.calls.append(("click",))
+        return self
+
+    def perform(self):
+        self.calls.append(("perform",))
+
+
+class BrowserInteractionTest(unittest.TestCase):
+    def test_click_with_pointer_uses_native_action_chain(self):
+        module = load_module(self)
+        actions = FakeActions()
+        module.ActionChains = lambda driver: actions
+        element = object()
+
+        module.click_with_pointer(object(), element, delay_seconds=0.25)
+
+        self.assertEqual(
+            [("move", element), ("pause", 0.25), ("click",), ("perform",)],
+            actions.calls,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -22,6 +22,7 @@ from timetable_navigation import (
     wait_for_target_window,
 )
 from timetable_browser_profile import should_run_headless
+from browser_interaction import click_with_pointer
 from timetable_semester import resolve_semester
 
 
@@ -177,8 +178,7 @@ def click_portal_app(driver, app_id, timeout=30):
 
     element = WebDriverWait(driver, timeout).until(find_ready_app)
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-    time.sleep(max(0, PORTAL_INTERACTION_DELAY_SECONDS))
-    js_click(driver, element)
+    click_with_pointer(driver, element, PORTAL_INTERACTION_DELAY_SECONDS)
 
 
 def portal_app_is_visible(driver, app_id):
@@ -199,8 +199,7 @@ def click_portal_enter_service(driver, timeout=30):
 
     button = WebDriverWait(driver, timeout).until(find_visible_enter_button)
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-    time.sleep(max(0, PORTAL_INTERACTION_DELAY_SECONDS))
-    js_click(driver, button)
+    click_with_pointer(driver, button, PORTAL_INTERACTION_DELAY_SECONDS)
 
 
 # =========================
