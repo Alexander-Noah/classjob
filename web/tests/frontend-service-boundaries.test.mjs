@@ -24,6 +24,19 @@ test('feature pages read device assets through deviceAssetService only', () => {
   assert.doesNotMatch(rolePortal, /deviceResourceService/)
 })
 
+test('device asset feature stays separate from runtime device status ownership', () => {
+  const deviceManagement = readSource('../src/views/devices/DeviceManagement.vue')
+  const deviceManagementComposable = readSource('../src/composables/useDeviceManagement.js')
+  const deviceStatus = readSource('../src/views/device-status/DeviceStatusPage.vue')
+  const deviceAssets = readSource('../src/api/services/deviceAssets.js')
+
+  assert.match(deviceManagement, /useDeviceManagement/)
+  assert.match(deviceManagementComposable, /deviceAssetService/)
+  assert.doesNotMatch(deviceManagementComposable, /iotService|runtimeStatus/)
+  assert.doesNotMatch(deviceStatus, /deviceAssetService/)
+  assert.doesNotMatch(deviceAssets, /iot|runtimeStatus/)
+})
+
 test('status, iot and activation services do not call device asset endpoints', () => {
   const serviceSources = [
     readSource('../src/api/services/deviceStatus.js'),
