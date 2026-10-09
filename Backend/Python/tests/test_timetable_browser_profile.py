@@ -15,6 +15,18 @@ def load_module(test_case):
 
 
 class TimetableBrowserProfileTest(unittest.TestCase):
+    def test_unauthorized_visible_profile_requires_manual_bootstrap(self):
+        module = load_module(self)
+        self.assertTrue(module.should_use_manual_bootstrap(False, False))
+
+    def test_authorized_profile_does_not_repeat_manual_bootstrap(self):
+        module = load_module(self)
+        self.assertFalse(module.should_use_manual_bootstrap(False, True))
+
+    def test_headless_session_cannot_use_manual_bootstrap(self):
+        module = load_module(self)
+        self.assertFalse(module.should_use_manual_bootstrap(True, False))
+
     def test_first_run_is_visible_even_when_headless_was_requested(self):
         module = load_module(self)
         self.assertFalse(module.should_run_headless(True, False))

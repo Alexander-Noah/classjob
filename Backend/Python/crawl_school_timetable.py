@@ -21,7 +21,7 @@ from timetable_navigation import (
     is_identity_login_page,
     wait_for_target_window,
 )
-from timetable_browser_profile import should_run_headless
+from timetable_browser_profile import should_run_headless, should_use_manual_bootstrap
 from browser_interaction import click_with_pointer
 from timetable_semester import resolve_semester
 
@@ -493,25 +493,32 @@ def login_portal_and_enter_jw(driver):
             f"统一身份认证后未返回办事大厅，当前页面：{driver.title} {driver.current_url}"
         ) from error
 
-    # 3. 按人工操作点击门户中的教务系统卡片，让门户执行完整跳转逻辑。
-    click_portal_app(driver, PORTAL_APP_ID)
-    print("已模拟点击门户中的教务系统应用")
-
-    # 此门户会先展示服务说明弹窗，必须再次点击左下角“进入服务”。
-    try:
-        click_portal_enter_service(driver, timeout=30)
-        print("已模拟点击服务说明弹窗中的进入服务")
-    except Exception as error:
-        raise RuntimeError("门户服务说明弹窗已打开，但未能点击“进入服务”按钮") from error
-
-    print("正在等待教务系统，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
     target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
-    wait_for_target_window(
-        driver,
-        target_host,
-        NAVIGATION_TIMEOUT_SECONDS,
-        target_url=CLASS_PAGE_URL,
-    )
+    effective_headless = getattr(driver, "_timetable_headless", HEADLESS)
+    manual_bootstrap = should_use_manual_bootstrap(effective_headless, PROFILE_AUTH_MARKER.exists())
+
+    if manual_bootstrap:
+        print("首次授权：请在办事大厅中手动点击“教务系统”，再点击弹窗中的“进入服务”。")
+        print("脚本正在等待教务系统首页，最长等待 300 秒，请勿关闭自动化浏览器。")
+        wait_for_target_window(driver, target_host, 300, target_url=None)
+    else:
+        # 已授权的持久化会话可在后台自动打开门户应用。
+        click_portal_app(driver, PORTAL_APP_ID)
+        print("已模拟点击门户中的教务系统应用")
+
+        try:
+            click_portal_enter_service(driver, timeout=30)
+            print("已模拟点击服务说明弹窗中的进入服务")
+        except Exception as error:
+            raise RuntimeError("门户服务说明弹窗已打开，但未能点击“进入服务”按钮") from error
+
+        print("正在等待教务系统，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
+        wait_for_target_window(
+            driver,
+            target_host,
+            NAVIGATION_TIMEOUT_SECONDS,
+            target_url=CLASS_PAGE_URL,
+        )
 
     # 4. 已确认进入教务系统
     print("进入教务系统后的地址：", driver.current_url)
