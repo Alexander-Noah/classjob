@@ -8,6 +8,7 @@ import PageHero from '../../components/common/PageHero.vue'
 import MetricGrid from '../../components/common/MetricGrid.vue'
 import { getStoredRole, getStoredUser } from '../../api/services/auth'
 import { getClassTimetableSemesters, listClassTimetables } from '../../api/services/classTimetable'
+import { getAcademicWeek, getTeachingWeekStartDate, loadTeachingCalendar } from '../../modules/teaching-calendar/teachingCalendar'
 import { exportTableToExcel } from '../../utils/exportExcel'
 
 defineOptions({
@@ -17,19 +18,12 @@ defineOptions({
 const router = useRouter()
 const currentUser = computed(() => getStoredUser() || {})
 const roleHomePath = computed(() => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
-const semesterStartDate = '2026-03-02'
+const teachingCalendar = ref(null)
 
 const bindingStorageKey = computed(() => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
 
 const resolveDefaultTeacherName = () =>
   currentUser.value.realName || currentUser.value.name || currentUser.value.username || ''
-
-const getCurrentAcademicWeek = () => {
-  const start = new Date(`${semesterStartDate}T00:00:00`)
-  const today = new Date()
-  const diffDays = Math.floor((today.getTime() - start.getTime()) / 86400000)
-  return Math.min(25, Math.max(1, Math.floor(diffDays / 7) + 1))
-}
 
 const formatMonthDay = (date) =>
   `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
@@ -78,7 +72,7 @@ const weekOptions = Array.from({ length: 25 }, (_, index) => {
 const filters = reactive({
   teacherName: '',
   semester: '',
-  week: getCurrentAcademicWeek(),
+  week: 1,
   className: '',
   classroom: '',
   courseName: '',
@@ -96,9 +90,7 @@ const latestLoadedAt = ref('')
 const isLoading = ref(false)
 
 const weekStartDate = computed(() => {
-  const start = new Date(`${semesterStartDate}T00:00:00`)
-  start.setDate(start.getDate() + (filters.week - 1) * 7)
-  return start
+  return getTeachingWeekStartDate(teachingCalendar.value, filters.week) || new Date()
 })
 
 const weekDays = computed(() =>
@@ -274,7 +266,14 @@ const handleBack = () => {
 onMounted(async () => {
   const storedBinding = window.localStorage?.getItem(bindingStorageKey.value)
   filters.teacherName = storedBinding || resolveDefaultTeacherName()
-  filters.week = getCurrentAcademicWeek()
+  try {
+    teachingCalendar.value = await loadTeachingCalendar()
+    filters.semester = teachingCalendar.value.semester
+    filters.week = getAcademicWeek(teachingCalendar.value)
+  } catch (error) {
+    ElMessage.error(error?.message || '教学日历加载失败')
+    return
+  }
   await loadSemesters()
   await loadTeacherSchedule()
 })

@@ -22,7 +22,6 @@ import java.util.Set;
 @Service
 public class ReservationsServiceImpl implements ReservationsService {
     private static final String CRAWLER_CONFIG_KEY = "lab-admin-class-timetable";
-    private static final String DEFAULT_SEMESTER_START_DATE = "2026-03-02";
     private static final String STATUS_PENDING = "待审核";
     private static final String STATUS_APPROVED = "已通过";
     private static final String STATUS_REJECTED = "已驳回";
@@ -631,19 +630,22 @@ public class ReservationsServiceImpl implements ReservationsService {
             return null;
         }
 
-        LocalDate semesterStartDate = LocalDate.parse(DEFAULT_SEMESTER_START_DATE);
         try {
             Map<String, Object> crawlerConfig = classTimetableMapper.getCrawlerConfig(CRAWLER_CONFIG_KEY);
             Object configuredStartDate = crawlerConfig == null ? null : crawlerConfig.get("semesterStartDate");
-            if (configuredStartDate != null && !String.valueOf(configuredStartDate).isBlank()) {
-                semesterStartDate = LocalDate.parse(String.valueOf(configuredStartDate));
+            if (configuredStartDate == null || String.valueOf(configuredStartDate).isBlank()) {
+                return null;
             }
-        } catch (RuntimeException ignored) {
-            semesterStartDate = LocalDate.parse(DEFAULT_SEMESTER_START_DATE);
-        }
+            LocalDate semesterStartDate = LocalDate.parse(String.valueOf(configuredStartDate));
 
-        long diffDays = ChronoUnit.DAYS.between(semesterStartDate, reservationDate);
-        return Math.max(1, (int) (diffDays / 7) + 1);
+            long diffDays = ChronoUnit.DAYS.between(semesterStartDate, reservationDate);
+            if (diffDays < 0) {
+                return null;
+            }
+            return Math.min(25, (int) (diffDays / 7) + 1);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     private String resolveWeekday(LocalDate reservationDate) {

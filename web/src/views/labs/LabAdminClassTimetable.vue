@@ -40,7 +40,7 @@ const configForm = reactive({
   weeklyTime: '02:00',
   cron: '0 0 */6 * * *',
   semester: '',
-  semesterStartDate: '2026-03-02',
+  semesterStartDate: '',
   nextRunAt: '',
 })
 

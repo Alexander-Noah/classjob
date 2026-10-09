@@ -5,6 +5,23 @@
 
 <mapper namespace="org.example.backend.mapper.DashboardMapper">
 
+    <sql id="joinActiveTeachingCalendar">
+        join timetable_crawler_config crawler_config
+          on crawler_config.config_key = 'lab-admin-class-timetable'
+    </sql>
+
+    <sql id="filterActiveSemesterAndWeek">
+        and convert(t.semester using utf8mb4) collate utf8mb4_general_ci =
+            convert(crawler_config.semester using utf8mb4) collate utf8mb4_general_ci
+        and find_in_set(
+                    convert(cast(least(25, greatest(1, floor(datediff(
+                            curdate(),
+                            str_to_date(crawler_config.semester_start_date, '%Y-%m-%d')
+                    ) / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
+                    convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
+            ) &gt; 0
+    </sql>
+
     <select id="countLabs" resultType="long">
         select count(*)
         from lab
@@ -117,11 +134,9 @@
                         ) &gt; 0
                 )
             )
+                 <include refid="joinActiveTeachingCalendar"/>
         where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
-          and find_in_set(
-                      convert(cast(least(25, greatest(1, floor(datediff(curdate(), '2026-03-02') / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
-                      convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
-              ) &gt; 0
+          <include refid="filterActiveSemesterAndWeek"/>
           and convert(t.weekday using utf8mb4) collate utf8mb4_general_ci =
               convert(case dayofweek(curdate())
                           when 1 then '星期日'
@@ -157,11 +172,9 @@
                         ) &gt; 0
                 )
             )
+                 <include refid="joinActiveTeachingCalendar"/>
         where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
-          and find_in_set(
-                      convert(cast(least(25, greatest(1, floor(datediff(curdate(), '2026-03-02') / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
-                      convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
-              ) &gt; 0
+          <include refid="filterActiveSemesterAndWeek"/>
           and convert(t.weekday using utf8mb4) collate utf8mb4_general_ci =
               convert(case dayofweek(curdate())
                           when 1 then '星期日'
@@ -208,11 +221,9 @@
                                  ) &gt; 0
                          )
                      )
+                          <include refid="joinActiveTeachingCalendar"/>
                  where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
-                   and find_in_set(
-                               convert(cast(least(25, greatest(1, floor(datediff(curdate(), '2026-03-02') / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
-                               convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
-                       ) &gt; 0
+                   <include refid="filterActiveSemesterAndWeek"/>
                    and convert(t.weekday using utf8mb4) collate utf8mb4_general_ci =
                        convert(case dayofweek(curdate())
                                    when 1 then '星期日'
@@ -439,11 +450,9 @@
                         ) &gt; 0
                 )
             )
+                 <include refid="joinActiveTeachingCalendar"/>
         where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
-          and find_in_set(
-                      convert(cast(least(25, greatest(1, floor(datediff(curdate(), '2026-03-02') / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
-                      convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
-              ) &gt; 0
+          <include refid="filterActiveSemesterAndWeek"/>
           and convert(t.weekday using utf8mb4) collate utf8mb4_general_ci =
               convert(case dayofweek(curdate())
                           when 1 then '星期日'

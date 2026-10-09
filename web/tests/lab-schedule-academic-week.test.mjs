@@ -5,6 +5,14 @@ import { test } from 'node:test'
 const academicWeekUrl = new URL('../src/utils/academicWeek.js', import.meta.url)
 const labManagementUrl = new URL('../src/views/labs/LabManagement.vue', import.meta.url)
 const timetableAdminUrl = new URL('../src/views/labs/LabAdminClassTimetable.vue', import.meta.url)
+const teachingCalendarUrl = new URL('../src/modules/teaching-calendar/teachingCalendar.js', import.meta.url)
+const calendarConsumers = [
+  new URL('../src/views/teacher/TeacherSchedule.vue', import.meta.url),
+  new URL('../src/views/roles/TeacherPortal.vue', import.meta.url),
+  new URL('../src/views/reservations/ScanReservation.vue', import.meta.url),
+  new URL('../src/composables/useReservationManagement.js', import.meta.url),
+  timetableAdminUrl,
+]
 
 test('calculates the current teaching week from the configured semester start date', async () => {
   assert.ok(existsSync(academicWeekUrl), 'academic week utility must exist')
@@ -29,4 +37,17 @@ test('lab management loads the authoritative semester start date before timetabl
   assert.doesNotMatch(source, /const semesterStartDate = ['"]2026-03-02['"]/)
   assert.match(source, /await loadScheduleConfiguration\(\)/)
   assert.match(source, /await loadScheduleRows\(\)/)
+})
+
+test('all timetable consumers use the shared teaching calendar instead of a fixed semester date', () => {
+  assert.ok(existsSync(teachingCalendarUrl), 'teaching calendar module must exist')
+
+  for (const consumerUrl of calendarConsumers) {
+    const source = readFileSync(consumerUrl, 'utf8')
+    assert.doesNotMatch(source, /2026-03-02/, `${consumerUrl.pathname} must not pin a semester start date`)
+  }
+
+  const moduleSource = readFileSync(teachingCalendarUrl, 'utf8')
+  assert.match(moduleSource, /getClassTimetableCrawlerConfig/)
+  assert.match(moduleSource, /calculateAcademicWeek/)
 })

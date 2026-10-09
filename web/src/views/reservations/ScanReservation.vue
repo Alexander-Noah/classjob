@@ -5,6 +5,7 @@ import { Calendar, Check, Clock, InfoFilled, Location, OfficeBuilding, Phone, Re
 import { ElMessage } from 'element-plus'
 import { getStoredUser } from '../../api/services/auth'
 import { getScanReservationProfile, getScanReservationStatus, submitScanReservation } from '../../api/services/scanReservation'
+import { getAcademicWeek, loadTeachingCalendar } from '../../modules/teaching-calendar/teachingCalendar'
 import { createContactValidator, createMeaningfulTextValidator, getContactError, normalizeInputText } from '../../utils/reservationValidation'
 
 defineOptions({
@@ -24,7 +25,7 @@ let statusPollingTimer = null
 
 const sceneOptions = ['课程', '自主', '考试', '竞赛']
 const statusStorageKey = 'smart-lab:scan-reservation:last-status'
-const semesterStartDate = '2026-03-02'
+const teachingCalendar = ref(null)
 const weekdayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 const quickSlots = [
   { label: '第1节', period: '上午', value: '08:30-10:00' },
@@ -124,14 +125,10 @@ const labFacts = computed(() => [
 const selectedRange = computed(() => parseTimeRange(formModel.timeRange))
 const selectedDateMeta = computed(() => {
   const date = parseDate(formModel.date)
-  const semesterStart = parseDate(semesterStartDate)
-  if (!date || !semesterStart) return null
-
-  const diffDays = Math.floor((date.getTime() - semesterStart.getTime()) / 86400000)
-  const academicWeek = Math.max(1, Math.floor(diffDays / 7) + 1)
+  if (!date || !teachingCalendar.value) return null
 
   return {
-    academicWeek,
+    academicWeek: getAcademicWeek(teachingCalendar.value, date),
     dayText: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
     weekday: weekdayNames[date.getDay()],
   }
@@ -543,7 +540,15 @@ const submitForm = async () => {
   }
 }
 
-onMounted(loadLabProfile)
+onMounted(async () => {
+  try {
+    teachingCalendar.value = await loadTeachingCalendar()
+  } catch (error) {
+    loadError.value = error?.message || '教学日历加载失败'
+    return
+  }
+  await loadLabProfile()
+})
 onBeforeUnmount(stopStatusPolling)
 </script>
 

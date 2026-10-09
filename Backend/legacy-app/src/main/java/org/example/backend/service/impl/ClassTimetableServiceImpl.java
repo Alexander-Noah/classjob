@@ -50,7 +50,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     private static final String CRAWLER_CREDENTIAL_KEY = "lab-admin-class-timetable";
     private static final String CRAWLER_CONFIG_KEY = "lab-admin-class-timetable";
     private static final String DEFAULT_CRON = "0 0 */6 * * *";
-    private static final String DEFAULT_SEMESTER_START_DATE = "2026-03-02";
     private static final int MIN_SECRET_LENGTH = 32;
 
     private final SecureRandom secureRandom = new SecureRandom();
@@ -418,7 +417,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
                     true,
                     DEFAULT_CRON,
                     latestSemester(),
-                    DEFAULT_SEMESTER_START_DATE
+                    null
             );
         }
     }
@@ -429,7 +428,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         config.put("scheduleEnabled", true);
         config.put("cron", DEFAULT_CRON);
         config.put("semester", "");
-        config.put("semesterStartDate", DEFAULT_SEMESTER_START_DATE);
+        config.put("semesterStartDate", "");
         config.put("updatedAt", "");
         if (row != null) {
             config.put("scheduleEnabled", toBoolean(row.get("scheduleEnabled"), true));
@@ -438,7 +437,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             config.put(
                     "semesterStartDate",
                     isBlank(stringValue(row.get("semesterStartDate")))
-                            ? DEFAULT_SEMESTER_START_DATE
+                            ? ""
                             : stringValue(row.get("semesterStartDate"))
             );
             config.put("updatedAt", stringValue(row.get("updatedAt")));

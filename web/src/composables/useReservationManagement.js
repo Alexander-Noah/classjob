@@ -3,7 +3,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { labResourceService, reservationResourceService } from '../api/services/basicResources'
 import { API_USE_MOCK } from '../api/config'
 import { applyAuthoritativeReservationRecord } from '../api/services/authoritativeRecord'
-import { getClassTimetableSemesters, listClassTimetables } from '../api/services/classTimetable'
+import { listClassTimetables } from '../api/services/classTimetable'
+import { getAcademicWeek as resolveAcademicWeek, loadTeachingCalendar } from '../modules/teaching-calendar/teachingCalendar'
 import { exportTableToExcel } from '../utils/exportExcel'
 import { formatLabDisplayName } from '../utils/labDisplay'
 import { resolveReservationLabId } from '../utils/reservationLabId'
@@ -28,7 +29,6 @@ const fallbackLabs = [
   { code: 'D407', name: 'D407 物联网实验室', capacity: 48 },
 ]
 const fallbackLabOptions = fallbackLabs.map((lab) => formatLabDisplayName(lab))
-const semesterStartDate = '2026-03-02'
 
 const weekdayOrder = {
   星期一: 1,
@@ -172,14 +172,6 @@ const parseDate = (dateText) => {
   if (!dateText) return null
   const date = new Date(`${dateText}T00:00:00`)
   return Number.isNaN(date.getTime()) ? null : date
-}
-
-const getAcademicWeek = (dateText) => {
-  const date = parseDate(dateText)
-  const start = parseDate(semesterStartDate)
-  if (!date || !start) return 0
-  const diffDays = Math.floor((date.getTime() - start.getTime()) / 86400000)
-  return Math.max(1, Math.floor(diffDays / 7) + 1)
 }
 
 const getWeekday = (dateText) => {
@@ -352,6 +344,12 @@ export function useReservationManagement() {
   const timetableRows = ref([])
   const timetableReady = ref(false)
   const activeSemester = ref('')
+  const teachingCalendar = ref(null)
+
+  const getAcademicWeek = (dateText) => {
+    const date = parseDate(dateText)
+    return date && teachingCalendar.value ? resolveAcademicWeek(teachingCalendar.value, date) : 0
+  }
 
   const selectedReservation = computed(() => reservations.value.find((item) => item.id === selectedReservationId.value) || reservations.value[0] || null)
   const selectedLabMeta = computed(() => labMetaMap.value[formModel.lab] || normalizeLabMeta({ name: formModel.lab }))
@@ -566,8 +564,8 @@ export function useReservationManagement() {
 
   const loadTimetableRows = async () => {
     try {
-      const semesters = await getClassTimetableSemesters()
-      activeSemester.value = semesters?.[0] || ''
+      teachingCalendar.value = await loadTeachingCalendar()
+      activeSemester.value = teachingCalendar.value.semester
       timetableRows.value = await listClassTimetables({
         semester: activeSemester.value || undefined,
         limit: 5000,

@@ -10,6 +10,7 @@ import { API_ENDPOINTS } from '../../api/endpoints'
 import { getStoredUser } from '../../api/services/auth'
 import { parseUserPermissions } from '../../constants/permissions'
 import { getClassTimetableSemesters, listClassTimetables } from '../../api/services/classTimetable'
+import { getAcademicWeek, getTeachingWeekStartDate, loadTeachingCalendar } from '../../modules/teaching-calendar/teachingCalendar'
 
 defineOptions({
   name: 'TeacherPortal',
@@ -19,18 +20,11 @@ const router = useRouter()
 const currentUser = computed(() => getStoredUser() || {})
 const currentUserPermissions = computed(() => parseUserPermissions(currentUser.value))
 const canViewTimetableData = computed(() => currentUserPermissions.value.includes('课表数据'))
-const semesterStartDate = '2026-03-02'
+const teachingCalendar = ref(null)
 const bindingStorageKey = computed(() => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
 
 const resolveDefaultTeacherName = () =>
   currentUser.value.realName || currentUser.value.name || currentUser.value.username || ''
-
-const getCurrentAcademicWeek = () => {
-  const start = new Date(`${semesterStartDate}T00:00:00`)
-  const today = new Date()
-  const diffDays = Math.floor((today.getTime() - start.getTime()) / 86400000)
-  return Math.min(25, Math.max(1, Math.floor(diffDays / 7) + 1))
-}
 
 const formatMonthDay = (date) =>
   `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
@@ -194,15 +188,13 @@ const isSyncing = ref(false)
 const semesters = ref([])
 const semester = ref('')
 const teacherName = ref('')
-const currentWeek = ref(getCurrentAcademicWeek())
+const currentWeek = ref(1)
 
 const scheduleRecords = ref(DEFAULT_SCHEDULE_RECORDS.map((item, index) => normalizePortalCourse(item, index)))
 const selectedCourse = ref(scheduleRecords.value[0] || null)
 
 const weekStartDate = computed(() => {
-  const start = new Date(`${semesterStartDate}T00:00:00`)
-  start.setDate(start.getDate() + (Number(currentWeek.value) - 1) * 7)
-  return start
+  return getTeachingWeekStartDate(teachingCalendar.value, currentWeek.value) || new Date()
 })
 
 const weekDays = computed(() =>
@@ -301,6 +293,14 @@ const goToTimetableData = () => {
 onMounted(async () => {
   const storedBinding = window.localStorage?.getItem(bindingStorageKey.value)
   teacherName.value = storedBinding || resolveDefaultTeacherName()
+  try {
+    teachingCalendar.value = await loadTeachingCalendar()
+    semester.value = teachingCalendar.value.semester
+    currentWeek.value = getAcademicWeek(teachingCalendar.value)
+  } catch (error) {
+    ElMessage.error(error?.message || '教学日历加载失败')
+    return
+  }
   await loadSemesters()
   await syncTeacherData({ silent: true })
 })
