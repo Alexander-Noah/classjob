@@ -20,6 +20,7 @@ from timetable_navigation import (
     ensure_academic_authenticated,
     wait_for_target_window,
 )
+from timetable_browser_profile import should_run_headless
 from timetable_semester import resolve_semester
 
 
@@ -46,6 +47,7 @@ BROWSER_PROFILE_DIR = Path(
         str(Path(__file__).resolve().parent / ".timetable-browser-profile"),
     )
 ).resolve()
+PROFILE_AUTH_MARKER = BROWSER_PROFILE_DIR / ".academic-session-initialized"
 
 # 导出文件夹：当前 Python 文件同目录下的“课表导出结果”
 OUTPUT_DIR = Path(__file__).resolve().parent / "课表导出结果"
@@ -495,11 +497,12 @@ def login_portal_and_enter_jw(driver):
     try:
         ensure_academic_authenticated(driver.current_url, driver.title, driver.page_source)
     except AcademicAuthenticationRequired:
-        if HEADLESS:
+        if getattr(driver, "_timetable_headless", HEADLESS):
+            PROFILE_AUTH_MARKER.unlink(missing_ok=True)
             raise RuntimeError(
-                "爬虫的持久化浏览器会话尚未登录教务系统或登录态已失效；"
-                "请先将 TIMETABLE_CRAWLER_HEADLESS=false，以可视模式运行一次，"
-                "在打开的教务登录页完成验证码登录，之后可恢复无头模式"
+                "爬虫保存的教务登录态已失效，授权标记已清除；"
+                "请再次执行抓取，脚本将自动打开可视浏览器，"
+                "在教务登录页完成验证码登录"
             )
 
         print("当前是教务登录页，正在填入账号密码；请在浏览器中输入验证码并点击登录。")
@@ -520,6 +523,8 @@ def login_portal_and_enter_jw(driver):
         WebDriverWait(driver, 300).until(academic_page_is_authenticated)
         print("教务系统人工授权成功，登录态已保存到持久化浏览器目录")
 
+    PROFILE_AUTH_MARKER.write_text("authorized\n", encoding="utf-8")
+
 
 # =========================
 # 主程序
@@ -527,17 +532,23 @@ def login_portal_and_enter_jw(driver):
 
 def create_driver():
     BROWSER_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    effective_headless = should_run_headless(HEADLESS, PROFILE_AUTH_MARKER.exists())
     options = EdgeOptions()
     options.add_argument("--window-size=1440,1000")
     options.add_argument("--disable-gpu")
     options.add_argument(f"--user-data-dir={BROWSER_PROFILE_DIR}")
 
-    if HEADLESS:
+    if effective_headless:
         options.add_argument("--headless=new")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--log-level=3")
 
-    return webdriver.Edge(options=options)
+    if HEADLESS and not effective_headless:
+        print("尚未建立教务持久化登录态，本次自动使用可视浏览器完成首次授权")
+
+    driver = webdriver.Edge(options=options)
+    driver._timetable_headless = effective_headless
+    return driver
 
 
 def main():
