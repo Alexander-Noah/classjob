@@ -19,10 +19,11 @@ def _matches_host(actual_host, target_host):
     return bool(expected) and (actual_host == expected or actual_host.endswith(f".{expected}"))
 
 
-def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1):
+def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1, target_url=None):
     deadline = time.monotonic() + max(0, float(timeout_seconds))
     atrust_seen = False
     observed_urls = []
+    target_retry_attempted = False
 
     while True:
         for handle in list(driver.window_handles):
@@ -41,6 +42,13 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1)
             if _matches_host(current_host, "atrust.hniu.cn"):
                 atrust_seen = True
 
+        if atrust_seen and target_url and not target_retry_attempted:
+            target_retry_attempted = True
+            try:
+                driver.get(target_url)
+            except Exception:
+                pass
+
         if time.monotonic() >= deadline:
             break
         time.sleep(max(0, float(poll_seconds)))
@@ -48,7 +56,7 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1)
     if atrust_seen:
         raise ATrustAuthenticationRequired(
             "检测到学校 aTrust 零信任页面，但在等待时间内未进入教务系统；"
-            "请先使用学校授权的 aTrust 客户端完成连接后再重试"
+            "脚本已重新请求教务系统但仍被拦截，请先使用学校授权的 aTrust 客户端完成连接后再重试"
         )
 
     detail = f"；已观察到：{', '.join(observed_urls)}" if observed_urls else ""

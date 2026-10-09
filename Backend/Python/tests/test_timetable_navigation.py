@@ -42,6 +42,9 @@ class FakeDriver:
             return current
         return value
 
+    def get(self, url):
+        self.windows[self.current_handle] = url
+
 
 class TimetableNavigationTest(unittest.TestCase):
     def test_finds_target_window_even_when_it_is_not_the_latest(self):
@@ -75,6 +78,20 @@ class TimetableNavigationTest(unittest.TestCase):
 
         with self.assertRaisesRegex(navigation.ATrustAuthenticationRequired, "aTrust"):
             navigation.wait_for_target_window(driver, "jw.hniu.cn", timeout_seconds=0.01, poll_seconds=0.001)
+
+    def test_retries_target_url_once_after_atrust_loses_original_redirect(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({"atrust": "https://atrust.hniu.cn/portal/#/common_info"})
+
+        url = navigation.wait_for_target_window(
+            driver,
+            "jw.hniu.cn",
+            timeout_seconds=0.05,
+            poll_seconds=0.001,
+            target_url="https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb",
+        )
+
+        self.assertEqual("https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb", url)
 
 
 if __name__ == "__main__":

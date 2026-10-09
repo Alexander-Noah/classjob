@@ -468,7 +468,12 @@ def login_portal_and_enter_jw(driver):
     # 5. 教务系统可能打开新窗口，也可能先经过 aTrust 零信任网关。
     print("正在等待教务系统窗口，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
     target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
-    wait_for_target_window(driver, target_host, NAVIGATION_TIMEOUT_SECONDS)
+    wait_for_target_window(
+        driver,
+        target_host,
+        NAVIGATION_TIMEOUT_SECONDS,
+        target_url=CLASS_PAGE_URL,
+    )
 
     # 6. 已确认进入教务系统
     print("进入教务系统后的地址：", driver.current_url)
