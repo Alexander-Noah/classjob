@@ -42,6 +42,7 @@ PASSWORD = os.environ.get("TIMETABLE_PASSWORD", "").strip()
 HEADLESS = os.environ.get("TIMETABLE_HEADLESS", "true").strip().lower() != "false"
 SEMESTER = os.environ.get("TIMETABLE_SEMESTER", "").strip()
 NAVIGATION_TIMEOUT_SECONDS = float(os.environ.get("TIMETABLE_NAVIGATION_TIMEOUT_SECONDS", "90"))
+PORTAL_INTERACTION_DELAY_SECONDS = float(os.environ.get("TIMETABLE_PORTAL_INTERACTION_DELAY_SECONDS", "2"))
 BROWSER_PROFILE_DIR = Path(
     os.environ.get(
         "TIMETABLE_BROWSER_PROFILE_DIR",
@@ -168,15 +169,16 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
 
 def click_portal_app(driver, app_id, timeout=30):
     selector = f'[amp-appid="{app_id}"]'
-    WebDriverWait(driver, timeout).until(
-        lambda d: any(element.is_displayed() for element in d.find_elements(By.CSS_SELECTOR, selector))
-    )
-    for element in driver.find_elements(By.CSS_SELECTOR, selector):
-        if element.is_displayed():
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-            js_click(driver, element)
-            return
-    raise RuntimeError(f"未找到可点击的门户应用：{app_id}")
+    def find_ready_app(current_driver):
+        for element in current_driver.find_elements(By.CSS_SELECTOR, selector):
+            if element.is_displayed() and str(element.get_attribute("amp-url") or "").strip():
+                return element
+        return False
+
+    element = WebDriverWait(driver, timeout).until(find_ready_app)
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    time.sleep(max(0, PORTAL_INTERACTION_DELAY_SECONDS))
+    js_click(driver, element)
 
 
 def portal_app_is_visible(driver, app_id):
@@ -197,6 +199,7 @@ def click_portal_enter_service(driver, timeout=30):
 
     button = WebDriverWait(driver, timeout).until(find_visible_enter_button)
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+    time.sleep(max(0, PORTAL_INTERACTION_DELAY_SECONDS))
     js_click(driver, button)
 
 
@@ -449,7 +452,7 @@ def login_portal_and_enter_jw(driver):
     登录门户并进入教务系统
     """
     driver.get(LOGIN_URL)
-    if not HEADLESS:
+    if not getattr(driver, "_timetable_headless", HEADLESS):
         driver.maximize_window()
 
     time.sleep(3)
