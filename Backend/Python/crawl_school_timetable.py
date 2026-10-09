@@ -160,6 +160,22 @@ def click_portal_app(driver, app_id, timeout=30):
     raise RuntimeError(f"未找到可点击的门户应用：{app_id}")
 
 
+def click_portal_enter_service(driver, timeout=30):
+    def find_visible_enter_button(current_driver):
+        candidates = current_driver.find_elements(By.ID, "ampDetailEnter")
+        candidates.extend(
+            current_driver.find_elements(
+                By.XPATH,
+                "//*[self::a or self::button][contains(normalize-space(.), '进入服务')]",
+            )
+        )
+        return next((element for element in candidates if element.is_displayed()), False)
+
+    button = WebDriverWait(driver, timeout).until(find_visible_enter_button)
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+    js_click(driver, button)
+
+
 # =========================
 # Excel 导出处理
 # =========================
@@ -447,15 +463,12 @@ def login_portal_and_enter_jw(driver):
     click_portal_app(driver, PORTAL_APP_ID)
     print("已模拟点击门户中的教务系统应用")
 
-    # 某些门户配置会先展示应用详情，另一些会直接打开新窗口。
+    # 此门户会先展示服务说明弹窗，必须再次点击左下角“进入服务”。
     try:
-        enter_btn = WebDriverWait(driver, 5).until(
-            EC.visibility_of_element_located((By.ID, "ampDetailEnter"))
-        )
-        js_click(driver, enter_btn)
-        print("已模拟点击进入教务系统")
-    except Exception:
-        print("门户未显示应用详情弹窗，继续等待教务系统窗口")
+        click_portal_enter_service(driver, timeout=30)
+        print("已模拟点击服务说明弹窗中的进入服务")
+    except Exception as error:
+        raise RuntimeError("门户服务说明弹窗已打开，但未能点击“进入服务”按钮") from error
 
     print("正在等待教务系统，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
     target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
