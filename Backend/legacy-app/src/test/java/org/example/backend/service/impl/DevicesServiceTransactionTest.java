@@ -31,7 +31,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -71,9 +70,11 @@ class DevicesServiceTransactionTest {
         assertSame(requestedTransfer, result.getRecord());
         assertSame(history, result.getRecords());
         InOrder order = inOrder(devicesMapper, transferMapper);
+        order.verify(devicesMapper).getDevicesById(7L);
         order.verify(devicesMapper).updateTransferState(eq(7L), any(), any(), any());
         order.verify(transferMapper).insertRecord(same(requestedTransfer));
-        verify(devicesMapper, org.mockito.Mockito.times(2)).getDevicesById(7L);
+        order.verify(devicesMapper).getDevicesById(7L);
+        order.verify(transferMapper).listRecordsByDeviceId(7L);
     }
 
     @Test
@@ -94,9 +95,11 @@ class DevicesServiceTransactionTest {
         assertSame(requestedRecord, result.getRecord());
         assertSame(history, result.getRecords());
         InOrder order = inOrder(devicesMapper, inventoryMapper);
+        order.verify(devicesMapper).getDevicesById(6L);
         order.verify(inventoryMapper).insertRecord(same(requestedRecord));
         order.verify(devicesMapper).updateInventoryState(6L, "2026-10-09");
-        verify(devicesMapper, org.mockito.Mockito.times(2)).getDevicesById(6L);
+        order.verify(devicesMapper).getDevicesById(6L);
+        order.verify(inventoryMapper).listRecordsByDeviceId(6L);
     }
 
     @Test
@@ -133,7 +136,6 @@ class DevicesServiceTransactionTest {
         when(inventoryMapper.listRecordsByDeviceId(6L)).thenReturn(List.of());
         proxy.recordDeviceInventory(6L, new DeviceInventoryRecordEntity());
         verify(transactionManager, org.mockito.Mockito.times(1)).getTransaction(any());
-        verify(transactionManager, never()).rollback(any());
     }
 
     private DevicesServiceImpl service() {

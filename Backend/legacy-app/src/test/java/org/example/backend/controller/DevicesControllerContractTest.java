@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -57,7 +57,15 @@ class DevicesControllerContractTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data[0].id").value(1))
-                .andExpect(jsonPath("$.data[0].deviceCode").value("DEV-001"));
+                .andExpect(jsonPath("$.data[0].deviceCode").value("DEV-001"))
+                .andExpect(jsonPath("$.data[0].assetNo").value("DEV-001"))
+                .andExpect(jsonPath("$.data[0].code").value("DEV-001"))
+                .andExpect(jsonPath("$.data[0].name").value("列表设备"))
+                .andExpect(jsonPath("$.data[0].lab").value("兼容实验室"))
+                .andExpect(jsonPath("$.data[0].roomNo").value("A-101"))
+                .andExpect(jsonPath("$.data[0].specification").value("兼容规格"))
+                .andExpect(jsonPath("$.data[0].health").value("良好"))
+                .andExpect(jsonPath("$.data[0].online").value(true));
 
         mockMvc.perform(get("/devices/page")
                         .param("pageNum", "2")
@@ -87,7 +95,15 @@ class DevicesControllerContractTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(17))
                 .andExpect(jsonPath("$.data.deviceCode").value("DB-017"))
-                .andExpect(jsonPath("$.data.deviceName").value("数据库名称"));
+                .andExpect(jsonPath("$.data.deviceName").value("数据库名称"))
+                .andExpect(jsonPath("$.data.assetNo").value("DB-017"))
+                .andExpect(jsonPath("$.data.code").value("DB-017"))
+                .andExpect(jsonPath("$.data.name").value("数据库名称"))
+                .andExpect(jsonPath("$.data.lab").value("兼容实验室"))
+                .andExpect(jsonPath("$.data.roomNo").value("A-101"))
+                .andExpect(jsonPath("$.data.specification").value("兼容规格"))
+                .andExpect(jsonPath("$.data.health").value("良好"))
+                .andExpect(jsonPath("$.data.online").value(true));
     }
 
     @Test
@@ -176,6 +192,11 @@ class DevicesControllerContractTest {
         device.setId(id);
         device.setDeviceCode(code);
         device.setDeviceName(name);
+        device.setLabName("兼容实验室");
+        device.setLocation("A-101");
+        device.setSpecs("兼容规格");
+        device.setHealth("良好");
+        device.setOnline(true);
         return device;
     }
 }
