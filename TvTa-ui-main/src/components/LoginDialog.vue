@@ -12,7 +12,7 @@ const emit = defineEmits<{
   (event: 'cancel'): void
 }>()
 
-const username = ref('admin')
+const username = ref('')
 const password = ref('')
 
 const canSubmit = computed(() => Boolean(username.value.trim() && password.value.trim()))
@@ -24,7 +24,7 @@ watch(
       password.value = ''
       return
     }
-    username.value = 'admin'
+    username.value = ''
     password.value = ''
   },
   { immediate: true }
@@ -58,7 +58,7 @@ function handleCancel() {
 
       <n-form class="login-form" label-placement="top">
         <n-form-item label="用户名">
-          <n-input v-model:value="username" size="large" placeholder="admin / teacher" @keyup.enter="handleSubmit" />
+          <n-input v-model:value="username" size="large" placeholder="请输入平台账号" @keyup.enter="handleSubmit" />
         </n-form-item>
         <n-form-item label="密码">
           <n-input
@@ -73,9 +73,7 @@ function handleCancel() {
         <div v-if="props.errorMessage" class="login-error">
           {{ props.errorMessage }}
         </div>
-        <div class="login-hint">
-          默认演示账号：admin / admin123
-        </div>
+        <div class="login-hint">使用智云实验室平台账号登录</div>
       </n-form>
 
       <footer class="login-actions">

@@ -27,7 +27,7 @@ const appVisible = computed(() => {
   if (activationStore.isLicensed) return true
   return activationStore.isTrialActive && activationPromptDismissed.value
 })
-const loginLoading = computed(() => false)
+const loginLoading = ref(false)
 const loginError = ref('')
 
 authStore.hydrate()
@@ -69,20 +69,26 @@ watch(
   { immediate: true }
 )
 
-function handleLogin(payload: { username: string; password: string }) {
+async function handleLogin(payload: { username: string; password: string }) {
   loginError.value = ''
-  const ok = authStore.login(payload.username, payload.password)
-
-  if (!ok) {
-    loginError.value = '账号或密码错误'
-    return
+  loginLoading.value = true
+  try {
+    const ok = await authStore.login(payload.username, payload.password)
+    if (!ok) {
+      loginError.value = '请输入账号和密码'
+      return
+    }
+    activationPromptDismissed.value = false
+  } catch (error) {
+    loginError.value = error instanceof Error ? error.message : '登录失败，请检查后端服务'
+  } finally {
+    loginLoading.value = false
   }
-  activationPromptDismissed.value = false
 }
 
 function handleLogout() {
   activationPromptDismissed.value = false
-  authStore.logout()
+  void authStore.logout()
 }
 
 function handleActivationContinue() {

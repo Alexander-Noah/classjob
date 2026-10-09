@@ -23,6 +23,15 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     config.baseURL = getApiBaseUrl()
+    try {
+      const rawSession = window.sessionStorage.getItem('tvta-ui-auth-session')
+      const token = rawSession ? JSON.parse(rawSession)?.token : ''
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch {
+      window.sessionStorage.removeItem('tvta-ui-auth-session')
+    }
     return config
   },
   error => {

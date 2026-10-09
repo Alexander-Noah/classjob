@@ -94,8 +94,8 @@ function handleStartTrial() {
         </n-button>
       </n-form>
 
-      <div class="trial-row">
-        <span>{{ activationStore.canStartTrial ? '可试用 30 天，结束后必须激活。' : '本机已使用过试用，不能再次开启。' }}</span>
+      <div v-if="activationStore.canStartTrial" class="trial-row">
+        <span>测试构建可启用本地试用，结束后必须激活。</span>
         <n-button
           secondary
           type="primary"

@@ -1,7 +1,49 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import request from '@/utils/request'
 
 const AUTH_KEY = 'tvta-ui-auth-session'
+
+type AuthSession = {
+  token: string
+  username: string
+  displayName: string
+}
+
+type LoginResponse = {
+  code?: number
+  message?: string
+  data?: {
+    token?: string
+    user?: {
+      username?: string
+      realName?: string
+      name?: string
+    }
+  }
+}
+
+function readSessionAuth(): AuthSession | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const value = window.sessionStorage.getItem(AUTH_KEY)
+    if (!value) return null
+    const session = JSON.parse(value) as Partial<AuthSession>
+    if (!session.token || !session.username) return null
+    return {
+      token: session.token,
+      username: session.username,
+      displayName: session.displayName || session.username
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeSessionAuth(session: AuthSession) {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(AUTH_KEY, JSON.stringify(session))
+}
 
 function clearSessionAuth() {
   if (typeof window === 'undefined') return
@@ -11,41 +53,63 @@ function clearSessionAuth() {
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
   const username = ref('')
+  const authenticatedDisplayName = ref('')
   const hydrated = ref(false)
 
-  const displayName = computed(() => username.value || 'admin')
+  const displayName = computed(() => authenticatedDisplayName.value || username.value || '未登录')
 
   function hydrate() {
     if (hydrated.value) return
     hydrated.value = true
-    clearSessionAuth()
+    const session = readSessionAuth()
+    if (!session) {
+      clearSessionAuth()
+      return
+    }
+    isAuthenticated.value = true
+    username.value = session.username
+    authenticatedDisplayName.value = session.displayName
   }
 
-  function login(inputUsername: string, inputPassword: string) {
+  async function login(inputUsername: string, inputPassword: string) {
     const normalizedUsername = inputUsername.trim()
-    const normalizedPassword = inputPassword.trim()
 
-    if (!normalizedUsername || !normalizedPassword) {
+    if (!normalizedUsername || !inputPassword) {
       return false
     }
 
-    const validAccount =
-      (normalizedUsername === 'admin' && normalizedPassword === 'admin123') ||
-      (normalizedUsername === 'teacher' && normalizedPassword === '123456')
-
-    if (!validAccount) {
-      return false
+    const response = await request.post<unknown, LoginResponse>('/auth/login', {
+      username: normalizedUsername,
+      password: inputPassword
+    }, { silent: true } as never)
+    const token = String(response?.data?.token || '').trim()
+    const user = response?.data?.user
+    if (response?.code !== 200 || !token || !user?.username) {
+      throw new Error(response?.message || '账号或密码错误')
     }
 
     isAuthenticated.value = true
-    username.value = normalizedUsername
+    username.value = user.username
+    authenticatedDisplayName.value = user.realName || user.name || user.username
+    writeSessionAuth({
+      token,
+      username: username.value,
+      displayName: authenticatedDisplayName.value
+    })
     return true
   }
 
-  function logout() {
-    isAuthenticated.value = false
-    username.value = ''
-    clearSessionAuth()
+  async function logout() {
+    try {
+      if (isAuthenticated.value) {
+        await request.post('/auth/logout', undefined, { silent: true } as never)
+      }
+    } finally {
+      isAuthenticated.value = false
+      username.value = ''
+      authenticatedDisplayName.value = ''
+      clearSessionAuth()
+    }
   }
 
   return {

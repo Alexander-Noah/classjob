@@ -5,7 +5,9 @@ import { getMacAddress } from '@/sys-methods/system'
 
 const ACTIVATION_KEY = 'tvta-ui-activation-token'
 const TRIAL_LOCK_KEY = 'tvta-ui-trial-lock'
-const TRIAL_DAYS = 30
+const LOCAL_TRIAL_ENABLED = import.meta.env.MODE === 'test' && import.meta.env.VITE_ENABLE_LOCAL_TRIAL === 'true'
+const TRIAL_DAYS = Number(import.meta.env.VITE_LOCAL_TRIAL_DAYS || 30)
+const TRIAL_DEVICE_LIMIT = Number(import.meta.env.VITE_LOCAL_TRIAL_DEVICE_LIMIT || 10)
 
 type ActivationMode = 'licensed' | 'trial'
 
@@ -144,7 +146,7 @@ export const useActivationStore = defineStore('activation', () => {
   })
   const isUsable = computed(() => isLicensed.value || isTrialActive.value)
   const isActivated = computed(() => isLicensed.value)
-  const canStartTrial = computed(() => !isLicensed.value && !trialUsed.value)
+  const canStartTrial = computed(() => LOCAL_TRIAL_ENABLED && !isLicensed.value && !trialUsed.value)
   const trialRemainingDays = computed(() => {
     if (!isTrialActive.value || !trialExpiresAt.value) return 0
     const diff = new Date(trialExpiresAt.value).getTime() - now.value
@@ -294,7 +296,7 @@ export const useActivationStore = defineStore('activation', () => {
 
   function startTrial() {
     refreshLicenseState()
-    if (!canStartTrial.value) return false
+    if (!LOCAL_TRIAL_ENABLED || !canStartTrial.value) return false
 
     const started = new Date()
     const expires = addDays(started, TRIAL_DAYS)
@@ -304,10 +306,10 @@ export const useActivationStore = defineStore('activation', () => {
       expiresAt: expires.toISOString()
     }
     const payload: ActivationPayload = {
-      token: 'TRIAL-LOCAL-30-DAYS',
-      labName: '30-day trial client',
+      token: `TRIAL-${crypto.randomUUID()}`,
+      labName: '本地测试试用',
       labId: null,
-      quota: 999,
+      quota: TRIAL_DEVICE_LIMIT,
       activatedAt: started.toISOString(),
       mode: 'trial',
       trialStartedAt: lockPayload.startedAt,

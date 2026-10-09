@@ -106,46 +106,10 @@ interface LocalMonitorCache {
   updatedAt?: string
 }
 
-const GATEWAY_BASE_URL = 'http://127.0.0.1:5000'
+const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_BASE_URL || 'http://127.0.0.1:5000'
 const LOCAL_PROBE_BASE_URL = import.meta.env.VITE_LOCAL_PROBE_BASE_URL || 'http://127.0.0.1:8765'
-const DEFAULT_BUSINESS_SYSTEM_URL = 'http://127.0.0.1:5173'
+const DEFAULT_BUSINESS_SYSTEM_URL = import.meta.env.VITE_BUSINESS_SYSTEM_URL || 'http://127.0.0.1:5173'
 const MONITOR_CACHE_KEY = 'tvta-ui-monitor-local-cache'
-
-const demoDevices: DeviceRecord[] = [
-  {
-    id: '48:45:E6:6E:02:F9',
-    hostName: 'WIN-62U3SAFTL5K',
-    location: 'PC-01',
-    status: 'online',
-    lastSeen: '2026-05-21 11:16:02',
-    ipAddress: '192.168.66.101',
-    metrics: { cpuUsage: 17.9, memoryUsage: 67.0, diskUsage: 69.4 }
-  },
-  {
-    id: '48:45:E6:6E:03:10',
-    hostName: 'WIN-CLASS-A102-07',
-    location: 'PC-07',
-    status: 'warning',
-    lastSeen: '2026-05-21 11:15:46',
-    ipAddress: '192.168.66.107',
-    metrics: { cpuUsage: 88.4, memoryUsage: 81.5, diskUsage: 72.6 }
-  },
-  {
-    id: '48:45:E6:6E:04:21',
-    hostName: 'WIN-CLASS-B201-12',
-    location: 'PC-12',
-    status: 'offline',
-    lastSeen: '2026-05-21 10:58:13',
-    ipAddress: '192.168.66.212',
-    metrics: { cpuUsage: 0, memoryUsage: 0, diskUsage: 0 }
-  }
-]
-
-const demoLogs = [
-  '2026/05/21 11:08:11 gateway service started at 192.168.66.58:5000',
-  '2026/05/21 11:09:03 student device WIN-62U3SAFTL5K connected',
-  '2026/05/21 11:10:17 student device WIN-CLASS-A102-07 CPU usage reached warning threshold'
-]
 
 function formatDateTime(value?: number | string | null) {
   if (!value) return '--'
@@ -296,7 +260,7 @@ export const useMonitorStore = defineStore('monitor', () => {
   function mergeKnownDevices(nextDevices: DeviceRecord[]) {
     const knownMap = new Map(devices.value.map(device => [device.id, device]))
     const incomingIds = new Set(nextDevices.map(device => device.id))
-    const merged = nextDevices.map((device, index) => {
+    const merged: DeviceRecord[] = nextDevices.map((device, index) => {
       const known = knownMap.get(device.id)
       return {
         ...known,
