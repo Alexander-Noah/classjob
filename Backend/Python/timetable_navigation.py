@@ -36,13 +36,19 @@ def is_identity_login_page(current_url, title, page_html):
 
 
 def ensure_academic_authenticated(current_url, title, page_html):
+    normalized_url = str(current_url or "").strip().lower()
     normalized_title = str(title or "").strip().lower()
     normalized_html = str(page_html or "").lower()
+    if normalized_title in {"首页", "home"} or (
+        "/jsxsd/framework/xsmain.htmlx" in normalized_url
+        and normalized_title not in {"登录", "login"}
+    ):
+        return str(current_url or "")
+
     is_login_page = (
         normalized_title in {"登录", "login"}
         or 'id="loginform"' in normalized_html
         or "id='loginform'" in normalized_html
-        or "/jsxsd/xk/logintoxk" in normalized_html
     )
     if is_login_page:
         raise AcademicAuthenticationRequired(

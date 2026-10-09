@@ -91,6 +91,15 @@ class TimetableNavigationTest(unittest.TestCase):
             '<div id="main">个人中心</div>',
         )
 
+    def test_authenticated_homepage_wins_over_login_reference_in_source(self):
+        navigation = load_navigation_module(self)
+
+        navigation.ensure_academic_authenticated(
+            "https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx",
+            "首页",
+            '<script>const fallback = "/jsxsd/xk/LoginToXk";</script>',
+        )
+
     def test_opens_authenticated_portal_app_entry_before_waiting_for_target(self):
         navigation = load_navigation_module(self)
         entry_url = "https://ehall.hniu.cn/appShow?appId=6190757434612287"
