@@ -16,6 +16,7 @@ import urllib.parse
 import urllib.request
 
 from timetable_navigation import open_portal_app_and_wait
+from timetable_semester import resolve_semester
 
 
 # =========================
@@ -466,10 +467,10 @@ def create_driver():
 
 
 def main():
+    global SEMESTER
+
     if not USERNAME or not PASSWORD:
         raise RuntimeError("缺少教务系统账号或密码，请先在课表抓取页面保存账号配置")
-    if not SEMESTER:
-        raise RuntimeError("缺少课表学期，请先保存课表采集配置")
 
     driver = create_driver()
 
@@ -488,6 +489,9 @@ def main():
 
         page_html = driver.page_source
         save_html("班级课表查询页面.html", page_html)
+
+        SEMESTER = resolve_semester(SEMESTER, page_html)
+        print("本次抓取学期：", SEMESTER)
 
         # 请求真实大表接口
         result_html = fetch_big_table(driver)
