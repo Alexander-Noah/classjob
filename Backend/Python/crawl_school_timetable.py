@@ -15,7 +15,7 @@ import os
 import urllib.parse
 import urllib.request
 
-from timetable_navigation import open_portal_app_and_wait
+from timetable_navigation import ensure_academic_authenticated, wait_for_target_window
 from timetable_semester import resolve_semester
 
 
@@ -25,7 +25,7 @@ from timetable_semester import resolve_semester
 
 LOGIN_URL = "https://ehall.hniu.cn/new/index.html?browser=no"
 
-PORTAL_APP_URL = "https://ehall.hniu.cn/appShow?appId=6190757434612287"
+PORTAL_APP_ID = "6190757434612287"
 
 CLASS_PAGE_URL = "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb"
 
@@ -145,6 +145,19 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
             return True
 
     raise Exception(f"没有找到可见元素：{element_id}")
+
+
+def click_portal_app(driver, app_id, timeout=30):
+    selector = f'[amp-appid="{app_id}"]'
+    WebDriverWait(driver, timeout).until(
+        lambda d: any(element.is_displayed() for element in d.find_elements(By.CSS_SELECTOR, selector))
+    )
+    for element in driver.find_elements(By.CSS_SELECTOR, selector):
+        if element.is_displayed():
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+            js_click(driver, element)
+            return
+    raise RuntimeError(f"未找到可点击的门户应用：{app_id}")
 
 
 # =========================
@@ -430,22 +443,33 @@ def login_portal_and_enter_jw(driver):
     except Exception as e:
         print("账号密码登录步骤失败，可能已经登录：", e)
 
-    # 3. 使用门户提供的应用入口完成 SSO 登录态交换。
-    # 直接打开 appShow 比依赖门户卡片和弹窗 XPath 更稳定，且与人工点击的最终行为一致。
-    print("正在通过门户单点登录入口进入教务系统：", PORTAL_APP_URL)
+    # 3. 按人工操作点击门户中的教务系统卡片，让门户执行完整跳转逻辑。
+    click_portal_app(driver, PORTAL_APP_ID)
+    print("已模拟点击门户中的教务系统应用")
+
+    # 某些门户配置会先展示应用详情，另一些会直接打开新窗口。
+    try:
+        enter_btn = WebDriverWait(driver, 5).until(
+            EC.visibility_of_element_located((By.ID, "ampDetailEnter"))
+        )
+        js_click(driver, enter_btn)
+        print("已模拟点击进入教务系统")
+    except Exception:
+        print("门户未显示应用详情弹窗，继续等待教务系统窗口")
+
     print("正在等待教务系统，最长等待秒数：", NAVIGATION_TIMEOUT_SECONDS)
     target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
-    open_portal_app_and_wait(
+    wait_for_target_window(
         driver,
-        PORTAL_APP_URL,
         target_host,
         NAVIGATION_TIMEOUT_SECONDS,
-        retry_url=CLASS_PAGE_URL,
+        target_url=CLASS_PAGE_URL,
     )
 
     # 4. 已确认进入教务系统
     print("进入教务系统后的地址：", driver.current_url)
     print("进入教务系统后的标题：", driver.title)
+    ensure_academic_authenticated(driver.current_url, driver.title, driver.page_source)
 
 
 # =========================

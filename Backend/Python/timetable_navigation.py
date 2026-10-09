@@ -6,6 +6,10 @@ class ATrustAuthenticationRequired(RuntimeError):
     pass
 
 
+class AcademicAuthenticationRequired(RuntimeError):
+    pass
+
+
 class TargetSystemUnavailable(RuntimeError):
     pass
 
@@ -17,6 +21,23 @@ def _hostname(url):
 def _matches_host(actual_host, target_host):
     expected = str(target_host or "").strip().lower()
     return bool(expected) and (actual_host == expected or actual_host.endswith(f".{expected}"))
+
+
+def ensure_academic_authenticated(current_url, title, page_html):
+    normalized_title = str(title or "").strip().lower()
+    normalized_html = str(page_html or "").lower()
+    is_login_page = (
+        normalized_title in {"登录", "login"}
+        or 'id="loginform"' in normalized_html
+        or "id='loginform'" in normalized_html
+        or "/jsxsd/xk/logintoxk" in normalized_html
+    )
+    if is_login_page:
+        raise AcademicAuthenticationRequired(
+            "已到达教务系统域名，但仍是登录页，门户登录态没有转换为教务系统会话；"
+            "请确认通过办事大厅点击教务系统后能够免登录进入"
+        )
+    return str(current_url or "")
 
 
 def open_portal_app_and_wait(

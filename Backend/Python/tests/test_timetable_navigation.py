@@ -50,6 +50,25 @@ class FakeDriver:
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    def test_rejects_academic_login_page_even_on_target_host(self):
+        navigation = load_navigation_module(self)
+
+        with self.assertRaisesRegex(navigation.AcademicAuthenticationRequired, "登录页"):
+            navigation.ensure_academic_authenticated(
+                "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb",
+                "登录",
+                '<form id="loginForm" action="/jsxsd/xk/LoginToXk"></form>',
+            )
+
+    def test_accepts_authenticated_academic_page(self):
+        navigation = load_navigation_module(self)
+
+        navigation.ensure_academic_authenticated(
+            "https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx",
+            "首页",
+            '<div id="main">个人中心</div>',
+        )
+
     def test_opens_authenticated_portal_app_entry_before_waiting_for_target(self):
         navigation = load_navigation_module(self)
         entry_url = "https://ehall.hniu.cn/appShow?appId=6190757434612287"
