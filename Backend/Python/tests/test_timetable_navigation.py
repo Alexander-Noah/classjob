@@ -23,10 +23,12 @@ class FakeSwitchTo:
 
 
 class FakeDriver:
-    def __init__(self, windows):
+    def __init__(self, windows, redirects=None):
         self.windows = windows
+        self.redirects = redirects or {}
         self.current_handle = next(iter(windows))
         self.switch_to = FakeSwitchTo(self)
+        self.requested_urls = []
 
     @property
     def window_handles(self):
@@ -43,10 +45,36 @@ class FakeDriver:
         return value
 
     def get(self, url):
-        self.windows[self.current_handle] = url
+        self.requested_urls.append(url)
+        self.windows[self.current_handle] = self.redirects.get(url, url)
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    def test_opens_authenticated_portal_app_entry_before_waiting_for_target(self):
+        navigation = load_navigation_module(self)
+        entry_url = "https://ehall.hniu.cn/appShow?appId=6190757434612287"
+        driver = FakeDriver(
+            {"portal": "https://ehall.hniu.cn/new/index.html"},
+            redirects={entry_url: [entry_url, "https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx"]},
+        )
+
+        url = navigation.open_portal_app_and_wait(
+            driver,
+            entry_url,
+            "jw.hniu.cn",
+            timeout_seconds=0.02,
+            poll_seconds=0.001,
+        )
+
+        self.assertEqual(
+            entry_url,
+            driver.requested_urls[0],
+        )
+        self.assertEqual(
+            "https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx",
+            url,
+        )
+
     def test_finds_target_window_even_when_it_is_not_the_latest(self):
         navigation = load_navigation_module(self)
         driver = FakeDriver({

@@ -19,6 +19,25 @@ def _matches_host(actual_host, target_host):
     return bool(expected) and (actual_host == expected or actual_host.endswith(f".{expected}"))
 
 
+def open_portal_app_and_wait(
+    driver,
+    portal_app_url,
+    target_host,
+    timeout_seconds,
+    poll_seconds=1,
+    retry_url=None,
+):
+    """Open an application through the authenticated portal SSO entry."""
+    driver.get(portal_app_url)
+    return wait_for_target_window(
+        driver,
+        target_host,
+        timeout_seconds,
+        poll_seconds=poll_seconds,
+        target_url=retry_url,
+    )
+
+
 def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1, target_url=None):
     deadline = time.monotonic() + max(0, float(timeout_seconds))
     atrust_seen = False
