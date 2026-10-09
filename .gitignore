@@ -41,3 +41,5 @@ Backend/data/
 
 # Source archives are local backups and exceed GitHub's normal file limit
 *.zip
+# Persistent browser profile used by the timetable crawler. It may contain login cookies.
+Backend/Python/.timetable-browser-profile/

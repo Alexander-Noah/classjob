@@ -15,7 +15,11 @@ import os
 import urllib.parse
 import urllib.request
 
-from timetable_navigation import ensure_academic_authenticated, wait_for_target_window
+from timetable_navigation import (
+    AcademicAuthenticationRequired,
+    ensure_academic_authenticated,
+    wait_for_target_window,
+)
 from timetable_semester import resolve_semester
 
 
@@ -36,6 +40,12 @@ PASSWORD = os.environ.get("TIMETABLE_PASSWORD", "").strip()
 HEADLESS = os.environ.get("TIMETABLE_HEADLESS", "true").strip().lower() != "false"
 SEMESTER = os.environ.get("TIMETABLE_SEMESTER", "").strip()
 NAVIGATION_TIMEOUT_SECONDS = float(os.environ.get("TIMETABLE_NAVIGATION_TIMEOUT_SECONDS", "90"))
+BROWSER_PROFILE_DIR = Path(
+    os.environ.get(
+        "TIMETABLE_BROWSER_PROFILE_DIR",
+        str(Path(__file__).resolve().parent / ".timetable-browser-profile"),
+    )
+).resolve()
 
 # 导出文件夹：当前 Python 文件同目录下的“课表导出结果”
 OUTPUT_DIR = Path(__file__).resolve().parent / "课表导出结果"
@@ -482,7 +492,33 @@ def login_portal_and_enter_jw(driver):
     # 4. 已确认进入教务系统
     print("进入教务系统后的地址：", driver.current_url)
     print("进入教务系统后的标题：", driver.title)
-    ensure_academic_authenticated(driver.current_url, driver.title, driver.page_source)
+    try:
+        ensure_academic_authenticated(driver.current_url, driver.title, driver.page_source)
+    except AcademicAuthenticationRequired:
+        if HEADLESS:
+            raise RuntimeError(
+                "爬虫的持久化浏览器会话尚未登录教务系统或登录态已失效；"
+                "请先将 TIMETABLE_CRAWLER_HEADLESS=false，以可视模式运行一次，"
+                "在打开的教务登录页完成验证码登录，之后可恢复无头模式"
+            )
+
+        print("当前是教务登录页，正在填入账号密码；请在浏览器中输入验证码并点击登录。")
+        wait_input_by_id(driver, "userAccount", USERNAME, timeout=15)
+        wait_input_by_id(driver, "userPassword", PASSWORD, timeout=15)
+
+        def academic_page_is_authenticated(current_driver):
+            try:
+                ensure_academic_authenticated(
+                    current_driver.current_url,
+                    current_driver.title,
+                    current_driver.page_source,
+                )
+                return True
+            except AcademicAuthenticationRequired:
+                return False
+
+        WebDriverWait(driver, 300).until(academic_page_is_authenticated)
+        print("教务系统人工授权成功，登录态已保存到持久化浏览器目录")
 
 
 # =========================
@@ -490,13 +526,14 @@ def login_portal_and_enter_jw(driver):
 # =========================
 
 def create_driver():
+    BROWSER_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     options = EdgeOptions()
     options.add_argument("--window-size=1440,1000")
     options.add_argument("--disable-gpu")
+    options.add_argument(f"--user-data-dir={BROWSER_PROFILE_DIR}")
 
     if HEADLESS:
         options.add_argument("--headless=new")
-        options.add_argument("--disable-extensions")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--log-level=3")
 
