@@ -18,7 +18,7 @@ import {
 import { fetchDashboardOverview } from '../../api/dashboard'
 import http from '../../api/http'
 import { API_ENDPOINTS } from '../../api/endpoints'
-import { buildDashboardScheduleView, buildDoorReminderList, getScheduleStatus } from './dashboardSchedule'
+import { buildDashboardScheduleView, buildDoorReminderList } from './dashboardSchedule'
 
 defineOptions({
   name: 'DashboardHome',
@@ -61,8 +61,6 @@ const scheduleRows = computed(() => scheduleView.value.visibleItems)
 const doorReminderView = computed(() =>
   buildDoorReminderList(schedules.value, sourceDoorAlerts.value, currentTime.value, { limit: 5 }),
 )
-const deviceStatus = computed(() => dashboardData.value.deviceStatus)
-
 const normalizePath = (path) => {
   if (!path) return ''
   if (path.startsWith('/lab-admin')) return path
@@ -77,8 +75,6 @@ const normalizePath = (path) => {
   }
   return redirectMap[path] || path
 }
-
-const toNumber = (value) => Number(value || 0)
 
 const getResponseData = (payload) => {
   if (Array.isArray(payload)) return payload
@@ -115,36 +111,6 @@ const normalizeConsumable = (item = {}) => {
     tagType: item.tagType || state.tagType,
   }
 }
-
-const deviceSummary = computed(() => {
-  const sourceRows = Array.isArray(deviceStatus.value) ? deviceStatus.value : []
-  const total = sourceRows.reduce((sum, item) => sum + toNumber(item.value), 0)
-  const sumByName = (patterns) =>
-    sourceRows.reduce((sum, item) => {
-      const name = String(item.name || '')
-      return patterns.some((pattern) => pattern.test(name)) ? sum + toNumber(item.value) : sum
-    }, 0)
-
-  const normal = sumByName([/正常/, /在线/])
-  const repairing = sumByName([/维修/, /维护/])
-  const abnormal = sumByName([/故障/, /异常/, /报废/])
-  const other = Math.max(total - normal - repairing - abnormal, 0)
-
-  return {
-    total,
-    normal,
-    repairing,
-    abnormal,
-    other,
-    onlineRate: total ? Math.round((normal / total) * 100) : 0,
-    rows: [
-      { name: '正常设备', value: normal, color: '#16a34a' },
-      { name: '异常设备', value: abnormal, color: '#ef4444' },
-      { name: '维修中', value: repairing, color: '#f59e0b' },
-      ...(other ? [{ name: '其他状态', value: other, color: '#60a5fa' }] : []),
-    ],
-  }
-})
 
 const consumableCategoryRows = computed(() => {
   const groups = consumableRecords.value.reduce((result, item) => {
@@ -243,60 +209,12 @@ const recentActivities = computed(() => {
   return (normalizedSource.length ? normalizedSource : generatedActivities.value).slice(0, 6)
 })
 
-const currentUsingLabCount = computed(() => {
-  const labs = new Set(
-    schedules.value
-      .filter((item) => getScheduleStatus(item, currentTime.value).group === 'ongoing')
-      .map((item) => item.lab || item.roomNo || item.labCode || item.classroom)
-      .filter(Boolean),
-  )
-  return labs.size
-})
-
-const todayCourseLabCount = computed(() => {
-  const labs = new Set(
-    scheduleView.value.visibleItems
-      .concat(schedules.value)
-      .map((item) => item.lab || item.roomNo || item.labCode || item.classroom)
-      .filter(Boolean),
-  )
-  return labs.size
-})
-
 const stats = computed(() =>
-  dashboardData.value.stats.map((stat) => {
-    const title = stat.title || stat.label || '实验室信息'
-    const nextStat = {
-      ...stat,
-      title,
-      icon: DASHBOARD_ICON_MAP[stat.iconKey] || markRaw(DataAnalysis),
-    }
-
-    if (title.includes('当前使用') && schedules.value.length) {
-      nextStat.value = currentUsingLabCount.value
-      nextStat.unit = '间'
-      nextStat.trend = `使用中 ${currentUsingLabCount.value} 间`
-    } else if (title.includes('今日课程') && schedules.value.length) {
-      nextStat.title = '今日有课实验室'
-      nextStat.value = todayCourseLabCount.value
-      nextStat.unit = '间'
-      nextStat.trend = `今日课程 ${scheduleView.value.totalToday} 条`
-    } else if (title.includes('待处理')) {
-      nextStat.title = '耗材库存预警'
-      nextStat.value = consumableSummary.value.warningCount
-      nextStat.unit = '项'
-      nextStat.trend = `库存总量 ${consumableSummary.value.totalStock.toLocaleString()}`
-      nextStat.color = consumableSummary.value.warningCount ? '#ea580c' : '#16a34a'
-      nextStat.icon = markRaw(DataAnalysis)
-    } else if (title.includes('异常设备') || title.includes('设备')) {
-      nextStat.title = '实验室设备'
-      nextStat.value = deviceSummary.value.total
-      nextStat.unit = '台'
-      nextStat.trend = `异常 ${deviceSummary.value.abnormal} 台`
-    }
-
-    return nextStat
-  }),
+  dashboardData.value.stats.map((stat) => ({
+    ...stat,
+    title: stat.title || stat.label || '实验室信息',
+    icon: DASHBOARD_ICON_MAP[stat.iconKey] || markRaw(DataAnalysis),
+  })),
 )
 
 const loadDashboardOverview = async () => {

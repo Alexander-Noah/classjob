@@ -8,21 +8,21 @@ const arrayWithFallback = (value, fallback = []) => (Array.isArray(value) ? valu
 const LAB_MANAGEMENT_SHORTCUT_TITLES = new Set(['实验室资源', '实验室管理'])
 
 const normalizeShortcuts = (value) =>
-  arrayWithFallback(value, DASHBOARD_OVERVIEW_MOCK.shortcuts).filter(
+  arrayWithFallback(value).filter(
     (shortcut) => !LAB_MANAGEMENT_SHORTCUT_TITLES.has(shortcut?.title),
   )
 
 const normalizeDashboardOverview = (data = {}) => ({
-  stats: arrayWithFallback(data?.stats, DASHBOARD_OVERVIEW_MOCK.stats),
+  stats: arrayWithFallback(data?.stats),
   shortcuts: normalizeShortcuts(data?.shortcuts),
-  labUsage: arrayWithFallback(data?.labUsage, DASHBOARD_OVERVIEW_MOCK.labUsage),
-  deviceStatus: arrayWithFallback(data?.deviceStatus, DASHBOARD_OVERVIEW_MOCK.deviceStatus),
-  notices: arrayWithFallback(data?.notices, DASHBOARD_OVERVIEW_MOCK.notices),
-  doorAlerts: arrayWithFallback(data?.doorAlerts, DASHBOARD_OVERVIEW_MOCK.doorAlerts),
-  todaySchedules: arrayWithFallback(data?.todaySchedules, DASHBOARD_OVERVIEW_MOCK.todaySchedules),
-  todoItems: arrayWithFallback(data?.todoItems, DASHBOARD_OVERVIEW_MOCK.todoItems),
-  recordReminders: arrayWithFallback(data?.recordReminders, DASHBOARD_OVERVIEW_MOCK.recordReminders),
-  recentActivities: arrayWithFallback(data?.recentActivities, DASHBOARD_OVERVIEW_MOCK.recentActivities),
+  labUsage: arrayWithFallback(data?.labUsage),
+  deviceStatus: arrayWithFallback(data?.deviceStatus),
+  notices: arrayWithFallback(data?.notices),
+  doorAlerts: arrayWithFallback(data?.doorAlerts),
+  todaySchedules: arrayWithFallback(data?.todaySchedules),
+  todoItems: arrayWithFallback(data?.todoItems),
+  recordReminders: arrayWithFallback(data?.recordReminders),
+  recentActivities: arrayWithFallback(data?.recentActivities),
   businessLoop: normalizeBusinessLoopOverview(data?.businessLoop),
 })
 
