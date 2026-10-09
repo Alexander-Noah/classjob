@@ -23,6 +23,18 @@ def _matches_host(actual_host, target_host):
     return bool(expected) and (actual_host == expected or actual_host.endswith(f".{expected}"))
 
 
+def is_identity_login_page(current_url, title, page_html):
+    host = _hostname(current_url)
+    normalized_title = str(title or "").strip().lower()
+    normalized_html = str(page_html or "").lower()
+    return (
+        _matches_host(host, "authserver.hniu.cn")
+        or normalized_title == "统一身份认证"
+        or 'id="casloginform"' in normalized_html
+        or "id='casloginform'" in normalized_html
+    )
+
+
 def ensure_academic_authenticated(current_url, title, page_html):
     normalized_title = str(title or "").strip().lower()
     normalized_html = str(page_html or "").lower()

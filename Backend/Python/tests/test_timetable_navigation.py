@@ -50,6 +50,28 @@ class FakeDriver:
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    def test_detects_cas_identity_login_page(self):
+        navigation = load_navigation_module(self)
+
+        self.assertTrue(
+            navigation.is_identity_login_page(
+                "https://authserver.hniu.cn/authserver/login?service=example",
+                "统一身份认证",
+                '<form id="casLoginForm"></form>',
+            )
+        )
+
+    def test_does_not_treat_portal_as_identity_login_page(self):
+        navigation = load_navigation_module(self)
+
+        self.assertFalse(
+            navigation.is_identity_login_page(
+                "https://ehall.hniu.cn/new/index.html",
+                "网上办事服务大厅",
+                '<div id="cardMyFavoriteContent"></div>',
+            )
+        )
+
     def test_rejects_academic_login_page_even_on_target_host(self):
         navigation = load_navigation_module(self)
 

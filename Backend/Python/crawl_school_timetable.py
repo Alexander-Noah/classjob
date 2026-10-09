@@ -18,6 +18,7 @@ import urllib.request
 from timetable_navigation import (
     AcademicAuthenticationRequired,
     ensure_academic_authenticated,
+    is_identity_login_page,
     wait_for_target_window,
 )
 from timetable_browser_profile import should_run_headless
@@ -132,7 +133,13 @@ def wait_element_by_xpath(driver, xpath, timeout=20):
 
 
 def wait_input_by_id(driver, element_id, value, timeout=20):
-    element = wait_element_by_id(driver, element_id, timeout)
+    def find_visible_input(current_driver):
+        return next(
+            (element for element in current_driver.find_elements(By.ID, element_id) if element.is_displayed()),
+            False,
+        )
+
+    element = WebDriverWait(driver, timeout).until(find_visible_input)
     element.clear()
     element.send_keys(value)
     return element
@@ -170,6 +177,11 @@ def click_portal_app(driver, app_id, timeout=30):
             js_click(driver, element)
             return
     raise RuntimeError(f"未找到可点击的门户应用：{app_id}")
+
+
+def portal_app_is_visible(driver, app_id):
+    selector = f'[amp-appid="{app_id}"]'
+    return any(element.is_displayed() for element in driver.find_elements(By.CSS_SELECTOR, selector))
 
 
 def click_portal_enter_service(driver, timeout=30):
@@ -445,31 +457,39 @@ def login_portal_and_enter_jw(driver):
     print("当前地址：", driver.current_url)
     print("当前标题：", driver.title)
 
-    # 1. 点击门户登录按钮
-    try:
-        click_visible_element_by_id(driver, "ampLoginBtn", timeout=20)
-        print("已点击门户登录按钮")
-        time.sleep(2)
-    except Exception as e:
-        print("登录按钮点击失败，可能已经登录或页面结构变化：", e)
+    # 1. 未登录时可能直接被重定向到 CAS，也可能先显示门户登录按钮。
+    if not is_identity_login_page(driver.current_url, driver.title, driver.page_source):
+        if not portal_app_is_visible(driver, PORTAL_APP_ID):
+            click_visible_element_by_id(driver, "ampLoginBtn", timeout=20)
+            print("已点击门户登录按钮")
+            WebDriverWait(driver, 20).until(
+                lambda current_driver: is_identity_login_page(
+                    current_driver.current_url,
+                    current_driver.title,
+                    current_driver.page_source,
+                )
+            )
 
-    # 2. 输入账号密码并登录
-    try:
+    # 2. 在统一身份认证页输入账号密码并登录。
+    if is_identity_login_page(driver.current_url, driver.title, driver.page_source):
         wait_input_by_id(driver, "username", USERNAME, timeout=15)
         wait_input_by_id(driver, "password", PASSWORD, timeout=15)
 
-        login_btn = wait_element_by_xpath(
-            driver,
-            '//*[@id="casLoginForm"]/p[4]/button',
-            timeout=20
+        login_btn = WebDriverWait(driver, 20).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#casLoginForm button[type='submit']"))
         )
         js_click(driver, login_btn)
 
-        print("已提交登录")
-        time.sleep(5)
+        print("已提交统一身份认证登录")
 
-    except Exception as e:
-        print("账号密码登录步骤失败，可能已经登录：", e)
+    try:
+        WebDriverWait(driver, 45).until(
+            lambda current_driver: portal_app_is_visible(current_driver, PORTAL_APP_ID)
+        )
+    except Exception as error:
+        raise RuntimeError(
+            f"统一身份认证后未返回办事大厅，当前页面：{driver.title} {driver.current_url}"
+        ) from error
 
     # 3. 按人工操作点击门户中的教务系统卡片，让门户执行完整跳转逻辑。
     click_portal_app(driver, PORTAL_APP_ID)
