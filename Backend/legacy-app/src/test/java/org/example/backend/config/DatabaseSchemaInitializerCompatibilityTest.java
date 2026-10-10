@@ -58,15 +58,17 @@ class DatabaseSchemaInitializerCompatibilityTest {
     }
 
     @Test
-    void timetableCalendarMigrationKeepsSemesterAndStartDateAtomic() throws IOException {
+    void timetableCalendarPersistenceKeepsSemesterAndStartDateAtomicWithoutRuntimeDdl() throws IOException {
         String mapper = Files.readString(Path.of("src", "main", "resources", "mapper", "ClassTimetableMapper.xml"));
         String implementation = Files.readString(Path.of("src", "main", "java", "org", "example", "backend",
                 "service", "impl", "ClassTimetableServiceImpl.java"));
 
         assertAll(
-                () -> assertTrue(mapper.contains("countCrawlerConfigSemesterColumn")),
-                () -> assertTrue(mapper.contains("add column semester varchar(40)")),
+                () -> assertTrue(mapper.contains("timetable_integration_config")),
+                () -> assertTrue(mapper.contains("date_format(semester_start_date, '%Y-%m-%d')")),
                 () -> assertTrue(mapper.contains("semester = values(semester)")),
+                () -> assertTrue(mapper.contains("semester_start_date = values(semester_start_date)")),
+                () -> assertTrue(!mapper.toLowerCase().contains("create table")),
                 () -> assertTrue(implementation.contains("TIMETABLE_SEMESTER")),
                 () -> assertTrue(implementation.contains("crawlerConfig.get(\"semester\")"))
         );

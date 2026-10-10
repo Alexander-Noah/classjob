@@ -2,6 +2,7 @@ package org.example.backend.service.impl;
 
 import org.example.backend.entity.AcademicCredentialView;
 import org.example.backend.entity.AcademicScheduleImportRequest;
+import org.example.backend.mapper.ClassTimetableMapper;
 import org.example.backend.service.AcademicCredentialService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -9,19 +10,11 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 
 @Service
 public class AcademicCredentialServiceImpl implements AcademicCredentialService {
@@ -30,14 +23,14 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
     private static final int MIN_SECRET_LENGTH = 32;
 
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Path storePath;
+    private final ClassTimetableMapper classTimetableMapper;
     private final SecretKeySpec secretKey;
 
     public AcademicCredentialServiceImpl(
-            @Value("${academic.credentials.store-path:data/academic-credentials.properties}") String storePath,
+            ClassTimetableMapper classTimetableMapper,
             @Value("${academic.credentials.secret:${ACADEMIC_CREDENTIAL_SECRET:}}") String secret
     ) {
-        this.storePath = Path.of(storePath);
+        this.classTimetableMapper = classTimetableMapper;
         this.secretKey = buildSecretKey(requireStrongSecret(secret, "ACADEMIC_CREDENTIAL_SECRET"));
     }
 
@@ -62,102 +55,44 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
             throw new IllegalArgumentException("保存教务凭据需要账号和密码");
         }
 
-        Map<String, StoredCredential> credentials = readCredentials();
-        StoredCredential credential = new StoredCredential();
-        credential.setUsername(encrypt(request.getUsername()));
-        credential.setPassword(encrypt(request.getPassword()));
-        credential.setUpdatedAt(LocalDateTime.now().toString());
-        credentials.put(credentialKey, credential);
-        writeCredentials(credentials);
-        return toView(credentialKey, credential);
+        classTimetableMapper.upsertCrawlerCredential(
+                credentialKey,
+                encrypt(request.getUsername()),
+                encrypt(request.getPassword())
+        );
+        return getCredentialView(credentialKey);
     }
 
     @Override
     public synchronized AcademicCredentialView getCredentialView(String credentialKey) {
         String resolvedKey = normalizeCredentialKey(credentialKey);
-        StoredCredential credential = readCredentials().get(resolvedKey);
-        return toView(resolvedKey, credential);
+        return toView(resolvedKey, classTimetableMapper.getCrawlerCredential(resolvedKey));
     }
 
     @Override
     public synchronized void deleteCredential(String credentialKey) {
         String resolvedKey = normalizeCredentialKey(credentialKey);
-        Map<String, StoredCredential> credentials = readCredentials();
-        credentials.remove(resolvedKey);
-        writeCredentials(credentials);
+        classTimetableMapper.deleteCrawlerCredential(resolvedKey);
     }
 
     @Override
     public synchronized void applySavedCredential(AcademicScheduleImportRequest request) {
         String credentialKey = resolveCredentialKey(request);
-        StoredCredential credential = readCredentials().get(credentialKey);
-        if (credential == null) {
+        Map<String, Object> credential = classTimetableMapper.getCrawlerCredential(credentialKey);
+        if (credential == null || credential.isEmpty()) {
             throw new IllegalArgumentException("未配置本地教务账号，请先保存账号密码");
         }
-        request.setUsername(decrypt(credential.getUsername()));
-        request.setPassword(decrypt(credential.getPassword()));
+        request.setUsername(decrypt(stringValue(credential.get("usernameCipher"))));
+        request.setPassword(decrypt(stringValue(credential.get("passwordCipher"))));
     }
 
-    private Map<String, StoredCredential> readCredentials() {
-        if (!Files.exists(storePath)) {
-            return new LinkedHashMap<>();
-        }
-        Properties properties = new Properties();
-        try {
-            try (InputStream inputStream = Files.newInputStream(storePath)) {
-                properties.load(inputStream);
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("读取本地教务凭据失败", exception);
-        }
-
-        Map<String, StoredCredential> credentials = new LinkedHashMap<>();
-        for (String name : properties.stringPropertyNames()) {
-            int dotIndex = name.lastIndexOf('.');
-            if (dotIndex <= 0) {
-                continue;
-            }
-            String credentialKey = name.substring(0, dotIndex);
-            String field = name.substring(dotIndex + 1);
-            StoredCredential credential = credentials.computeIfAbsent(credentialKey, key -> new StoredCredential());
-            switch (field) {
-                case "username" -> credential.setUsername(properties.getProperty(name));
-                case "password" -> credential.setPassword(properties.getProperty(name));
-                case "updatedAt" -> credential.setUpdatedAt(properties.getProperty(name));
-                default -> {
-                }
-            }
-        }
-        return credentials;
-    }
-
-    private void writeCredentials(Map<String, StoredCredential> credentials) {
-        try {
-            Path parent = storePath.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Properties properties = new Properties();
-            credentials.forEach((credentialKey, credential) -> {
-                properties.setProperty(credentialKey + ".username", firstNonBlank(credential.getUsername(), ""));
-                properties.setProperty(credentialKey + ".password", firstNonBlank(credential.getPassword(), ""));
-                properties.setProperty(credentialKey + ".updatedAt", firstNonBlank(credential.getUpdatedAt(), ""));
-            });
-            try (OutputStream outputStream = Files.newOutputStream(storePath)) {
-                properties.store(outputStream, "Encrypted academic system credentials");
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("保存本地教务凭据失败", exception);
-        }
-    }
-
-    private AcademicCredentialView toView(String credentialKey, StoredCredential credential) {
+    private AcademicCredentialView toView(String credentialKey, Map<String, Object> credential) {
         AcademicCredentialView view = new AcademicCredentialView();
         view.setCredentialKey(credentialKey);
-        view.setConfigured(credential != null);
-        if (credential != null) {
-            view.setUsernameMasked(maskUsername(decrypt(credential.getUsername())));
-            view.setUpdatedAt(credential.getUpdatedAt());
+        view.setConfigured(credential != null && !credential.isEmpty());
+        if (Boolean.TRUE.equals(view.getConfigured())) {
+            view.setUsernameMasked(maskUsername(decrypt(stringValue(credential.get("usernameCipher")))));
+            view.setUpdatedAt(stringValue(credential.get("updatedAt")));
         }
         return view;
     }
@@ -228,42 +163,7 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return value == null || value.isBlank();
     }
 
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (!isBlank(value)) {
-                return value;
-            }
-        }
-        return "";
-    }
-
-    public static class StoredCredential {
-        private String username;
-        private String password;
-        private String updatedAt;
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public String getUpdatedAt() {
-            return updatedAt;
-        }
-
-        public void setUpdatedAt(String updatedAt) {
-            this.updatedAt = updatedAt;
-        }
+    private String stringValue(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 }

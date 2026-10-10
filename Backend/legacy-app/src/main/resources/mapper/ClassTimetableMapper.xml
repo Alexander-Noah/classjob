@@ -4,28 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.example.backend.mapper.ClassTimetableMapper">
-
-    <update id="createClassTimetableTableIfNotExists">
-        create table if not exists class_timetable (
-        id bigint primary key auto_increment,
-        semester varchar(50) comment '学年学期',
-        row_class_name varchar(100) comment '原始行班级',
-        class_name varchar(100) comment '班级',
-        weekday varchar(20) comment '星期',
-        section_code varchar(20) comment '节次代码',
-        section_text varchar(50) comment '节次',
-        start_section int comment '开始节次',
-        end_section int comment '结束节次',
-        course_name varchar(200) comment '课程名称',
-        teacher varchar(100) comment '教师',
-        week_raw varchar(100) comment '周次原文',
-        week_text varchar(100) comment '周次',
-        week_expanded varchar(255) comment '展开周次',
-        classroom varchar(200) comment '教室',
-        create_time datetime default current_timestamp
-        ) engine=InnoDB default charset=utf8mb4
-    </update>
-
     <delete id="deleteBySemester">
         delete from class_timetable
         where semester = #{semester}
@@ -33,226 +11,118 @@
 
     <insert id="insertTimetable" parameterType="org.example.backend.entity.ClassTimetableEntity">
         insert into class_timetable (
-        semester,
-        row_class_name,
-        class_name,
-        weekday,
-        section_code,
-        section_text,
-        start_section,
-        end_section,
-        course_name,
-        teacher,
-        week_raw,
-        week_text,
-        week_expanded,
-        classroom
+            semester, row_class_name, class_name, weekday, section_code, section_text,
+            start_section, end_section, course_name, teacher, week_raw, week_text,
+            week_expanded, classroom
         ) values (
-        #{semester},
-        #{rowClassName},
-        #{className},
-        #{weekday},
-        #{sectionCode},
-        #{sectionText},
-        #{startSection},
-        #{endSection},
-        #{courseName},
-        #{teacher},
-        #{weekRaw},
-        #{weekText},
-        #{weekExpanded},
-        #{classroom}
+            #{semester}, #{rowClassName}, #{className}, #{weekday}, #{sectionCode}, #{sectionText},
+            #{startSection}, #{endSection}, #{courseName}, #{teacher}, #{weekRaw}, #{weekText},
+            #{weekExpanded}, #{classroom}
         )
     </insert>
 
-    <update id="createCrawlerConfigTableIfNotExists">
-        create table if not exists timetable_crawler_config (
-        config_key varchar(80) primary key,
-        schedule_enabled tinyint(1) not null default 0,
-        cron_expression varchar(120) not null,
-        semester varchar(40),
-        semester_start_date varchar(20),
-        updated_at datetime default current_timestamp on update current_timestamp
-        ) engine=InnoDB default charset=utf8mb4
-    </update>
-
-    <select id="countCrawlerConfigSemesterColumn" resultType="int">
-        select count(*)
-        from information_schema.columns
-        where table_schema = database()
-        and table_name = 'timetable_crawler_config'
-        and column_name = 'semester'
-    </select>
-
-    <update id="addCrawlerConfigSemesterColumn">
-        alter table timetable_crawler_config add column semester varchar(40) null after cron_expression
-    </update>
-
     <select id="getCrawlerConfig" resultType="java.util.Map">
-        select
-        config_key as configKey,
-        schedule_enabled as scheduleEnabled,
-        cron_expression as cron,
-        semester,
-        semester_start_date as semesterStartDate,
-        date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
-        from timetable_crawler_config
+        select config_key as configKey,
+               schedule_enabled as scheduleEnabled,
+               cron_expression as cron,
+               semester,
+               date_format(semester_start_date, '%Y-%m-%d') as semesterStartDate,
+               date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+        from timetable_integration_config
         where config_key = #{configKey}
     </select>
 
     <insert id="upsertCrawlerConfig">
-        insert into timetable_crawler_config (
-        config_key,
-        schedule_enabled,
-        cron_expression,
-        semester,
-        semester_start_date,
-        updated_at
+        insert into timetable_integration_config (
+            config_key, schedule_enabled, cron_expression, semester, semester_start_date, updated_at
         ) values (
-        #{configKey},
-        #{scheduleEnabled},
-        #{cronExpression},
-        #{semester},
-        #{semesterStartDate},
-        now()
+            #{configKey}, #{scheduleEnabled}, #{cronExpression}, #{semester}, #{semesterStartDate}, now()
         )
         on duplicate key update
-        schedule_enabled = values(schedule_enabled),
-        cron_expression = values(cron_expression),
-        semester = values(semester),
-        semester_start_date = values(semester_start_date),
-        updated_at = now()
+            schedule_enabled = values(schedule_enabled),
+            cron_expression = values(cron_expression),
+            semester = values(semester),
+            semester_start_date = values(semester_start_date),
+            updated_at = now()
     </insert>
 
-    <update id="createCrawlerTaskTableIfNotExists">
-        create table if not exists timetable_crawler_task (
-        id bigint primary key,
-        trigger_type varchar(20) not null,
-        status varchar(20) not null,
-        scope varchar(50),
-        source varchar(80),
-        success_account varchar(120),
-        attempts int default 0,
-        updated_count int default 0,
-        started_at datetime,
-        finished_at datetime,
-        error_message text,
-        output mediumtext,
-        log_path varchar(500),
-        created_at datetime default current_timestamp
-        ) engine=InnoDB default charset=utf8mb4
-    </update>
-
     <select id="listCrawlerTasks" resultType="java.util.Map">
-        select
-        id,
-        trigger_type as triggerType,
-        status,
-        scope,
-        source,
-        success_account as successAccount,
-        attempts,
-        updated_count as updatedCount,
-        date_format(started_at, '%Y-%m-%d %H:%i:%s') as startedAt,
-        date_format(finished_at, '%Y-%m-%d %H:%i:%s') as finishedAt,
-        error_message as error,
-        output,
-        log_path as logPath
-        from timetable_crawler_task
+        select id,
+               trigger_type as triggerType,
+               status,
+               scope,
+               source,
+               success_account as successAccount,
+               attempts,
+               updated_count as updatedCount,
+               date_format(started_at, '%Y-%m-%d %H:%i:%s') as startedAt,
+               date_format(finished_at, '%Y-%m-%d %H:%i:%s') as finishedAt,
+               error_message as error,
+               output,
+               log_path as logPath
+        from timetable_import_job
         order by started_at desc, id desc
         limit #{limit}
     </select>
 
     <insert id="insertCrawlerTask" parameterType="java.util.Map">
-        insert into timetable_crawler_task (
-        id,
-        trigger_type,
-        status,
-        scope,
-        source,
-        success_account,
-        attempts,
-        updated_count,
-        started_at,
-        finished_at,
-        error_message,
-        output,
-        log_path
+        insert into timetable_import_job (
+            id, config_id, trigger_type, status, scope, source, success_account,
+            attempts, updated_count, started_at, finished_at, error_message, output, log_path
         ) values (
-        #{id},
-        #{triggerType},
-        #{status},
-        #{scope},
-        #{source},
-        #{successAccount},
-        #{attempts},
-        #{updatedCount},
-        #{startedAt},
-        #{finishedAt},
-        #{error},
-        #{output},
-        #{logPath}
+            #{id},
+            (select id from timetable_integration_config where config_key = 'lab-admin-class-timetable'),
+            #{triggerType}, #{status}, #{scope}, #{source}, #{successAccount},
+            #{attempts}, #{updatedCount}, #{startedAt}, #{finishedAt}, #{error}, #{output}, #{logPath}
         )
     </insert>
 
     <update id="updateCrawlerTask" parameterType="java.util.Map">
-        update timetable_crawler_task
-        set
-        status = #{status},
-        success_account = #{successAccount},
-        attempts = #{attempts},
-        updated_count = #{updatedCount},
-        finished_at = #{finishedAt},
-        error_message = #{error},
-        output = #{output},
-        log_path = #{logPath}
+        update timetable_import_job
+        set status = #{status},
+            success_account = #{successAccount},
+            attempts = #{attempts},
+            updated_count = #{updatedCount},
+            finished_at = #{finishedAt},
+            error_message = #{error},
+            output = #{output},
+            log_path = #{logPath}
         where id = #{id}
     </update>
 
     <delete id="clearCrawlerTasks">
-        delete from timetable_crawler_task
+        delete from timetable_import_job
     </delete>
 
-    <update id="createCredentialTableIfNotExists">
-        create table if not exists timetable_academic_credential (
-        credential_key varchar(80) primary key,
-        username_cipher text not null,
-        password_cipher text not null,
-        updated_at datetime default current_timestamp on update current_timestamp
-        ) engine=InnoDB default charset=utf8mb4
-    </update>
-
     <select id="getCrawlerCredential" resultType="java.util.Map">
-        select
-        credential_key as credentialKey,
-        username_cipher as usernameCipher,
-        password_cipher as passwordCipher,
-        date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
-        from timetable_academic_credential
-        where credential_key = #{credentialKey}
+        select config_key as credentialKey,
+               credential_username_cipher as usernameCipher,
+               credential_password_cipher as passwordCipher,
+               date_format(updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+        from timetable_integration_config
+        where config_key = #{credentialKey}
+          and credential_username_cipher is not null
+          and credential_password_cipher is not null
     </select>
 
     <insert id="upsertCrawlerCredential">
-        insert into timetable_academic_credential (
-        credential_key,
-        username_cipher,
-        password_cipher,
-        updated_at
+        insert into timetable_integration_config (
+            config_key, schedule_enabled, cron_expression,
+            credential_username_cipher, credential_password_cipher, updated_at
         ) values (
-        #{credentialKey},
-        #{usernameCipher},
-        #{passwordCipher},
-        now()
+            #{credentialKey}, 0, '0 0 2 * * *', #{usernameCipher}, #{passwordCipher}, now()
         )
         on duplicate key update
-        username_cipher = values(username_cipher),
-        password_cipher = values(password_cipher),
-        updated_at = now()
+            credential_username_cipher = values(credential_username_cipher),
+            credential_password_cipher = values(credential_password_cipher),
+            updated_at = now()
     </insert>
 
-    <delete id="deleteCrawlerCredential">
-        delete from timetable_academic_credential
-        where credential_key = #{credentialKey}
-    </delete>
-
+    <update id="deleteCrawlerCredential">
+        update timetable_integration_config
+        set credential_username_cipher = null,
+            credential_password_cipher = null,
+            updated_at = now()
+        where config_key = #{credentialKey}
+    </update>
 </mapper>

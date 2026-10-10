@@ -93,7 +93,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     @PostConstruct
     public void initializeCrawlerScheduler() {
         try {
-            ensureCrawlerTables();
             ensureDefaultCrawlerConfig();
             rescheduleCrawler();
         } catch (RuntimeException exception) {
@@ -103,7 +102,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public Map<String, Object> getCrawlerConfig() {
-        ensureCrawlerTables();
         ensureDefaultCrawlerConfig();
         Map<String, Object> config = normalizeCrawlerConfig(classTimetableMapper.getCrawlerConfig(CRAWLER_CONFIG_KEY));
         config.put("nextRunAt", computeNextRunAt(config));
@@ -113,14 +111,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public Map<String, Object> saveCrawlerConfig(Map<String, Object> payload) {
-        ensureCrawlerTables();
         boolean scheduleEnabled = toBoolean(payload == null ? null : payload.get("scheduleEnabled"), true);
         String cron = normalizeCron(stringValue(payload == null ? null : payload.get("cron")));
         String semester = trimToNull(stringValue(payload == null ? null : payload.get("semester")));
         if (semester == null) {
             throw new IllegalArgumentException("请选择课表学期");
         }
-        String semesterStartDate = normalizeSemesterStartDate(stringValue(payload == null ? null : payload.get("semesterStartDate")));
+        LocalDate semesterStartDate = normalizeSemesterStartDate(stringValue(payload == null ? null : payload.get("semesterStartDate")));
 
         classTimetableMapper.upsertCrawlerConfig(CRAWLER_CONFIG_KEY, scheduleEnabled, cron, semester, semesterStartDate);
         rescheduleCrawler();
@@ -129,7 +126,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public List<Map<String, Object>> listCrawlerTasks(Integer limit) {
-        ensureCrawlerTables();
         List<Map<String, Object>> tasks = classTimetableMapper.listCrawlerTasks(normalizeTaskLimit(limit));
         for (Map<String, Object> task : tasks) {
             if (isBlank(stringValue(task.get("output"))) && !isBlank(stringValue(task.get("logPath")))) {
@@ -141,7 +137,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public void clearCrawlerTasks() {
-        ensureCrawlerTables();
         classTimetableMapper.clearCrawlerTasks();
     }
 
@@ -288,7 +283,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             StoredCrawlerCredential credential,
             Path logPath
     ) {
-        ensureCrawlerTables();
         Map<String, Object> task = new LinkedHashMap<>();
         task.put("id", nextTaskId());
         task.put("triggerType", triggerType);
@@ -356,7 +350,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     private void insertSimpleCrawlerTask(String triggerType, String status, String error) {
         try {
-            ensureCrawlerTables();
             StoredCrawlerCredential credential = null;
             try {
                 credential = readStoredCrawlerCredential();
@@ -400,14 +393,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             }
         }
         return 0;
-    }
-
-    private void ensureCrawlerTables() {
-        classTimetableMapper.createCrawlerConfigTableIfNotExists();
-        if (classTimetableMapper.countCrawlerConfigSemesterColumn() == 0) {
-            classTimetableMapper.addCrawlerConfigSemesterColumn();
-        }
-        classTimetableMapper.createCrawlerTaskTableIfNotExists();
     }
 
     private void ensureDefaultCrawlerConfig() {
@@ -479,14 +464,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
-    private String normalizeSemesterStartDate(String value) {
+    private LocalDate normalizeSemesterStartDate(String value) {
         String semesterStartDate = trimToNull(value);
         if (semesterStartDate == null) {
             throw new IllegalArgumentException("请选择学期起始时间");
         }
         try {
-            LocalDate.parse(semesterStartDate);
-            return semesterStartDate;
+            return LocalDate.parse(semesterStartDate);
         } catch (RuntimeException exception) {
             throw new IllegalArgumentException("学期起始时间格式应为 YYYY-MM-DD", exception);
         }
@@ -554,7 +538,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
                 semesters.add(entity.getSemester());
             }
 
-            classTimetableMapper.createClassTimetableTableIfNotExists();
             for (String semester : semesters) {
                 classTimetableMapper.deleteBySemester(semester);
             }
@@ -655,7 +638,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public AcademicCredentialView getCrawlerCredential() {
-        ensureCredentialTable();
         Map<String, Object> row = classTimetableMapper.getCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
         return toCredentialView(row);
     }
@@ -668,7 +650,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             throw new IllegalArgumentException("请填写教务系统账号和密码");
         }
 
-        ensureCredentialTable();
         classTimetableMapper.upsertCrawlerCredential(
                 CRAWLER_CREDENTIAL_KEY,
                 encrypt(username),
@@ -679,12 +660,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
 
     @Override
     public void deleteCrawlerCredential() {
-        ensureCredentialTable();
         classTimetableMapper.deleteCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
     }
 
     private StoredCrawlerCredential readStoredCrawlerCredential() {
-        ensureCredentialTable();
         Map<String, Object> row = classTimetableMapper.getCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
         if (row == null || row.isEmpty()) {
             return null;
@@ -706,10 +685,6 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             view.setUpdatedAt(stringValue(row.get("updatedAt")));
         }
         return view;
-    }
-
-    private void ensureCredentialTable() {
-        classTimetableMapper.createCredentialTableIfNotExists();
     }
 
     private int runPythonScript(
