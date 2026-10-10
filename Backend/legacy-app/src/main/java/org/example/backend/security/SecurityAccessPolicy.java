@@ -65,6 +65,7 @@ public class SecurityAccessPolicy {
                 "/iot",
                 "/lab-software",
                 "/labs",
+                "/maintenance-records",
                 "/notices",
                 "/repairs",
                 "/reservations",

@@ -5,16 +5,16 @@
 <mapper namespace="org.example.backend.mapper.MaintenanceRecordMapper">
     <sql id="MaintenanceRecordColumns">
         r.id,
-        r.order_no as recordNo,
-        l.lab_name as lab,
-        d.device_name as device,
-        r.fault_type as maintenanceType,
-        date_format(r.created_at, '%Y-%m-%d %H:%i:%s') as maintenanceDate,
-        r.assignee_name as maintainer,
-        r.description as content,
-        r.result_desc as result,
-        r.contact as remark,
-        date_format(r.updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+        coalesce(r.order_no, '未填写') as recordNo,
+        coalesce(l.lab_name, '未填写') as lab,
+        coalesce(d.device_name, '未填写') as device,
+        coalesce(r.fault_type, '未填写') as maintenanceType,
+        coalesce(date_format(r.created_at, '%Y-%m-%d %H:%i:%s'), '未填写') as maintenanceDate,
+        coalesce(r.assignee_name, '未填写') as maintainer,
+        coalesce(r.description, '未填写') as content,
+        coalesce(r.result_desc, '未填写') as result,
+        coalesce(r.contact, '未填写') as remark,
+        coalesce(date_format(r.updated_at, '%Y-%m-%d %H:%i:%s'), '未填写') as updatedAt
     </sql>
 
     <select id="listMaintenanceRecords" resultType="org.example.backend.entity.MaintenanceRecord">
