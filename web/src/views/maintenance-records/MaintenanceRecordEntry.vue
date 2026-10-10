@@ -14,21 +14,31 @@ const record = ref({})
 const loading = ref(false)
 const recordId = computed(() => String(route.query.id || '').trim())
 const pageTitle = computed(() => (recordId.value ? '编辑维护记录' : '填写维护记录'))
+let loadRequestToken = 0
 
 const loadRecord = async () => {
-  if (!recordId.value) {
+  const requestedId = recordId.value
+  const requestToken = ++loadRequestToken
+
+  if (!requestedId) {
     record.value = {}
+    loading.value = false
     return
   }
 
   loading.value = true
   try {
-    record.value = await getMaintenanceRecord(recordId.value)
+    const loadedRecord = await getMaintenanceRecord(requestedId)
+    if (requestToken !== loadRequestToken || requestedId !== recordId.value) return
+    record.value = loadedRecord
   } catch (error) {
+    if (requestToken !== loadRequestToken || requestedId !== recordId.value) return
     record.value = {}
     ElMessage.error(error?.message || '维护记录加载失败')
   } finally {
-    loading.value = false
+    if (requestToken === loadRequestToken && requestedId === recordId.value) {
+      loading.value = false
+    }
   }
 }
 

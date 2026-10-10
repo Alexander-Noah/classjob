@@ -9,6 +9,7 @@ import { useTablePagination } from '../../composables/useTablePagination'
 import { exportTableToExcel } from '../../utils/exportExcel'
 import MaintenanceRecordDetail from './components/MaintenanceRecordDetail.vue'
 import MaintenanceRecordFilters from './components/MaintenanceRecordFilters.vue'
+import { toMaintenanceRecordExportRow } from './maintenanceRecordExport'
 
 defineOptions({ name: 'MaintenanceRecordList' })
 
@@ -84,7 +85,7 @@ const exportRecords = () => {
 
   const count = exportTableToExcel({
     filename: '维护记录',
-    rows: filteredRecords.value,
+    rows: filteredRecords.value.map(toMaintenanceRecordExportRow),
     columns: [
       { label: '记录编号', prop: 'recordNo' },
       { label: '实验室', prop: 'lab' },
