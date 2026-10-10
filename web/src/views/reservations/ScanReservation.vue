@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Calendar, Check, Clock, InfoFilled, Location, OfficeBuilding, Phone, Refresh, Tickets, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getStoredUser } from '../../api/services/auth'
+import { getStoredUser, isAuthenticated } from '../../api/services/auth'
 import { getScanReservationProfile, getScanReservationStatus, submitScanReservation } from '../../api/services/scanReservation'
 import { getAcademicWeek, loadTeachingCalendar } from '../../modules/teaching-calendar/teachingCalendar'
 import { createContactValidator, createMeaningfulTextValidator, getContactError, normalizeInputText } from '../../utils/reservationValidation'
@@ -541,13 +541,15 @@ const submitForm = async () => {
 }
 
 onMounted(async () => {
-  try {
-    teachingCalendar.value = await loadTeachingCalendar()
-  } catch (error) {
-    loadError.value = error?.message || '教学日历加载失败'
-    return
-  }
   await loadLabProfile()
+
+  if (isAuthenticated()) {
+    try {
+      teachingCalendar.value = await loadTeachingCalendar()
+    } catch (error) {
+      ElMessage.warning(error?.message || '教学日历加载失败')
+    }
+  }
 })
 onBeforeUnmount(stopStatusPolling)
 </script>
