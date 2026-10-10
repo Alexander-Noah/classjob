@@ -39,6 +39,18 @@ class TimetableBrowserProfileTest(unittest.TestCase):
         module = load_module(self)
         self.assertFalse(module.should_run_headless(False, True))
 
+    def test_expired_headless_session_requests_visible_reauthorization(self):
+        module = load_module(self)
+        self.assertTrue(module.should_retry_with_visible_authorization(True, False))
+        self.assertFalse(module.should_retry_with_visible_authorization(False, False))
+        self.assertFalse(module.should_retry_with_visible_authorization(True, True))
+
+    def test_crawler_restarts_in_same_run_after_session_expiry(self):
+        source = (MODULE_PATH.parent / "crawl_school_timetable.py").read_text(encoding="utf-8")
+        self.assertIn("except AcademicSessionRefreshRequired", source)
+        self.assertIn("driver = create_driver()", source)
+        self.assertIn("无需重新执行任务", source)
+
 
 if __name__ == "__main__":
     unittest.main()

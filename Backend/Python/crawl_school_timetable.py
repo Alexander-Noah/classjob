@@ -21,7 +21,12 @@ from timetable_navigation import (
     is_identity_login_page,
     wait_for_target_window,
 )
-from timetable_browser_profile import should_run_headless, should_use_manual_bootstrap
+from timetable_browser_profile import (
+    AcademicSessionRefreshRequired,
+    should_retry_with_visible_authorization,
+    should_run_headless,
+    should_use_manual_bootstrap,
+)
 from browser_interaction import click_with_pointer
 from timetable_semester import resolve_semester
 from academic_system_config import load_academic_system_config
@@ -523,10 +528,9 @@ def login_portal_and_enter_jw(driver):
     except AcademicAuthenticationRequired:
         if getattr(driver, "_timetable_headless", HEADLESS):
             PROFILE_AUTH_MARKER.unlink(missing_ok=True)
-            raise RuntimeError(
+            raise AcademicSessionRefreshRequired(
                 "爬虫保存的教务登录态已失效，授权标记已清除；"
-                "请再次执行抓取，脚本将自动打开可视浏览器，"
-                "在教务登录页完成验证码登录"
+                "需要切换到可视浏览器重新授权"
             )
 
         print("当前是教务登录页，正在填入账号密码；请在浏览器中输入验证码并点击登录。")
@@ -582,9 +586,22 @@ def main():
         raise RuntimeError("缺少教务系统账号或密码，请先在课表抓取页面保存账号配置")
 
     driver = create_driver()
+    authorization_retried = False
 
     try:
-        login_portal_and_enter_jw(driver)
+        try:
+            login_portal_and_enter_jw(driver)
+        except AcademicSessionRefreshRequired:
+            if not should_retry_with_visible_authorization(
+                    getattr(driver, "_timetable_headless", False),
+                    authorization_retried):
+                raise
+
+            authorization_retried = True
+            driver.quit()
+            print("教务会话已过期，正在自动重启可视浏览器；无需重新执行任务。")
+            driver = create_driver()
+            login_portal_and_enter_jw(driver)
 
         print("正在打开班级课表查询页面...")
 
