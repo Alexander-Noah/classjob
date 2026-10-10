@@ -24,19 +24,14 @@ from timetable_navigation import (
 from timetable_browser_profile import should_run_headless, should_use_manual_bootstrap
 from browser_interaction import click_with_pointer
 from timetable_semester import resolve_semester
+from academic_system_config import load_academic_system_config
 
 
 # =========================
 # 基础配置
 # =========================
 
-LOGIN_URL = "https://ehall.hniu.cn/new/index.html?browser=no"
-
-PORTAL_APP_ID = "6190757434612287"
-
-CLASS_PAGE_URL = "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb"
-
-RESULT_URL = "https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb_ifr"
+ACADEMIC_SYSTEM = load_academic_system_config()
 
 USERNAME = os.environ.get("TIMETABLE_USERNAME", "").strip()
 PASSWORD = os.environ.get("TIMETABLE_PASSWORD", "").strip()
@@ -318,7 +313,7 @@ def export_tables(html, output_excel):
 def build_big_table_payload():
     return {
         "xnxq01id": SEMESTER,
-        "kbjcmsid": "67FB3A89FDC146ADA865DCC81B9EC143",
+        "kbjcmsid": ACADEMIC_SYSTEM.timetable_mode_id,
 
         # 下面这些为空，表示不筛选，尽量查大范围
         "skyx": "",
@@ -363,20 +358,20 @@ def fetch_big_table_by_http(driver):
     user_agent = driver.execute_script("return navigator.userAgent") or "Mozilla/5.0"
 
     request = urllib.request.Request(
-        RESULT_URL,
+        ACADEMIC_SYSTEM.class_timetable_result_url,
         data=body,
         headers={
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "Cookie": cookie_header,
-            "Origin": "https://jw.hniu.cn",
-            "Referer": CLASS_PAGE_URL,
+            "Origin": ACADEMIC_SYSTEM.academic_origin,
+            "Referer": ACADEMIC_SYSTEM.class_timetable_url,
             "User-Agent": user_agent,
             "X-Requested-With": "XMLHttpRequest",
         },
         method="POST",
     )
 
-    print("正在用后端 HTTP 请求真实接口：", RESULT_URL)
+    print("正在用后端 HTTP 请求真实接口：", ACADEMIC_SYSTEM.class_timetable_result_url)
     with urllib.request.urlopen(request, timeout=120) as response:
         html = decode_response_body(response)
 
@@ -419,11 +414,11 @@ def fetch_big_table_by_browser(driver):
     .catch(error => callback("FETCH_ERROR:" + error.toString()));
     """
 
-    print("正在请求真实接口：", RESULT_URL)
+    print("正在请求真实接口：", ACADEMIC_SYSTEM.class_timetable_result_url)
 
     driver.set_script_timeout(120)
 
-    html = driver.execute_async_script(js_code, RESULT_URL, payload)
+    html = driver.execute_async_script(js_code, ACADEMIC_SYSTEM.class_timetable_result_url, payload)
 
     if html.startswith("FETCH_ERROR:"):
         raise Exception(html)
@@ -450,7 +445,7 @@ def login_portal_and_enter_jw(driver):
     """
     登录门户并进入教务系统
     """
-    driver.get(LOGIN_URL)
+    driver.get(ACADEMIC_SYSTEM.portal_url)
     if not getattr(driver, "_timetable_headless", HEADLESS):
         driver.maximize_window()
 
@@ -461,7 +456,7 @@ def login_portal_and_enter_jw(driver):
 
     # 1. 未登录时可能直接被重定向到 CAS，也可能先显示门户登录按钮。
     if not is_identity_login_page(driver.current_url, driver.title, driver.page_source):
-        if not portal_app_is_visible(driver, PORTAL_APP_ID):
+        if not portal_app_is_visible(driver, ACADEMIC_SYSTEM.portal_app_id):
             click_visible_element_by_id(driver, "ampLoginBtn", timeout=20)
             print("已点击门户登录按钮")
             WebDriverWait(driver, 20).until(
@@ -486,14 +481,14 @@ def login_portal_and_enter_jw(driver):
 
     try:
         WebDriverWait(driver, 45).until(
-            lambda current_driver: portal_app_is_visible(current_driver, PORTAL_APP_ID)
+            lambda current_driver: portal_app_is_visible(current_driver, ACADEMIC_SYSTEM.portal_app_id)
         )
     except Exception as error:
         raise RuntimeError(
             f"统一身份认证后未返回办事大厅，当前页面：{driver.title} {driver.current_url}"
         ) from error
 
-    target_host = urllib.parse.urlparse(CLASS_PAGE_URL).hostname
+    target_host = urllib.parse.urlparse(ACADEMIC_SYSTEM.class_timetable_url).hostname
     effective_headless = getattr(driver, "_timetable_headless", HEADLESS)
     manual_bootstrap = should_use_manual_bootstrap(effective_headless, PROFILE_AUTH_MARKER.exists())
 
@@ -503,7 +498,7 @@ def login_portal_and_enter_jw(driver):
         wait_for_target_window(driver, target_host, 300, target_url=None)
     else:
         # 已授权的持久化会话可在后台自动打开门户应用。
-        click_portal_app(driver, PORTAL_APP_ID)
+        click_portal_app(driver, ACADEMIC_SYSTEM.portal_app_id)
         print("已模拟点击门户中的教务系统应用")
 
         try:
@@ -517,7 +512,7 @@ def login_portal_and_enter_jw(driver):
             driver,
             target_host,
             NAVIGATION_TIMEOUT_SECONDS,
-            target_url=CLASS_PAGE_URL,
+            target_url=ACADEMIC_SYSTEM.class_timetable_url,
         )
 
     # 4. 已确认进入教务系统
@@ -594,7 +589,7 @@ def main():
         print("正在打开班级课表查询页面...")
 
         # 这里不需要点击左侧菜单，直接打开真实班级课表查询页面
-        driver.get(CLASS_PAGE_URL)
+        driver.get(ACADEMIC_SYSTEM.class_timetable_url)
 
         time.sleep(3)
 
