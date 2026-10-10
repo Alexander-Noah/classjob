@@ -19,6 +19,9 @@ public class SecurityAccessPolicy {
         String normalizedMethod = normalizeMethod(method);
         String normalizedRole = normalizeRole(roleCode);
 
+        if ("maintenance".equals(normalizedRole)) {
+            return false;
+        }
         if (isCommonAuthenticatedPath(normalizedPath)) {
             return true;
         }
@@ -32,9 +35,6 @@ public class SecurityAccessPolicy {
         }
         if ("teacher".equals(normalizedRole)) {
             return isTeacherPath(normalizedMethod, normalizedPath);
-        }
-        if ("maintenance".equals(normalizedRole)) {
-            return isMaintenancePath(normalizedMethod, normalizedPath);
         }
         if ("academic".equals(normalizedRole)) {
             return isAcademicPath(normalizedPath);
@@ -99,13 +99,6 @@ public class SecurityAccessPolicy {
             return "GET".equals(method) || ("POST".equals(method) && path.equals("/reservations"));
         }
         return "GET".equals(method) && startsWithAnySegment(path, "/class-timetables", "/notices");
-    }
-
-    private boolean isMaintenancePath(String method, String path) {
-        if (startsWithSegment(path, "/repairs")) {
-            return Set.of("GET", "POST", "PUT").contains(method);
-        }
-        return "GET".equals(method) && startsWithAnySegment(path, "/devices", "/device-inventory-records", "/notices");
     }
 
     private boolean isAcademicPath(String path) {

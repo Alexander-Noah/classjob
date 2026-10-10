@@ -23,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String AUTH_USERNAME_ATTRIBUTE = AuthenticationAttributes.USERNAME;
     public static final String AUTH_ROLE_ATTRIBUTE = AuthenticationAttributes.ROLE;
     public static final String AUTH_USER_ID_ATTRIBUTE = AuthenticationAttributes.USER_ID;
+    private static final String RETIRED_ROLE_MESSAGE = "角色已停用，请联系系统管理员重新分配角色";
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/login",
@@ -73,6 +74,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             JwtService.JwtClaims claims = jwtService.validateToken(token);
+            if ("maintenance".equals(claims.roleCode())) {
+                writeUnauthorized(response, RETIRED_ROLE_MESSAGE);
+                return;
+            }
             request.setAttribute(AUTH_USERNAME_ATTRIBUTE, claims.username());
             request.setAttribute(AUTH_ROLE_ATTRIBUTE, claims.roleCode());
             request.setAttribute(AUTH_USER_ID_ATTRIBUTE, claims.userId());

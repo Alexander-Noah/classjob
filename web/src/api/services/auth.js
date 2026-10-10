@@ -13,6 +13,7 @@ import {
 } from '../../constants/auth'
 
 const PROFILE_REFRESH_INTERVAL = 8000
+export const RETIRED_ROLE_MESSAGE = '角色已停用，请联系系统管理员重新分配角色'
 
 let lastProfileRefreshAt = 0
 
@@ -20,7 +21,6 @@ const ROLE_CODE_MAP = {
   系统管理员: 'systemAdmin',
   实验室管理员: 'labAdmin',
   教师: 'teacher',
-  维修人员: 'maintenance',
 }
 
 const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(([name, code]) => [code, name]))
@@ -30,12 +30,11 @@ const DEFAULT_PERMISSION_GROUPS = {
   labAdmin: [
     { group: '资源管理', items: ['实验室管理', '课表数据', '预约管理'] },
     { group: '资产管理', items: ['设备资产', '耗材库存', '设备状态'] },
-    { group: '环境运维', items: ['环境管理', '故障报修', '物联网扩展'] },
+    { group: '环境运维', items: ['环境管理', '维护记录填写', '维护记录查看', '物联网扩展'] },
     { group: '数据分析', items: ['使用记录', '统计分析', 'AI智能助手'] },
     { group: '系统通知', items: ['通知公告'] },
   ],
   teacher: [{ group: '个人工作', items: ['教师课表', '课程环境'] }],
-  maintenance: [{ group: '个人工作', items: ['维修工单'] }],
 }
 
 const MOCK_ROLE_USERS = {
@@ -69,16 +68,6 @@ const MOCK_ROLE_USERS = {
     roleName: '教师',
     permissions: JSON.stringify(DEFAULT_PERMISSION_GROUPS.teacher),
   },
-  maintenance: {
-    id: 'mock-maintenance',
-    username: 'repair01',
-    name: '周工',
-    realName: '周工',
-    role: '维修人员',
-    roleCode: 'maintenance',
-    roleName: '维修人员',
-    permissions: JSON.stringify(DEFAULT_PERMISSION_GROUPS.maintenance),
-  },
 }
 
 const MOCK_USERNAME_ROLE_MAP = {
@@ -93,10 +82,25 @@ const MOCK_USERNAME_ROLE_MAP = {
   academic01: 'teacher',
   jw: 'teacher',
   jiaowu: 'teacher',
-  repair: 'maintenance',
-  repair01: 'maintenance',
-  maintenance: 'maintenance',
 }
+
+const RETIRED_MOCK_USERNAMES = new Set(['repair', 'repair01', 'maintenance'])
+
+const isRetiredRoleValue = (value) => value === 'maintenance' || value === '维修人员'
+
+export function assertActiveSessionRole(role, user = {}) {
+  if ([role, user?.roleCode, user?.role, user?.roleName].some(isRetiredRoleValue)) {
+    const error = new Error(RETIRED_ROLE_MESSAGE)
+    error.code = 'ROLE_RETIRED'
+    throw error
+  }
+}
+
+const isRetiredRoleError = (error) =>
+  error?.code === 'ROLE_RETIRED' ||
+  error?.message === RETIRED_ROLE_MESSAGE ||
+  error?.userMessage === RETIRED_ROLE_MESSAGE ||
+  error?.response?.data?.message === RETIRED_ROLE_MESSAGE
 
 const MOCK_ACCOUNT_USERS = {
   academic01: {
@@ -129,6 +133,7 @@ const resolveRoleCode = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
 }
 
 const normalizeSessionUser = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
+  assertActiveSessionRole(fallbackRole, user)
   const roleCode = resolveRoleCode(user, fallbackRole)
   const roleName = user.roleName || ROLE_NAME_MAP[roleCode] || user.role || '实验室管理员'
   const realName = user.realName || user.name || user.username || roleName
@@ -266,6 +271,7 @@ export function persistRememberedLogin({ username, remember }) {
 }
 
 export function persistAuthSession({ role, token, user, remember = true }) {
+  assertActiveSessionRole(role, user)
   writeStorage(AUTH_STORAGE_KEY, 'true', remember)
   writeStorage(AUTH_ROLE_STORAGE_KEY, role || DEFAULT_AUTH_ROLE, remember)
   writeStorage(AUTH_TOKEN_STORAGE_KEY, token || '', remember)
@@ -275,6 +281,7 @@ export function persistAuthSession({ role, token, user, remember = true }) {
 export function updateStoredUser(user, role) {
   const remember = getAuthRememberMode()
   const previousUser = getStoredUser()
+  assertActiveSessionRole(role || getStoredRole(), { ...(previousUser || {}), ...(user || {}) })
   const nextUser = normalizeSessionUser({ ...(previousUser || {}), ...(user || {}) }, role || getStoredRole())
   const nextRole = role || nextUser.roleCode || getStoredRole()
 
@@ -345,6 +352,8 @@ export async function updateCurrentUserProfile(payload = {}) {
 export async function refreshCurrentUserSession({ force = false } = {}) {
   if (!isAuthenticated()) return null
 
+  assertActiveSessionRole(getStoredRole(), getStoredUser())
+
   const now = Date.now()
   if (!force && now - lastProfileRefreshAt < PROFILE_REFRESH_INTERVAL) {
     return getStoredUser()
@@ -359,7 +368,8 @@ export async function refreshCurrentUserSession({ force = false } = {}) {
 
     const nextUser = normalizeSessionUser(profileUser, getStoredRole())
     return updateStoredUser(nextUser, nextUser.roleCode)
-  } catch {
+  } catch (error) {
+    if (isRetiredRoleError(error)) throw error
     return storedUser
   }
 }
@@ -368,6 +378,9 @@ export async function loginByPassword(payload) {
   const shouldRemember = payload.remember !== false
 
   if (API_USE_MOCK) {
+    if (RETIRED_MOCK_USERNAMES.has(String(payload.username || '').trim().toLowerCase())) {
+      throw new Error(RETIRED_ROLE_MESSAGE)
+    }
     const role = payload.role || inferMockRoleByUsername(payload.username)
     const user = normalizeSessionUser(findMockUser({ role, username: payload.username }), role)
     const session = {

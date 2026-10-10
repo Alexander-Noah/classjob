@@ -207,7 +207,6 @@ onMounted(loadSettings)
                   <el-select v-model="basicConfig.noticeTarget" class="full-width">
                     <el-option label="实验室管理员" value="实验室管理员" />
                     <el-option label="教师" value="教师" />
-                    <el-option label="维修人员" value="维修人员" />
                   </el-select>
                 </el-form-item>
                 <el-form-item label="默认首页">

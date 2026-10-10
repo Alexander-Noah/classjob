@@ -72,13 +72,14 @@ class SecurityAccessPolicyTest {
     }
 
     @Test
-    void teacherAndMaintenanceRolesKeepOnlyTheirExpectedSurfaces() {
+    void teacherKeepsItsExpectedSurfaceAndRetiredMaintenanceRoleHasNone() {
         assertTrue(isAllowed("GET", "/class-timetables", "teacher"));
         assertTrue(isAllowed("POST", "/course-environment-requests", "teacher"));
         assertFalse(isAllowed("POST", "/class-timetables/crawl", "teacher"));
 
-        assertTrue(isAllowed("GET", "/repairs", "maintenance"));
-        assertTrue(isAllowed("POST", "/repairs/RO-2026/complete", "maintenance"));
+        assertFalse(isAllowed("GET", "/repairs", "maintenance"));
+        assertFalse(isAllowed("POST", "/repairs/RO-2026/complete", "maintenance"));
+        assertFalse(isAllowed("GET", "/dashboard", "maintenance"));
         assertFalse(isAllowed("DELETE", "/users/1", "maintenance"));
     }
 

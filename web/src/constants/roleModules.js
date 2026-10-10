@@ -49,7 +49,6 @@ export const TEACHER_COURSE_ENVIRONMENT_MODULE = {
     { title: '不满足时退回调整', date: '按需', type: 'warning' },
   ],
 }
-
 export const TEACHER_SCHEDULE_MODULE = {
   badge: '个人课表',
   recordName: '授课安排',
@@ -101,55 +100,3 @@ export const TEACHER_SCHEDULE_MODULE = {
   ],
 }
 
-export const MAINTENANCE_WORK_ORDER_MODULE = {
-  badge: '维修工单',
-  recordName: '工单',
-  primaryKey: 'ticket',
-  tableTitle: '我的维修工单',
-  actions: [
-    { label: '开始处理', type: 'primary', command: 'batchStatus', targetStatus: '处理中' },
-    { label: '导出工单', type: 'default', command: 'export' },
-  ],
-  statusOptions: [
-    { label: '待接单', type: 'danger' },
-    { label: '处理中', type: 'warning' },
-    { label: '待复核', type: 'primary' },
-    { label: '已完成', type: 'success' },
-  ],
-  defaultRecord: {
-    ticket: 'R20260424099',
-    device: '待确认设备',
-    lab: '待确认实验室',
-    fault: '待填写故障',
-    status: '待接单',
-    tagType: 'danger',
-  },
-  metrics: [
-    { label: '待接单', value: '3', trend: '高优先级 1 单' },
-    { label: '处理中', value: '6', trend: '今日需回填' },
-    { label: '已完成', value: '14', trend: '本周累计' },
-  ],
-  featureCards: [
-    { title: '查看分派工单', tag: '工单', type: 'primary', description: '仅展示分派给当前维修人员的待接单、处理中和已完成工单。' },
-    { title: '回填维修过程', tag: '过程', type: 'warning', description: '记录故障原因、处理步骤、更换配件和处理结果。' },
-    { title: '同步设备状态', tag: '设备', type: 'success', description: '维修后同步设备恢复、继续观察或停用状态，便于管理员闭环。' },
-  ],
-  tableColumns: [
-    { prop: 'ticket', label: '工单号', minWidth: 140 },
-    { prop: 'device', label: '设备', minWidth: 150 },
-    { prop: 'lab', label: '实验室', minWidth: 120 },
-    { prop: 'fault', label: '故障描述', minWidth: 180 },
-    { prop: 'status', label: '状态', minWidth: 100, type: 'tag' },
-  ],
-  records: [
-    { ticket: 'R20260424001', device: '核心交换机', lab: 'B203', fault: '端口掉线，网络不通', status: '处理中', tagType: 'warning' },
-    { ticket: 'R20260424005', device: '教师机', lab: 'A101', fault: '系统无法启动', status: '待接单', tagType: 'danger' },
-    { ticket: 'R20260423018', device: 'GPU 服务器', lab: 'C305', fault: '驱动异常，训练任务中断', status: '待复核', tagType: 'primary' },
-    { ticket: 'R20260422011', device: '显示器', lab: 'A102', fault: '屏幕无信号', status: '已完成', tagType: 'success' },
-  ],
-  timeline: [
-    { title: '接收管理员派单', date: '实时', type: 'primary' },
-    { title: '到场排查并回填过程', date: '处理时', type: 'warning' },
-    { title: '提交结果等待复核', date: '处理后', type: 'success' },
-  ],
-}

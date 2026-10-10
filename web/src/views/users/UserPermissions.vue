@@ -28,14 +28,13 @@ defineOptions({
   name: 'UserManagement',
 })
 
-const ROLE_OPTIONS = ['系统管理员', '实验室管理员', '教师', '维修人员', '教务人员']
+const ROLE_OPTIONS = ['系统管理员', '实验室管理员', '教师', '教务人员']
 const DEPARTMENT_OPTIONS = ['信息中心', '实验中心', '软件学院', '信息工程学院', '运维组', '教务处']
 
 const ROLE_CODE_MAP = {
   系统管理员: 'systemAdmin',
   实验室管理员: 'labAdmin',
   教师: 'teacher',
-  维修人员: 'maintenance',
   教务人员: 'academic',
 }
 
@@ -46,12 +45,11 @@ const PERMISSIONS_BY_ROLE = {
   实验室管理员: [
     { group: '资源管理', items: ['实验室管理', '课表数据', '预约管理'] },
     { group: '资产管理', items: ['设备资产', '耗材库存', '设备状态'] },
-    { group: '环境运维', items: ['环境管理', '故障报修', '物联网扩展'] },
+    { group: '环境运维', items: ['环境管理', '维护记录填写', '维护记录查看', '物联网扩展'] },
     { group: '数据分析', items: ['使用记录', '统计分析', 'AI智能助手'] },
     { group: '系统通知', items: ['通知公告'] },
   ],
   教师: [{ group: '个人工作', items: ['教师课表', '课程环境'] }],
-  维修人员: [{ group: '个人工作', items: ['维修工单'] }],
   教务人员: [{ group: '教务管理', items: ['课表数据', '通知公告'] }],
 }
 

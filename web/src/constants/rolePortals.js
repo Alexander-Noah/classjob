@@ -65,7 +65,6 @@ export const LAB_ADMIN_PORTAL = {
     { title: '更新实验室状态与库存提醒', date: '每日' },
   ],
 }
-
 export const SYSTEM_ADMIN_PORTAL = {
   badge: '系统管理员',
   title: '系统管理员工作台',
@@ -78,7 +77,7 @@ export const SYSTEM_ADMIN_PORTAL = {
     { label: '配置项', value: '36', trend: '已绑定权限' },
   ],
   actions: [
-    { title: '管理账号权限', tag: '账号', description: '维护系统管理员、实验室管理员、教师和维修人员账号与访问范围。' },
+    { title: '管理账号权限', tag: '账号', description: '维护系统管理员、实验室管理员、教师和教务人员账号与访问范围。' },
     { title: '配置平台参数', tag: '配置', description: '管理数据字典、日志策略、外部服务和平台基础参数。' },
     { title: '发布通知公告', tag: '通知', description: '向各角色发布维护通知、制度公告和系统提醒。' },
     { title: '查看平台统计', tag: '统计', description: '检查账号、权限、访问和全局运行数据，输出治理报表。' },
@@ -126,31 +125,3 @@ export const TEACHER_PORTAL = {
   ],
 }
 
-export const MAINTENANCE_PORTAL = {
-  badge: '维修人员',
-  title: '维修工单工作台',
-  description: '围绕派单维修流程，查看待处理工单、处理进度和维修结果归档。',
-  stats: [
-    { label: '待接单工单', value: '3', trend: '高优先级 1 单' },
-    { label: '处理中工单', value: '6', trend: '需今日回填' },
-    { label: '本周已完成', value: '14', trend: '平均耗时 18 分钟' },
-    { label: '待复核结果', value: '2', trend: '等待管理员确认' },
-  ],
-  actions: [
-    { title: '查看我的工单', tag: '工单', description: '集中查看分派给本人的待处理、处理中和已完成维修工单。' },
-    { title: '回填处理过程', tag: '处理', description: '记录故障原因、维修步骤、更换部件和处理结果。' },
-    { title: '同步设备状态', tag: '设备', description: '维修完成后同步设备恢复、停用或继续观察状态。' },
-  ],
-  recordsTitle: '当前维修任务',
-  columns: ['工单号', '设备', '实验室', '说明', '状态'],
-  records: [
-    ['R20260424001', '核心交换机', 'B203', '端口掉线，已到场排查', '处理中'],
-    ['R20260424005', '教师机', 'A101', '系统无法启动，待更换硬盘', '待接单'],
-    ['R20260423018', 'GPU 服务器', 'C305', '驱动恢复完成，待复核', '待复核'],
-  ],
-  timeline: [
-    { title: '接收管理员派单', date: '实时' },
-    { title: '回填维修过程与结果', date: '处理后' },
-    { title: '同步工单闭环状态', date: '每日' },
-  ],
-}

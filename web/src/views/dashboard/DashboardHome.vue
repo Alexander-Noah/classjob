@@ -66,7 +66,7 @@ const normalizePath = (path) => {
   if (path.startsWith('/lab-admin')) return path
   const redirectMap = {
     '/reservations': '/lab-admin/reservations',
-    '/repairs': '/lab-admin/repairs',
+    '/repairs': '/lab-admin/maintenance-records',
     '/records': '/lab-admin/records',
     '/environments': '/lab-admin/environments',
     '/device-status': DEVICE_STATUS_PATH,

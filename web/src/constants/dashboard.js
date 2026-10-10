@@ -53,7 +53,7 @@ export const DASHBOARD_OVERVIEW_MOCK = {
     { title: '设备资产', description: '资产台账与生命周期管理', path: '/lab-admin/devices', iconKey: 'device' },
     { title: '设备状态', description: '在线、故障与维护监测', path: '/lab-admin/device-status', iconKey: 'normal' },
     { title: '预约审批', description: '课程与自主预约审核', path: '/lab-admin/reservations', iconKey: 'reservation' },
-    { title: '故障报修', description: '故障流转与维修跟踪', path: '/lab-admin/repairs', iconKey: 'repair' },
+    { title: '维护记录查看', description: '设备维护历史与处理结果', path: '/lab-admin/maintenance-records', iconKey: 'repair' },
     { title: '使用记录', description: '上机、借用、巡检记录', path: '/lab-admin/records', iconKey: 'record' },
     { title: '统计分析', description: '运行指标与趋势分析', path: '/lab-admin/statistics', iconKey: 'statistics' },
   ],

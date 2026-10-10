@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { getStoredRole, getStoredUser, isAuthenticated, refreshCurrentUserSession } from '../api/services/auth'
+import { ElMessage } from 'element-plus'
+import {
+  assertActiveSessionRole,
+  clearAuthSession,
+  getStoredRole,
+  getStoredUser,
+  isAuthenticated,
+  refreshCurrentUserSession,
+} from '../api/services/auth'
 import {
   AUTH_ROLE_DEFAULT_PATH,
   DEFAULT_AUTH_ROLE,
@@ -48,7 +56,8 @@ const routeComponentMap = {
   LabAdminDeviceManagement: () => import('../views/devices/DeviceManagement.vue'),
   LabAdminEnvironmentManagement: () => import('../views/environments/EnvironmentManagement.vue'),
   LabAdminReservationManagement: () => import('../views/reservations/ReservationManagement.vue'),
-  LabAdminRepairManagement: () => import('../views/repairs/RepairManagement.vue'),
+  LabAdminMaintenanceRecordList: () => import('../views/maintenance-records/MaintenanceRecordList.vue'),
+  LabAdminMaintenanceRecordEntry: () => import('../views/maintenance-records/MaintenanceRecordEntry.vue'),
   LabAdminConsumableInventory: () => import('../views/consumables/ConsumableInventory.vue'),
   LabAdminUsageRecords: () => import('../views/records/UsageRecords.vue'),
   LabAdminDataStatistics: () => import('../views/statistics/DataStatistics.vue'),
@@ -70,9 +79,6 @@ const routeComponentMap = {
   TeacherCourseEnvironments: () => import('../views/teacher/TeacherCourseEnvironments.vue'),
   TeacherSchedule: () => import('../views/teacher/TeacherSchedule.vue'),
   TeacherClassTimetableData: () => import('../views/labs/LabAdminClassTimetableData.vue'),
-
-  MaintenancePortal: () => import('../views/roles/MaintenancePortal.vue'),
-  MaintenanceWorkOrders: () => import('../views/maintenance/MaintenanceWorkOrders.vue'),
 }
 
 const routes = [
@@ -113,6 +119,10 @@ const routes = [
         redirect: '/lab-admin/device-status',
       },
       {
+        path: 'lab-admin/repairs',
+        redirect: '/lab-admin/maintenance-records',
+      },
+      {
         path: 'forbidden',
         name: 'Forbidden',
         component: Forbidden,
@@ -144,7 +154,7 @@ const routes = [
   },
   {
     path: '/repairs',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/repairs`,
+    redirect: '/lab-admin/maintenance-records',
   },
   {
     path: '/records',
@@ -196,7 +206,11 @@ const routes = [
   },
   {
     path: '/work-orders',
-    redirect: `${ROLE_DEFAULT_PATHS.maintenance}/work-orders`,
+    redirect: '/forbidden',
+  },
+  {
+    path: '/maintenance/:pathMatch(.*)*',
+    redirect: '/forbidden',
   },
   {
     path: '/student',
@@ -253,12 +267,22 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (isPublicRoute && hasAuth && to.path === '/login') {
-    return getRedirectPath()
+  if (hasAuth) {
+    try {
+      assertActiveSessionRole(getStoredRole(), getStoredUser())
+      if (!isPublicRoute) {
+        await refreshCurrentUserSession({ force: true })
+      }
+    } catch (error) {
+      clearAuthSession()
+      const message = error?.userMessage || error?.message || '登录状态无效'
+      if (!error?.__handled) ElMessage.error(message)
+      return { path: '/login', query: { error: message } }
+    }
   }
 
-  if (hasAuth && !isPublicRoute) {
-    await refreshCurrentUserSession({ force: true })
+  if (isPublicRoute && hasAuth && to.path === '/login') {
+    return getRedirectPath()
   }
 
   const storedRole = getStoredRole()

@@ -24,13 +24,6 @@ export const ROLE_LAYOUTS = {
     },
     subtitle: '教师教学支持中心',
   },
-  maintenance: {
-    user: {
-      name: '周工',
-      role: '维修人员',
-    },
-    subtitle: '维修工单处理台',
-  },
 }
 
 export const getRoleLayout = (roleScope = DEFAULT_AUTH_ROLE) =>
@@ -66,10 +59,10 @@ const LAB_ADMIN_MENU_GROUPS = [
     children: ['/lab-admin/environments'],
   },
   {
-    index: 'lab-admin-repair-management',
-    title: '故障维修管理',
-    iconPath: '/lab-admin/repairs',
-    children: ['/lab-admin/repairs', '/lab-admin/notices'],
+    index: 'lab-admin-maintenance-management',
+    title: '设备维护管理',
+    iconPath: '/lab-admin/maintenance-records',
+    children: ['/lab-admin/maintenance-records', '/lab-admin/maintenance-records/new', '/lab-admin/notices'],
   },
   {
     index: 'lab-admin-data-intelligence',

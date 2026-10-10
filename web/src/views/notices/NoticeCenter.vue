@@ -18,7 +18,6 @@ const TARGET_OPTIONS = [
   { label: '实验室管理员', value: 'labAdmin' },
   { label: '系统管理员', value: 'systemAdmin' },
   { label: '教师', value: 'teacher' },
-  { label: '维修人员', value: 'maintenance' },
 ]
 
 const TYPE_OPTIONS = ['系统公告', '开放安排', '维护通知', '库存预警', '预约审批', '设备维修', '环境确认']

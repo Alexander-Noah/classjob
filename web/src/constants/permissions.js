@@ -15,7 +15,8 @@ export const PERMISSION_ROUTE_MAP = {
   设备资产: ['/lab-admin/devices'],
   环境管理: ['/lab-admin/environments'],
   预约管理: ['/lab-admin/reservations'],
-  故障报修: ['/lab-admin/repairs'],
+  维护记录填写: ['/lab-admin/maintenance-records/new'],
+  维护记录查看: ['/lab-admin/maintenance-records'],
   耗材库存: ['/lab-admin/consumables'],
   使用记录: ['/lab-admin/records'],
   统计分析: ['/lab-admin/statistics'],
@@ -29,10 +30,18 @@ export const PERMISSION_ROUTE_MAP = {
 
   教师课表: ['/teacher/schedule'],
   课程环境: ['/teacher/course-environments'],
-  维修工单: ['/maintenance/work-orders'],
 }
 
 const CONTROLLED_PATHS = Object.values(PERMISSION_ROUTE_MAP).flat()
+const EXACT_PERMISSION_PATHS = new Set([
+  '/lab-admin/maintenance-records',
+  '/lab-admin/maintenance-records/new',
+])
+const LEGACY_PERMISSION_ITEM_MAP = {
+  故障报修: ['维护记录填写', '维护记录查看'],
+}
+
+const expandPermissionItem = (item) => LEGACY_PERMISSION_ITEM_MAP[item] || [item]
 
 export function getAllowedPaths(permissionItems) {
   if (!Array.isArray(permissionItems) || !permissionItems.length) return []
@@ -48,7 +57,9 @@ export function isPathAllowed(path, permissionItems) {
   if (!isControlledPath(path)) return true
 
   const allowedPaths = getAllowedPaths(permissionItems)
-  return allowedPaths.some((allowed) => path.startsWith(allowed))
+  return allowedPaths.some((allowed) =>
+    EXACT_PERMISSION_PATHS.has(allowed) ? path === allowed : path.startsWith(allowed),
+  )
 }
 
 export function parseUserPermissions(user) {
@@ -58,11 +69,11 @@ export function parseUserPermissions(user) {
     const parsed = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
 
     if (Array.isArray(parsed)) {
-      return parsed.flatMap((group) => {
-        if (typeof group === 'string') return [group]
-        if (Array.isArray(group?.items)) return group.items
+      return [...new Set(parsed.flatMap((group) => {
+        if (typeof group === 'string') return expandPermissionItem(group)
+        if (Array.isArray(group?.items)) return group.items.flatMap(expandPermissionItem)
         return []
-      })
+      }))]
     }
   } catch {
     // 本地缓存异常时按无自定义权限处理，避免阻断正常登录。

@@ -14,6 +14,7 @@ import java.util.Objects;
 
 @Service
 public class UserServiceImpl implements UserService {
+    private static final String RETIRED_ROLE_MESSAGE = "角色已停用，请联系系统管理员重新分配角色";
     private final UserMapper userMapper;
     private final BusinessLoopService businessLoopService;
     private final PasswordService passwordService;
@@ -28,6 +29,7 @@ public class UserServiceImpl implements UserService {
     public UserEntity login(String username, String password) {
         UserEntity user = userMapper.login(username);
         if (user != null && passwordService.matches(password, user.getPassword()) && Integer.valueOf(1).equals(user.getStatus())) {
+            assertRoleActive(user.getRoleCode(), user.getRoleName());
             if (passwordService.needsRehash(user.getPassword())) {
                 String encodedPassword = passwordService.encode(password);
                 userMapper.updatePassword(user.getId(), encodedPassword);
@@ -40,7 +42,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity profile(String username) {
-        return userMapper.profile(username);
+        UserEntity user = userMapper.profile(username);
+        if (user != null) {
+            assertRoleActive(user.getRoleCode(), user.getRoleName());
+        }
+        return user;
     }
 
     @Override
@@ -192,6 +198,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public List<UserEntity> batchUpdateRole(List<Integer> ids, String roleName, String roleCode) {
         String nextRoleCode = roleCode == null || roleCode.isBlank() ? resolveRoleCode(roleName) : roleCode;
+        assertRoleActive(nextRoleCode, roleName);
         if (nextRoleCode == null || nextRoleCode.isBlank()) {
             nextRoleCode = "teacher";
         }
@@ -312,6 +319,7 @@ public class UserServiceImpl implements UserService {
         if (user.getRoleCode() == null || user.getRoleCode().isBlank()) {
             user.setRoleCode(resolveRoleCode(user.getRoleName()));
         }
+        assertRoleActive(user.getRoleCode(), user.getRoleName());
         if (user.getRoleCode() == null || user.getRoleCode().isBlank()) {
             user.setRoleCode("teacher");
         }
@@ -330,6 +338,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void saveRole(Integer userId, String roleCode) {
+        assertRoleActive(roleCode, null);
         userMapper.deleteUserRoles(userId);
         userMapper.insertUserRole(userId, roleCode == null || roleCode.isBlank() ? "teacher" : roleCode);
     }
@@ -351,11 +360,16 @@ public class UserServiceImpl implements UserService {
     private String defaultPermissions(String roleCode) {
         return switch (roleCode) {
             case "systemAdmin" -> "[{\"group\":\"平台治理\",\"items\":[\"用户管理\",\"系统设置\",\"激活管理\",\"平台统计\",\"通知公告\"]}]";
-            case "labAdmin" -> "[{\"group\":\"资源管理\",\"items\":[\"实验室管理\",\"课表数据\",\"预约管理\"]},{\"group\":\"资产管理\",\"items\":[\"设备资产\",\"耗材库存\",\"设备状态\"]},{\"group\":\"环境运维\",\"items\":[\"环境管理\",\"故障报修\",\"物联网扩展\"]},{\"group\":\"数据分析\",\"items\":[\"使用记录\",\"统计分析\",\"AI智能助手\"]},{\"group\":\"系统通知\",\"items\":[\"通知公告\"]}]";
-            case "maintenance" -> "[{\"group\":\"个人工作\",\"items\":[\"维修工单\"]}]";
+            case "labAdmin" -> "[{\"group\":\"资源管理\",\"items\":[\"实验室管理\",\"课表数据\",\"预约管理\"]},{\"group\":\"资产管理\",\"items\":[\"设备资产\",\"耗材库存\",\"设备状态\"]},{\"group\":\"环境运维\",\"items\":[\"环境管理\",\"维护记录填写\",\"维护记录查看\",\"物联网扩展\"]},{\"group\":\"数据分析\",\"items\":[\"使用记录\",\"统计分析\",\"AI智能助手\"]},{\"group\":\"系统通知\",\"items\":[\"通知公告\"]}]";
             case "academic" -> "[{\"group\":\"教务管理\",\"items\":[\"课表数据\",\"通知公告\"]}]";
             default -> "[{\"group\":\"个人工作\",\"items\":[\"教师课表\",\"课程环境\"]}]";
         };
+    }
+
+    private void assertRoleActive(String roleCode, String roleName) {
+        if ("maintenance".equals(roleCode) || "维修人员".equals(roleName)) {
+            throw new IllegalArgumentException(RETIRED_ROLE_MESSAGE);
+        }
     }
 
     private void recordUserEvent(String action, UserEntity user) {

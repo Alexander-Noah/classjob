@@ -12,5 +12,4 @@ export const AUTH_ROLE_DEFAULT_PATH = {
   labAdmin: '/lab-admin',
   systemAdmin: '/system-admin',
   teacher: '/teacher',
-  maintenance: '/maintenance',
 }

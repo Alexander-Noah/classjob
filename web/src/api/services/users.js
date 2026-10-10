@@ -7,7 +7,6 @@ const ROLE_CODE_MAP = {
   系统管理员: 'systemAdmin',
   实验室管理员: 'labAdmin',
   教师: 'teacher',
-  维修人员: 'maintenance',
   教务人员: 'academic',
 }
 
@@ -18,12 +17,11 @@ const PERMISSIONS_BY_ROLE = {
   实验室管理员: [
     { group: '资源管理', items: ['实验室管理', '课表数据', '预约管理'] },
     { group: '资产管理', items: ['设备资产', '耗材库存', '设备状态'] },
-    { group: '环境运维', items: ['环境管理', '故障报修', '物联网扩展'] },
+    { group: '环境运维', items: ['环境管理', '维护记录填写', '维护记录查看', '物联网扩展'] },
     { group: '数据分析', items: ['使用记录', '统计分析', 'AI智能助手'] },
     { group: '系统通知', items: ['通知公告'] },
   ],
   教师: [{ group: '个人工作', items: ['教师课表', '课程环境'] }],
-  维修人员: [{ group: '个人工作', items: ['维修工单'] }],
   教务人员: [{ group: '教务管理', items: ['课表数据', '通知公告'] }],
 }
 
@@ -90,24 +88,6 @@ const MOCK_USERS = [
     logs: [{ time: '今天 10:05', content: '查看本周课表', type: 'success' }],
   },
   {
-    id: 4,
-    username: 'repair01',
-    employeeNo: 'M-0042',
-    realName: '周工',
-    roleCode: 'maintenance',
-    roleName: '维修人员',
-    department: '运维组',
-    phone: '13700000004',
-    email: 'repair01@school.edu',
-    avatarUrl: '',
-    status: 1,
-    remark: '负责设备维修工单处理',
-    lastLogin: '今天 11:20',
-    createdAt: '2026-03-18 08:30',
-    permissions: JSON.stringify(PERMISSIONS_BY_ROLE.维修人员),
-    logs: [{ time: '今天 11:20', content: '接收维修派单', type: 'warning' }],
-  },
-  {
     id: 5,
     username: 'academic01',
     employeeNo: 'JW-0066',
@@ -151,7 +131,8 @@ const getRoleName = (record = {}) => record.roleName || ROLE_NAME_MAP[record.rol
 
 const getRoleCode = (record = {}) => record.roleCode || ROLE_CODE_MAP[getRoleName(record)] || 'teacher'
 
-const getDefaultPermissions = (roleName) => JSON.stringify(PERMISSIONS_BY_ROLE[roleName] || PERMISSIONS_BY_ROLE.教师)
+const getDefaultPermissions = (roleName) =>
+  JSON.stringify(roleName === '维修人员' ? [] : PERMISSIONS_BY_ROLE[roleName] || PERMISSIONS_BY_ROLE.教师)
 
 const ensureUserShape = (record = {}) => {
   const roleName = getRoleName(record)
