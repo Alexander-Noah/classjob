@@ -101,6 +101,10 @@ export const API_ENDPOINTS = {
     batch: '/repairs/batch',
     reset: '/repairs/reset',
   },
+  maintenanceRecords: {
+    list: '/maintenance-records',
+    detail: (id) => `/maintenance-records/${encodeURIComponent(id)}`,
+  },
   usageRecords: {
     list: '/usage-records',
     batch: '/usage-records/batch',
