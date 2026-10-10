@@ -3,13 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import campusBuildingImage from '../../../assets/digital-twin/campus-building.png'
-import {
-  labResourceService,
-  repairResourceService,
-  reservationResourceService,
-} from '../../../api/services/basicResources'
+import { labResourceService, reservationResourceService } from '../../../api/services/basicResources'
 import { listClassTimetables } from '../../../api/services/classTimetable'
 import { deviceAssetService } from '../../../api/services/deviceAssets'
+import { listMaintenanceRecords } from '../../../api/services/maintenanceRecords'
 
 defineOptions({
   name: 'RolePortalPage',
@@ -26,7 +23,7 @@ const twinLoading = ref(false)
 const liveLabs = ref([])
 const liveDevices = ref([])
 const liveReservations = ref([])
-const liveRepairs = ref([])
+const liveMaintenanceRecords = ref([])
 const liveTimetables = ref([])
 const activeModule = ref('系统总览')
 const selectedLabCode = ref('')
@@ -65,7 +62,6 @@ const getReservationLabText = (reservation = {}) =>
   reservation.lab || reservation.labName || reservation.labDisplayName || reservation.roomName || reservation.classroom || ''
 const getReservationDate = (reservation = {}) =>
   reservation.date || reservation.reservationDate || reservation.useDate || reservation.startDate || ''
-const getRepairStatus = (repair = {}) => repair.status || repair.repairStatus || ''
 const getLabId = (lab = {}) => lab.id || lab.labId || getLabCode(lab)
 
 const isLabMatched = (text, lab) => {
@@ -139,10 +135,10 @@ const selectedLabReservations = computed(() =>
     : [],
 )
 
-const selectedLabRepairs = computed(() =>
+const selectedLabMaintenanceRecords = computed(() =>
   selectedLab.value
-    ? liveRepairs.value.filter((repair) =>
-        isLabMatched(repair.labName || repair.lab || repair.roomName || repair.location, selectedLab.value),
+    ? liveMaintenanceRecords.value.filter((record) =>
+        isLabMatched(record.labName || record.lab || record.roomName || record.location, selectedLab.value),
       )
     : [],
 )
@@ -164,7 +160,7 @@ const selectedLabPanel = computed(() => {
       { label: '设备数量', value: `${selectedLabDevices.value.length || 0} 台` },
       { label: '在线设备', value: `${selectedLabDevices.value.filter(isDeviceOnline).length || 0} 台` },
       { label: '关联预约', value: `${selectedLabReservations.value.length || 0} 条` },
-      { label: '报修工单', value: `${selectedLabRepairs.value.length || 0} 条` },
+      { label: '维护记录', value: `${selectedLabMaintenanceRecords.value.length || 0} 条` },
     ],
   }
 })
@@ -236,15 +232,11 @@ const liveSummary = computed(() => {
 
 const liveEvents = computed(() => {
   const events = []
-  const abnormalRepairs = liveRepairs.value
-    .filter((repair) => !['已完成', '已关闭', '完成'].includes(getRepairStatus(repair)))
-    .slice(0, 2)
-
-  abnormalRepairs.forEach((repair) => {
+  liveMaintenanceRecords.value.slice(0, 2).forEach((record) => {
     events.push({
-      level: '关注',
-      title: repair.title || repair.deviceName || repair.device || '待处理报修',
-      desc: `${repair.labName || repair.lab || repair.roomName || '实验室'} · ${getRepairStatus(repair) || '处理中'}`,
+      level: '记录',
+      title: record.device || record.deviceName || record.content || '设备维护记录',
+      desc: `${record.lab || record.labName || record.roomName || '实验室'} · ${record.result || record.maintenanceDate || '已记录'}`,
     })
   })
 
@@ -274,18 +266,18 @@ const loadTwinData = async () => {
 
   twinLoading.value = true
   try {
-    const [labs, devices, reservations, repairs, timetables] = await Promise.all([
+    const [labs, devices, reservations, maintenanceRecords, timetables] = await Promise.all([
       labResourceService.list({ fallbackRecords: [] }),
       deviceAssetService.list({ fallbackRecords: [] }),
       reservationResourceService.list({ fallbackRecords: [] }),
-      repairResourceService.list({ fallbackRecords: [] }),
+      listMaintenanceRecords().catch(() => []),
       listClassTimetables({ limit: 5000 }).catch(() => []),
     ])
 
     liveLabs.value = Array.isArray(labs) ? labs : []
     liveDevices.value = Array.isArray(devices) ? devices : []
     liveReservations.value = Array.isArray(reservations) ? reservations : []
-    liveRepairs.value = Array.isArray(repairs) ? repairs : []
+    liveMaintenanceRecords.value = Array.isArray(maintenanceRecords) ? maintenanceRecords : []
     liveTimetables.value = Array.isArray(timetables) ? timetables : []
     selectedLabCode.value = selectedLabCode.value || buildLabNodes()[0]?.code || ''
   } finally {

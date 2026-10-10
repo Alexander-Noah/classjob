@@ -15,13 +15,31 @@ test('device asset endpoints are owned by the device asset service', () => {
 })
 
 test('feature pages read device assets through deviceAssetService only', () => {
-  const repairManagement = readSource('../src/composables/useRepairManagement.js')
   const rolePortal = readSource('../src/views/roles/components/RolePortalPage.vue')
 
-  assert.match(repairManagement, /deviceAssetService/)
-  assert.doesNotMatch(repairManagement, /deviceResourceService/)
   assert.match(rolePortal, /deviceAssetService/)
   assert.doesNotMatch(rolePortal, /deviceResourceService/)
+})
+
+test('retired repair-management frontend is removed from the runtime surface', () => {
+  const basicResources = readSource('../src/api/services/basicResources.js')
+  const rolePortal = readSource('../src/views/roles/components/RolePortalPage.vue')
+  const obsoleteFiles = [
+    '../src/composables/useRepairManagement.js',
+    '../src/views/repairs/RepairManagement.vue',
+    '../src/views/repairs/components/RepairDetailPanel.vue',
+    '../src/views/repairs/components/RepairEditorDialog.vue',
+    '../src/views/repairs/components/RepairFilterBar.vue',
+    '../src/views/repairs/components/RepairListTable.vue',
+    '../src/views/repairs/components/RepairManagementHeader.vue',
+  ]
+
+  assert.doesNotMatch(basicResources, /repairResourceService|RepairManagement/)
+  assert.match(rolePortal, /listMaintenanceRecords/)
+  assert.doesNotMatch(rolePortal, /repairResourceService/)
+  for (const file of obsoleteFiles) {
+    assert.equal(existsSync(new URL(file, import.meta.url)), false, file)
+  }
 })
 
 test('device asset feature stays separate from runtime device status ownership', () => {

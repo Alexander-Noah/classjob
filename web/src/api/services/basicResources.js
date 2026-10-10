@@ -14,12 +14,6 @@ export const reservationResourceService = createCollectionService({
   serverAuthoritativeRecords: true,
 })
 
-export const repairResourceService = createCollectionService({
-  resourceName: 'repairs',
-  storageKey: 'smart-lab:RepairManagement:records:v2',
-  endpoints: API_ENDPOINTS.repairs,
-})
-
 export const usageRecordResourceService = createCollectionService({
   resourceName: 'usage-records',
   storageKey: 'smart-lab:UsageRecords:records:v2',
