@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.MaintenanceRecordMapper">
+    <sql id="MaintenanceRecordColumns">
+        r.id,
+        r.order_no as recordNo,
+        l.lab_name as lab,
+        d.device_name as device,
+        r.fault_type as maintenanceType,
+        date_format(r.created_at, '%Y-%m-%d %H:%i:%s') as maintenanceDate,
+        r.assignee_name as maintainer,
+        r.description as content,
+        r.result_desc as result,
+        r.contact as remark,
+        date_format(r.updated_at, '%Y-%m-%d %H:%i:%s') as updatedAt
+    </sql>
+
+    <select id="listMaintenanceRecords" resultType="org.example.backend.entity.MaintenanceRecord">
+        select
+            <include refid="MaintenanceRecordColumns" />
+        from repair_order r
+        left join lab l on l.id = r.lab_id
+        left join device d on d.id = r.device_id
+        order by r.id desc
+    </select>
+
+    <select id="getMaintenanceRecord" resultType="org.example.backend.entity.MaintenanceRecord">
+        select
+            <include refid="MaintenanceRecordColumns" />
+        from repair_order r
+        left join lab l on l.id = r.lab_id
+        left join device d on d.id = r.device_id
+        where r.order_no = #{id} or cast(r.id as char) = #{id}
+        limit 1
+    </select>
+
+    <select id="findLabId" resultType="long">
+        select l.id
+        from lab l
+        where cast(l.id as char) = #{reference}
+           or l.lab_code = #{reference}
+           or l.lab_name = #{reference}
+           or concat(l.lab_code, ' ', l.lab_name) = #{reference}
+        limit 1
+    </select>
+
+    <select id="findDeviceId" resultType="long">
+        select d.id
+        from device d
+        where cast(d.id as char) = #{reference}
+           or d.device_code = #{reference}
+           or d.device_name = #{reference}
+        limit 1
+    </select>
+
+    <insert id="insertMaintenanceRecord">
+        insert into repair_order (
+            order_no,
+            lab_id,
+            device_id,
+            fault_type,
+            created_at,
+            assignee_name,
+            description,
+            result_desc,
+            contact
+        )
+        values (
+            #{record.recordNo},
+            #{labId},
+            #{deviceId},
+            #{record.maintenanceType},
+            #{record.maintenanceDate},
+            #{record.maintainer},
+            #{record.content},
+            #{record.result},
+            #{record.remark}
+        )
+    </insert>
+
+    <update id="updateMaintenanceRecord">
+        update repair_order
+        set
+            lab_id = #{labId},
+            device_id = #{deviceId},
+            fault_type = #{record.maintenanceType},
+            created_at = #{record.maintenanceDate},
+            assignee_name = #{record.maintainer},
+            description = #{record.content},
+            result_desc = #{record.result},
+            contact = #{record.remark},
+            updated_at = now()
+        where order_no = #{id} or cast(id as char) = #{id}
+    </update>
+
+    <delete id="deleteMaintenanceRecord">
+        delete from repair_order
+        where order_no = #{id} or cast(id as char) = #{id}
+    </delete>
+</mapper>
