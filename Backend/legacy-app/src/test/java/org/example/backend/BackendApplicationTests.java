@@ -19,7 +19,7 @@ class BackendApplicationTests {
         String source = Files.readString(Path.of("src/main/java/org/example/backend/BackendApplication.java"));
 
         int secretsIndex = source.indexOf("LocalDevelopmentSecretsInitializer.ensure");
-        int springRunIndex = source.indexOf("SpringApplication.run");
+        int springRunIndex = source.indexOf("application.run");
 
         assertTrue(secretsIndex >= 0);
         assertTrue(springRunIndex > secretsIndex);
