@@ -4,11 +4,6 @@ import re
 import os
 from pathlib import Path
 
-try:
-    import pymysql
-except ModuleNotFoundError:
-    pymysql = None
-
 
 # =========================
 # 文件配置
@@ -29,25 +24,6 @@ OUTPUT_CSV = OUTPUT_DIR / "班级课表标准数据.csv"
 SEMESTER = os.getenv("TIMETABLE_SEMESTER", "").strip()
 if not SEMESTER:
     raise RuntimeError("缺少 TIMETABLE_SEMESTER，无法保证课表与学期配置一致")
-
-
-# =========================
-# 数据库配置
-# =========================
-
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "root",
-    "database": "smart_lab_basic",
-    "charset": "utf8mb4"
-}
-
-TABLE_NAME = "class_timetable"
-
-# 是否删除当前学期旧数据，防止重复导入
-CLEAR_OLD_DATA = True
 
 
 WEEKDAYS = [
@@ -296,115 +272,6 @@ def parse_big_timetable(html):
 
 
 # =========================
-# 数据库操作
-# =========================
-
-def create_table_if_not_exists(cursor):
-    sql = f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-
-        semester VARCHAR(50) COMMENT '学年学期',
-        row_class_name VARCHAR(100) COMMENT '原始行班级',
-        class_name VARCHAR(100) COMMENT '班级',
-
-        weekday VARCHAR(20) COMMENT '星期',
-        section_code VARCHAR(20) COMMENT '节次代码',
-        section_text VARCHAR(50) COMMENT '节次',
-        start_section INT COMMENT '开始节次',
-        end_section INT COMMENT '结束节次',
-
-        course_name VARCHAR(200) COMMENT '课程名称',
-        teacher VARCHAR(100) COMMENT '教师',
-        week_raw VARCHAR(100) COMMENT '周次原文',
-        week_text VARCHAR(100) COMMENT '周次',
-        week_expanded VARCHAR(255) COMMENT '展开周次',
-        classroom VARCHAR(200) COMMENT '教室',
-
-        create_time DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    """
-
-    cursor.execute(sql)
-
-
-def import_dataframe_to_mysql(df):
-    if pymysql is None:
-        print("未安装 pymysql，已跳过 Python 直连 MySQL 导入；后端将使用 JDBC 导入标准 CSV。")
-        return 0
-
-    conn = pymysql.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-
-    try:
-        create_table_if_not_exists(cursor)
-
-        if CLEAR_OLD_DATA:
-            cursor.execute(
-                f"DELETE FROM {TABLE_NAME} WHERE semester = %s",
-                (SEMESTER,)
-            )
-            print(f"已清空 {SEMESTER} 的旧课表数据")
-
-        sql = f"""
-        INSERT INTO {TABLE_NAME} (
-            semester,
-            row_class_name,
-            class_name,
-            weekday,
-            section_code,
-            section_text,
-            start_section,
-            end_section,
-            course_name,
-            teacher,
-            week_raw,
-            week_text,
-            week_expanded,
-            classroom
-        ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-        )
-        """
-
-        count = 0
-
-        for _, row in df.iterrows():
-            values = (
-                clean(row.get("学年学期")),
-                clean(row.get("行班级")),
-                clean(row.get("班级")),
-                clean(row.get("星期")),
-                clean(row.get("节次代码")),
-                clean(row.get("节次")),
-                to_int(row.get("开始节次")),
-                to_int(row.get("结束节次")),
-                clean(row.get("课程名称")),
-                clean(row.get("教师")),
-                clean(row.get("周次原文")),
-                clean(row.get("周次")),
-                clean(row.get("展开周次")),
-                clean(row.get("教室")),
-            )
-
-            cursor.execute(sql, values)
-            count += 1
-
-        conn.commit()
-
-        print(f"导入完成，共导入 {count} 条课表数据")
-        return count
-
-    except Exception as e:
-        conn.rollback()
-        raise e
-
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# =========================
 # 主程序
 # =========================
 
@@ -438,11 +305,7 @@ def main():
     print("标准 Excel 已导出：", OUTPUT_EXCEL)
     print("标准 CSV 已导出：", OUTPUT_CSV)
 
-    print("正在导入 MySQL...")
-
-    import_dataframe_to_mysql(df)
-
-    print("全部完成")
+    print("标准化完成；数据库写入由后端 JDBC 导入模块统一执行。")
 
 
 if __name__ == "__main__":
