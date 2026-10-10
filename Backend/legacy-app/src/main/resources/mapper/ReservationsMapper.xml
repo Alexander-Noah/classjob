@@ -183,12 +183,11 @@
             )
         )
         where convert(t.weekday using utf8mb4) collate utf8mb4_general_ci =
-              convert(cast(#{weekday} as char) using utf8mb4_general_ci
-        and find_in_set(
+              convert(cast(#{weekday} as char) using utf8mb4) collate utf8mb4_general_ci
+          and find_in_set(
             convert(cast(#{week} as char) using utf8mb4) collate utf8mb4_general_ci,
             convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
-            ) &gt;0)
-          and find_in_set(cast(#{week} as char), t.week_expanded) &gt; 0
+          ) &gt; 0
           and (
 	              (
 	                  nullif(l.lab_code, '') is not null
