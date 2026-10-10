@@ -8,9 +8,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -89,6 +94,7 @@ class MaintenanceRecordContractTest {
         assertTrue(created.getRecordNo().matches("MR-\\d{14}-\\d{4}"));
         assertEquals(11L, mapper.insertedLabId);
         assertEquals(12L, mapper.insertedDeviceId);
+        assertEquals(11L, mapper.requestedDeviceLabId);
 
         mapper.labId = null;
         IllegalArgumentException error = assertThrows(
@@ -96,6 +102,34 @@ class MaintenanceRecordContractTest {
                 () -> new MaintenanceRecordServiceImpl(mapper).createMaintenanceRecord(validRecord())
         );
         assertTrue(error.getMessage().contains("lab not found"));
+    }
+
+    @Test
+    void deletionIsDisabledAndNeverDelegatesToTheMapper() {
+        RecordingMapper mapper = new RecordingMapper();
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> new MaintenanceRecordServiceImpl(mapper).deleteMaintenanceRecord("MR-001")
+        );
+
+        assertEquals(HttpStatus.GONE, error.getStatusCode());
+        assertTrue(error.getReason().contains("历史数据必须保留"));
+        assertFalse(mapper.deleteCalled);
+    }
+
+    @Test
+    void deviceResolutionIsScopedToItsLabAndExcludesSoftDeletedDevices() throws Exception {
+        String mapperXml = mapperXml();
+
+        assertTrue(mapperXml.contains("d.lab_id = #{labId}"));
+        assertTrue(mapperXml.contains("coalesce(d.deleted, 0) = 0"));
+        assertEquals(
+                Long.class,
+                MaintenanceRecordMapper.class
+                        .getDeclaredMethod("findDeviceId", String.class, Long.class)
+                        .getReturnType()
+        );
     }
 
     private Set<String> mappedEndpoints(Class<?> controller) {
@@ -124,6 +158,13 @@ class MaintenanceRecordContractTest {
         return Arrays.stream(values).map(value -> method + " " + value).toList();
     }
 
+    private String mapperXml() throws IOException {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("mapper/MaintenanceRecordMapper.xml")) {
+            assertTrue(input != null, "MaintenanceRecordMapper.xml should be on the test classpath");
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
     private MaintenanceRecord validRecord() {
         MaintenanceRecord record = new MaintenanceRecord();
         record.setLab("LAB-01");
@@ -142,7 +183,9 @@ class MaintenanceRecordContractTest {
         private Long deviceId = 12L;
         private Long insertedLabId;
         private Long insertedDeviceId;
+        private Long requestedDeviceLabId;
         private MaintenanceRecord saved;
+        private boolean deleteCalled;
 
         @Override
         public List<MaintenanceRecord> listMaintenanceRecords() {
@@ -160,7 +203,8 @@ class MaintenanceRecordContractTest {
         }
 
         @Override
-        public Long findDeviceId(String reference) {
+        public Long findDeviceId(String reference, Long labId) {
+            requestedDeviceLabId = labId;
             return deviceId;
         }
 
@@ -184,6 +228,7 @@ class MaintenanceRecordContractTest {
 
         @Override
         public int deleteMaintenanceRecord(String id) {
+            deleteCalled = true;
             saved = null;
             return 1;
         }

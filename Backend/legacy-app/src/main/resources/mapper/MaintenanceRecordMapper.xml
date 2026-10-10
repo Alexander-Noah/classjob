@@ -49,9 +49,13 @@
     <select id="findDeviceId" resultType="long">
         select d.id
         from device d
-        where cast(d.id as char) = #{reference}
-           or d.device_code = #{reference}
-           or d.device_name = #{reference}
+        where (
+            cast(d.id as char) = #{reference}
+            or d.device_code = #{reference}
+            or d.device_name = #{reference}
+        )
+          and d.lab_id = #{labId}
+          and coalesce(d.deleted, 0) = 0
         limit 1
     </select>
 

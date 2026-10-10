@@ -14,7 +14,7 @@ public interface MaintenanceRecordMapper {
 
     Long findLabId(@Param("reference") String reference);
 
-    Long findDeviceId(@Param("reference") String reference);
+    Long findDeviceId(@Param("reference") String reference, @Param("labId") Long labId);
 
     int insertMaintenanceRecord(
             @Param("record") MaintenanceRecord record,

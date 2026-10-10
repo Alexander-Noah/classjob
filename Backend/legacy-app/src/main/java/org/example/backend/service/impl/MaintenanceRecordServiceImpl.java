@@ -3,8 +3,10 @@ package org.example.backend.service.impl;
 import org.example.backend.entity.MaintenanceRecord;
 import org.example.backend.mapper.MaintenanceRecordMapper;
 import org.example.backend.service.MaintenanceRecordService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -57,11 +59,8 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
     }
 
     @Override
-    @Transactional
     public void deleteMaintenanceRecord(String id) {
-        if (maintenanceRecordMapper.deleteMaintenanceRecord(id) == 0) {
-            throw new IllegalArgumentException("maintenance record not found");
-        }
+        throw new ResponseStatusException(HttpStatus.GONE, "维护记录删除已停用，历史数据必须保留");
     }
 
     private ResolvedReferences validateAndResolve(MaintenanceRecord record) {
@@ -80,7 +79,7 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         if (labId == null) {
             throw new IllegalArgumentException("lab not found: " + record.getLab());
         }
-        Long deviceId = maintenanceRecordMapper.findDeviceId(record.getDevice());
+        Long deviceId = maintenanceRecordMapper.findDeviceId(record.getDevice(), labId);
         if (deviceId == null) {
             throw new IllegalArgumentException("device not found: " + record.getDevice());
         }
