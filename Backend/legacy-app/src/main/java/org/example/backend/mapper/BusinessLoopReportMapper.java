@@ -36,15 +36,7 @@ public interface BusinessLoopReportMapper {
 
     long countFaultDevices();
 
-    long countCourseEnvironmentRequests();
-
-    long countConfirmedCourseEnvironmentRequests();
-
-    long countEnvironmentTemplates();
-
-    long countConsumables();
-
-    long countLowStockConsumables();
+    long countLabs();
 
     long countNotices();
 

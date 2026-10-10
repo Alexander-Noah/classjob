@@ -44,11 +44,7 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         long normalDevices = businessLoopReportMapper.countNormalDevices();
         long maintenanceDevices = businessLoopReportMapper.countMaintenanceDevices();
         long faultDevices = businessLoopReportMapper.countFaultDevices();
-        long environmentRequests = businessLoopReportMapper.countCourseEnvironmentRequests();
-        long confirmedEnvironmentRequests = businessLoopReportMapper.countConfirmedCourseEnvironmentRequests();
-        long environmentTemplates = businessLoopReportMapper.countEnvironmentTemplates();
-        long consumables = businessLoopReportMapper.countConsumables();
-        long lowStockConsumables = businessLoopReportMapper.countLowStockConsumables();
+        long labTotal = businessLoopReportMapper.countLabs();
         long notices = businessLoopReportMapper.countNotices();
         long publishedNotices = businessLoopReportMapper.countPublishedNotices();
         long eventTotal = businessLoopReportMapper.countOperationEvents();
@@ -60,8 +56,6 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
                 chain("reservation-usage", "预约审核到使用记录", approvedReservations, usageFromReservation, pendingReservations, "预约管理"),
                 chain("usage-repair", "使用异常到报修工单", abnormalUsage, repairFromUsage, Math.max(0, abnormalUsage - repairFromUsage), "使用记录"),
                 chain("repair-device", "报修处理到设备状态", repairTotal, closedRepairs, activeRepairs, "故障报修"),
-                chain("environment-template", "课程环境到模板沉淀", environmentRequests, confirmedEnvironmentRequests, Math.max(0, environmentRequests - confirmedEnvironmentRequests), "环境管理"),
-                chain("consumable-notice", "库存预警到通知公告", consumables, Math.max(0, consumables - lowStockConsumables), lowStockConsumables, "耗材库存"),
                 chain("operation-event", "全模块操作到事件留痕", eventTotal, eventTotal, 0, "统一事件流水")
         );
 
@@ -70,16 +64,14 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
                 card("异常闭环率", rate(repairFromUsage, abnormalUsage), abnormalUsage, repairFromUsage, "异常使用自动生成工单"),
                 card("报修闭环率", rate(closedRepairs, repairTotal), repairTotal, closedRepairs, "工单完成后同步设备状态"),
                 card("设备健康率", rate(normalDevices, deviceTotal), deviceTotal, normalDevices, "故障和维护设备待处理"),
-                card("环境沉淀率", rate(confirmedEnvironmentRequests, environmentRequests), environmentRequests, confirmedEnvironmentRequests, "课程需求确认后形成模板"),
                 card("通知发布率", rate(publishedNotices, notices), notices, publishedNotices, "闭环动作可通过公告触达")
         );
 
         List<Map<String, Object>> actions = new ArrayList<>();
         addAction(actions, pendingReservations, "待审核预约", "处理预约审核后将自动写入使用记录", "/lab-admin/reservations");
         addAction(actions, Math.max(0, abnormalUsage - repairFromUsage), "异常使用未生成工单", "检查使用记录异常复核结果", "/lab-admin/records");
-        addAction(actions, activeRepairs, "处理中报修工单", "完成工单后设备状态会回到健康台账", "/lab-admin/repairs");
+        addAction(actions, activeRepairs, "待完善维护记录", "补充维护结果后设备状态会回到健康台账", "/lab-admin/maintenance-records");
         addAction(actions, faultDevices + maintenanceDevices, "非正常设备", "结合报修和物联网状态排查设备", "/lab-admin/devices");
-        addAction(actions, lowStockConsumables, "低库存耗材", "补货后更新库存并完成预警闭环", "/lab-admin/consumables");
 
         Map<String, Object> overview = new LinkedHashMap<>();
         overview.put("cards", cards);
@@ -95,8 +87,7 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
                 usageTotal,
                 repairTotal,
                 deviceTotal,
-                environmentTemplates,
-                consumables,
+                labTotal,
                 notices,
                 eventTotal
         ));
@@ -109,8 +100,7 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
             long usageTotal,
             long repairTotal,
             long deviceTotal,
-            long environmentTemplates,
-            long consumables,
+            long labTotal,
             long notices,
             long eventTotal
     ) {
@@ -119,8 +109,7 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         totals.put("usageRecords", usageTotal);
         totals.put("repairs", repairTotal);
         totals.put("devices", deviceTotal);
-        totals.put("environmentTemplates", environmentTemplates);
-        totals.put("consumables", consumables);
+        totals.put("labs", labTotal);
         totals.put("notices", notices);
         totals.put("events", eventTotal);
         return totals;
