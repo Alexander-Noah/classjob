@@ -1,8 +1,7 @@
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.DevicesEntity;
-import org.example.backend.mapper.DeviceInventoryRecordMapper;
-import org.example.backend.mapper.DeviceTransferRecordMapper;
+import org.example.backend.mapper.DeviceEventMapper;
 import org.example.backend.mapper.DevicesMapper;
 import org.example.backend.mapper.LabMapper;
 import org.example.backend.service.BusinessLoopService;
@@ -33,10 +32,7 @@ class DeviceImportSecurityTest {
     private DevicesMapper devicesMapper;
 
     @Mock
-    private DeviceInventoryRecordMapper inventoryMapper;
-
-    @Mock
-    private DeviceTransferRecordMapper transferMapper;
+    private DeviceEventMapper deviceEventMapper;
 
     @Mock
     private LabMapper labMapper;
@@ -98,7 +94,7 @@ class DeviceImportSecurityTest {
     }
 
     private DevicesServiceImpl service() {
-        return new DevicesServiceImpl(devicesMapper, inventoryMapper, transferMapper, labMapper, businessLoopService);
+        return new DevicesServiceImpl(devicesMapper, deviceEventMapper, labMapper, businessLoopService);
     }
 
     private MultipartFile file(String filename, long declaredSize, byte[] content) {

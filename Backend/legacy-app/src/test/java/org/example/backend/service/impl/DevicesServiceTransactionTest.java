@@ -3,8 +3,7 @@ package org.example.backend.service.impl;
 import org.example.backend.entity.DeviceInventoryRecordEntity;
 import org.example.backend.entity.DeviceTransferRecordEntity;
 import org.example.backend.entity.DevicesEntity;
-import org.example.backend.mapper.DeviceInventoryRecordMapper;
-import org.example.backend.mapper.DeviceTransferRecordMapper;
+import org.example.backend.mapper.DeviceEventMapper;
 import org.example.backend.mapper.DevicesMapper;
 import org.example.backend.mapper.LabMapper;
 import org.example.backend.service.BusinessLoopService;
@@ -23,7 +22,6 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,10 +38,7 @@ class DevicesServiceTransactionTest {
     private DevicesMapper devicesMapper;
 
     @Mock
-    private DeviceInventoryRecordMapper inventoryMapper;
-
-    @Mock
-    private DeviceTransferRecordMapper transferMapper;
+    private DeviceEventMapper deviceEventMapper;
 
     @Mock
     private LabMapper labMapper;
@@ -62,19 +57,19 @@ class DevicesServiceTransactionTest {
         savedTransfer.setDeviceId(7L);
         List<DeviceTransferRecordEntity> history = List.of(savedTransfer);
         when(devicesMapper.getDevicesById(7L)).thenReturn(before, after);
-        when(transferMapper.listRecordsByDeviceId(7L)).thenReturn(history);
+        when(deviceEventMapper.listTransferEvents(7L)).thenReturn(history);
 
         DevicesService.DeviceTransferRecordResult result = service().transferDevice(7L, requestedTransfer);
 
         assertSame(after, result.getDevice());
         assertSame(requestedTransfer, result.getRecord());
         assertSame(history, result.getRecords());
-        InOrder order = inOrder(devicesMapper, transferMapper);
+        InOrder order = inOrder(devicesMapper, deviceEventMapper);
         order.verify(devicesMapper).getDevicesById(7L);
         order.verify(devicesMapper).updateTransferState(eq(7L), any(), any(), any());
-        order.verify(transferMapper).insertRecord(same(requestedTransfer));
+        order.verify(deviceEventMapper).insertTransferEvent(same(requestedTransfer));
         order.verify(devicesMapper).getDevicesById(7L);
-        order.verify(transferMapper).listRecordsByDeviceId(7L);
+        order.verify(deviceEventMapper).listTransferEvents(7L);
     }
 
     @Test
@@ -87,23 +82,23 @@ class DevicesServiceTransactionTest {
         savedRecord.setDeviceId(6L);
         List<DeviceInventoryRecordEntity> history = List.of(savedRecord);
         when(devicesMapper.getDevicesById(6L)).thenReturn(before, after);
-        when(inventoryMapper.listRecordsByDeviceId(6L)).thenReturn(history);
+        when(deviceEventMapper.listInventoryEvents(6L)).thenReturn(history);
 
         DevicesService.DeviceInventoryRecordResult result = service().recordDeviceInventory(6L, requestedRecord);
 
         assertSame(after, result.getDevice());
         assertSame(requestedRecord, result.getRecord());
         assertSame(history, result.getRecords());
-        InOrder order = inOrder(devicesMapper, inventoryMapper);
+        InOrder order = inOrder(devicesMapper, deviceEventMapper);
         order.verify(devicesMapper).getDevicesById(6L);
-        order.verify(inventoryMapper).insertRecord(same(requestedRecord));
+        order.verify(deviceEventMapper).insertInventoryEvent(same(requestedRecord));
         order.verify(devicesMapper).updateInventoryState(6L, "2026-10-09");
         order.verify(devicesMapper).getDevicesById(6L);
-        order.verify(inventoryMapper).listRecordsByDeviceId(6L);
+        order.verify(deviceEventMapper).listInventoryEvents(6L);
     }
 
     @Test
-    void springProxyExposesTransferTransactionButNotInventoryTransaction() throws Exception {
+    void springProxyWrapsTransferAndInventoryStateChangesWithTheirEvents() throws Exception {
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         AnnotationTransactionAttributeSource attributes = new AnnotationTransactionAttributeSource();
@@ -119,27 +114,27 @@ class DevicesServiceTransactionTest {
         assertNotNull(attributes.getTransactionAttribute(
                 DevicesServiceImpl.class.getMethod("transferDevice", Long.class, DeviceTransferRecordEntity.class),
                 DevicesServiceImpl.class));
-        assertNull(attributes.getTransactionAttribute(
+        assertNotNull(attributes.getTransactionAttribute(
                 DevicesServiceImpl.class.getMethod("recordDeviceInventory", Long.class, DeviceInventoryRecordEntity.class),
                 DevicesServiceImpl.class));
 
         DevicesEntity transferBefore = device(7L, "DEV-007", "调拨前设备");
         DevicesEntity transferAfter = device(7L, "DEV-007", "调拨后设备");
         when(devicesMapper.getDevicesById(7L)).thenReturn(transferBefore, transferAfter);
-        when(transferMapper.listRecordsByDeviceId(7L)).thenReturn(List.of());
+        when(deviceEventMapper.listTransferEvents(7L)).thenReturn(List.of());
         proxy.transferDevice(7L, new DeviceTransferRecordEntity());
         verify(transactionManager).getTransaction(any());
 
         DevicesEntity inventoryBefore = device(6L, "DEV-006", "盘点前设备");
         DevicesEntity inventoryAfter = device(6L, "DEV-006", "盘点后设备");
         when(devicesMapper.getDevicesById(6L)).thenReturn(inventoryBefore, inventoryAfter);
-        when(inventoryMapper.listRecordsByDeviceId(6L)).thenReturn(List.of());
+        when(deviceEventMapper.listInventoryEvents(6L)).thenReturn(List.of());
         proxy.recordDeviceInventory(6L, new DeviceInventoryRecordEntity());
-        verify(transactionManager, org.mockito.Mockito.times(1)).getTransaction(any());
+        verify(transactionManager, org.mockito.Mockito.times(2)).getTransaction(any());
     }
 
     private DevicesServiceImpl service() {
-        return new DevicesServiceImpl(devicesMapper, inventoryMapper, transferMapper, labMapper, businessLoopService);
+        return new DevicesServiceImpl(devicesMapper, deviceEventMapper, labMapper, businessLoopService);
     }
 
     private DevicesEntity device(Long id, String code, String name) {

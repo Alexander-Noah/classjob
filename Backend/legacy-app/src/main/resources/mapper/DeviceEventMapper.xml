@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.DeviceEventMapper">
+    <insert id="insertInventoryEvent" useGeneratedKeys="true" keyProperty="id">
+        insert into device_event (
+            device_id, event_type, occurred_at, operator_name, result_status,
+            after_state, remark
+        ) values (
+            #{deviceId}, 'inventory', str_to_date(#{inspectedAt}, '%Y-%m-%d %H:%i:%s'),
+            #{inspectorName}, #{resultStatus},
+            json_object(
+                'deviceCode', #{deviceCode}, 'deviceName', #{deviceName},
+                'normal', #{normal}, 'missing', #{missing}, 'damaged', #{damaged}
+            ),
+            #{remark}
+        )
+    </insert>
+
+    <insert id="insertTransferEvent" useGeneratedKeys="true" keyProperty="id">
+        insert into device_event (
+            device_id, event_type, occurred_at, operator_name, result_status,
+            before_state, after_state, remark
+        ) values (
+            #{deviceId}, 'transfer', str_to_date(#{transferAt}, '%Y-%m-%d %H:%i:%s'),
+            #{operatorName}, #{transferType},
+            json_object(
+                'deviceCode', #{deviceCode}, 'deviceName', #{deviceName},
+                'labId', #{fromLabId}, 'labName', #{fromLabName},
+                'ownerUserId', #{fromOwnerUserId}, 'ownerName', #{fromOwnerName},
+                'location', #{fromLocation}
+            ),
+            json_object(
+                'deviceCode', #{deviceCode}, 'deviceName', #{deviceName},
+                'labId', #{toLabId}, 'labName', #{toLabName},
+                'ownerUserId', #{toOwnerUserId}, 'ownerName', #{toOwnerName},
+                'location', #{toLocation}
+            ),
+            #{reason}
+        )
+    </insert>
+
+    <select id="listInventoryEvents" resultType="org.example.backend.entity.DeviceInventoryRecordEntity">
+        select id,
+               device_id as deviceId,
+               json_unquote(json_extract(after_state, '$.deviceCode')) as deviceCode,
+               json_unquote(json_extract(after_state, '$.deviceName')) as deviceName,
+               operator_name as inspectorName,
+               date_format(occurred_at, '%Y-%m-%d %H:%i:%s') as inspectedAt,
+               result_status as resultStatus,
+               json_extract(after_state, '$.normal') as normal,
+               json_extract(after_state, '$.missing') as missing,
+               json_extract(after_state, '$.damaged') as damaged,
+               remark,
+               created_at as createdAt
+        from device_event
+        where event_type = 'inventory'
+        <if test="deviceId != null">
+            and device_id = #{deviceId}
+        </if>
+        order by occurred_at desc, id desc
+    </select>
+
+    <select id="listTransferEvents" resultType="org.example.backend.entity.DeviceTransferRecordEntity">
+        select id,
+               device_id as deviceId,
+               coalesce(json_unquote(json_extract(after_state, '$.deviceCode')),
+                        json_unquote(json_extract(before_state, '$.deviceCode'))) as deviceCode,
+               coalesce(json_unquote(json_extract(after_state, '$.deviceName')),
+                        json_unquote(json_extract(before_state, '$.deviceName'))) as deviceName,
+               result_status as transferType,
+               json_unquote(json_extract(before_state, '$.labId')) as fromLabId,
+               json_unquote(json_extract(before_state, '$.labName')) as fromLabName,
+               json_unquote(json_extract(after_state, '$.labId')) as toLabId,
+               json_unquote(json_extract(after_state, '$.labName')) as toLabName,
+               json_unquote(json_extract(before_state, '$.ownerUserId')) as fromOwnerUserId,
+               json_unquote(json_extract(before_state, '$.ownerName')) as fromOwnerName,
+               json_unquote(json_extract(after_state, '$.ownerUserId')) as toOwnerUserId,
+               json_unquote(json_extract(after_state, '$.ownerName')) as toOwnerName,
+               json_unquote(json_extract(before_state, '$.location')) as fromLocation,
+               json_unquote(json_extract(after_state, '$.location')) as toLocation,
+               remark as reason,
+               operator_name as operatorName,
+               date_format(occurred_at, '%Y-%m-%d %H:%i:%s') as transferAt,
+               created_at as createdAt
+        from device_event
+        where event_type = 'transfer'
+        <if test="deviceId != null">
+            and device_id = #{deviceId}
+        </if>
+        order by occurred_at desc, id desc
+    </select>
+</mapper>
