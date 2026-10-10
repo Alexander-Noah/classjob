@@ -186,6 +186,20 @@ def portal_app_is_visible(driver, app_id):
     return any(element.is_displayed() for element in driver.find_elements(By.CSS_SELECTOR, selector))
 
 
+def return_to_portal_window(driver):
+    portal_host = urllib.parse.urlparse(ACADEMIC_SYSTEM.portal_url).hostname
+    if len(driver.window_handles) > 1:
+        try:
+            driver.close()
+        except Exception:
+            pass
+    for handle in list(driver.window_handles):
+        driver.switch_to.window(handle)
+        if urllib.parse.urlparse(str(driver.current_url or "")).hostname == portal_host:
+            return
+    raise RuntimeError("无法返回办事大厅窗口进行人工授权")
+
+
 def click_portal_enter_service(driver, timeout=30):
     def find_visible_enter_button(current_driver):
         candidates = current_driver.find_elements(By.ID, "ampDetailEnter")
@@ -498,9 +512,28 @@ def login_portal_and_enter_jw(driver):
     manual_bootstrap = should_use_manual_bootstrap(effective_headless, PROFILE_AUTH_MARKER.exists())
 
     if manual_bootstrap:
-        print("首次授权：请在办事大厅中手动点击“教务系统”，再点击弹窗中的“进入服务”。")
-        print("脚本正在等待教务系统首页，最长等待 300 秒，请勿关闭自动化浏览器。")
-        wait_for_target_window(driver, target_host, 300, target_url=None)
+        automatic_visible_authorization = getattr(
+            driver,
+            "_timetable_automatic_visible_authorization",
+            False,
+        )
+        if automatic_visible_authorization:
+            try:
+                click_portal_app(driver, ACADEMIC_SYSTEM.portal_app_id)
+                print("可视恢复模式：已使用真实指针事件点击教务系统应用")
+                click_portal_enter_service(driver, timeout=30)
+                print("可视恢复模式：已点击进入服务")
+                wait_for_target_window(driver, target_host, 90, target_url=None)
+                ensure_academic_authenticated(driver.current_url, driver.title, driver.page_source)
+            except Exception as error:
+                print("可视自动续权未成功，已切换为人工点击兜底：", error)
+                return_to_portal_window(driver)
+                print("请点击“教务系统”，再点击弹窗中的“进入服务”。")
+                wait_for_target_window(driver, target_host, 300, target_url=None)
+        else:
+            print("首次授权：请在办事大厅中手动点击“教务系统”，再点击弹窗中的“进入服务”。")
+            print("脚本正在等待教务系统首页，最长等待 300 秒，请勿关闭自动化浏览器。")
+            wait_for_target_window(driver, target_host, 300, target_url=None)
     else:
         # 已授权的持久化会话可在后台自动打开门户应用。
         click_portal_app(driver, ACADEMIC_SYSTEM.portal_app_id)
@@ -558,9 +591,11 @@ def login_portal_and_enter_jw(driver):
 # 主程序
 # =========================
 
-def create_driver():
+def create_driver(automatic_visible_authorization=False):
     BROWSER_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     effective_headless = should_run_headless(HEADLESS, PROFILE_AUTH_MARKER.exists())
+    if automatic_visible_authorization:
+        effective_headless = False
     options = EdgeOptions()
     options.add_argument("--window-size=1440,1000")
     options.add_argument("--disable-gpu")
@@ -576,6 +611,7 @@ def create_driver():
 
     driver = webdriver.Edge(options=options)
     driver._timetable_headless = effective_headless
+    driver._timetable_automatic_visible_authorization = automatic_visible_authorization
     return driver
 
 
@@ -600,7 +636,7 @@ def main():
             authorization_retried = True
             driver.quit()
             print("教务会话已过期，正在自动重启可视浏览器；无需重新执行任务。")
-            driver = create_driver()
+            driver = create_driver(automatic_visible_authorization=True)
             login_portal_and_enter_jw(driver)
 
         print("正在打开班级课表查询页面...")
