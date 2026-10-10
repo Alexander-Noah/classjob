@@ -37,8 +37,11 @@ import java.nio.file.Path;
 public class BackendApplication {
 
     public static void main(String[] args) {
-        LocalDevelopmentSecretsInitializer.ensure(Path.of(""));
-        SpringApplication.run(BackendApplication.class, args);
+        SpringApplication application = new SpringApplication(BackendApplication.class);
+        if (LocalDevelopmentSecretsInitializer.ensure(Path.of(""))) {
+            application.setAdditionalProfiles("local");
+        }
+        application.run(args);
     }
 
 }

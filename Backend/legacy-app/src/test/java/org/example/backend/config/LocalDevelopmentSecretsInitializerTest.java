@@ -22,7 +22,7 @@ class LocalDevelopmentSecretsInitializerTest {
         );
         Files.writeString(projectDir.resolve("pom.xml"), "<project />");
 
-        ensureLocalDevelopmentSecrets(projectDir);
+        assertTrue(ensureLocalDevelopmentSecrets(projectDir));
 
         Path secretsPath = projectDir.resolve(".local-dev-secrets.properties");
         Properties properties = new Properties();
@@ -46,7 +46,7 @@ class LocalDevelopmentSecretsInitializerTest {
         );
         Files.writeString(projectDir.resolve("pom.xml"), "<project />");
 
-        ensureLocalDevelopmentSecrets(projectDir);
+        assertTrue(ensureLocalDevelopmentSecrets(projectDir));
 
         Path secretsPath = projectDir.resolve(".local-dev-secrets.properties");
         assertTrue(Files.exists(secretsPath), "aggregator startup should create the Backend-root secrets file");
@@ -65,7 +65,7 @@ class LocalDevelopmentSecretsInitializerTest {
     void doesNotCreateSecretsOutsideDevelopmentDirectory() throws Exception {
         Path tempDir = newTestDirectory();
 
-        ensureLocalDevelopmentSecrets(tempDir);
+        assertFalse(ensureLocalDevelopmentSecrets(tempDir));
 
         assertFalse(Files.exists(tempDir.resolve(".local-dev-secrets.properties")));
     }
@@ -76,9 +76,9 @@ class LocalDevelopmentSecretsInitializerTest {
         return directory;
     }
 
-    private void ensureLocalDevelopmentSecrets(Path workingDirectory) throws Exception {
+    private boolean ensureLocalDevelopmentSecrets(Path workingDirectory) throws Exception {
         Method ensure = Class.forName("org.example.backend.config.LocalDevelopmentSecretsInitializer")
                 .getMethod("ensure", Path.class);
-        ensure.invoke(null, workingDirectory);
+        return Boolean.TRUE.equals(ensure.invoke(null, workingDirectory));
     }
 }

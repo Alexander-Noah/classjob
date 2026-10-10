@@ -19,12 +19,12 @@ public final class LocalDevelopmentSecretsInitializer {
     private LocalDevelopmentSecretsInitializer() {
     }
 
-    public static void ensure(Path workingDirectory) {
+    public static boolean ensure(Path workingDirectory) {
         Path baseDirectory = workingDirectory == null
                 ? Path.of("").toAbsolutePath().normalize()
                 : workingDirectory.toAbsolutePath().normalize();
         if (!isDevelopmentDirectory(baseDirectory)) {
-            return;
+            return false;
         }
 
         Path secretsPath = baseDirectory.resolve(SECRETS_FILE);
@@ -43,6 +43,7 @@ public final class LocalDevelopmentSecretsInitializer {
         if (changed) {
             writeSecrets(secretsPath, secrets);
         }
+        return true;
     }
 
     private static boolean isDevelopmentDirectory(Path directory) {

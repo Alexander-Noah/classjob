@@ -18,6 +18,9 @@ class LocalDevelopmentLaunchScriptTest {
         String gitignore = Files.readString(Path.of("..", "..", ".gitignore"));
         String applicationYaml = Files.readString(Path.of("src/main/resources/application.yaml"));
         String localApplicationYaml = Files.readString(Path.of("src/main/resources/application-local.yaml"));
+        String backendApplication = Files.readString(
+                Path.of("src/main/java/org/example/backend/BackendApplication.java")
+        );
 
         assertAll(
                 () -> assertTrue(script.contains("SMART_LAB_JWT_SECRET")),
@@ -32,7 +35,9 @@ class LocalDevelopmentLaunchScriptTest {
                 () -> assertFalse(applicationYaml.contains("optional:file:.local-dev-secrets.properties")),
                 () -> assertFalse(applicationYaml.contains("SMART_LAB_DB_PASSWORD:root")),
                 () -> assertTrue(localApplicationYaml.contains("optional:file:.local-dev-secrets.properties")),
-                () -> assertTrue(localApplicationYaml.contains("SMART_LAB_DB_PASSWORD:root"))
+                () -> assertTrue(localApplicationYaml.contains("SMART_LAB_DB_PASSWORD:root")),
+                () -> assertTrue(backendApplication.contains("setAdditionalProfiles(\"local\")"),
+                        "IDE launches from the Backend source directory must activate local configuration")
         );
     }
 }
