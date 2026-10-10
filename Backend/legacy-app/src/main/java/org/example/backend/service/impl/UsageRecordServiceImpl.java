@@ -72,11 +72,20 @@ public class UsageRecordServiceImpl implements UsageRecordService {
     }
 
     private void normalizeRecord(UsageRecordEntity record) {
+        if (record.getUserId() == null && record.getPerson() != null && !record.getPerson().isBlank()) {
+            record.setUserId(usageRecordMapper.findUniqueUserIdByRealName(record.getPerson()));
+        }
+        if (record.getLabId() == null && record.getResource() != null && !record.getResource().isBlank()) {
+            record.setLabId(usageRecordMapper.findUniqueLabIdByNameOrCode(record.getResource()));
+        }
         if (record.getUseTime() == null) {
             record.setUseTime(LocalDateTime.now());
         }
         if (record.getStatus() == null || record.getStatus().isBlank()) {
             record.setStatus("正常");
+        }
+        if (record.getSourceType() == null || record.getSourceType().isBlank()) {
+            record.setSourceType("台账");
         }
     }
 }

@@ -9,7 +9,7 @@
         d.device_name as deviceName,
         d.category,
         d.lab_id as labId,
-        coalesce(d.lab_name, l.lab_name) as labName,
+        l.lab_name as labName,
         d.location,
         d.owner_user_id as ownerUserId,
         coalesce(u.real_name, u.username) as ownerUsername,
@@ -50,7 +50,7 @@
             and d.lab_id = #{labId}
         </if>
         <if test="labName != null and labName != ''">
-            and coalesce(d.lab_name, l.lab_name) = #{labName}
+            and l.lab_name = #{labName}
         </if>
         <if test="category != null and category != ''">
             and d.category = #{category}
@@ -66,7 +66,6 @@
             device_name,
             category,
             lab_id,
-            lab_name,
             location,
             owner_user_id,
             quantity,
@@ -90,7 +89,6 @@
             #{deviceName},
             #{category},
             #{labId},
-            #{labName},
             #{location},
             #{ownerUserId},
             #{quantity},
@@ -118,7 +116,6 @@
             device_name = #{devices.deviceName},
             category = #{devices.category},
             lab_id = #{devices.labId},
-            lab_name = #{devices.labName},
             location = #{devices.location},
             owner_user_id = #{devices.ownerUserId},
             quantity = #{devices.quantity},

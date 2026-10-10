@@ -74,12 +74,16 @@ public class BusinessLoopServiceImpl implements BusinessLoopService {
         }
 
         UsageRecordEntity usageRecord = new UsageRecordEntity();
+        usageRecord.setUserId(reservation.getApplicantUserId());
+        usageRecord.setLabId(reservation.getLabId());
         usageRecord.setPerson(firstNonBlank(reservation.getApplicantName(), reservation.getApplicant()));
         usageRecord.setResource(reservation.getLab());
         usageRecord.setScene(firstNonBlank(reservation.getScene(), "预约"));
         usageRecord.setUseTime(resolveReservationUseTime(reservation));
         usageRecord.setStatus(STATUS_NORMAL);
         usageRecord.setRemark("由预约审批通过自动生成，预约编号" + reservation.getId());
+        usageRecord.setSourceType("预约");
+        usageRecord.setSourceId(String.valueOf(reservation.getId()));
 
         int exists = usageRecordMapper.countUsageRecordBySignature(
                 usageRecord.getPerson(),

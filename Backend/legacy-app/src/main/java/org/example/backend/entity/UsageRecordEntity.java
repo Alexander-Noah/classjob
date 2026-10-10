@@ -12,6 +12,8 @@ public class UsageRecordEntity {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private Long id;
+    private Long userId;
+    private Long labId;
     private String person;
     private String resource;
     private String scene;
@@ -33,6 +35,7 @@ public class UsageRecordEntity {
     private String abnormalReason;
     private String note;
     private String sourceType;
+    private String sourceId;
     private Boolean readonly;
 
     public String getTime() {
