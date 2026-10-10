@@ -18,6 +18,13 @@ spring:
     password: ${SMART_LAB_DB_PASSWORD}
     # MySQL JDBC 驱动类。
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: ${SMART_LAB_FLYWAY_ENABLED:false}
+    baseline-on-migrate: true
+    baseline-version: 20261009
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
 
 # =============================
 # MyBatis 配置
