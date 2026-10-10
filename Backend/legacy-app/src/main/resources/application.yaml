@@ -98,7 +98,7 @@ smart-lab:
       # 明确允许的前端来源，多个地址用英文逗号分隔。
       allowed-origins: ${SMART_LAB_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
       # 开发调试来源匹配规则；生产环境建议收紧为正式域名。
-      allowed-origin-patterns: ${SMART_LAB_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,tauri://localhost,http://tauri.localhost}
+      allowed-origin-patterns: ${SMART_LAB_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,http://10.*:*,http://192.168.*:*,http://172.16.*:*,http://172.17.*:*,http://172.18.*:*,http://172.19.*:*,http://172.20.*:*,http://172.21.*:*,http://172.22.*:*,http://172.23.*:*,http://172.24.*:*,http://172.25.*:*,http://172.26.*:*,http://172.27.*:*,http://172.28.*:*,http://172.29.*:*,http://172.30.*:*,http://172.31.*:*,tauri://localhost,http://tauri.localhost}
     headers:
       # 是否启用统一安全响应头。
       enabled: true
