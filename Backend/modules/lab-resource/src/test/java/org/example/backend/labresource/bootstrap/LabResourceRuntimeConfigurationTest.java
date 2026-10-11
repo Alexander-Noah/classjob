@@ -52,6 +52,14 @@ class LabResourceRuntimeConfigurationTest {
     }
 
     @Test
+    void suppliesEmptyMetadataFallbacksWhenOwningModulesAreNotInstalled() {
+        LabResourceRuntimeConfiguration configuration = new LabResourceRuntimeConfiguration();
+
+        assertTrue(configuration.missingManagerNamePort().findNames(java.util.Set.of(1L)).isEmpty());
+        assertTrue(configuration.missingDeviceCountPort().countByLabIds(java.util.Set.of(1L)).isEmpty());
+    }
+
+    @Test
     void catalogCanBeProxiedForOneReadOnlyTransaction() {
         try (var context = new AnnotationConfigApplicationContext(TransactionProxyConfiguration.class)) {
             assertNotNull(context.getBean(LabCatalogQuery.class));

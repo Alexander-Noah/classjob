@@ -11,6 +11,7 @@ import org.example.backend.labresource.application.port.out.DeviceCountPort;
 import org.example.backend.labresource.application.port.out.LabRecordReadPort;
 import org.example.backend.labresource.application.port.out.ManagerNamePort;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -20,6 +21,18 @@ import org.springframework.context.annotation.Primary;
 @MapperScan(basePackageClasses = LabRecordReadMapper.class)
 @Import(LabResourceModuleConfiguration.class)
 public class LabResourceRuntimeConfiguration {
+    @Bean
+    @ConditionalOnMissingBean(ManagerNamePort.class)
+    public ManagerNamePort missingManagerNamePort() {
+        return managerUserIds -> java.util.Map.of();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DeviceCountPort.class)
+    public DeviceCountPort missingDeviceCountPort() {
+        return labIds -> java.util.Map.of();
+    }
+
     @Bean
     public LabRecordReadPort labRecordReadPort(LabRecordReadMapper mapper) {
         return new MyBatisLabRecordReadAdapter(mapper);
