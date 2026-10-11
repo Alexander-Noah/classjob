@@ -141,6 +141,26 @@ class DeviceModuleBoundaryTest {
     }
 
     @Test
+    void deviceLifecycleUsesConsolidatedEventMapper() throws IOException {
+        String service = readSource("service", "impl", "DevicesServiceImpl.java");
+        String mapper = readSource("mapper", "DeviceEventMapper.java");
+        String mapperXml = readResource("mapper", "DeviceEventMapper.xml");
+
+        assertAll(
+                () -> assertTrue(service.contains("DeviceEventMapper")),
+                () -> assertFalse(service.contains("DeviceInventoryRecordMapper")),
+                () -> assertFalse(service.contains("DeviceTransferRecordMapper")),
+                () -> assertTrue(mapper.contains("insertInventoryEvent")),
+                () -> assertTrue(mapper.contains("insertTransferEvent")),
+                () -> assertTrue(mapper.contains("listInventoryEvents")),
+                () -> assertTrue(mapper.contains("listTransferEvents")),
+                () -> assertTrue(mapperXml.contains("from device_event")),
+                () -> assertFalse(mapperXml.contains("device_inventory_record")),
+                () -> assertFalse(mapperXml.contains("device_transfer_record"))
+        );
+    }
+
+    @Test
     void repairSyncUpdatesOnlyAssetMaintenanceStateAndNeverRuntimeHeartbeatFields() throws IOException {
         String service = readSource("service", "impl", "BusinessLoopServiceImpl.java");
         String mapper = readSource("mapper", "DevicesMapper.java");
@@ -226,21 +246,46 @@ class DeviceModuleBoundaryTest {
     }
 
     private String readSource(String... parts) throws IOException {
-        Path path = Path.of("src", "main", "java", "org", "example", "backend");
-        for (String part : parts) {
-            path = path.resolve(part);
-        }
+        Path path = resolveModulePath("src", "main", "java", "org", "example", "backend", parts);
         assertTrue(Files.exists(path), path + " should exist");
         return Files.readString(path);
     }
 
     private String readResource(String... parts) throws IOException {
-        Path path = Path.of("src", "main", "resources");
-        for (String part : parts) {
-            path = path.resolve(part);
-        }
+        Path path = resolveModulePath("src", "main", "resources", parts);
         assertTrue(Files.exists(path), path + " should exist");
         return Files.readString(path);
+    }
+
+    private Path resolveModulePath(String first, String second, String third, String fourth, String fifth,
+                                   String sixth, String... remaining) {
+        Path modulePath = Path.of(first, second, third, fourth, fifth, sixth);
+        for (String part : remaining) {
+            modulePath = modulePath.resolve(part);
+        }
+        if (Files.exists(modulePath)) {
+            return modulePath;
+        }
+        Path reactorPath = Path.of("legacy-app", first, second, third, fourth, fifth, sixth);
+        for (String part : remaining) {
+            reactorPath = reactorPath.resolve(part);
+        }
+        return reactorPath;
+    }
+
+    private Path resolveModulePath(String first, String second, String third, String... remaining) {
+        Path modulePath = Path.of(first, second, third);
+        for (String part : remaining) {
+            modulePath = modulePath.resolve(part);
+        }
+        if (Files.exists(modulePath)) {
+            return modulePath;
+        }
+        Path reactorPath = Path.of("legacy-app", first, second, third);
+        for (String part : remaining) {
+            reactorPath = reactorPath.resolve(part);
+        }
+        return reactorPath;
     }
 
     private String between(String value, String startMarker, String endMarker) {

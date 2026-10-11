@@ -4,8 +4,7 @@ import org.example.backend.entity.DeviceInventoryRecordEntity;
 import org.example.backend.entity.DeviceTransferRecordEntity;
 import org.example.backend.entity.DevicesEntity;
 import org.example.backend.entity.LabEntity;
-import org.example.backend.mapper.DeviceInventoryRecordMapper;
-import org.example.backend.mapper.DeviceTransferRecordMapper;
+import org.example.backend.mapper.DeviceEventMapper;
 import org.example.backend.mapper.DevicesMapper;
 import org.example.backend.mapper.LabMapper;
 import org.example.backend.service.BusinessLoopService;
@@ -69,21 +68,18 @@ public class DevicesServiceImpl implements DevicesService {
     private static final long MAX_XLSX_TOTAL_BYTES = 10L * 1024 * 1024;
 
     private final DevicesMapper devicesMapper;
-    private final DeviceInventoryRecordMapper deviceInventoryRecordMapper;
-    private final DeviceTransferRecordMapper deviceTransferRecordMapper;
+    private final DeviceEventMapper deviceEventMapper;
     private final LabMapper labMapper;
     private final BusinessLoopService businessLoopService;
 
     public DevicesServiceImpl(
             DevicesMapper devicesMapper,
-            DeviceInventoryRecordMapper deviceInventoryRecordMapper,
-            DeviceTransferRecordMapper deviceTransferRecordMapper,
+            DeviceEventMapper deviceEventMapper,
             LabMapper labMapper,
             BusinessLoopService businessLoopService
     ) {
         this.devicesMapper = devicesMapper;
-        this.deviceInventoryRecordMapper = deviceInventoryRecordMapper;
-        this.deviceTransferRecordMapper = deviceTransferRecordMapper;
+        this.deviceEventMapper = deviceEventMapper;
         this.labMapper = labMapper;
         this.businessLoopService = businessLoopService;
     }
@@ -193,15 +189,13 @@ public class DevicesServiceImpl implements DevicesService {
 
     @Override
     public List<DeviceInventoryRecordEntity> listInventoryRecords(Long deviceId) {
-        deviceInventoryRecordMapper.createTableIfNotExists();
-        List<DeviceInventoryRecordEntity> records = deviceInventoryRecordMapper.listRecords(deviceId);
+        List<DeviceInventoryRecordEntity> records = deviceEventMapper.listInventoryEvents(deviceId);
         return records == null ? List.of() : records;
     }
 
     @Override
     public DeviceInventoryRecordResult recordDeviceInventory(Long deviceId, DeviceInventoryRecordEntity record) {
         DevicesEntity device = requireDevice(deviceId);
-        deviceInventoryRecordMapper.createTableIfNotExists();
 
         record.setDeviceId(device.getId());
         record.setDeviceCode(defaultText(record.getDeviceCode(), device.getDeviceCode()));
@@ -213,21 +207,20 @@ public class DevicesServiceImpl implements DevicesService {
         record.setMissing(Boolean.TRUE.equals(record.getMissing()));
         record.setDamaged(Boolean.TRUE.equals(record.getDamaged()));
         record.setRemark(textOrEmpty(record.getRemark()));
-        deviceInventoryRecordMapper.insertRecord(record);
+        deviceEventMapper.insertInventoryEvent(record);
 
         String inventoryDate = record.getInspectedAt().length() >= 10
                 ? record.getInspectedAt().substring(0, 10)
                 : LocalDate.now().toString();
         devicesMapper.updateInventoryState(deviceId, inventoryDate);
         DevicesEntity savedDevice = devicesMapper.getDevicesById(deviceId);
-        List<DeviceInventoryRecordEntity> records = deviceInventoryRecordMapper.listRecordsByDeviceId(deviceId);
+        List<DeviceInventoryRecordEntity> records = deviceEventMapper.listInventoryEvents(deviceId);
         return new DeviceInventoryRecordResult(savedDevice, record, records == null ? List.of() : records);
     }
 
     @Override
     public List<DeviceTransferRecordEntity> listTransferRecords(Long deviceId) {
-        deviceTransferRecordMapper.createTableIfNotExists();
-        List<DeviceTransferRecordEntity> records = deviceTransferRecordMapper.listRecords(deviceId);
+        List<DeviceTransferRecordEntity> records = deviceEventMapper.listTransferEvents(deviceId);
         return records == null ? List.of() : records;
     }
 
@@ -235,7 +228,6 @@ public class DevicesServiceImpl implements DevicesService {
     @Transactional
     public DeviceTransferRecordResult transferDevice(Long deviceId, DeviceTransferRecordEntity record) {
         DevicesEntity device = requireDevice(deviceId);
-        deviceTransferRecordMapper.createTableIfNotExists();
 
         record.setDeviceId(device.getId());
         record.setDeviceCode(defaultText(record.getDeviceCode(), device.getDeviceCode()));
@@ -252,9 +244,9 @@ public class DevicesServiceImpl implements DevicesService {
         record.setReason(textOrEmpty(record.getReason()));
 
         devicesMapper.updateTransferState(deviceId, record.getToLabId(), record.getToOwnerUserId(), record.getToLocation());
-        deviceTransferRecordMapper.insertRecord(record);
+        deviceEventMapper.insertTransferEvent(record);
         DevicesEntity savedDevice = devicesMapper.getDevicesById(deviceId);
-        List<DeviceTransferRecordEntity> records = deviceTransferRecordMapper.listRecordsByDeviceId(deviceId);
+        List<DeviceTransferRecordEntity> records = deviceEventMapper.listTransferEvents(deviceId);
         return new DeviceTransferRecordResult(savedDevice, record, records == null ? List.of() : records);
     }
 
