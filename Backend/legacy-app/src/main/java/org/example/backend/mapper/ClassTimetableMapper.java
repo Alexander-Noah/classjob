@@ -4,23 +4,16 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.example.backend.entity.ClassTimetableEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 @Mapper
 public interface ClassTimetableMapper {
 
-    void createClassTimetableTableIfNotExists();
-
     int deleteBySemester(@Param("semester") String semester);
 
     int insertTimetable(ClassTimetableEntity entity);
-
-    void createCrawlerConfigTableIfNotExists();
-
-    int countCrawlerConfigSemesterColumn();
-
-    void addCrawlerConfigSemesterColumn();
 
     Map<String, Object> getCrawlerConfig(@Param("configKey") String configKey);
 
@@ -29,10 +22,8 @@ public interface ClassTimetableMapper {
             @Param("scheduleEnabled") Boolean scheduleEnabled,
             @Param("cronExpression") String cronExpression,
             @Param("semester") String semester,
-            @Param("semesterStartDate") String semesterStartDate
+            @Param("semesterStartDate") LocalDate semesterStartDate
     );
-
-    void createCrawlerTaskTableIfNotExists();
 
     List<Map<String, Object>> listCrawlerTasks(@Param("limit") Integer limit);
 
@@ -41,8 +32,6 @@ public interface ClassTimetableMapper {
     int updateCrawlerTask(Map<String, Object> task);
 
     int clearCrawlerTasks();
-
-    void createCredentialTableIfNotExists();
 
     Map<String, Object> getCrawlerCredential(@Param("credentialKey") String credentialKey);
 
