@@ -54,29 +54,21 @@ const routeComponentMap = {
   LabAdminPortal: () => import('../views/roles/LabAdminPortal.vue'),
   LabAdminLabManagement: () => import('../views/labs/LabManagement.vue'),
   LabAdminDeviceManagement: () => import('../views/devices/DeviceManagement.vue'),
-  LabAdminEnvironmentManagement: () => import('../views/environments/EnvironmentManagement.vue'),
   LabAdminReservationManagement: () => import('../views/reservations/ReservationManagement.vue'),
   LabAdminMaintenanceRecordList: () => import('../views/maintenance-records/MaintenanceRecordList.vue'),
   LabAdminMaintenanceRecordEntry: () => import('../views/maintenance-records/MaintenanceRecordEntry.vue'),
-  LabAdminConsumableInventory: () => import('../views/consumables/ConsumableInventory.vue'),
   LabAdminUsageRecords: () => import('../views/records/UsageRecords.vue'),
   LabAdminDataStatistics: () => import('../views/statistics/DataStatistics.vue'),
-  LabAdminAiAssistant: () => import('../views/ai-assistant/AiAssistant.vue'),
   LabAdminNoticeCenter: () => import('../views/notices/NoticeCenter.vue'),
-  LabAdminRoomControlCenter: () => import('../views/room-control/RoomControlCenter.vue'),
-  LabAdminDeviceStatus: () => import('../views/device-status/DeviceStatusPage.vue'),
   LabAdminClassTimetable: () => import('../views/labs/LabAdminClassTimetable.vue'),
   LabAdminClassTimetableData: () => import('../views/labs/LabAdminClassTimetableData.vue'),
 
   SystemAdminPortal: () => import('../views/roles/SystemAdminPortal.vue'),
   SystemAdminUserPermissions: () => import('../views/users/UserPermissions.vue'),
-  SystemAdminSettings: () => import('../views/system/SystemSettings.vue'),
-  SystemAdminActivationCodes: () => import('../views/system/ActivationCodeManagement.vue'),
   SystemAdminNoticeCenter: () => import('../views/notices/NoticeCenter.vue'),
   SystemAdminStatistics: () => import('../views/statistics/DataStatistics.vue'),
 
   TeacherPortal: () => import('../views/roles/TeacherPortal.vue'),
-  TeacherCourseEnvironments: () => import('../views/teacher/TeacherCourseEnvironments.vue'),
   TeacherSchedule: () => import('../views/teacher/TeacherSchedule.vue'),
   TeacherClassTimetableData: () => import('../views/labs/LabAdminClassTimetableData.vue'),
 }
@@ -116,7 +108,7 @@ const routes = [
       })),
       {
         path: 'lab-admin/device-bindings',
-        redirect: '/lab-admin/device-status',
+        redirect: '/lab-admin/devices',
       },
       {
         path: 'lab-admin/repairs',
@@ -145,10 +137,6 @@ const routes = [
     redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/devices`,
   },
   {
-    path: '/environments',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/environments`,
-  },
-  {
     path: '/reservations',
     redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/reservations`,
   },
@@ -165,24 +153,12 @@ const routes = [
     redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/statistics`,
   },
   {
-    path: '/ai-assistant',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/ai-assistant`,
-  },
-  {
     path: '/notices',
     redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/notices`,
   },
   {
-    path: '/room-control',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/room-control`,
-  },
-  {
     path: '/device-bindings',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/device-status`,
-  },
-  {
-    path: '/device-status',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/device-status`,
+    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/devices`,
   },
   {
     path: '/users',
@@ -190,18 +166,10 @@ const routes = [
   },
   {
     path: '/system',
-    redirect: `${ROLE_DEFAULT_PATHS.systemAdmin}/system`,
-  },
-  {
-    path: '/course-environments',
-    redirect: `${ROLE_DEFAULT_PATHS.teacher}/course-environments`,
+    redirect: ROLE_DEFAULT_PATHS.systemAdmin,
   },
   {
     path: '/schedule',
-    redirect: `${ROLE_DEFAULT_PATHS.teacher}/schedule`,
-  },
-  {
-    path: '/adjustments',
     redirect: `${ROLE_DEFAULT_PATHS.teacher}/schedule`,
   },
   {
@@ -223,14 +191,6 @@ const routes = [
   {
     path: '/home',
     redirect: DEFAULT_ROUTE_PATH,
-  },
-  {
-    path: '/software',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/environments?tab=software`,
-  },
-  {
-    path: '/environment-templates',
-    redirect: `${ROLE_DEFAULT_PATHS.labAdmin}/environments?tab=template`,
   },
   {
     path: '/:pathMatch(.*)*',

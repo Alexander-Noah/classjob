@@ -6,30 +6,20 @@
 export const PERMISSION_ROUTE_MAP = {
   用户管理: ['/system-admin/users'],
   用户权限: ['/system-admin/users'],
-  系统设置: ['/system-admin/system'],
-  激活管理: ['/system-admin/activation-codes'],
   平台统计: ['/system-admin/statistics'],
   通知公告: ['/lab-admin/notices', '/system-admin/notices'],
 
   实验室管理: ['/lab-admin/labs'],
   设备资产: ['/lab-admin/devices'],
-  环境管理: ['/lab-admin/environments'],
   预约管理: ['/lab-admin/reservations'],
   维护记录填写: ['/lab-admin/maintenance-records/new'],
   维护记录查看: ['/lab-admin/maintenance-records'],
-  耗材库存: ['/lab-admin/consumables'],
   使用记录: ['/lab-admin/records'],
   统计分析: ['/lab-admin/statistics'],
-  AI智能助手: ['/lab-admin/ai-assistant'],
-  物联网扩展: ['/lab-admin/room-control'],
-  设备状态: ['/lab-admin/device-status'],
-  接入授权: ['/lab-admin/device-status'],
-  设备绑定: ['/lab-admin/device-status'],
   课表抓取: ['/lab-admin/class-timetable', '/lab-admin/class-timetable-data'],
   课表数据: ['/lab-admin/class-timetable', '/lab-admin/class-timetable-data', '/teacher/class-timetable-data'],
 
   教师课表: ['/teacher/schedule'],
-  课程环境: ['/teacher/course-environments'],
 }
 
 const CONTROLLED_PATHS = Object.values(PERMISSION_ROUTE_MAP).flat()

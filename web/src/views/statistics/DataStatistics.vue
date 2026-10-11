@@ -45,14 +45,14 @@ const SUMMARY_ICON_MAP = {
 const LAB_ADMIN_PAGE = {
   badge: '统计分析',
   title: '统计分析',
-  description: '通过图表查看实验室使用率、设备状态、故障趋势与课程环境需求变化。',
+  description: '通过图表查看实验室使用率、设备状态、故障趋势与课表协同变化。',
   pageIcon: markRaw(DataAnalysis),
   actions: [
     { label: '生成报表', type: 'primary', command: 'report' },
     { label: '导出图表', type: 'default', command: 'export' },
   ],
   toolbarTitle: '实验室运营视图',
-  toolbarDescription: '按时间维度观察实验室运行波动、环境需求变化和故障热点。',
+  toolbarDescription: '按时间维度观察实验室运行波动、课表协同变化和故障热点。',
   charts: {
     trend: { title: '使用率趋势', subtitle: '预约与上机利用率变化', tag: '折线图' },
     compare: { title: '实验室使用对比', subtitle: '使用记录前五实验室横向对比', tag: '柱状图' },
@@ -100,14 +100,14 @@ const LAB_ADMIN_PAGE = {
       },
       details: [
         { metric: 'A101 晚间开放利用率', value: '88%', change: '+8%', owner: '实验室管理员', status: '上升', tagType: 'success' },
-        { metric: 'GPU 环境需求量', value: '18 次', change: '+3', owner: '课程环境', status: '关注', tagType: 'warning' },
+        { metric: 'GPU 课程排课量', value: '18 次', change: '+3', owner: '课表数据', status: '关注', tagType: 'warning' },
         { metric: '平均故障响应时长', value: '18 分钟', change: '-6 分钟', owner: '维修工单', status: '优化', tagType: 'primary' },
-        { metric: '课程环境确认通过率', value: '91%', change: '+4%', owner: '教师确认', status: '稳定', tagType: 'info' },
+        { metric: '课表同步完成率', value: '91%', change: '+4%', owner: '课表数据', status: '稳定', tagType: 'info' },
       ],
       insights: [
         { title: 'C305 持续高负载', description: 'GPU 课程集中在周四和周五，建议将部分训练课程分流到 A102。', type: 'warning' },
         { title: '故障集中在网络与启动', description: '本周端口异常和系统启动问题占比最高，适合增加交换机巡检与系统镜像校验。', type: 'primary' },
-        { title: '环境模板复用效果明显', description: 'Java Web 与数据库类课程复用模板后，环境准备平均缩短约 30%。', type: 'success' },
+        { title: '课表与预约协同稳定', description: 'Java Web 与数据库类课程的课表和预约数据已完成统一汇总。', type: 'success' },
       ],
     },
     month: {
@@ -149,13 +149,13 @@ const LAB_ADMIN_PAGE = {
       },
       details: [
         { metric: '晚间开放预约量', value: '96 次', change: '+12', owner: '预约管理', status: '上升', tagType: 'success' },
-        { metric: '环境确认退回率', value: '6%', change: '-2%', owner: '教师确认', status: '优化', tagType: 'primary' },
+        { metric: '课表冲突处理率', value: '94%', change: '+2%', owner: '预约管理', status: '优化', tagType: 'primary' },
         { metric: '高频报修实验室', value: 'B203', change: '+4 单', owner: '维修工单', status: '关注', tagType: 'warning' },
-        { metric: '模板复用次数', value: '31 次', change: '+8', owner: '课程环境', status: '稳定', tagType: 'info' },
+        { metric: '课表导入次数', value: '31 次', change: '+8', owner: '课表数据', status: '稳定', tagType: 'info' },
       ],
       insights: [
         { title: 'B203 故障率偏高', description: '网络实验室工单数连续两周偏高，建议安排专项巡检窗口。', type: 'warning' },
-        { title: '模板沉淀已见成效', description: '复用模板最多的课程来自 Java Web 与数据库方向，适合继续扩充 AI 课程模板。', type: 'success' },
+        { title: '课表导入已形成周期', description: 'Java Web 与数据库类课程的课表导入较稳定，可继续关注预约冲突。', type: 'success' },
         { title: '晚间时段更适合开放自习', description: '18:00 后预约更多集中在 A101 与 A102，可做差异化开放策略。', type: 'primary' },
       ],
     },
@@ -197,13 +197,13 @@ const LAB_ADMIN_PAGE = {
         color: '#f59e0b',
       },
       details: [
-        { metric: '学期课程环境需求', value: '164 条', change: '+22', owner: '课程环境', status: '上升', tagType: 'success' },
-        { metric: '学期模板复用率', value: '64%', change: '+11%', owner: '模板管理', status: '优化', tagType: 'primary' },
+        { metric: '学期课表记录', value: '164 条', change: '+22', owner: '课表数据', status: '上升', tagType: 'success' },
+        { metric: '学期预约协同率', value: '64%', change: '+11%', owner: '预约管理', status: '优化', tagType: 'primary' },
         { metric: '平均维修闭环时长', value: '1.8 天', change: '-0.4 天', owner: '维修工单', status: '稳定', tagType: 'info' },
         { metric: '设备报废建议数', value: '7 台', change: '+2', owner: '设备资产', status: '关注', tagType: 'warning' },
       ],
       insights: [
-        { title: 'GPU 类课程增长明显', description: '本学期 GPU 环境需求增长快，建议系统管理员提前储备镜像和驱动版本。', type: 'warning' },
+        { title: 'GPU 类课程增长明显', description: '本学期 GPU 课程排课增长快，建议提前核对设备资产和实验室容量。', type: 'warning' },
         { title: '维护效率整体提升', description: '维修工单平均闭环时长较上学期缩短，说明派单和回填流程已经稳定。', type: 'success' },
         { title: 'A101/A102 仍是核心承载机房', description: '两间机房承担了多数基础课程，可优先投入更新预算。', type: 'primary' },
       ],
@@ -871,8 +871,6 @@ const buildLinkedStatistics = (records, period) => {
   const classTimetables = records.classTimetables || []
   const timetableConfig = records.timetableConfig || {}
   const repairs = records.repairs || []
-  const courseEnvironments = records.courseEnvironments || []
-  const templates = records.templates || []
   const periodUsageRecords = filterRecordsByPeriod(usageRecords, period)
   const periodReservations = filterRecordsByPeriod(reservations, period)
   const periodTimetableOccurrences = expandTimetableOccurrences(
@@ -881,13 +879,11 @@ const buildLinkedStatistics = (records, period) => {
     timetableConfig.semesterStartDate,
   )
   const periodRepairs = filterRecordsByPeriod(repairs, period)
-  const periodCourseEnvironments = filterRecordsByPeriod(courseEnvironments, period)
 
   const approvedReservations = periodReservations.filter((record) =>
     hasStatus(record, ['已通过', '通过', '已确认', '预约成功', '正常']),
   )
   const pendingReservations = periodReservations.filter((record) => hasStatus(record, ['待审', '待审核', '待确认']))
-  const pendingEnvironments = periodCourseEnvironments.filter((record) => !hasStatus(record, ['已确认', '可复用', '已完成']))
   const resolveLabName = createLabResolver(labs)
   const labUsageSourceRecords = [...periodUsageRecords, ...approvedReservations, ...periodTimetableOccurrences]
   const labUsageRecords = labUsageSourceRecords.filter(resolveLabName)
@@ -929,9 +925,9 @@ const buildLinkedStatistics = (records, period) => {
         iconKey: 'device',
       },
       {
-        label: '环境需求',
-        value: String(periodCourseEnvironments.length),
-        trend: `模板 ${templates.length} 个`,
+        label: '课表记录',
+        value: String(periodTimetableOccurrences.length),
+        trend: `来源 ${classTimetables.length} 条`,
         iconKey: 'config',
       },
     ],
@@ -1004,12 +1000,12 @@ const buildLinkedStatistics = (records, period) => {
         tagType: activeLabRepairs.length ? 'primary' : 'success',
       },
       {
-        metric: '待处理环境需求',
-        value: `${pendingEnvironments.length} 条`,
-        change: `${templates.length} 个模板可复用`,
-        owner: '环境运维',
-        status: pendingEnvironments.length ? '关注' : '稳定',
-        tagType: pendingEnvironments.length ? 'warning' : 'info',
+        metric: '课表协同记录',
+        value: `${periodTimetableOccurrences.length} 条`,
+        change: `${classTimetables.length} 条原始课表`,
+        owner: '课表数据',
+        status: periodTimetableOccurrences.length ? '已纳入' : '暂无',
+        tagType: periodTimetableOccurrences.length ? 'success' : 'info',
       },
     ],
     insights: [
@@ -1028,11 +1024,11 @@ const buildLinkedStatistics = (records, period) => {
         type: activeLabRepairs.length ? 'warning' : 'success',
       },
       {
-        title: pendingEnvironments.length ? '课程环境需继续确认' : '暂无待处理环境需求',
-        description: pendingEnvironments.length
-          ? `本时间范围内 ${pendingEnvironments.length} 条课程环境需求尚未完成确认，当前模板 ${templates.length} 个。`
-          : `当前时间范围内接口未返回待处理环境需求，系统模板数 ${templates.length} 个。`,
-        type: pendingEnvironments.length ? 'warning' : 'info',
+        title: periodTimetableOccurrences.length ? '课表数据已纳入统计' : '暂无课表协同数据',
+        description: periodTimetableOccurrences.length
+          ? `本时间范围内已纳入 ${periodTimetableOccurrences.length} 节课表记录，可结合预约继续核对。`
+          : '当前时间范围内接口未返回可统计的课表记录。',
+        type: periodTimetableOccurrences.length ? 'success' : 'info',
       },
     ],
   }
@@ -1380,8 +1376,6 @@ const loadBusinessStatistics = async () => {
     classTimetables,
     timetableConfig,
     repairs,
-    courseEnvironments,
-    templates,
   ] = await Promise.all([
     loadLinkedRecords(API_ENDPOINTS.labs.list),
     loadLinkedRecords(API_ENDPOINTS.devices.list),
@@ -1390,8 +1384,6 @@ const loadBusinessStatistics = async () => {
     loadLinkedRecords(`${API_ENDPOINTS.classTimetables.list}?limit=5000`),
     loadLinkedPayload(API_ENDPOINTS.classTimetables.crawlerConfig),
     loadLinkedRecords(API_ENDPOINTS.repairs.list),
-    loadLinkedRecords(API_ENDPOINTS.courseEnvironmentRequests.list),
-    loadLinkedRecords(API_ENDPOINTS.environmentTemplates.list),
   ])
 
   linkedStatistics.value = buildLinkedStatistics(
@@ -1403,8 +1395,6 @@ const loadBusinessStatistics = async () => {
       classTimetables,
       timetableConfig,
       repairs,
-      courseEnvironments,
-      templates,
     },
     activePeriod.value,
   )

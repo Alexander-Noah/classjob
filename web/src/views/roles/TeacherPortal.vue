@@ -5,8 +5,6 @@ import { ElMessage } from 'element-plus'
 import { Calendar } from '@element-plus/icons-vue'
 import MetricGrid from '../../components/common/MetricGrid.vue'
 import TeacherScheduleBoard from '../teacher/components/TeacherScheduleBoard.vue'
-import http from '../../api/http'
-import { API_ENDPOINTS } from '../../api/endpoints'
 import { getStoredUser } from '../../api/services/auth'
 import { parseUserPermissions } from '../../constants/permissions'
 import { getClassTimetableSemesters, listClassTimetables } from '../../api/services/classTimetable'
@@ -70,10 +68,7 @@ const DEFAULT_SCHEDULE_RECORDS = [
     time: '08:00-09:40',
     lab: 'A101',
     className: '软件工程 2 班',
-    status: '待确认',
-    tagType: 'warning',
-    environment: 'JDK 21、IDEA、MySQL',
-    note: '已上传环境截图，建议课前完成远程确认。',
+    note: '课表已排定，课前请核对实验室安排。',
     students: 48,
   },
   {
@@ -84,10 +79,7 @@ const DEFAULT_SCHEDULE_RECORDS = [
     time: '10:00-11:40',
     lab: 'C305',
     className: '数据科学 1 班',
-    status: '已确认',
-    tagType: 'success',
-    environment: 'Python、PyTorch、CUDA',
-    note: 'GPU 环境已确认，可直接授课。',
+    note: '课表已排定，可按授课安排到场。',
     students: 42,
   },
   {
@@ -98,10 +90,7 @@ const DEFAULT_SCHEDULE_RECORDS = [
     time: '14:00-15:40',
     lab: 'A102',
     className: '软件工程 3 班',
-    status: '已排课',
-    tagType: 'success',
-    environment: 'MySQL、Navicat、ER 建模工具',
-    note: '课表已排定，环境准备中。',
+    note: '课表已排定，实验室安排已同步。',
     students: 50,
   },
   {
@@ -112,19 +101,10 @@ const DEFAULT_SCHEDULE_RECORDS = [
     time: '16:00-17:40',
     lab: 'A102',
     className: '软件工程 1 班',
-    status: '已排课',
-    tagType: 'info',
-    environment: 'JUnit、Selenium、测试样例库',
-    note: '课表已排定，环境准备中。',
+    note: '课表已排定，实验室安排已同步。',
     students: 44,
   },
 ]
-
-const normalizeListResponse = (data) => {
-  if (Array.isArray(data?.data)) return data.data
-  if (Array.isArray(data)) return data
-  return []
-}
 
 const resolveSectionTime = (record = {}) => {
   const section = String(record.sectionText || record.sectionCode || '').trim()
@@ -149,19 +129,9 @@ const resolvePeriodStart = (record = {}) => {
   return parsed % 2 === 0 ? parsed - 1 : parsed
 }
 
-const findEnvironmentRecord = (record = {}) => {
-  const courseName = record.courseName || record.course || record.title || ''
-  return environmentRecords.value.find((item) => {
-    const envCourse = item.course || item.courseName || item.title || ''
-    return envCourse && courseName && envCourse === courseName
-  })
-}
-
 const normalizePortalCourse = (record = {}, index = 0) => {
-  const environmentRecord = findEnvironmentRecord(record)
   const title = record.title || record.course || record.courseName || '未命名课程'
   const lab = record.lab || record.classroom || record.assignedLabCode || record.assignedLabName || record.labType || '待分配'
-  const environment = record.software || record.softwareRequirements || record.environment || '按课程要求配置'
 
   return {
     id: record.id ? `teacher-course-${record.id}` : `teacher-course-${Date.now()}-${index}`,
@@ -172,18 +142,13 @@ const normalizePortalCourse = (record = {}, index = 0) => {
     time: record.time || record.useTime || record.schedule || resolveCourseTimeText(record),
     lab,
     className: record.className || record.rowClassName || '待同步班级',
-    environment: environmentRecord?.software || environmentRecord?.softwareRequirements || environment,
-    note:
-      environmentRecord?.specialRequirements ||
-      record.note ||
-      resolveCourseTimeText(record),
+    note: record.note || resolveCourseTimeText(record),
     students: Number(record.students || record.capacity || 45),
     teacher: record.teacher || teacherName.value,
     weekText: record.weekText || record.weekRaw || '',
   }
 }
 
-const environmentRecords = ref([])
 const isSyncing = ref(false)
 const semesters = ref([])
 const semester = ref('')
@@ -212,15 +177,11 @@ const metrics = computed(() => {
   const courses = scheduleRecords.value.filter((item) => item.week === currentWeek.value)
   const labCount = new Set(courses.map((item) => item.lab).filter(Boolean)).size
   const classCount = new Set(courses.map((item) => item.className).filter(Boolean)).size
-  const pendingEnvironmentCount = environmentRecords.value.filter(
-    (item) => !['已确认', '已完成'].includes(item.status || item.confirmStatus),
-  ).length
-
   return [
     { label: '本周课程', value: String(courses.length), trend: `第 ${currentWeek.value} 周课表` },
     { label: '授课班级', value: String(classCount), trend: teacherName.value || '当前教师' },
     { label: '涉及实验室', value: String(labCount), trend: courses.map((item) => item.lab).slice(0, 3).join(' / ') || '暂无实验室' },
-    { label: '待确认环境', value: String(pendingEnvironmentCount), trend: '课前完成确认' },
+    { label: '课表记录', value: String(courses.length), trend: '当前周次已同步' },
   ]
 })
 
@@ -252,16 +213,12 @@ watch(visibleCourses, (courses) => {
 const syncTeacherData = async ({ silent = false } = {}) => {
   isSyncing.value = true
   try {
-    const [{ data }, timetableRecords] = await Promise.all([
-      http.get(API_ENDPOINTS.courseEnvironmentRequests.list),
-      listClassTimetables({
-        semester: semester.value || undefined,
-        teacher: teacherName.value || undefined,
-        week: currentWeek.value || undefined,
-        limit: 5000,
-      }),
-    ])
-    environmentRecords.value = normalizeListResponse(data)
+    const timetableRecords = await listClassTimetables({
+      semester: semester.value || undefined,
+      teacher: teacherName.value || undefined,
+      week: currentWeek.value || undefined,
+      limit: 5000,
+    })
     if (Array.isArray(timetableRecords) && timetableRecords.length) {
       scheduleRecords.value = timetableRecords.map((item, index) => normalizePortalCourse(item, index))
       selectedCourse.value = scheduleRecords.value[0] || null

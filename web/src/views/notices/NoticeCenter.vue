@@ -546,7 +546,7 @@ onMounted(loadData)
         </el-form-item>
         <div class="form-grid">
           <el-form-item label="来源模块">
-            <el-input v-model="formModel.sourceModule" placeholder="如 consumable / reservation / repair" />
+            <el-input v-model="formModel.sourceModule" placeholder="如 reservation / maintenance-record" />
           </el-form-item>
           <el-form-item label="来源ID">
             <el-input v-model="formModel.sourceId" placeholder="业务记录 ID" />

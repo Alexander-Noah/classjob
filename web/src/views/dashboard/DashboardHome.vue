@@ -16,8 +16,6 @@ import {
   WarningFilled,
 } from '@element-plus/icons-vue'
 import { fetchDashboardOverview } from '../../api/dashboard'
-import http from '../../api/http'
-import { API_ENDPOINTS } from '../../api/endpoints'
 import { buildDashboardScheduleView, buildDoorReminderList } from './dashboardSchedule'
 
 defineOptions({
@@ -36,11 +34,9 @@ const dashboardData = ref({
 const isLoading = ref(false)
 const errorMessage = ref('')
 const currentTime = ref(new Date())
-const consumableRecords = ref([])
 let clockTimer = null
 const router = useRouter()
 const SCHEDULE_DETAIL_PATH = '/lab-admin/class-timetable-data'
-const DEVICE_STATUS_PATH = '/lab-admin/device-status'
 
 const DASHBOARD_ICON_MAP = {
   lab: markRaw(OfficeBuilding),
@@ -68,76 +64,10 @@ const normalizePath = (path) => {
     '/reservations': '/lab-admin/reservations',
     '/repairs': '/lab-admin/maintenance-records',
     '/records': '/lab-admin/records',
-    '/environments': '/lab-admin/environments',
-    '/device-status': DEVICE_STATUS_PATH,
     '/devices': '/lab-admin/devices',
-    '/room-control': '/lab-admin/room-control',
   }
   return redirectMap[path] || path
 }
-
-const getResponseData = (payload) => {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.data)) return payload.data
-  if (Array.isArray(payload?.data?.records)) return payload.data.records
-  if (Array.isArray(payload?.records)) return payload.records
-  return []
-}
-
-const toStockNumber = (value, fallback = 0) => {
-  const number = Number(String(value ?? '').replace(/[^\d.-]/g, ''))
-  return Number.isFinite(number) ? number : fallback
-}
-
-const getConsumableState = (stock, warnThreshold) => {
-  if (stock <= 0) return { status: '待补货', tagType: 'danger' }
-  if (stock <= warnThreshold) return { status: '低库存', tagType: 'warning' }
-  return { status: '库存充足', tagType: 'success' }
-}
-
-const normalizeConsumable = (item = {}) => {
-  const stock = Math.max(toStockNumber(item.stock), 0)
-  const warnThreshold = Math.max(toStockNumber(item.warnThreshold, 5), 0)
-  const state = getConsumableState(stock, warnThreshold)
-
-  return {
-    id: item.id,
-    name: item.name || '未命名耗材',
-    category: item.category || '未分类',
-    stock,
-    unit: item.unit || '件',
-    warnThreshold,
-    status: item.status || state.status,
-    tagType: item.tagType || state.tagType,
-  }
-}
-
-const consumableCategoryRows = computed(() => {
-  const groups = consumableRecords.value.reduce((result, item) => {
-    const current = result[item.category] || { category: item.category, count: 0, stock: 0 }
-    current.count += 1
-    current.stock += item.stock
-    result[item.category] = current
-    return result
-  }, {})
-  return Object.values(groups).sort((first, second) => second.stock - first.stock)
-})
-
-const maxConsumableStock = computed(() => Math.max(...consumableCategoryRows.value.map((item) => item.stock), 1))
-const visibleConsumableCategoryRows = computed(() => consumableCategoryRows.value.slice(0, 4))
-const hiddenConsumableCategoryCount = computed(() => Math.max(consumableCategoryRows.value.length - visibleConsumableCategoryRows.value.length, 0))
-
-const consumableSummary = computed(() => {
-  const warningCount = consumableRecords.value.filter((item) => item.tagType === 'warning' || item.tagType === 'danger').length
-  const totalStock = consumableRecords.value.reduce((sum, item) => sum + item.stock, 0)
-
-  return {
-    totalKinds: consumableRecords.value.length,
-    totalStock,
-    warningCount,
-    categoryCount: new Set(consumableRecords.value.map((item) => item.category).filter(Boolean)).size,
-  }
-})
 
 const ACTIVITY_TAG_TYPES = new Set(['primary', 'success', 'warning', 'danger', 'info'])
 
@@ -188,18 +118,6 @@ const generatedActivities = computed(() => {
     })
   })
 
-  const warningItems = consumableRecords.value.filter((item) => item.tagType === 'warning' || item.tagType === 'danger')
-  if (warningItems.length) {
-    items.push({
-      id: 'consumable-warning',
-      time: '库存',
-      title: `耗材库存预警 ${warningItems.length} 项`,
-      desc: warningItems.slice(0, 3).map((item) => item.name).join('、'),
-      type: 'warning',
-      typeLabel: '耗材',
-    })
-  }
-
   return items.map(normalizeActivity).slice(0, 6)
 })
 
@@ -222,9 +140,7 @@ const loadDashboardOverview = async () => {
   errorMessage.value = ''
 
   try {
-    const [overview, consumables] = await Promise.all([fetchDashboardOverview(), fetchConsumableRecords()])
-    dashboardData.value = overview
-    consumableRecords.value = consumables
+    dashboardData.value = await fetchDashboardOverview()
   } catch (error) {
     errorMessage.value = '工作台数据加载失败，请稍后重试'
     if (!error?.__handled) {
@@ -232,15 +148,6 @@ const loadDashboardOverview = async () => {
     }
   } finally {
     isLoading.value = false
-  }
-}
-
-const fetchConsumableRecords = async () => {
-  try {
-    const response = await http.get(API_ENDPOINTS.consumables.list)
-    return getResponseData(response.data).map(normalizeConsumable)
-  } catch {
-    return []
   }
 }
 
@@ -386,67 +293,6 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="workbench-grid secondary-grid">
-      <el-card class="module-card inventory-card" shadow="never">
-        <template #header>
-          <div class="card-header">
-            <div>
-              <h2>库存统计数据</h2>
-              <span>按耗材分类汇总当前库存与预警状态</span>
-            </div>
-            <el-tag :type="consumableSummary.warningCount ? 'warning' : 'success'" effect="light">
-              预警 {{ consumableSummary.warningCount }} 项
-            </el-tag>
-          </div>
-        </template>
-        <div class="inventory-body">
-          <div class="inventory-summary-grid">
-            <div>
-              <span>耗材种类</span>
-              <strong>{{ consumableSummary.totalKinds.toLocaleString() }}</strong>
-            </div>
-            <div>
-              <span>库存总量</span>
-              <strong>{{ consumableSummary.totalStock.toLocaleString() }}</strong>
-            </div>
-            <div>
-              <span>分类数量</span>
-              <strong>{{ consumableSummary.categoryCount.toLocaleString() }}</strong>
-            </div>
-          </div>
-
-          <div class="inventory-category-panel">
-            <el-empty
-              v-if="!visibleConsumableCategoryRows.length"
-              class="inline-empty"
-              description="暂无库存统计数据"
-              :image-size="82"
-            />
-            <template v-else>
-              <div class="inventory-category-grid">
-                <article v-for="item in visibleConsumableCategoryRows" :key="item.category" class="inventory-category-item">
-                  <div class="inventory-category-head">
-                    <span>{{ item.category }}</span>
-                    <strong>{{ item.stock.toLocaleString() }}</strong>
-                  </div>
-                  <div class="status-bar">
-                    <i :style="{ width: `${Math.max((item.stock / maxConsumableStock) * 100, 8)}%`, backgroundColor: '#2563eb' }"></i>
-                  </div>
-                  <small>{{ item.count }} 种耗材</small>
-                </article>
-              </div>
-              <p v-if="hiddenConsumableCategoryCount" class="inventory-more">
-                另有 {{ hiddenConsumableCategoryCount }} 类库存已收起，可进入耗材库存查看完整明细。
-              </p>
-            </template>
-          </div>
-        </div>
-        <div class="card-actions">
-          <el-button plain type="primary" @click="openPath('/lab-admin/consumables')">
-            查看耗材库存
-          </el-button>
-        </div>
-      </el-card>
-
       <el-card class="module-card activity-card" shadow="never">
         <template #header>
           <div class="card-header">

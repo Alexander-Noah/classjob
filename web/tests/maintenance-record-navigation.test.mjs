@@ -72,7 +72,6 @@ test('maintenance role routes, workbench, presets, and selectors are removed', (
   const roleModules = readSource('../src/constants/roleModules.js')
   const userPermissions = readSource('../src/views/users/UserPermissions.vue')
   const usersService = readSource('../src/api/services/users.js')
-  const systemSettings = readSource('../src/views/system/SystemSettings.vue')
   const noticeCenter = readSource('../src/views/notices/NoticeCenter.vue')
 
   assert.doesNotMatch(authConstants, /maintenance:\s*'\/maintenance'/)
@@ -85,7 +84,6 @@ test('maintenance role routes, workbench, presets, and selectors are removed', (
   assert.doesNotMatch(usersService.match(/const PERMISSIONS_BY_ROLE = \{[\s\S]*?\n\}/)?.[0] || '', /维修人员|维修工单/)
   assert.doesNotMatch(usersService, /roleCode:\s*'maintenance'|roleName:\s*'维修人员'/)
   assert.doesNotMatch(authService.match(/const DEFAULT_PERMISSION_GROUPS = \{[\s\S]*?\n\}/)?.[0] || '', /maintenance|维修工单/)
-  assert.doesNotMatch(systemSettings, /label="维修人员"/)
   assert.doesNotMatch(noticeCenter, /value:\s*'maintenance'/)
 
   assert.match(router, /path: '\/maintenance\/:pathMatch\(\.\*\)\*'[\s\S]*?redirect: '\/forbidden'/)

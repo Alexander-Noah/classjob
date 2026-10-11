@@ -38,25 +38,19 @@ const LAB_ADMIN_MENU_GROUPS = [
     index: 'lab-admin-basic-resources',
     title: '基础资源管理',
     iconPath: '/lab-admin/labs',
-    children: ['/lab-admin/labs', '/lab-admin/consumables'],
+    children: ['/lab-admin/labs'],
   },
   {
     index: 'lab-admin-device-management',
     title: '设备管理',
     iconPath: '/lab-admin/devices',
-    children: ['/lab-admin/devices', '/lab-admin/device-status', '/lab-admin/room-control'],
+    children: ['/lab-admin/devices'],
   },
   {
     index: 'lab-admin-teaching-reservations',
     title: '教学预约协同',
     iconPath: '/lab-admin/class-timetable',
     children: ['/lab-admin/class-timetable', '/lab-admin/class-timetable-data', '/lab-admin/reservations'],
-  },
-  {
-    index: 'lab-admin-environment-operations',
-    title: '实验环境运维',
-    iconPath: '/lab-admin/environments',
-    children: ['/lab-admin/environments'],
   },
   {
     index: 'lab-admin-maintenance-management',
@@ -68,7 +62,7 @@ const LAB_ADMIN_MENU_GROUPS = [
     index: 'lab-admin-data-intelligence',
     title: '数据统计与智能辅助',
     iconPath: '/lab-admin/statistics',
-    children: ['/lab-admin/records', '/lab-admin/statistics', '/lab-admin/ai-assistant'],
+    children: ['/lab-admin/records', '/lab-admin/statistics'],
   },
 ]
 
