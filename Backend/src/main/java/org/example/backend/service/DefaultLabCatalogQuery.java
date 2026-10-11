@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+@Service
 @Transactional(readOnly = true)
 public class DefaultLabCatalogQuery implements LabCatalogQuery {
     private final LabRecordReadService records;

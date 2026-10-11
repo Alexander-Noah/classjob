@@ -2,11 +2,13 @@ package org.example.backend.service;
 
 import org.example.backend.entity.ReservationStateMachine;
 import org.example.backend.entity.ReservationStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 import java.util.Set;
 
+@Service
 @Transactional
 public class DefaultReservationReviewService {
     private static final Set<ReservationStatus> APPROVABLE = Set.of(ReservationStatus.PENDING);

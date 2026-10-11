@@ -1,7 +1,10 @@
 package org.example.backend.service;
 
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public final class DefaultTeachingScheduleQuery implements TeachingScheduleQuery {
     static final int DEFAULT_LIMIT = 500;
     static final int MAX_LIMIT = 5000;

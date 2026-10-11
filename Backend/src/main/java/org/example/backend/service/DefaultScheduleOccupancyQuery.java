@@ -1,5 +1,7 @@
 package org.example.backend.service;
 
+import org.springframework.stereotype.Service;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@Service
 public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQuery {
     private static final LocalTime[] SECTION_STARTS = {
             LocalTime.of(8, 30), LocalTime.of(8, 30), LocalTime.of(10, 20), LocalTime.of(10, 20),

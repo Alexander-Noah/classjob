@@ -1,11 +1,13 @@
 package org.example.backend.service;
 
 import org.example.backend.entity.ReservationStatus;
+import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Service
 public final class DefaultReservationAvailabilityEvaluator implements ReservationAvailabilityEvaluator {
     private static final Set<ReservationStatus> TERMINAL_OVERLAP_EXCLUSIONS = EnumSet.of(
             ReservationStatus.REJECTED, ReservationStatus.CANCELLED,

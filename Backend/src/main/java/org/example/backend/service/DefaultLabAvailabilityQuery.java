@@ -2,11 +2,13 @@ package org.example.backend.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 
+@Service
 public final class DefaultLabAvailabilityQuery implements LabAvailabilityQuery {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultLabAvailabilityQuery.class);
     private static final Set<String> ELIGIBLE_STATUSES = Set.of("开放", "预约中", "使用中");

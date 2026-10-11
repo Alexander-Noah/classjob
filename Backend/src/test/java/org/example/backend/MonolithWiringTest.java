@@ -5,6 +5,15 @@ import org.example.backend.controller.LabQueryController;
 import org.example.backend.controller.ReservationController;
 import org.example.backend.controller.TeachingScheduleQueryController;
 import org.example.backend.mapper.ClassTimetableMapper;
+import org.example.backend.service.DefaultLabAvailabilityQuery;
+import org.example.backend.service.DefaultLabCatalogQuery;
+import org.example.backend.service.DefaultReservationAvailabilityEvaluator;
+import org.example.backend.service.DefaultReservationCatalogQuery;
+import org.example.backend.service.DefaultReservationCommandHandler;
+import org.example.backend.service.DefaultReservationCreationService;
+import org.example.backend.service.DefaultReservationReviewService;
+import org.example.backend.service.DefaultScheduleOccupancyQuery;
+import org.example.backend.service.DefaultTeachingScheduleQuery;
 import org.example.backend.service.LabRecordReadService;
 import org.example.backend.service.ReservationPersistenceService;
 import org.example.backend.service.TeachingScheduleReadService;
@@ -82,13 +91,33 @@ class MonolithWiringTest {
         assertNotNull(LabRecordReadService.class.getAnnotation(Service.class));
         assertNotNull(TeachingScheduleReadService.class.getAnnotation(Service.class));
         assertNotNull(ReservationPersistenceService.class.getAnnotation(Service.class));
+        assertAll(
+                () -> assertNotNull(DefaultLabCatalogQuery.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultLabAvailabilityQuery.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultTeachingScheduleQuery.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultScheduleOccupancyQuery.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultReservationCatalogQuery.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultReservationAvailabilityEvaluator.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultReservationCreationService.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultReservationReviewService.class.getAnnotation(Service.class)),
+                () -> assertNotNull(DefaultReservationCommandHandler.class.getAnnotation(Service.class))
+        );
 
         String configuration = Files.readString(mainJava().resolve(
                 "org/example/backend/config/FeatureConfiguration.java"));
         assertAll(
                 () -> assertFalse(configuration.contains("labRecordReadPort(")),
                 () -> assertFalse(configuration.contains("teachingScheduleReadPort(")),
-                () -> assertFalse(configuration.contains("reservationPersistencePort("))
+                () -> assertFalse(configuration.contains("reservationPersistencePort(")),
+                () -> assertFalse(configuration.contains("labCatalogQuery(")),
+                () -> assertFalse(configuration.contains("labAvailabilityQuery(")),
+                () -> assertFalse(configuration.contains("teachingScheduleQuery(")),
+                () -> assertFalse(configuration.contains("scheduleOccupancyQuery(")),
+                () -> assertFalse(configuration.contains("reservationCatalogQuery(")),
+                () -> assertFalse(configuration.contains("reservationAvailabilityEvaluator(")),
+                () -> assertFalse(configuration.contains("reservationCreationService(")),
+                () -> assertFalse(configuration.contains("reservationReviewService(")),
+                () -> assertFalse(configuration.contains("reservationCommandHandler("))
         );
     }
 

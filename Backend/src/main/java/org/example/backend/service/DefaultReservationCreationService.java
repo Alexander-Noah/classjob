@@ -2,6 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.entity.ReservationStateMachine;
 import org.example.backend.entity.ReservationStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
 
+@Service
 @Transactional(isolation = Isolation.SERIALIZABLE)
 public class DefaultReservationCreationService {
     private final ReservationPersistenceService reservations;
