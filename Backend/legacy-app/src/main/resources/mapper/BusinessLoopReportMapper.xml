@@ -85,33 +85,9 @@
         where status = '故障'
     </select>
 
-    <select id="countCourseEnvironmentRequests" resultType="long">
+    <select id="countLabs" resultType="long">
         select count(1)
-        from course_environment_request
-    </select>
-
-    <select id="countConfirmedCourseEnvironmentRequests" resultType="long">
-        select count(1)
-        from course_environment_request
-        where process_status = '已确认'
-           or confirm_status = '已确认'
-    </select>
-
-    <select id="countEnvironmentTemplates" resultType="long">
-        select count(1)
-        from environment_template
-    </select>
-
-    <select id="countConsumables" resultType="long">
-        select count(1)
-        from consumable_inventory
-    </select>
-
-    <select id="countLowStockConsumables" resultType="long">
-        select count(1)
-        from consumable_inventory
-        where tag_type in ('danger', 'warning')
-           or stock &lt;= warn_threshold
+        from lab
     </select>
 
     <select id="countNotices" resultType="long">
@@ -127,8 +103,7 @@
 
     <select id="countOperationEvents" resultType="long">
         select count(1)
-        from module_record
-        where module_name = 'operation-events'
+        from audit_event
     </select>
 
     <select id="listUsageTrend" resultType="java.util.Map">
@@ -143,12 +118,11 @@
 
     <select id="listLabUsageRanking" resultType="java.util.Map">
         select
-            coalesce(l.lab_code, resource) as name,
+            coalesce(l.lab_code, ur.resource) as name,
             count(1) as value
         from usage_record ur
-                 left join lab l on ur.resource = l.lab_name
-            or ur.resource = concat(l.lab_code, ' ', l.lab_name)
-        group by coalesce(l.lab_code, resource)
+                 left join lab l on ur.lab_id = l.id
+        group by coalesce(l.lab_code, ur.resource)
         order by value desc
         limit 8
     </select>
@@ -164,10 +138,19 @@
     </select>
 
     <select id="listLatestEventJson" resultType="java.lang.String">
-        select record_json
-        from module_record
-        where module_name = 'operation-events'
-        order by id desc
+        select json_object(
+            'id', concat('audit-', id),
+            'category', aggregate_type,
+            'aggregateId', aggregate_id,
+            'action', action,
+            'status', result_status,
+            'operator', actor_name,
+            'subject', json_unquote(json_extract(detail_json, '$.subject')),
+            'details', coalesce(json_extract(detail_json, '$.details'), json_object()),
+            'occurredAt', date_format(occurred_at, '%Y-%m-%d %H:%i:%s')
+        )
+        from audit_event
+        order by occurred_at desc, id desc
         limit #{limit}
     </select>
 

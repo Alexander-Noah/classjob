@@ -1,11 +1,12 @@
 package org.example.backend.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.backend.entity.AuditEventEntity;
 import org.example.backend.entity.RepairEntity;
 import org.example.backend.entity.ReservationsEntity;
 import org.example.backend.entity.UsageRecordEntity;
 import org.example.backend.mapper.DevicesMapper;
-import org.example.backend.mapper.ModuleRecordMapper;
+import org.example.backend.mapper.AuditEventMapper;
 import org.example.backend.mapper.RepairMapper;
 import org.example.backend.mapper.UsageRecordMapper;
 import org.example.backend.service.BusinessLoopService;
@@ -15,17 +16,20 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 public class BusinessLoopServiceImpl implements BusinessLoopService {
 
     private static final DateTimeFormatter TICKET_DATE = DateTimeFormatter.BASIC_ISO_DATE;
-    private static final DateTimeFormatter EVENT_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final String EVENT_MODULE = "operation-events";
+    private static final Pattern SENSITIVE_DETAIL_KEY =
+            Pattern.compile(".*(password|secret|token|apikey|credential).*", Pattern.CASE_INSENSITIVE);
 
     private static final String STATUS_APPROVED = "已通过";
     private static final String STATUS_EXISTING_REPAIR = "已存在工单";
@@ -43,20 +47,20 @@ public class BusinessLoopServiceImpl implements BusinessLoopService {
     private final UsageRecordMapper usageRecordMapper;
     private final RepairMapper repairMapper;
     private final DevicesMapper devicesMapper;
-    private final ModuleRecordMapper moduleRecordMapper;
+    private final AuditEventMapper auditEventMapper;
     private final ObjectMapper objectMapper;
 
     public BusinessLoopServiceImpl(
             UsageRecordMapper usageRecordMapper,
             RepairMapper repairMapper,
             DevicesMapper devicesMapper,
-            ModuleRecordMapper moduleRecordMapper,
+            AuditEventMapper auditEventMapper,
             ObjectMapper objectMapper
     ) {
         this.usageRecordMapper = usageRecordMapper;
         this.repairMapper = repairMapper;
         this.devicesMapper = devicesMapper;
-        this.moduleRecordMapper = moduleRecordMapper;
+        this.auditEventMapper = auditEventMapper;
         this.objectMapper = objectMapper;
     }
 
@@ -180,29 +184,55 @@ public class BusinessLoopServiceImpl implements BusinessLoopService {
      */
     @Override
     public void recordEvent(String category, String action, String subject, String status, Map<String, ?> details) {
-        Map<String, Object> event = new LinkedHashMap<>();
-
-        event.put("id", "evt-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8));
-        event.put("category", firstNonBlank(category, "business"));
-        event.put("action", firstNonBlank(action, "operate"));
-        event.put("subject", firstNonBlank(subject, "-"));
-        event.put("status", firstNonBlank(status, STATUS_DONE));
-        event.put("operator", "system");
-        event.put("occurredAt", LocalDateTime.now().format(EVENT_TIME));
-
-        if (details != null && !details.isEmpty()) {
-            event.put("details", details);
-        }
-
         try {
-            moduleRecordMapper.insertRecord(
-                    EVENT_MODULE,
-                    String.valueOf(event.get("id")),
-                    objectMapper.writeValueAsString(event)
-            );
+            AuditEventEntity event = new AuditEventEntity();
+            event.setAggregateType(firstNonBlank(category, "business"));
+            event.setAggregateId(resolveAggregateId(details));
+            event.setAction(firstNonBlank(action, "operate"));
+            event.setResultStatus(firstNonBlank(status, STATUS_DONE));
+            event.setActorName("system");
+            event.setOccurredAt(LocalDateTime.now());
+
+            Map<String, Object> detailPayload = new LinkedHashMap<>();
+            detailPayload.put("subject", firstNonBlank(subject, "-"));
+            if (details != null && !details.isEmpty()) {
+                detailPayload.put("details", sanitizeValue(details));
+            }
+            event.setDetailJson(objectMapper.writeValueAsString(detailPayload));
+            auditEventMapper.insertEvent(event);
         } catch (Exception exception) {
             log.warn("Failed to write business loop event", exception);
         }
+    }
+
+    private String resolveAggregateId(Map<String, ?> details) {
+        if (details == null) {
+            return null;
+        }
+        for (String key : List.of("reservationId", "deviceId", "repairId")) {
+            Object value = details.get(key);
+            if (value != null && !String.valueOf(value).isBlank()) {
+                return String.valueOf(value);
+            }
+        }
+        return null;
+    }
+
+    private Object sanitizeValue(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> sanitized = new LinkedHashMap<>();
+            map.forEach((key, nestedValue) -> {
+                String name = String.valueOf(key);
+                sanitized.put(name, SENSITIVE_DETAIL_KEY.matcher(name).matches() ? "[REDACTED]" : sanitizeValue(nestedValue));
+            });
+            return sanitized;
+        }
+        if (value instanceof Iterable<?> iterable) {
+            List<Object> sanitized = new ArrayList<>();
+            iterable.forEach(item -> sanitized.add(sanitizeValue(item)));
+            return sanitized;
+        }
+        return value;
     }
 
     /**
