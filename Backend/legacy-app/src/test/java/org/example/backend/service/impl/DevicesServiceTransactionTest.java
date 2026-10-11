@@ -22,7 +22,6 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -99,7 +98,7 @@ class DevicesServiceTransactionTest {
     }
 
     @Test
-    void springProxyExposesTransferTransactionButNotInventoryTransaction() throws Exception {
+    void springProxyExposesTransactionsForTransferAndInventory() throws Exception {
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
         when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         AnnotationTransactionAttributeSource attributes = new AnnotationTransactionAttributeSource();
@@ -115,7 +114,7 @@ class DevicesServiceTransactionTest {
         assertNotNull(attributes.getTransactionAttribute(
                 DevicesServiceImpl.class.getMethod("transferDevice", Long.class, DeviceTransferRecordEntity.class),
                 DevicesServiceImpl.class));
-        assertNull(attributes.getTransactionAttribute(
+        assertNotNull(attributes.getTransactionAttribute(
                 DevicesServiceImpl.class.getMethod("recordDeviceInventory", Long.class, DeviceInventoryRecordEntity.class),
                 DevicesServiceImpl.class));
 
@@ -131,7 +130,7 @@ class DevicesServiceTransactionTest {
         when(devicesMapper.getDevicesById(6L)).thenReturn(inventoryBefore, inventoryAfter);
         when(eventMapper.listInventoryEvents(6L)).thenReturn(List.of());
         proxy.recordDeviceInventory(6L, new DeviceInventoryRecordEntity());
-        verify(transactionManager, org.mockito.Mockito.times(1)).getTransaction(any());
+        verify(transactionManager, org.mockito.Mockito.times(2)).getTransaction(any());
     }
 
     private DevicesServiceImpl service() {

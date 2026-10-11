@@ -45,8 +45,9 @@ BUILD SUCCESS
 ```
 
 The transfer update and event insert remain in the existing transactional
-method. Inventory retains its existing transaction boundary, which is covered
-by `DevicesServiceTransactionTest`.
+method. Inventory event insertion and inventory-state update now share a
+transactional method boundary, which is covered by
+`DevicesServiceTransactionTest`.
 
 ## Safety notes
 
@@ -63,3 +64,50 @@ The SQL compatibility projections are covered by source contracts and service
 tests; the real MySQL migration integration test remains the database-level
 verification for migrated historical rows and will be run again at the final
 shrink-migration gate.
+
+## Review follow-up: transactionality and transfer type preservation
+
+- `DevicesServiceImpl.recordDeviceInventory` is now annotated with
+  `@Transactional`, so inserting the inventory event and updating the device's
+  inventory state share one transaction.
+- `DevicesServiceTransactionTest` now requires transaction metadata and two
+  transaction starts when invoking transfer and inventory through the Spring
+  proxy; the former assertion that inventory had no transaction was removed.
+- `V20261010_02__migrate_core_data.sql` now maps the retired
+  `device_transfer_record.transfer_type` column to `transferType` in transfer
+  event `after_state`, matching `DeviceEventMapper.xml`.
+- `CoreSchemaMigrationMySqlIntegrationTest` now supplies a `relocation`
+  transfer type and asserts that the migrated transfer event preserves it in
+  `after_state.transferType`.
+
+Verification on 2026-10-11:
+
+```text
+mvn.cmd -pl legacy-app -Dtest=DevicesServiceTransactionTest test
+BUILD FAILURE before the selected test executed
+```
+
+The concurrent package-renaming work blocks `legacy-app` test compilation with
+unrelated unresolved imports in
+`ClassTimetableQueryCompatibilityTest` (`teachingschedule.web`),
+`LabQueryCompatibilityTest` (`labresource.web`), and
+`MySqlReservationConcurrencyIntegrationTest` (`reservation.infrastructure`,
+including `ReservationPersistenceMapper`, `ReservationPersistencePort`,
+`ManagedLaboratoryIdsPort`, `LaboratorySummaryPort`, `ReservationRecordScope`,
+`ReservationRecord`, `NewReservationRecord`, `ReservationOverlapCheck`, and
+`ReservationReviewUpdate`). The focused device and migration integration tests
+therefore did not execute through Maven.
+
+Static checks completed:
+
+```text
+mvn.cmd -pl legacy-app dependency:build-classpath -Dmdep.outputFile=target/task4-test-classpath.txt -Dmdep.includeScope=test
+BUILD SUCCESS
+
+javac -encoding UTF-8 --release 17 ... DevicesServiceImpl.java
+javac -encoding UTF-8 --release 17 ... DevicesServiceTransactionTest.java CoreSchemaMigrationMySqlIntegrationTest.java
+SUCCESS
+
+git diff --check
+SUCCESS
+```

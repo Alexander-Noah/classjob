@@ -194,6 +194,7 @@ public class DevicesServiceImpl implements DevicesService {
     }
 
     @Override
+    @Transactional
     public DeviceInventoryRecordResult recordDeviceInventory(Long deviceId, DeviceInventoryRecordEntity record) {
         DevicesEntity device = requireDevice(deviceId);
 

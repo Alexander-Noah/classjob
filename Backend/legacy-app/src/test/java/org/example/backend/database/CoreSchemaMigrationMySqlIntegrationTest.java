@@ -56,6 +56,11 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         assertEquals(1, count("timetable_integration_config"));
         assertEquals(1, count("timetable_import_job"));
         assertEquals(1, count("audit_event"));
+        assertEquals("relocation", scalar("""
+                select json_unquote(json_extract(after_state, '$.transferType'))
+                from device_event
+                where event_type = 'transfer'
+                """));
         assertEquals("cipher-user", scalar("select credential_username_cipher from timetable_integration_config"));
         assertEquals("cipher-password", scalar("select credential_password_cipher from timetable_integration_config"));
         assertEquals(1, scalarLong("select count(*) from usage_record where id = 1 and user_id = 1"));
@@ -146,6 +151,7 @@ class CoreSchemaMigrationMySqlIntegrationTest {
                   to_owner_name varchar(100),
                   from_location varchar(200),
                   to_location varchar(200),
+                  transfer_type varchar(80),
                   reason varchar(500),
                   operator_name varchar(100),
                   transfer_at datetime not null,
@@ -222,7 +228,7 @@ class CoreSchemaMigrationMySqlIntegrationTest {
                 """.formatted(SCHEMA));
         statement.execute("""
                 insert into `%s`.device_transfer_record
-                values (1, 1, 'DEV-1', 'Microscope', 1, 'Main Lab', 1, 'Main Lab', 1, 'Alice', 1, 'Alice', 'A-101', 'A-102', 'transfer', 'Alice', '2026-10-10 10:00:00', '2026-10-10 10:01:00')
+                values (1, 1, 'DEV-1', 'Microscope', 1, 'Main Lab', 1, 'Main Lab', 1, 'Alice', 1, 'Alice', 'A-101', 'A-102', 'relocation', 'transfer', 'Alice', '2026-10-10 10:00:00', '2026-10-10 10:01:00')
                 """.formatted(SCHEMA));
         statement.execute("""
                 insert into `%s`.timetable_crawler_config
