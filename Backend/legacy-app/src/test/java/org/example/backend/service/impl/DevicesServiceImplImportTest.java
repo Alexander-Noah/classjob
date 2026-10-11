@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DevicesServiceImplImportTest {
     @Test
-    void normalizeDeviceBindsLabByLabId() throws Exception {
+    void normalizeDeviceBindsLabIdWithoutCopyingLabName() throws Exception {
         Object service = newDevicesServiceWithLabs(List.of(newLab(7, "软件部署实训室", "2-412")));
         Object device = newDevice();
         invokeSetter(device, "setDeviceName", String.class, "教师机");
@@ -35,12 +35,12 @@ class DevicesServiceImplImportTest {
         invokeNormalizeDevice(service, device);
 
         assertEquals(7L, invokeObject(device, "getLabId"));
-        assertEquals("软件部署实训室", invokeString(device, "getLabName"));
+        assertEquals("", invokeString(device, "getLabName"));
         assertEquals("2-412", invokeString(device, "getLocation"));
     }
 
     @Test
-    void normalizeDeviceBindsLabByLocationWhenLabIdMissing() throws Exception {
+    void normalizeDeviceBindsLabByLocationWithoutCopyingLabName() throws Exception {
         Object service = newDevicesServiceWithLabs(List.of(newLab(8, "WEB后端开发实训室", "2-209")));
         Object device = newDevice();
         invokeSetter(device, "setDeviceName", String.class, "2-209 交换机");
@@ -49,7 +49,7 @@ class DevicesServiceImplImportTest {
         invokeNormalizeDevice(service, device);
 
         assertEquals(8L, invokeObject(device, "getLabId"));
-        assertEquals("WEB后端开发实训室", invokeString(device, "getLabName"));
+        assertEquals("", invokeString(device, "getLabName"));
         assertEquals("2-209", invokeString(device, "getLocation"));
     }
 

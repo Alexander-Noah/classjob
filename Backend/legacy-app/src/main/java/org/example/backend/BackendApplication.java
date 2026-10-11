@@ -21,8 +21,7 @@ import java.nio.file.Path;
         "org.example.backend.config",
         "org.example.backend.controller",
         "org.example.backend.security",
-        "org.example.backend.service",
-        "org.example.backend.websocket"
+        "org.example.backend.service"
 })
 @MapperScan(basePackages = "org.example.backend.mapper")
 @Import({

@@ -331,20 +331,6 @@
           and coalesce(deleted, 0) = 0
     </select>
 
-    <select id="listLowStockConsumables" resultType="map">
-        select
-            id,
-            name,
-            stock,
-            unit,
-            warn_threshold as warnThreshold,
-            status
-        from consumable_inventory
-        where stock &lt;= warn_threshold
-        order by stock asc, id desc
-        limit 20
-    </select>
-
     <select id="listPendingReservations" resultType="map">
         select
             r.id,

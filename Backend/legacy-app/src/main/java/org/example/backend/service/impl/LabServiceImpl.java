@@ -93,8 +93,6 @@ public class LabServiceImpl implements LabService {
 
         labMapper.deleteRepairsByLabId(id);
         labMapper.deleteReservationsByLabId(id);
-        labMapper.deleteCourseEnvironmentsByLabId(id);
-        labMapper.deleteLabSoftwareByLabId(id);
         labMapper.deleteDevicesByLabId(id);
         int deletedRows = labMapper.deleteLab(id);
 

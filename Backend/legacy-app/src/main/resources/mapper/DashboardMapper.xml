@@ -6,7 +6,7 @@
 <mapper namespace="org.example.backend.mapper.DashboardMapper">
 
     <sql id="joinActiveTeachingCalendar">
-        join timetable_crawler_config crawler_config
+        join timetable_integration_config crawler_config
           on crawler_config.config_key = 'lab-admin-class-timetable'
     </sql>
 
@@ -16,7 +16,7 @@
         and find_in_set(
                     convert(cast(least(25, greatest(1, floor(datediff(
                             curdate(),
-                            str_to_date(crawler_config.semester_start_date, '%Y-%m-%d')
+                            crawler_config.semester_start_date
                     ) / 7) + 1)) as char) using utf8mb4) collate utf8mb4_general_ci,
                     convert(t.week_expanded using utf8mb4) collate utf8mb4_general_ci
             ) &gt; 0

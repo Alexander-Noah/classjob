@@ -39,8 +39,7 @@ class ExplicitModuleWiringTest {
                 "org.example.backend.config",
                 "org.example.backend.controller",
                 "org.example.backend.security",
-                "org.example.backend.service",
-                "org.example.backend.websocket"
+                "org.example.backend.service"
         ), Set.of(application.scanBasePackages()));
 
         Import imported = BackendApplication.class.getAnnotation(Import.class);

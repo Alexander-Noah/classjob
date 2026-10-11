@@ -22,41 +22,11 @@ class SecurityAccessPolicyTest {
     }
 
     @Test
-    void systemSettingsAndActivationManagementRequireSystemAdmin() {
-        assertTrue(isAllowed("PUT", "/system-settings", "systemAdmin"));
-        assertTrue(isAllowed("POST", "/activation-codes/generate", "systemAdmin"));
-
-        assertFalse(isAllowed("PUT", "/system-settings", "labAdmin"));
-        assertFalse(isAllowed("GET", "/admin/activation-codes", "labAdmin"));
-        assertFalse(isAllowed("POST", "/activation-codes/generate", "labAdmin"));
-        assertFalse(isAllowed("POST", "/activation-codes/batch", "labAdmin"));
-        assertFalse(isAllowed("POST", "/activation-codes/generate", "teacher"));
-    }
-
-    @Test
-    void labAdminCanUseOnlyLabActivationBindingEndpoints() {
-        assertTrue(isAllowed("GET", "/activation-codes/lab-bindings", "labAdmin"));
-        assertTrue(isAllowed("POST", "/activation-codes/bind-lab", "labAdmin"));
-        assertTrue(isAllowed("POST", "/activation-codes/abc/unbind-lab", "labAdmin"));
-
-        assertFalse(isAllowed("GET", "/activation-codes/lab-bindings", "teacher"));
-        assertFalse(isAllowed("POST", "/activation-codes/bind-lab", "teacher"));
-        assertFalse(isAllowed("POST", "/activation-codes/abc/unbind-lab", "teacher"));
-    }
-
-    @Test
     void labAdminCanManageLabResourcesButTeacherCannotMutateThem() {
         assertTrue(isAllowed("POST", "/devices/import", "labAdmin"));
         assertTrue(isAllowed("PUT", "/labs/12", "labAdmin"));
-        assertTrue(isAllowed("POST", "/consumables/12/movement", "labAdmin"));
         assertTrue(isAllowed("POST", "/class-timetables/crawl", "labAdmin"));
-        assertTrue(isAllowed("POST", "/lab-software", "labAdmin"));
-        assertTrue(isAllowed("PUT", "/environment-templates/3", "labAdmin"));
-        assertTrue(isAllowed("GET", "/iot/hardware", "labAdmin"));
-        assertTrue(isAllowed("POST", "/iot/labs/12/access", "labAdmin"));
         assertTrue(isAllowed("POST", "/reservations/9/approve", "labAdmin"));
-        assertTrue(isAllowed("POST", "/schedule-adjustments/9/approve", "labAdmin"));
-        assertTrue(isAllowed("POST", "/course-environment-requests/9/confirm", "labAdmin"));
         assertTrue(isAllowed("POST", "/repairs/9/assign", "labAdmin"));
         assertTrue(isAllowed("POST", "/notices", "labAdmin"));
         assertTrue(isAllowed("POST", "/usage-records/9/review", "labAdmin"));
@@ -64,17 +34,14 @@ class SecurityAccessPolicyTest {
 
         assertFalse(isAllowed("POST", "/devices/import", "teacher"));
         assertFalse(isAllowed("PUT", "/labs/12", "teacher"));
-        assertFalse(isAllowed("POST", "/consumables/12/movement", "teacher"));
-        assertFalse(isAllowed("POST", "/iot/labs/12/access", "teacher"));
         assertFalse(isAllowed("POST", "/reservations/9/approve", "teacher"));
-        assertFalse(isAllowed("POST", "/schedule-adjustments/9/approve", "teacher"));
-        assertFalse(isAllowed("POST", "/course-environment-requests/9/confirm", "teacher"));
     }
 
     @Test
     void teacherKeepsItsExpectedSurfaceAndRetiredMaintenanceRoleHasNone() {
         assertTrue(isAllowed("GET", "/class-timetables", "teacher"));
-        assertTrue(isAllowed("POST", "/course-environment-requests", "teacher"));
+        assertTrue(isAllowed("GET", "/reservations", "teacher"));
+        assertTrue(isAllowed("POST", "/reservations", "teacher"));
         assertFalse(isAllowed("POST", "/class-timetables/crawl", "teacher"));
 
         assertFalse(isAllowed("GET", "/repairs", "maintenance"));

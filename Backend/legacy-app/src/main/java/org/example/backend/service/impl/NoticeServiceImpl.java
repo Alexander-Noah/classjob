@@ -149,18 +149,6 @@ public class NoticeServiceImpl implements NoticeService {
     public Map<String, Object> syncBusinessReminders() {
         List<NoticeEntity> notices = new ArrayList<>();
 
-        for (Map<String, Object> item : noticeMapper.listLowStockConsumables()) {
-            notices.add(buildBusinessNotice(
-                    String.valueOf(item.get("name")) + "库存预警",
-                    "库存预警",
-                    "labAdmin",
-                    "consumable",
-                    String.valueOf(item.get("id")),
-                    "当前库存 " + item.get("stock") + firstNonBlank(String.valueOf(item.get("unit")), "件")
-                            + "，低于预警阈值 " + item.get("warnThreshold") + "，请及时补货。"
-            ));
-        }
-
         for (Map<String, Object> item : noticeMapper.listPendingReservations()) {
             notices.add(buildBusinessNotice(
                     "预约审批待处理：" + firstNonBlank(String.valueOf(item.get("applicantName")), "预约申请"),
@@ -300,9 +288,8 @@ public class NoticeServiceImpl implements NoticeService {
 
     private List<NoticeEntity> getDefaultNotices() {
         return List.of(
-                buildNotice("课程环境确认提醒", "环境确认", "teacher", "请任课教师确认已配置课程环境。", "已发布"),
                 buildNotice("设备维护提醒", "设备维护", "labAdmin", "请关注待处理设备维护工单。", "已发布"),
-                buildNotice("库存预警提醒", "库存预警", "labAdmin", "请及时处理低库存耗材。", "草稿")
+                buildNotice("预约审核提醒", "预约审核", "labAdmin", "请及时处理待审核实验室预约。", "草稿")
         );
     }
 

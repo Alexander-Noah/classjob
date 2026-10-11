@@ -43,30 +43,6 @@ mybatis:
     map-underscore-to-camel-case: true
 
 # =============================
-# 通义千问 / DashScope 智能助手配置
-# =============================
-tongyi:
-  agent:
-    # 是否启用后端 AI 问答能力。
-    enabled: true
-    # DashScope OpenAI 兼容接口地址。
-    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    # 使用的模型名称。
-    model: qwen-plus
-    # 图片识别/多模态问答使用的视觉模型；可通过 TONGYI_VISION_MODEL 环境变量覆盖。
-    vision-model: qwen-vl-plus
-    # DashScope API Key；必须通过环境变量注入，避免真实密钥进入代码仓库。
-    api-key: ${DASHSCOPE_API_KEY:${TONGYI_API_KEY:}}
-
-# =============================
-# 语音识别配置
-# =============================
-speech:
-  vosk:
-    # Vosk 中文语音模型路径；可通过 VOSK_MODEL_PATH 环境变量覆盖。
-    model-path: ${VOSK_MODEL_PATH:../vosk-model-small-cn-0.22/vosk-model-small-cn-0.22}
-
-# =============================
 # 课表抓取与导入脚本配置
 # =============================
 timetable:
@@ -114,13 +90,6 @@ smart-lab:
       max-attempts: 5
       # 触发失败上限后的锁定时长，单位秒。
       lock-seconds: 900
-  iot:
-    # 是否启用硬件控制适配层。
-    enabled: true
-    # 调用硬件设备接口的默认超时时间。
-    timeout: 5s
-    # 硬件设备清单；正式接入可参考 application-iot-example.yaml。
-    devices: []
   oss:
     # 是否启用阿里云 OSS 文件上传。
     enabled: ${SMART_LAB_OSS_ENABLED:false}

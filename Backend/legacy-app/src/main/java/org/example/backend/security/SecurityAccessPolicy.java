@@ -5,13 +5,10 @@ import java.util.Set;
 
 public class SecurityAccessPolicy {
     private static final Set<String> COMMON_PREFIXES = Set.of(
-            "/ai-assistant",
             "/auth/profile",
             "/auth/logout",
             "/dashboard",
-            "/files",
-            "/teacher-hosts",
-            "/student-clients"
+            "/files"
     );
 
     public boolean isAllowed(String method, String path, String roleCode) {
@@ -30,7 +27,6 @@ public class SecurityAccessPolicy {
         }
         if ("labAdmin".equals(normalizedRole)) {
             return isUserOptionsPath(normalizedMethod, normalizedPath)
-                    || isLabActivationCodePath(normalizedMethod, normalizedPath)
                     || isLabAdminPath(normalizedPath);
         }
         if ("teacher".equals(normalizedRole)) {
@@ -52,24 +48,16 @@ public class SecurityAccessPolicy {
     private boolean isLabAdminPath(String path) {
         return startsWithAnySegment(path,
                 "/academic-schedules",
-                "/approval-countersigns",
                 "/business-loop",
                 "/class-timetables",
-                "/consumables",
-                "/course-environment-requests",
-                "/device-status",
                 "/device-inventory-records",
                 "/device-transfer-records",
                 "/devices",
-                "/environment-templates",
-                "/iot",
-                "/lab-software",
                 "/labs",
                 "/maintenance-records",
                 "/notices",
                 "/repairs",
                 "/reservations",
-                "/schedule-adjustments",
                 "/usage-records"
         );
     }
@@ -78,23 +66,7 @@ public class SecurityAccessPolicy {
         return "GET".equals(method) && path.equals("/users/options");
     }
 
-    private boolean isLabActivationCodePath(String method, String path) {
-        if ("GET".equals(method) && path.equals("/activation-codes/lab-bindings")) {
-            return true;
-        }
-        if ("POST".equals(method) && path.equals("/activation-codes/bind-lab")) {
-            return true;
-        }
-        return "POST".equals(method) && path.matches("^/activation-codes/[^/]+/unbind-lab$");
-    }
-
     private boolean isTeacherPath(String method, String path) {
-        if (startsWithSegment(path, "/course-environment-requests")) {
-            return isListOrCreateOrRecordUpdate(method, path, "/course-environment-requests");
-        }
-        if (startsWithSegment(path, "/schedule-adjustments")) {
-            return isListOrCreateOrRecordUpdate(method, path, "/schedule-adjustments");
-        }
         if (startsWithSegment(path, "/reservations")) {
             return "GET".equals(method) || ("POST".equals(method) && path.equals("/reservations"));
         }
@@ -122,16 +94,6 @@ public class SecurityAccessPolicy {
 
     private boolean startsWithSegment(String path, String prefix) {
         return path.equals(prefix) || path.startsWith(prefix + "/");
-    }
-
-    private boolean isListOrCreateOrRecordUpdate(String method, String path, String prefix) {
-        if ("GET".equals(method)) {
-            return true;
-        }
-        if ("POST".equals(method)) {
-            return path.equals(prefix);
-        }
-        return "PUT".equals(method) && path.matches("^" + prefix + "/[^/]+$");
     }
 
     private String normalizePath(String path) {

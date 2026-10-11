@@ -171,16 +171,6 @@
         where lab_id = #{id}
     </delete>
 
-    <delete id="deleteCourseEnvironmentsByLabId">
-        delete from course_environment_request
-        where assigned_lab_id = #{id}
-    </delete>
-
-    <delete id="deleteLabSoftwareByLabId">
-        delete from lab_software
-        where lab_id = #{id}
-    </delete>
-
     <delete id="deleteDevicesByLabId">
         delete from device
         where lab_id = #{id}

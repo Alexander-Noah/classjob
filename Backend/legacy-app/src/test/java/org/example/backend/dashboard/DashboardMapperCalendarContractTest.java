@@ -40,10 +40,12 @@ class DashboardMapperCalendarContractTest {
                 .replaceAll("\\s+", " ")
                 .toLowerCase(Locale.ROOT);
 
-        assertTrue(xml.contains("join timetable_crawler_config"));
+        assertTrue(xml.contains("join timetable_integration_config"));
+        assertFalse(xml.contains("timetable_crawler_config"));
         assertTrue(xml.contains("convert(t.semester"));
         assertTrue(xml.contains("convert(crawler_config.semester"));
         assertTrue(xml.contains("crawler_config.semester_start_date"));
+        assertFalse(xml.contains("str_to_date(crawler_config.semester_start_date"));
         assertFalse(xml.contains("datediff(curdate(), '2026-03-02')"));
     }
 }

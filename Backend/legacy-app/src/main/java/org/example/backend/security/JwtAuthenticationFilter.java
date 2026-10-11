@@ -28,20 +28,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/login",
             "/auth/logout",
-            "/ai-assistant/ws",
-            "/ws/ai-assistant",
             "/error",
             "/favicon.ico",
-            "/actuator/health",
-            "/activation-codes/verify"
+            "/actuator/health"
     );
 
     private static final String[] PUBLIC_PREFIXES = {
-            "/public/",
-            "/teacher-hosts",
-            "/student-clients",
-            "/api/teacher-hosts",
-            "/api/student-clients"
+            "/public/"
     };
 
     private final JwtService jwtService;
