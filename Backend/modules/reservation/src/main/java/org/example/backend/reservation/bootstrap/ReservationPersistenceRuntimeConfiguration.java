@@ -16,6 +16,7 @@ import org.example.backend.reservation.application.port.out.LaboratorySummaryPor
 import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
 import org.example.backend.reservation.application.port.out.ReservationPersistencePort;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -24,6 +25,18 @@ import org.springframework.context.annotation.Import;
 @MapperScan(basePackageClasses = ReservationPersistenceMapper.class)
 @Import(ReservationModuleConfiguration.class)
 public class ReservationPersistenceRuntimeConfiguration {
+    @Bean
+    @ConditionalOnMissingBean(ManagedLaboratoryIdsPort.class)
+    public ManagedLaboratoryIdsPort missingManagedLaboratoryIdsPort() {
+        return managerUserId -> java.util.Set.of();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(LaboratorySummaryPort.class)
+    public LaboratorySummaryPort missingLaboratorySummaryPort() {
+        return laboratoryIds -> java.util.Map.of();
+    }
+
     @Bean
     public ReservationPersistencePort reservationPersistencePort(ReservationPersistenceMapper mapper) {
         return new MyBatisReservationPersistenceAdapter(mapper);

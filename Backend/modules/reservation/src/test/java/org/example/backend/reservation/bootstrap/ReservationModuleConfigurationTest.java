@@ -15,6 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ReservationModuleConfigurationTest {
     @Test
+    void runtimeSuppliesEmptyOwnershipFallbacksWhenOwningModulesAreAbsent() {
+        ReservationPersistenceRuntimeConfiguration configuration = new ReservationPersistenceRuntimeConfiguration();
+
+        assertEquals(java.util.Set.of(), configuration.missingManagedLaboratoryIdsPort().findByManagerUserId(7L));
+        assertEquals(java.util.Map.of(), configuration.missingLaboratorySummaryPort().findByIds(java.util.Set.of(1L)));
+    }
+
+    @Test
     void startsInIsolationAndFallsBackWhenLabModuleIsAbsent() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ReservationModuleConfiguration.class)) {
             assertEquals("reservation", context.getBean(ModuleDescriptor.class).id().value());

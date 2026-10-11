@@ -9,12 +9,12 @@ import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessMo
 import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
 import org.example.backend.integration.academic.AcademicSystemIntegrationConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
-import org.example.backend.labresource.bootstrap.LabResourceModuleConfiguration;
+import org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration;
 import org.example.backend.platform.security.SecurityPlatformConfiguration;
 import org.example.backend.platform.websupport.WebSupportConfiguration;
-import org.example.backend.reservation.bootstrap.ReservationModuleConfiguration;
+import org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration;
 import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
-import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
+import org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -30,9 +30,9 @@ import org.springframework.context.annotation.Import;
         WebSupportConfiguration.class,
         AcademicSystemIntegrationConfiguration.class,
         IdentityAccessModuleConfiguration.class,
-        TeachingScheduleModuleConfiguration.class,
-        LabResourceModuleConfiguration.class,
-        ReservationModuleConfiguration.class,
+        TeachingScheduleRuntimeConfiguration.class,
+        LabResourceRuntimeConfiguration.class,
+        ReservationPersistenceRuntimeConfiguration.class,
         EnvironmentReadinessModuleConfiguration.class,
         TeachingCoordinationModuleConfiguration.class
 })
