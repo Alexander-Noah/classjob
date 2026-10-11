@@ -14,6 +14,10 @@ public interface UsageRecordMapper {
 
     int insertUsageRecord(UsageRecordEntity usageRecord);
 
+    Long findUniqueUserIdByRealName(@Param("person") String person);
+
+    Long findUniqueLabIdByNameOrCode(@Param("resource") String resource);
+
     int countUsageRecordBySignature(
             @Param("person") String person,
             @Param("resource") String resource,

@@ -5,37 +5,44 @@
 <mapper namespace="org.example.backend.mapper.UsageRecordMapper">
 
     <sql id="UsageRecordColumns">
-        id,
-        convert(concat('UR-', lpad(id, 4, '0')) using utf8mb4) collate utf8mb4_general_ci as recordNo,
-        convert(person using utf8mb4) collate utf8mb4_general_ci as person,
-        convert(resource using utf8mb4) collate utf8mb4_general_ci as resource,
-        convert(scene using utf8mb4) collate utf8mb4_general_ci as scene,
-        use_time as useTime,
-        convert(status using utf8mb4) collate utf8mb4_general_ci as status,
-        convert(remark using utf8mb4) collate utf8mb4_general_ci as remark,
+        ur.id,
+        ur.user_id as userId,
+        ur.lab_id as labId,
+        convert(concat('UR-', lpad(ur.id, 4, '0')) using utf8mb4) collate utf8mb4_general_ci as recordNo,
+        convert(coalesce(u.real_name, ur.person) using utf8mb4) collate utf8mb4_general_ci as person,
+        convert(case
+            when l.lab_name is null then ur.resource
+            when l.lab_code is null or l.lab_code = '' or l.lab_name like concat(l.lab_code, '%') then l.lab_name
+            else concat(l.lab_code, ' ', l.lab_name)
+        end using utf8mb4) collate utf8mb4_general_ci as resource,
+        convert(ur.scene using utf8mb4) collate utf8mb4_general_ci as scene,
+        ur.use_time as useTime,
+        convert(ur.status using utf8mb4) collate utf8mb4_general_ci as status,
+        convert(ur.remark using utf8mb4) collate utf8mb4_general_ci as remark,
         convert('使用对象' using utf8mb4) collate utf8mb4_general_ci as role,
-        convert(scene using utf8mb4) collate utf8mb4_general_ci as type,
-        convert(resource using utf8mb4) collate utf8mb4_general_ci as lab,
+        convert(ur.scene using utf8mb4) collate utf8mb4_general_ci as type,
+        convert(coalesce(l.lab_name, ur.resource) using utf8mb4) collate utf8mb4_general_ci as lab,
         convert('-' using utf8mb4) collate utf8mb4_general_ci as leaveTime,
         convert('-' using utf8mb4) collate utf8mb4_general_ci as duration,
         convert(case
-            when status = '异常' then '待管理员处理'
-            when status = '待复核' then '待管理员复核'
+            when ur.status = '异常' then '待管理员处理'
+            when ur.status = '待复核' then '待管理员复核'
             else '系统记录正常'
         end using utf8mb4) collate utf8mb4_general_ci as accessResult,
         convert(case
-            when status in ('异常', '待复核') then '待复核'
+            when ur.status in ('异常', '待复核') then '待复核'
             else '系统'
         end using utf8mb4) collate utf8mb4_general_ci as reviewer,
         convert(case
-            when status in ('异常', '待复核') then coalesce(remark, '待补充异常原因')
+            when ur.status in ('异常', '待复核') then coalesce(ur.remark, '待补充异常原因')
             else '-'
         end using utf8mb4) collate utf8mb4_general_ci as abnormalReason,
-        convert(remark using utf8mb4) collate utf8mb4_general_ci as note,
-        convert('台账' using utf8mb4) collate utf8mb4_general_ci as sourceType,
+        convert(ur.remark using utf8mb4) collate utf8mb4_general_ci as note,
+        convert(coalesce(ur.source_type, '台账') using utf8mb4) collate utf8mb4_general_ci as sourceType,
+        ur.source_id as sourceId,
         false as readonly,
-        created_at as createdAt,
-        updated_at as updatedAt
+        ur.created_at as createdAt,
+        ur.updated_at as updatedAt
     </sql>
 
     <select id="listUsageRecords" resultType="org.example.backend.entity.UsageRecordEntity">
@@ -43,12 +50,16 @@
         from (
         select
         <include refid="UsageRecordColumns" />
-        from usage_record
+        from usage_record ur
+        left join sys_user u on ur.user_id = u.id
+        left join lab l on ur.lab_id = l.id
 
         union all
 
         select
         -1000000000 - r.id as id,
+        r.applicant_user_id as userId,
+        r.lab_id as labId,
         convert(concat('RES-', r.id) using utf8mb4) collate utf8mb4_general_ci as recordNo,
         convert(coalesce(r.applicant_name, '预约用户') using utf8mb4) collate utf8mb4_general_ci as person,
         convert(case
@@ -98,6 +109,7 @@
         convert('-' using utf8mb4) collate utf8mb4_general_ci as abnormalReason,
         convert(concat('来源：预约；预约编号', r.id) using utf8mb4) collate utf8mb4_general_ci as note,
         convert('预约' using utf8mb4) collate utf8mb4_general_ci as sourceType,
+        cast(r.id as char) as sourceId,
         true as readonly,
         r.created_at as createdAt,
         r.updated_at as updatedAt
@@ -126,6 +138,8 @@
 
         select
         -2000000000 - t.id as id,
+        null as userId,
+        l.id as labId,
         convert(concat('COURSE-', t.id) using utf8mb4) collate utf8mb4_general_ci as recordNo,
         convert(coalesce(t.class_name, t.row_class_name, '课程班级') using utf8mb4) collate utf8mb4_general_ci as person,
         convert(case
@@ -213,6 +227,7 @@
         convert('-' using utf8mb4) collate utf8mb4_general_ci as abnormalReason,
         convert(concat('来源：课表；课程：', coalesce(t.course_name, '-'), '；教师：', coalesce(t.teacher, '-')) using utf8mb4) collate utf8mb4_general_ci as note,
         convert('课表' using utf8mb4) collate utf8mb4_general_ci as sourceType,
+        cast(t.id as char) as sourceId,
         true as readonly,
         t.create_time as createdAt,
         t.create_time as updatedAt
@@ -265,14 +280,39 @@
     <select id="getUsageRecord" resultType="org.example.backend.entity.UsageRecordEntity">
         select
         <include refid="UsageRecordColumns" />
-        from usage_record
-        where id = #{id}
+        from usage_record ur
+        left join sys_user u on ur.user_id = u.id
+        left join lab l on ur.lab_id = l.id
+        where ur.id = #{id}
     </select>
 
     <insert id="insertUsageRecord" useGeneratedKeys="true" keyProperty="id">
-        insert into usage_record(person, resource, scene, use_time, status, remark)
-        values(#{person}, #{resource}, #{scene}, #{useTime}, #{status}, #{remark})
+        insert into usage_record(
+            user_id, lab_id, person, resource, scene, use_time, status, remark, source_type, source_id
+        )
+        values(
+            #{userId}, #{labId}, #{person}, #{resource}, #{scene}, #{useTime}, #{status}, #{remark},
+            #{sourceType}, #{sourceId}
+        )
     </insert>
+
+    <select id="findUniqueUserIdByRealName" resultType="java.lang.Long">
+        select min(id)
+        from sys_user
+        where real_name = #{person}
+        group by real_name
+        having count(*) = 1
+    </select>
+
+    <select id="findUniqueLabIdByNameOrCode" resultType="java.lang.Long">
+        select min(id)
+        from (
+            select id from lab where lab_name = #{resource}
+            union all
+            select id from lab where lab_code = #{resource}
+        ) matches
+        having count(distinct id) = 1
+    </select>
 
     <select id="countUsageRecordBySignature" resultType="int">
         select count(1)
@@ -291,10 +331,14 @@
         set
             person = #{record.person},
             resource = #{record.resource},
+            user_id = #{record.userId},
+            lab_id = #{record.labId},
             scene = #{record.scene},
             use_time = #{record.useTime},
             status = #{record.status},
             remark = #{record.remark},
+            source_type = #{record.sourceType},
+            source_id = #{record.sourceId},
             updated_at = now()
         where id = #{id}
     </update>

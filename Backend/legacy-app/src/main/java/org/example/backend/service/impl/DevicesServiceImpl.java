@@ -721,7 +721,6 @@ public class DevicesServiceImpl implements DevicesService {
         }
 
         device.setLabId(matchedLab.getId() == null ? null : matchedLab.getId().longValue());
-        device.setLabName(matchedLab.getLabName());
         device.setLocation(matchedLab.getRoomNo());
     }
 
