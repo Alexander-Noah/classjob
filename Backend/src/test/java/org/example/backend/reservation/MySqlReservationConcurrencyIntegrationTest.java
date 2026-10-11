@@ -1,19 +1,9 @@
 package org.example.backend;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.example.backend.service.CapabilityResult;
-import org.example.backend.service.ReservationPersistenceService;
 import org.example.backend.mapper.ReservationInsertRow;
 import org.example.backend.mapper.ReservationOverlapCount;
 import org.example.backend.mapper.ReservationPersistenceMapper;
-import org.example.backend.service.ReservationActor;
-import org.example.backend.service.ReservationCatalogQuery;
-import org.example.backend.service.ReservationView;
-import org.example.backend.service.LaboratorySummary;
-import org.example.backend.service.LaboratorySummaryPort;
-import org.example.backend.service.LabAvailabilitySnapshot;
-import org.example.backend.service.ManagedLaboratoryIdsPort;
-import org.example.backend.service.ScheduleConflictSnapshot;
 import org.example.backend.service.*;
 import org.example.backend.entity.ReservationStatus;
 import org.junit.jupiter.api.AfterAll;
@@ -129,22 +119,40 @@ class MySqlReservationConcurrencyIntegrationTest {
         @Bean ReservationPersistenceService reservationPersistenceService(ReservationPersistenceMapper mapper) {
             return new ReservationPersistenceService(new BarrierPersistenceMapper(mapper));
         }
-        @Bean ManagedLaboratoryIdsPort managedLaboratoryIdsPort() { return userId -> Set.of(7L); }
-        @Bean LaboratorySummaryPort laboratorySummaryPort() {
-            return ids -> ids.contains(7L) ? Map.of(7L, new LaboratorySummary("并发实验室", "LAB-7")) : Map.of();
+        @Bean LabCatalogQuery labCatalogQuery() {
+            LabView laboratory = new LabView(7L, "LAB-7", "并发实验室", null, null, null, null,
+                    50, null, null, null, 0, null, null, null);
+            return new LabCatalogQuery() {
+                public List<LabView> list(LabAccessScope scope) { return List.of(laboratory); }
+                public LabView findById(long id, LabAccessScope scope) { return id == 7L ? laboratory : null; }
+            };
         }
-        @Bean ReservationCatalogQuery reservationCatalogQuery(ReservationPersistenceService reservations, ManagedLaboratoryIdsPort managed,
-                                                                LaboratorySummaryPort summaries) {
-            return new DefaultReservationCatalogQuery(reservations, managed, summaries);
+        @Bean LabAvailabilityQuery labAvailabilityQuery() {
+            return (labId, count, startsAt, endsAt) ->
+                    CapabilityResult.available(new LabAvailabilityView(labId, 50, true));
         }
-        @Bean ReservationAvailabilityEvaluator availability(ReservationPersistenceService reservations) {
-            return new DefaultReservationAvailabilityEvaluator(reservations,
-                    (labId, count, range) -> CapabilityResult.available(new LabAvailabilitySnapshot(labId, 50, true)),
-                    (labId, date, range) -> CapabilityResult.available(new ScheduleConflictSnapshot(labId, date, range, false)));
+        @Bean ScheduleOccupancyQuery scheduleOccupancyQuery() {
+            return request -> CapabilityResult.available(new ScheduleOccupancyView(false));
+        }
+        @Bean ReservationLabService reservationLabService(LabCatalogQuery catalog, LabAvailabilityQuery availability) {
+            return new ReservationLabService(catalog, availability);
+        }
+        @Bean ReservationScheduleService reservationScheduleService(ScheduleOccupancyQuery schedules, LabCatalogQuery catalog) {
+            return new ReservationScheduleService(schedules, catalog);
+        }
+        @Bean ReservationCatalogQuery reservationCatalogQuery(ReservationPersistenceService reservations,
+                                                                ReservationLabService laboratories) {
+            return new DefaultReservationCatalogQuery(reservations, laboratories);
+        }
+        @Bean ReservationAvailabilityEvaluator availability(ReservationPersistenceService reservations,
+                                                              ReservationLabService laboratories,
+                                                              ReservationScheduleService schedules) {
+            return new DefaultReservationAvailabilityEvaluator(reservations, laboratories, schedules);
         }
         @Bean DefaultReservationCreationService creation(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
-                                                          ManagedLaboratoryIdsPort managed, ReservationAvailabilityEvaluator availability) {
-            return new DefaultReservationCreationService(reservations, catalog, managed, availability);
+                                                          ReservationLabService laboratories,
+                                                          ReservationAvailabilityEvaluator availability) {
+            return new DefaultReservationCreationService(reservations, catalog, laboratories, availability);
         }
         @Bean DefaultReservationReviewService review(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
                                                       ReservationAvailabilityEvaluator availability) {

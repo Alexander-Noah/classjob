@@ -1,11 +1,5 @@
 package org.example.backend.service;
 
-import org.example.backend.service.CapabilityResult;
-import org.example.backend.service.CapabilityStatus;
-import org.example.backend.service.LabAvailabilityPort;
-import org.example.backend.service.LabAvailabilitySnapshot;
-import org.example.backend.service.ScheduleConflictPort;
-import org.example.backend.service.ScheduleConflictSnapshot;
 import org.example.backend.entity.ReservationStatus;
 
 import java.util.EnumSet;
@@ -19,15 +13,15 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
     );
 
     private final ReservationPersistenceService reservations;
-    private final LabAvailabilityPort laboratoryAvailability;
-    private final ScheduleConflictPort scheduleConflicts;
+    private final ReservationLabService laboratories;
+    private final ReservationScheduleService schedules;
 
     public DefaultReservationAvailabilityEvaluator(ReservationPersistenceService reservations,
-                                                   LabAvailabilityPort laboratoryAvailability,
-                                                   ScheduleConflictPort scheduleConflicts) {
+                                                   ReservationLabService laboratories,
+                                                   ReservationScheduleService schedules) {
         this.reservations = Objects.requireNonNull(reservations, "reservations");
-        this.laboratoryAvailability = Objects.requireNonNull(laboratoryAvailability, "laboratoryAvailability");
-        this.scheduleConflicts = Objects.requireNonNull(scheduleConflicts, "scheduleConflicts");
+        this.laboratories = Objects.requireNonNull(laboratories, "laboratories");
+        this.schedules = Objects.requireNonNull(schedules, "schedules");
     }
 
     @Override
@@ -46,7 +40,7 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
     }
 
     private LabAvailabilitySnapshot requireLaboratoryCapability(ReservationAvailabilityRequest request) {
-        CapabilityResult<LabAvailabilitySnapshot> result = laboratoryAvailability.check(
+        CapabilityResult<LabAvailabilitySnapshot> result = laboratories.checkAvailability(
                 request.labId(), request.attendeeCount(), request.timeRange());
         if (result == null || result.status() != CapabilityStatus.AVAILABLE || result.value() == null) {
             throw new IllegalStateException("Laboratory availability capability is unavailable");
@@ -59,7 +53,7 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
     }
 
     private ScheduleConflictSnapshot requireScheduleCapability(ReservationAvailabilityRequest request) {
-        CapabilityResult<ScheduleConflictSnapshot> result = scheduleConflicts.check(
+        CapabilityResult<ScheduleConflictSnapshot> result = schedules.checkConflict(
                 request.labId(), request.reservationDate(), request.timeRange());
         if (result == null || result.status() != CapabilityStatus.AVAILABLE || result.value() == null) {
             throw new IllegalStateException("Schedule conflict capability is unavailable");

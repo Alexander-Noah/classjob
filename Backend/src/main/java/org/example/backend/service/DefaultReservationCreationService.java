@@ -1,12 +1,5 @@
 package org.example.backend.service;
 
-import org.example.backend.service.ReservationAccessScope;
-import org.example.backend.service.ReservationActor;
-import org.example.backend.service.ReservationActorRole;
-import org.example.backend.service.ReservationCatalogQuery;
-import org.example.backend.service.ReservationView;
-import org.example.backend.service.ManagedLaboratoryIdsPort;
-import org.example.backend.service.NewReservationRecord;
 import org.example.backend.entity.ReservationStateMachine;
 import org.example.backend.entity.ReservationStatus;
 import org.springframework.transaction.annotation.Isolation;
@@ -20,15 +13,15 @@ import java.util.Set;
 public class DefaultReservationCreationService {
     private final ReservationPersistenceService reservations;
     private final ReservationCatalogQuery catalog;
-    private final ManagedLaboratoryIdsPort managedLaboratories;
+    private final ReservationLabService laboratories;
     private final ReservationAvailabilityEvaluator availability;
 
     public DefaultReservationCreationService(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
-                                             ManagedLaboratoryIdsPort managedLaboratories,
+                                             ReservationLabService laboratories,
                                              ReservationAvailabilityEvaluator availability) {
         this.reservations = Objects.requireNonNull(reservations, "reservations");
         this.catalog = Objects.requireNonNull(catalog, "catalog");
-        this.managedLaboratories = Objects.requireNonNull(managedLaboratories, "managedLaboratories");
+        this.laboratories = Objects.requireNonNull(laboratories, "laboratories");
         this.availability = Objects.requireNonNull(availability, "availability");
     }
 
@@ -56,7 +49,7 @@ public class DefaultReservationCreationService {
         if (actor.role() != ReservationActorRole.LABORATORY_ADMINISTRATOR) {
             throw new IllegalStateException("Unsupported reservation actor role: " + actor.role());
         }
-        Set<Long> managed = managedLaboratories.findByManagerUserId(actor.userId());
+        Set<Long> managed = laboratories.findManagedLaboratoryIds(actor.userId());
         if (managed == null) {
             throw new IllegalStateException("Managed laboratory capability did not return a set");
         }

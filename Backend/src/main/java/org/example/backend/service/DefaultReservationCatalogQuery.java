@@ -12,17 +12,14 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
     private final ReservationPersistenceService reservations;
-    private final ManagedLaboratoryIdsPort managedLaboratoryIds;
-    private final LaboratorySummaryPort laboratorySummaries;
+    private final ReservationLabService laboratories;
 
     public DefaultReservationCatalogQuery(
             ReservationPersistenceService reservations,
-            ManagedLaboratoryIdsPort managedLaboratoryIds,
-            LaboratorySummaryPort laboratorySummaries
+            ReservationLabService laboratories
     ) {
         this.reservations = Objects.requireNonNull(reservations, "reservations");
-        this.managedLaboratoryIds = Objects.requireNonNull(managedLaboratoryIds, "managedLaboratoryIds");
-        this.laboratorySummaries = Objects.requireNonNull(laboratorySummaries, "laboratorySummaries");
+        this.laboratories = Objects.requireNonNull(laboratories, "laboratories");
     }
 
     @Override
@@ -51,7 +48,7 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         }
         if (actor.role() == ReservationActorRole.LABORATORY_ADMINISTRATOR) {
             Set<Long> ids = Objects.requireNonNull(
-                    managedLaboratoryIds.findByManagerUserId(actor.userId()), "managed laboratory ids");
+                    laboratories.findManagedLaboratoryIds(actor.userId()), "managed laboratory ids");
             return ReservationRecordScope.forLaboratoryIds(Set.copyOf(ids));
         }
         throw new IllegalStateException("Unsupported reservation actor role: " + actor.role());
@@ -70,7 +67,7 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         }
 
         Map<Long, LaboratorySummary> summaries = Objects.requireNonNull(
-                laboratorySummaries.findByIds(Set.copyOf(laboratoryIds)), "laboratory summaries");
+                laboratories.findLaboratorySummaries(Set.copyOf(laboratoryIds)), "laboratory summaries");
         validateSummaries(laboratoryIds, summaries);
         return found.stream().map(record -> toView(record, summaries.get(record.labId()))).toList();
     }
