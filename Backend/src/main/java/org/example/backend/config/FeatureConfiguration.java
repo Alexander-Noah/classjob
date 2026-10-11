@@ -19,9 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Wires the laboratory, timetable, and reservation features in the monolith.
- * Business collaboration stays explicit here so the application remains easy
- * to follow as one deployable Spring Boot project.
+ * Provides fallback snapshot queries and converts their views into the
+ * capability types consumed by teaching coordination.
  */
 @Configuration(proxyBeanMethods = false)
 public class FeatureConfiguration {
