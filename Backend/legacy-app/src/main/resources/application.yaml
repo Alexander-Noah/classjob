@@ -9,6 +9,13 @@ spring:
   application:
     # 应用名称，主要用于日志、监控和服务识别。
     name: Backend
+  flyway:
+    enabled: ${SMART_LAB_FLYWAY_ENABLED:false}
+    baseline-on-migrate: true
+    baseline-version: 20261009
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
   datasource:
     # MySQL 数据库连接地址；smart_lab_basic 是当前业务库名称。
     url: ${SMART_LAB_DB_URL}
