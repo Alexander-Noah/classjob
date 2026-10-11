@@ -21,6 +21,22 @@ Tests run: 22, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
+Review-finding verification:
+
+```text
+mvn.cmd -pl legacy-app '-Dtest=DeviceEventPersistenceContractTest,DeviceModuleBoundaryTest,DeviceImportSecurityTest,DevicesServiceTransactionTest' test
+[ERROR] COMPILATION ERROR
+[ERROR] BackendApplication.java: cannot find symbol LabResourceRuntimeConfiguration
+[ERROR] BackendApplication.java: cannot find symbol ReservationPersistenceRuntimeConfiguration
+[ERROR] BackendApplication.java: cannot find symbol TeachingScheduleRuntimeConfiguration
+[ERROR] LegacyLabMetadataAdapter.java: cannot find symbols DeviceCountPort and ManagerNamePort
+BUILD FAILURE
+```
+
+The inventory and transfer event inserts explicitly use MyBatis generated-key
+propagation (`useGeneratedKeys="true" keyProperty="id"`), preserving the
+input record object's generated `id` for service results and API responses.
+
 Compilation verification:
 
 ```text
