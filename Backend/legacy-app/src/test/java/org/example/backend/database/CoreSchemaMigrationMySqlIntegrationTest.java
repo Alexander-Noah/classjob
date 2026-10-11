@@ -55,6 +55,7 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         assertEquals(2, count("device_event"));
         assertEquals(1, count("timetable_integration_config"));
         assertEquals(1, count("timetable_import_job"));
+        assertEquals(1, count("class_timetable"), "source row lost from class_timetable");
         assertEquals(1, count("audit_event"));
         assertEquals("relocation", scalar("""
                 select json_unquote(json_extract(after_state, '$.transferType'))
@@ -169,6 +170,26 @@ class CoreSchemaMigrationMySqlIntegrationTest {
                 ) engine=InnoDB
                 """.formatted(SCHEMA));
         statement.execute("""
+                create table `%s`.class_timetable (
+                  id bigint primary key auto_increment,
+                  semester varchar(40) not null,
+                  row_class_name varchar(160),
+                  class_name varchar(160),
+                  weekday varchar(20),
+                  section_code varchar(40),
+                  section_text varchar(80),
+                  start_section int,
+                  end_section int,
+                  course_name varchar(200),
+                  teacher varchar(100),
+                  week_raw varchar(200),
+                  week_text varchar(200),
+                  week_expanded varchar(500),
+                  classroom varchar(200),
+                  create_time datetime not null
+                ) engine=InnoDB
+                """.formatted(SCHEMA));
+        statement.execute("""
                 create table `%s`.timetable_academic_credential (
                   credential_key varchar(80) primary key,
                   username_cipher text not null,
@@ -233,6 +254,15 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         statement.execute("""
                 insert into `%s`.timetable_crawler_config
                 values ('lab-admin-class-timetable', 1, '0 0 2 * * *', '2026-Fall', '2026-09-01', '2026-10-10 08:00:00')
+                """.formatted(SCHEMA));
+        statement.execute("""
+                insert into `%s`.class_timetable
+                  (semester, row_class_name, class_name, weekday, section_code, section_text,
+                   start_section, end_section, course_name, teacher, week_raw, week_text,
+                   week_expanded, classroom, create_time)
+                values ('2026-Fall', 'Class A', 'Physics', '星期一', '1-2', '第一二节',
+                        1, 2, 'Physics', 'Alice', '1-16', '1-16周', '1,2,3', 'LAB-1',
+                        '2026-10-10 08:00:00')
                 """.formatted(SCHEMA));
         statement.execute("""
                 insert into `%s`.timetable_academic_credential

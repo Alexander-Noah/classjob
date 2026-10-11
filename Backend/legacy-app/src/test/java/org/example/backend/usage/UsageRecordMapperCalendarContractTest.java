@@ -39,10 +39,12 @@ class UsageRecordMapperCalendarContractTest {
                 .replaceAll("\\s+", " ")
                 .toLowerCase(Locale.ROOT);
 
-        assertTrue(sql.contains("join timetable_crawler_config"));
+        assertTrue(sql.contains("join timetable_integration_config"));
+        assertFalse(sql.contains("timetable_crawler_config"));
         assertTrue(sql.contains("convert(t.semester"));
         assertTrue(sql.contains("convert(crawler_config.semester"));
         assertTrue(sql.contains("crawler_config.semester_start_date"));
+        assertFalse(sql.contains("str_to_date(crawler_config.semester_start_date"));
         assertFalse(sql.contains("datediff(curdate(), '2026-03-02')"));
     }
 }

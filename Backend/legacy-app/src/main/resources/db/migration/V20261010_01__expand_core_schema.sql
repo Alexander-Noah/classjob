@@ -51,6 +51,27 @@ create table timetable_import_job (
     references timetable_integration_config(id) on delete set null
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci;
 
+create table if not exists class_timetable (
+  id bigint primary key auto_increment,
+  semester varchar(40) not null,
+  row_class_name varchar(160) null,
+  class_name varchar(160) null,
+  weekday varchar(20) null,
+  section_code varchar(40) null,
+  section_text varchar(80) null,
+  start_section int null,
+  end_section int null,
+  course_name varchar(200) null,
+  teacher varchar(100) null,
+  week_raw varchar(200) null,
+  week_text varchar(200) null,
+  week_expanded varchar(500) null,
+  classroom varchar(200) null,
+  create_time datetime not null default current_timestamp,
+  key idx_class_timetable_semester_weekday (semester, weekday),
+  key idx_class_timetable_classroom (classroom)
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci;
+
 create table audit_event (
   id bigint primary key auto_increment,
   aggregate_type varchar(60) not null,

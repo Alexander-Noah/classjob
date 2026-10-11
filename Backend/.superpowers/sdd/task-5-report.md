@@ -62,3 +62,33 @@ These files are outside Task 5 scope and were not modified.
 - `Backend/legacy-app/src/test/java/org/example/backend/service/impl/AcademicCredentialServiceImplSecurityTest.java`
 
 No commit was created.
+
+## Review Fixes for 6818d05
+
+- Updated the production calendar joins in `DashboardMapper.xml` and
+  `UsageRecordMapper.xml` to use `timetable_integration_config` while keeping
+  the existing `crawler_config` alias and response/query shapes.
+- Removed `str_to_date` around `crawler_config.semester_start_date`; the
+  consolidated schema stores that value as a MySQL `DATE`.
+- Added an idempotent `create table if not exists class_timetable` definition
+  to `V20261010_01__expand_core_schema.sql`, including the columns consumed by
+  `ClassTimetableMapper.insertTimetable` and `ClassTimetableEntity`.
+- Updated calendar contract tests to reject the retired table and DATE string
+  conversion explicitly.
+- Updated `CoreSchemaMigrationContractTest` and the MySQL integration fixture
+  to represent and preserve a `class_timetable` row.
+- Strengthened `TimetablePersistenceContractTest` to parse the mapper with
+  `XMLMapperBuilder`, inspect bound SQL for retired-table references, require
+  `config_id` in task inserts, and capture encrypted credential writes plus
+  clear-not-delete credential behavior.
+
+## Review-Fix Verification
+
+| Command | Result |
+| --- | --- |
+| `mvn.cmd -pl legacy-app -am '-Dtest=TimetablePersistenceContractTest,AcademicCredentialServiceImplSecurityTest,ReservationMapperCalendarContractTest,DashboardMapperCalendarContractTest,UsageRecordMapperCalendarContractTest,DatabaseSchemaInitializerCompatibilityTest,CoreSchemaMigrationContractTest' test` | BLOCKED before `legacy-app`: `platform-web-support` fails Surefire with `No tests matching pattern ...` because the reactor-wide command selects tests absent from upstream modules. |
+| `mvn.cmd -pl legacy-app -am '-Dtest=TimetablePersistenceContractTest,AcademicCredentialServiceImplSecurityTest,ReservationMapperCalendarContractTest,DashboardMapperCalendarContractTest,UsageRecordMapperCalendarContractTest,DatabaseSchemaInitializerCompatibilityTest,CoreSchemaMigrationContractTest' '-Dsurefire.failIfNoSpecifiedTests=false' test` | PASS. Legacy app ran 12 tests with 0 failures, 0 errors, and 0 skipped. |
+| `mvn.cmd -pl legacy-app -am -DskipTests compile` | PASS. All 10 reactor projects compiled. |
+| PowerShell `[xml]` parse of `DashboardMapper.xml`, `UsageRecordMapper.xml`, and `ClassTimetableMapper.xml` | PASS. |
+| `git diff --check` on all Task 5 review-fix files | PASS. |
+| `CoreSchemaMigrationMySqlIntegrationTest` | Not run; requires `-Dcore.schema.mysql.it=true` and an available MySQL instance. The fixture and assertions were updated, and the static migration contract passed. |

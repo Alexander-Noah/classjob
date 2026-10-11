@@ -13,15 +13,18 @@ class CoreSchemaMigrationContractTest {
     private static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
 
     @Test
-    void expandMigrationCreatesExactlyTheFourReplacementTables() throws Exception {
+    void expandMigrationCreatesReplacementTablesAndRetainsClassTimetable() throws Exception {
         String sql = Files.readString(MIGRATIONS.resolve("V20261010_01__expand_core_schema.sql")).toLowerCase();
         Set<String> expected = Set.of(
                 "device_event", "timetable_integration_config",
-                "timetable_import_job", "audit_event"
+                "timetable_import_job", "audit_event", "class_timetable"
         );
         for (String table : expected) {
-            assertTrue(sql.contains("create table " + table), table);
+            assertTrue(sql.contains("create table " + table) || sql.contains("create table if not exists " + table), table);
         }
+        assertTrue(sql.contains("create table if not exists class_timetable"));
+        assertTrue(sql.contains("row_class_name"));
+        assertTrue(sql.contains("week_expanded"));
         assertTrue(sql.contains("alter table usage_record"));
         assertTrue(sql.contains("add column user_id"));
         assertTrue(sql.contains("add column lab_id"));
