@@ -1,9 +1,9 @@
-package org.example.backend.identityaccess.adapter.out.security;
+package org.example.backend.identityaccess.internal;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.backend.identityaccess.api.UserView;
-import org.example.backend.identityaccess.application.port.out.TokenPort;
+import org.example.backend.identityaccess.internal.TokenPort;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

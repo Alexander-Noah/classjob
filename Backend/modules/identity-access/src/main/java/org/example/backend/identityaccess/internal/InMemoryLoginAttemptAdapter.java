@@ -1,6 +1,6 @@
-package org.example.backend.identityaccess.adapter.out.security;
+package org.example.backend.identityaccess.internal;
 
-import org.example.backend.identityaccess.application.port.out.LoginAttemptPort;
+import org.example.backend.identityaccess.internal.LoginAttemptPort;
 
 import java.time.Clock;
 import java.util.Locale;

@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.application;
+package org.example.backend.identityaccess.internal;
 
 public class InvalidCredentialsException extends RuntimeException {
     public InvalidCredentialsException() {

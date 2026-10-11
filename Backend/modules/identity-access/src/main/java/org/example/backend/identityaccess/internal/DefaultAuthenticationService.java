@@ -1,14 +1,14 @@
-package org.example.backend.identityaccess.application;
+package org.example.backend.identityaccess.internal;
 
 import org.example.backend.identityaccess.api.AuthenticatedSession;
 import org.example.backend.identityaccess.api.AuthenticationUseCase;
 import org.example.backend.identityaccess.api.LoginCommand;
 import org.example.backend.identityaccess.api.UserView;
-import org.example.backend.identityaccess.application.port.out.LoginAttemptPort;
-import org.example.backend.identityaccess.application.port.out.PasswordPort;
-import org.example.backend.identityaccess.application.port.out.TokenPort;
-import org.example.backend.identityaccess.application.port.out.UserCredentialPort;
-import org.example.backend.identityaccess.application.port.out.UserCredentialRecord;
+import org.example.backend.identityaccess.internal.LoginAttemptPort;
+import org.example.backend.identityaccess.internal.PasswordPort;
+import org.example.backend.identityaccess.internal.TokenPort;
+import org.example.backend.identityaccess.internal.UserCredentialPort;
+import org.example.backend.identityaccess.internal.UserCredentialRecord;
 
 public final class DefaultAuthenticationService implements AuthenticationUseCase {
     private static final String RETIRED_ROLE_MESSAGE = "角色已停用，请联系系统管理员重新分配角色";

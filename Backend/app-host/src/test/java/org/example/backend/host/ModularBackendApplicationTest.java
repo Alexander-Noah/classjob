@@ -16,7 +16,7 @@ import org.example.backend.teachingschedule.api.ScheduleOccupancyQuery;
 import org.example.backend.teachingschedule.api.ScheduleOccupancyView;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
 import org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration;
-import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
+import org.example.backend.identityaccess.IdentityAccessModuleConfiguration;
 import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
 import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
 import org.junit.jupiter.api.Test;

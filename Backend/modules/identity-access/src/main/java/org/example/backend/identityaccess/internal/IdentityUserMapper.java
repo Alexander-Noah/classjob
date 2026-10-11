@@ -1,8 +1,8 @@
-package org.example.backend.identityaccess.adapter.out.persistence;
+package org.example.backend.identityaccess.internal;
 
 import org.apache.ibatis.annotations.Param;
-import org.example.backend.identityaccess.application.port.out.UserCredentialPort;
-import org.example.backend.identityaccess.application.port.out.UserCredentialRecord;
+import org.example.backend.identityaccess.internal.UserCredentialPort;
+import org.example.backend.identityaccess.internal.UserCredentialRecord;
 
 import java.util.Optional;
 

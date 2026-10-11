@@ -1,6 +1,6 @@
-package org.example.backend.identityaccess.adapter.out.security;
+package org.example.backend.identityaccess.internal;
 
-import org.example.backend.identityaccess.application.port.out.PasswordPort;
+import org.example.backend.identityaccess.internal.PasswordPort;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;

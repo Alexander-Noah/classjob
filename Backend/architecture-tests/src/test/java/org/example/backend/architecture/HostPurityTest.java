@@ -9,7 +9,7 @@ class HostPurityTest {
     void hostDoesNotDependOnBusinessApiApplicationDomainOrAdapters() {
         noClasses().that().resideInAPackage("..host..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "..identityaccess.api..", "..identityaccess.application..", "..identityaccess.domain..", "..identityaccess.adapter..",
+                        "..identityaccess.api..", "..identityaccess.internal..", "..identityaccess.web..",
                         "..teachingschedule.api..", "..teachingschedule.application..", "..teachingschedule.domain..", "..teachingschedule.adapter..",
                         "..labresource.api..", "..labresource.application..", "..labresource.domain..", "..labresource.adapter..",
                         "..reservation.api..", "..reservation.application..", "..reservation.domain..", "..reservation.adapter..",

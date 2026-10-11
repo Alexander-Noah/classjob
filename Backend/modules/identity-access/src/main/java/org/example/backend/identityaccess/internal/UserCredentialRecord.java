@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.application.port.out;
+package org.example.backend.identityaccess.internal;
 
 public record UserCredentialRecord(long id, String username, String encodedPassword, String realName,
                                    String roleCode, String roleName, int status, String department,

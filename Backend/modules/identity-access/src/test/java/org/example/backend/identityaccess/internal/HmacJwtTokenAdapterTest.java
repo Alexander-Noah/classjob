@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.adapter.out.security;
+package org.example.backend.identityaccess.internal;
 
 import org.example.backend.identityaccess.api.UserView;
 import org.junit.jupiter.api.Test;

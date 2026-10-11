@@ -6,7 +6,7 @@ import org.example.backend.bridge.coordinationschedule.CoordinationScheduleBridg
 import org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration;
 import org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration;
 import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
-import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
+import org.example.backend.identityaccess.IdentityAccessModuleConfiguration;
 import org.example.backend.integration.academic.AcademicSystemIntegrationConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
 import org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration;

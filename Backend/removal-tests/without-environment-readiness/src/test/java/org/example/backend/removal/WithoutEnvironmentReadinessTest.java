@@ -3,7 +3,7 @@ package org.example.backend.removal;
 import org.example.backend.bridge.coordinationreservation.CoordinationReservationBridgeConfiguration;
 import org.example.backend.bridge.coordinationschedule.CoordinationScheduleBridgeConfiguration;
 import org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration;
-import org.example.backend.identityaccess.bootstrap.IdentityAccessModuleConfiguration;
+import org.example.backend.identityaccess.IdentityAccessModuleConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
 import org.example.backend.kernel.capability.CapabilityStatus;
 import org.example.backend.kernel.module.ModuleCatalog;

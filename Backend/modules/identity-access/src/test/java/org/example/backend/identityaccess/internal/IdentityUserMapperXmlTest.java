@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.adapter.out.persistence;
+package org.example.backend.identityaccess.internal;
 
 import org.junit.jupiter.api.Test;
 

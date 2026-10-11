@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.application.port.out;
+package org.example.backend.identityaccess.internal;
 
 public interface LoginAttemptPort {
     void assertAllowed(String username, String clientAddress);

@@ -1,4 +1,4 @@
-package org.example.backend.identityaccess.bootstrap;
+package org.example.backend.identityaccess;
 
 import org.example.backend.kernel.module.ModuleDescriptor;
 import org.junit.jupiter.api.Test;
