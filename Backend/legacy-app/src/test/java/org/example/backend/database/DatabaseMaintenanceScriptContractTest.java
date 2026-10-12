@@ -20,9 +20,14 @@ class DatabaseMaintenanceScriptContractTest {
         assertAll(
                 () -> assertTrue(backup.contains("mysqldump")),
                 () -> assertTrue(backup.contains("Get-FileHash")),
+                () -> assertTrue(backup.contains("table-archives")),
+                () -> assertTrue(backup.contains("information_schema.table_constraints")),
                 () -> assertFalse(backup.contains("--password=")),
                 () -> assertTrue(restore.contains("smart_lab_restore_rehearsal_")),
+                () -> assertTrue(restore.contains("tableArchives")),
+                () -> assertTrue(restore.contains("constraint")),
                 () -> assertTrue(migrate.contains("restore-rehearsal.json")),
+                () -> assertTrue(migrate.contains("tableArchives")),
                 () -> assertTrue(migrate.contains("SMART_LAB_FLYWAY_ENABLED")),
                 () -> assertTrue(migrate.contains("20261010.3"))
         );

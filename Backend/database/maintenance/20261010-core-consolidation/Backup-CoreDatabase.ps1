@@ -38,6 +38,8 @@ if (-not $resolvedArchive.StartsWith($resolvedRoot, [System.StringComparison]::O
 
 $fullDump = Join-Path $resolvedArchive 'full.sql'
 $retiredDump = Join-Path $resolvedArchive 'retired-tables.sql'
+$tableArchiveDirectory = Join-Path $resolvedArchive 'table-archives'
+New-Item -ItemType Directory -Path $tableArchiveDirectory -Force | Out-Null
 $mysqlCommon = @("--host=$DbHost", "--port=$Port", "--user=$User", '--batch', '--skip-column-names')
 
 $fullArgs = @(
@@ -67,6 +69,17 @@ if ($existingRetiredTables.Count -gt 0) {
 
 $tableManifest = foreach ($table in $databaseTables) {
     if ($table -notmatch '^[A-Za-z0-9_]+$') { throw "Unsafe table name returned by MySQL: $table" }
+
+    $tableArchiveName = "table-archives/$table.sql"
+    $tableArchivePath = Join-Path $tableArchiveDirectory "$table.sql"
+    $tableArgs = @(
+        "--host=$DbHost", "--port=$Port", "--user=$User",
+        '--single-transaction', '--hex-blob', '--no-create-db',
+        "--result-file=$tableArchivePath", $Database, $table
+    )
+    & mysqldump @tableArgs
+    if ($LASTEXITCODE -ne 0) { throw "Table mysqldump failed for $table (exit $LASTEXITCODE)" }
+
     $hasIdSql = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='$Database' AND table_name='$table' AND column_name='id'"
     $hasId = [int]((& mysql @mysqlCommon "--execute=$hasIdSql") | Select-Object -First 1)
     $aggregateSql = if ($hasId -eq 1) {
@@ -76,7 +89,48 @@ $tableManifest = foreach ($table in $databaseTables) {
     }
     $aggregate = ((& mysql @mysqlCommon "--execute=$aggregateSql") | Select-Object -First 1) -split "`t", 3
     if ($LASTEXITCODE -ne 0) { throw "Unable to inventory table $table (exit $LASTEXITCODE)" }
-    [ordered]@{ name = $table; rowCount = [long]$aggregate[0]; minId = $aggregate[1]; maxId = $aggregate[2] }
+
+    $constraintSql = @"
+SELECT tc.constraint_name,
+       tc.constraint_type,
+       COALESCE(kcu.column_name, ''),
+       COALESCE(kcu.referenced_table_name, ''),
+       COALESCE(kcu.referenced_column_name, ''),
+       COALESCE(kcu.ordinal_position, 0)
+FROM information_schema.table_constraints tc
+LEFT JOIN information_schema.key_column_usage kcu
+  ON kcu.constraint_schema = tc.constraint_schema
+ AND kcu.table_name = tc.table_name
+ AND kcu.constraint_name = tc.constraint_name
+WHERE tc.table_schema = '$Database'
+  AND tc.table_name = '$table'
+ORDER BY tc.constraint_name, kcu.ordinal_position
+"@
+    $constraintRows = @(& mysql @mysqlCommon "--execute=$constraintSql")
+    if ($LASTEXITCODE -ne 0) { throw "Unable to inventory constraints for $table (exit $LASTEXITCODE)" }
+    $constraints = @()
+    foreach ($constraintRow in $constraintRows) {
+        $parts = ([string]$constraintRow) -split "`t", 6
+        if ($parts.Count -ne 6) { throw "Unexpected constraint result for $table" }
+        $constraints += [ordered]@{
+            name = $parts[0]
+            type = $parts[1]
+            column = $parts[2]
+            referencedTable = $parts[3]
+            referencedColumn = $parts[4]
+            ordinal = [int]$parts[5]
+        }
+    }
+
+    $tableArchiveHash = (Get-FileHash -LiteralPath $tableArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    [ordered]@{
+        name = $table
+        rowCount = [long]$aggregate[0]
+        minId = $aggregate[1]
+        maxId = $aggregate[2]
+        keys = @($constraints)
+        sqlArchive = [ordered]@{ name = $tableArchiveName; sha256 = $tableArchiveHash }
+    }
 }
 
 $fullHash = (Get-FileHash -LiteralPath $fullDump -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -92,6 +146,7 @@ $manifest = [ordered]@{
     files = [ordered]@{
         full = [ordered]@{ name = 'full.sql'; sha256 = $fullHash }
         retired = [ordered]@{ name = 'retired-tables.sql'; sha256 = $retiredHash }
+        tableArchives = @($tableManifest | ForEach-Object { $_.sqlArchive })
     }
     tables = @($tableManifest)
 }

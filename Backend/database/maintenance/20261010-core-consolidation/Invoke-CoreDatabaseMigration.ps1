@@ -18,7 +18,7 @@ if ([string]::IsNullOrWhiteSpace($env:MYSQL_PWD)) {
 $archive = (Resolve-Path -LiteralPath $ArchiveDirectory).Path
 $manifest = Get-Content -LiteralPath (Join-Path $archive 'manifest.json') -Raw | ConvertFrom-Json
 
-foreach ($file in @($manifest.files.full, $manifest.files.retired)) {
+foreach ($file in @($manifest.files.full, $manifest.files.retired) + @($manifest.files.tableArchives)) {
     $path = Join-Path $archive $file.name
     $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $file.sha256) { throw "$($file.name) SHA-256 does not match manifest.json" }
