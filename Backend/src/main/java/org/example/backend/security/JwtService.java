@@ -305,4 +305,3 @@ public class JwtService {
     public record JwtClaims(String username, String roleCode, String userId, long expiresAt) {
     }
 }
-

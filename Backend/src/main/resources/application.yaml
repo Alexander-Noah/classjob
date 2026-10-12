@@ -135,7 +135,7 @@ smart-lab:
     # 文件公开访问基础地址；配置 CDN 或 bucket 公网域名。
     public-base-url: ${ALIYUN_OSS_PUBLIC_BASE_URL:zhibi1.oss-cn-beijing.aliyuncs.com}
     # 用户头像上传目录。
-    avatar-dir: ${ALIYUN_OSS_AVATAR_DIR:zhiyun}  
+    avatar-dir: ${ALIYUN_OSS_AVATAR_DIR:zhiyun}
 
 # =============================
 # OpenAPI / Swagger 文档配置
