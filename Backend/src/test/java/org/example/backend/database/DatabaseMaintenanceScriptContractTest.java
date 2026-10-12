@@ -15,7 +15,8 @@ class DatabaseMaintenanceScriptContractTest {
     @Test
     void scriptsRequireBackupAndRestoreProofBeforeShrink() throws Exception {
         String backup = Files.readString(ROOT.resolve("Backup-CoreDatabase.ps1"));
-        String restore = Files.readString(ROOT.resolve("Test-CoreDatabaseBackup.ps1"));
+        String restore = Files.readString(ROOT.resolve("Test-CoreDatabaseBackup.ps1"))
+                .replace("\r\n", "\n");
         String migrate = Files.readString(ROOT.resolve("Invoke-CoreDatabaseMigration.ps1"));
         String readme = Files.readString(ROOT.resolve("README.md"));
         assertAll(
@@ -32,6 +33,7 @@ class DatabaseMaintenanceScriptContractTest {
                 () -> assertTrue(migrate.contains("SMART_LAB_FLYWAY_ENABLED")),
                 () -> assertTrue(migrate.contains("20261010.3")),
                 () -> assertTrue(migrate.startsWith("#requires -Version 7.0")),
+                () -> assertFalse(migrate.contains("legacy-app")),
                 () -> assertTrue(readme.contains("PowerShell 7.0"))
         );
     }

@@ -97,8 +97,6 @@ $processInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $processInfo.FileName = $maven
 $processInfo.WorkingDirectory = $backendRoot
 $processInfo.UseShellExecute = $false
-$processInfo.ArgumentList.Add('-pl')
-$processInfo.ArgumentList.Add('legacy-app')
 $processInfo.ArgumentList.Add("-Dspring-boot.run.arguments=--spring.main.web-application-type=none --spring.flyway.target=$target")
 $processInfo.ArgumentList.Add('spring-boot:run')
 
