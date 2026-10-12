@@ -15,7 +15,9 @@ import org.example.backend.service.DefaultReservationReviewService;
 import org.example.backend.service.DefaultScheduleOccupancyQuery;
 import org.example.backend.service.DefaultTeachingScheduleQuery;
 import org.example.backend.service.LabRecordReadService;
+import org.example.backend.service.ReservationLabService;
 import org.example.backend.service.ReservationPersistenceService;
+import org.example.backend.service.ReservationScheduleService;
 import org.example.backend.service.TeachingScheduleReadService;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.annotation.MapperScan;
@@ -41,7 +43,11 @@ class MonolithWiringTest {
     private static final Set<String> FORWARDING_PORTS = Set.of(
             "LabRecordReadPort.java",
             "TeachingScheduleReadPort.java",
-            "ReservationPersistencePort.java"
+            "ReservationPersistencePort.java",
+            "LabAvailabilityPort.java",
+            "ManagedLaboratoryIdsPort.java",
+            "LaboratorySummaryPort.java",
+            "ScheduleConflictPort.java"
     );
 
     @Test
@@ -91,6 +97,8 @@ class MonolithWiringTest {
         assertNotNull(LabRecordReadService.class.getAnnotation(Service.class));
         assertNotNull(TeachingScheduleReadService.class.getAnnotation(Service.class));
         assertNotNull(ReservationPersistenceService.class.getAnnotation(Service.class));
+        assertNotNull(ReservationLabService.class.getAnnotation(Service.class));
+        assertNotNull(ReservationScheduleService.class.getAnnotation(Service.class));
         assertAll(
                 () -> assertNotNull(DefaultLabCatalogQuery.class.getAnnotation(Service.class)),
                 () -> assertNotNull(DefaultLabAvailabilityQuery.class.getAnnotation(Service.class)),
@@ -109,6 +117,10 @@ class MonolithWiringTest {
                 () -> assertFalse(configuration.contains("labRecordReadPort(")),
                 () -> assertFalse(configuration.contains("teachingScheduleReadPort(")),
                 () -> assertFalse(configuration.contains("reservationPersistencePort(")),
+                () -> assertFalse(configuration.contains("labAvailabilityPort(")),
+                () -> assertFalse(configuration.contains("managedLaboratoryIdsPort(")),
+                () -> assertFalse(configuration.contains("laboratorySummaryPort(")),
+                () -> assertFalse(configuration.contains("scheduleConflictPort(")),
                 () -> assertFalse(configuration.contains("labCatalogQuery(")),
                 () -> assertFalse(configuration.contains("labAvailabilityQuery(")),
                 () -> assertFalse(configuration.contains("teachingScheduleQuery(")),
