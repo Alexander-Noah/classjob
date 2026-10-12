@@ -26,10 +26,6 @@ public interface LabMapper {
 
     int deleteReservationsByLabId(Integer id);
 
-    int deleteCourseEnvironmentsByLabId(Integer id);
-
-    int deleteLabSoftwareByLabId(Integer id);
-
     int deleteDevicesByLabId(Integer id);
 
     int deleteLab(Integer id);

@@ -51,8 +51,6 @@ public interface NoticeMapper {
 
     int countNoticeBySource(@Param("sourceModule") String sourceModule, @Param("sourceId") String sourceId);
 
-    List<Map<String, Object>> listLowStockConsumables();
-
     List<Map<String, Object>> listPendingReservations();
 
     List<Map<String, Object>> listActiveRepairs();

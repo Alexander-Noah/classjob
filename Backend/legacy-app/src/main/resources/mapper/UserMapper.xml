@@ -140,7 +140,6 @@
         select
             (select count(1) from lab where manager_user_id = #{id})
             + (select count(1) from device where owner_user_id = #{id})
-            + (select count(1) from course_environment_request where teacher_user_id = #{id})
             + (select count(1) from lab_reservation where applicant_user_id = #{id})
             + (select count(1) from repair_order where reporter_user_id = #{id})
             + (select count(1) from notice where created_by = #{id})

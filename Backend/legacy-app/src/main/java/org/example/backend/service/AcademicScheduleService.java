@@ -2,7 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.entity.AcademicScheduleCourse;
 import org.example.backend.entity.AcademicScheduleImportRequest;
-import org.example.backend.entity.CourseEnvironmentEntity;
+import org.example.backend.entity.ClassTimetableEntity;
 
 import java.util.List;
 
@@ -11,5 +11,5 @@ public interface AcademicScheduleService {
 
     List<AcademicScheduleCourse> fetchSchedule(AcademicScheduleImportRequest request);
 
-    List<CourseEnvironmentEntity> importSchedule(AcademicScheduleImportRequest request);
+    List<ClassTimetableEntity> importSchedule(AcademicScheduleImportRequest request);
 }

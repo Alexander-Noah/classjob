@@ -109,7 +109,7 @@
         convert('-' using utf8mb4) collate utf8mb4_general_ci as abnormalReason,
         convert(concat('来源：预约；预约编号', r.id) using utf8mb4) collate utf8mb4_general_ci as note,
         convert('预约' using utf8mb4) collate utf8mb4_general_ci as sourceType,
-        cast(r.id as char) as sourceId,
+        convert(cast(r.id as char) using utf8mb4) collate utf8mb4_general_ci as sourceId,
         true as readonly,
         r.created_at as createdAt,
         r.updated_at as updatedAt
@@ -227,7 +227,7 @@
         convert('-' using utf8mb4) collate utf8mb4_general_ci as abnormalReason,
         convert(concat('来源：课表；课程：', coalesce(t.course_name, '-'), '；教师：', coalesce(t.teacher, '-')) using utf8mb4) collate utf8mb4_general_ci as note,
         convert('课表' using utf8mb4) collate utf8mb4_general_ci as sourceType,
-        cast(t.id as char) as sourceId,
+        convert(cast(t.id as char) using utf8mb4) collate utf8mb4_general_ci as sourceId,
         true as readonly,
         t.create_time as createdAt,
         t.create_time as updatedAt

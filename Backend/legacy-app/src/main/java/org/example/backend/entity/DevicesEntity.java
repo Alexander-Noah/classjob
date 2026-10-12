@@ -29,7 +29,7 @@ public class DevicesEntity {
 
     private Integer quantity;
     private String unit;
-    // Asset lifecycle status only. Runtime online/health data belongs to device_runtime_status.
+    // Asset lifecycle status only; live telemetry is outside the consolidated core.
     private String status;
     // Legacy compatibility field. Keep returning it for old /devices consumers during migration.
     private String health;

@@ -2,10 +2,10 @@ package org.example.backend.service.impl;
 
 import org.example.backend.entity.AcademicScheduleCourse;
 import org.example.backend.entity.AcademicScheduleImportRequest;
-import org.example.backend.entity.CourseEnvironmentEntity;
+import org.example.backend.entity.ClassTimetableEntity;
+import org.example.backend.mapper.ClassTimetableMapper;
 import org.example.backend.service.AcademicScheduleService;
 import org.example.backend.service.AcademicCredentialService;
-import org.example.backend.service.CourseEnvironmentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,15 +39,15 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
     private static final Pattern TAG_PATTERN = Pattern.compile("(?is)<[^>]+>");
     private static final Pattern PERIOD_PATTERN = Pattern.compile("(第\\s*\\d+\\s*节).*?(\\d{1,2}:\\d{2}\\s*[-~—]\\s*\\d{1,2}:\\d{2})");
 
-    private final CourseEnvironmentService courseEnvironmentService;
+    private final ClassTimetableMapper classTimetableMapper;
     private final AcademicCredentialService academicCredentialService;
     private final HttpClient httpClient;
 
     public AcademicScheduleServiceImpl(
-            CourseEnvironmentService courseEnvironmentService,
+            ClassTimetableMapper classTimetableMapper,
             AcademicCredentialService academicCredentialService
     ) {
-        this.courseEnvironmentService = courseEnvironmentService;
+        this.classTimetableMapper = classTimetableMapper;
         this.academicCredentialService = academicCredentialService;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(8))
@@ -110,36 +110,36 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
 
     @Override
     @Transactional
-    public List<CourseEnvironmentEntity> importSchedule(AcademicScheduleImportRequest request) {
+    public List<ClassTimetableEntity> importSchedule(AcademicScheduleImportRequest request) {
         request = ensureRequest(request);
         List<AcademicScheduleCourse> courses = isBlank(request.getHtml())
                 ? fetchSchedule(request)
                 : parseSchedule(request);
 
-        List<CourseEnvironmentEntity> savedRecords = new ArrayList<>();
+        List<ClassTimetableEntity> savedRecords = new ArrayList<>();
         for (AcademicScheduleCourse course : courses) {
-            CourseEnvironmentEntity environment = new CourseEnvironmentEntity();
-            environment.setCourse(course.getCourseName());
-            environment.setCourseName(course.getCourseName());
-            environment.setTeacherName(firstNonBlank(course.getTeacherName(), request.getTeacherName(), "任课教师"));
-            environment.setTeacher(firstNonBlank(course.getTeacherName(), request.getTeacherName(), "任课教师"));
-            environment.setTeacherUserId(request.getTeacherUserId());
-            environment.setClassName(firstNonBlank(course.getClassName(), request.getClassName(), "待同步班级"));
-            environment.setUseTime(course.getUseTime());
-            environment.setLabType(firstNonBlank(course.getLabName(), request.getLabType(), "待分配实验室"));
-            environment.setAssignedLabName(course.getLabName());
-            environment.setSoftware("按教务课表课程要求配置");
-            environment.setSoftwareRequirements("按教务课表课程要求配置");
-            environment.setSpecialRequirements("来源：湖南信息职院教务系统课表导入；原始信息：" + limit(course.getRawText(), 180));
-            environment.setProcessStatus("待配置");
-            environment.setStatus("待配置");
-            environment.setConfirmStatus("待确认");
-            Object saved = courseEnvironmentService.InserterCourseEnvironment(environment);
-            if (saved instanceof CourseEnvironmentEntity savedEntity) {
-                savedRecords.add(savedEntity);
-            }
+            ClassTimetableEntity timetable = new ClassTimetableEntity();
+            timetable.setSemester(firstNonBlank(request.getTerm(), course.getWeekLabel(), "未指定学期"));
+            timetable.setRowClassName(firstNonBlank(course.getClassName(), request.getClassName(), "待同步班级"));
+            timetable.setClassName(timetable.getRowClassName());
+            timetable.setWeekday(normalizeWeekday(course.getDayLabel()));
+            timetable.setSectionText(firstNonBlank(course.getSectionLabel(), course.getTimeRange()));
+            timetable.setCourseName(course.getCourseName());
+            timetable.setTeacher(firstNonBlank(course.getTeacherName(), request.getTeacherName(), "任课教师"));
+            timetable.setWeekRaw(course.getWeekLabel());
+            timetable.setWeekText(course.getWeekLabel());
+            timetable.setClassroom(firstNonBlank(course.getLabName(), request.getLabType(), "待分配实验室"));
+            classTimetableMapper.insertTimetable(timetable);
+            savedRecords.add(timetable);
         }
         return savedRecords;
+    }
+
+    private String normalizeWeekday(String value) {
+        if (value == null || value.isBlank() || value.startsWith("星期")) {
+            return value;
+        }
+        return value.startsWith("周") ? "星期" + value.substring(1) : value;
     }
 
     private AcademicScheduleImportRequest ensureRequest(AcademicScheduleImportRequest request) {
