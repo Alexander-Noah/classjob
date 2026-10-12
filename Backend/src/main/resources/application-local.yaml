@@ -1,0 +1,14 @@
+spring:
+  config:
+    import: optional:file:.local-dev-secrets.properties
+  datasource:
+    url: ${SMART_LAB_DB_URL:jdbc:mysql://localhost:3306/smart_lab_basic}
+    username: ${SMART_LAB_DB_USERNAME:root}
+    password: ${SMART_LAB_DB_PASSWORD}
+  flyway:
+    enabled: ${SMART_LAB_FLYWAY_ENABLED:false}
+    baseline-on-migrate: true
+    baseline-version: 20261009
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true

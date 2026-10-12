@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.TeachingScheduleReadMapper">
+    <resultMap id="scheduleEntryView" type="org.example.backend.service.ScheduleEntryView">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.lang.Long"/>
+            <arg column="semester" name="semester" javaType="java.lang.String"/>
+            <arg column="row_class_name" name="rowClassName" javaType="java.lang.String"/>
+            <arg column="class_name" name="className" javaType="java.lang.String"/>
+            <arg column="weekday" name="weekday" javaType="java.lang.String"/>
+            <arg column="section_code" name="sectionCode" javaType="java.lang.String"/>
+            <arg column="section_text" name="sectionText" javaType="java.lang.String"/>
+            <arg column="start_section" name="startSection" javaType="java.lang.Integer"/>
+            <arg column="end_section" name="endSection" javaType="java.lang.Integer"/>
+            <arg column="course_name" name="courseName" javaType="java.lang.String"/>
+            <arg column="teacher" name="teacher" javaType="java.lang.String"/>
+            <arg column="week_raw" name="weekRaw" javaType="java.lang.String"/>
+            <arg column="week_text" name="weekText" javaType="java.lang.String"/>
+            <arg column="week_expanded" name="weekExpanded" javaType="java.lang.String"/>
+            <arg column="classroom" name="classroom" javaType="java.lang.String"/>
+            <arg column="create_time" name="createTime" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduleSummaryData"
+               type="org.example.backend.service.ScheduleSummaryData">
+        <constructor>
+            <arg column="total" name="total" javaType="_long"/>
+            <arg column="class_count" name="classCount" javaType="_long"/>
+            <arg column="teacher_count" name="teacherCount" javaType="_long"/>
+            <arg column="classroom_count" name="classroomCount" javaType="_long"/>
+            <arg column="latest_sync_at" name="latestSyncAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduleCalendarData"
+               type="org.example.backend.service.ScheduleCalendarData">
+        <constructor>
+            <arg column="semester" name="semester" javaType="java.lang.String"/>
+            <arg column="semester_start_date" name="semesterStartDate" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="scheduleOccupancyRow"
+               type="org.example.backend.service.ScheduleOccupancyRow">
+        <constructor>
+            <arg column="classroom" name="classroom" javaType="java.lang.String"/>
+            <arg column="start_section" name="startSection" javaType="java.lang.Integer"/>
+            <arg column="end_section" name="endSection" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findActiveCalendar" resultMap="scheduleCalendarData">
+        select semester, semester_start_date
+        from timetable_integration_config
+        where config_key = 'lab-admin-class-timetable'
+    </select>
+
+    <select id="findOccupancyCandidates"
+            parameterType="org.example.backend.service.ScheduleOccupancyCriteria"
+            resultMap="scheduleOccupancyRow">
+        select classroom, start_section, end_section
+        from class_timetable
+        where semester = #{semester}
+        and weekday = #{weekday}
+        and find_in_set(
+            convert(cast(#{academicWeek} as char) using utf8mb4) collate utf8mb4_general_ci,
+            convert(week_expanded using utf8mb4) collate utf8mb4_general_ci
+        ) &gt; 0
+        order by id
+    </select>
+
+    <select id="search"
+            parameterType="org.example.backend.service.ScheduleSearchCriteria"
+            resultMap="scheduleEntryView">
+        select
+        id,
+        semester,
+        row_class_name,
+        class_name,
+        weekday,
+        section_code,
+        section_text,
+        start_section,
+        end_section,
+        course_name,
+        teacher,
+        week_raw,
+        week_text,
+        week_expanded,
+        classroom,
+        create_time
+        from class_timetable
+        <where>
+            <if test="semester != null and semester != ''">
+                and semester = #{semester}
+            </if>
+            <if test="teacher != null and teacher != ''">
+                and teacher like concat('%', #{teacher}, '%')
+            </if>
+            <if test="className != null and className != ''">
+                and (
+                class_name like concat('%', #{className}, '%')
+                or row_class_name like concat('%', #{className}, '%')
+                )
+            </if>
+            <if test="classroom != null and classroom != ''">
+                and classroom like concat('%', #{classroom}, '%')
+            </if>
+            <if test="courseName != null and courseName != ''">
+                and course_name like concat('%', #{courseName}, '%')
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                course_name like concat('%', #{keyword}, '%')
+                or teacher like concat('%', #{keyword}, '%')
+                or class_name like concat('%', #{keyword}, '%')
+                or row_class_name like concat('%', #{keyword}, '%')
+                or classroom like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="week != null">
+                and find_in_set(
+                convert(cast(#{week} as char) using utf8mb4) collate utf8mb4_general_ci,
+                convert(week_expanded using utf8mb4) collate utf8mb4_general_ci
+                ) &gt; 0
+            </if>
+        </where>
+        order by id desc
+        limit #{limit}
+    </select>
+
+    <select id="summary"
+            resultMap="scheduleSummaryData">
+        select
+        count(*) as total,
+        count(distinct class_name) as class_count,
+        count(distinct teacher) as teacher_count,
+        count(distinct classroom) as classroom_count,
+        max(create_time) as latest_sync_at
+        from class_timetable
+    </select>
+
+    <select id="listSemesters" resultType="java.lang.String">
+        select semester
+        from class_timetable
+        where semester is not null
+        and semester != ''
+        group by semester
+        order by max(create_time) desc, semester desc
+    </select>
+</mapper>

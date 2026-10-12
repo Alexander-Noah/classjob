@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.ReservationPersistenceMapper">
+    <resultMap id="reservationRecord"
+               type="org.example.backend.service.ReservationRecord">
+        <constructor>
+            <idArg column="id" name="id" javaType="java.lang.Long"/>
+            <arg column="applicant_user_id" name="applicantUserId" javaType="java.lang.Long"/>
+            <arg column="applicant_name" name="applicantName" javaType="java.lang.String"/>
+            <arg column="department" name="department" javaType="java.lang.String"/>
+            <arg column="contact" name="contact" javaType="java.lang.String"/>
+            <arg column="lab_id" name="labId" javaType="java.lang.Long"/>
+            <arg column="reservation_date" name="reservationDate" javaType="java.time.LocalDate"/>
+            <arg column="time_range" name="timeRange" javaType="java.lang.String"/>
+            <arg column="scene" name="scene" javaType="java.lang.String"/>
+            <arg column="attendee_count" name="attendeeCount" javaType="java.lang.Integer"/>
+            <arg column="reason" name="reason" javaType="java.lang.String"/>
+            <arg column="status" name="status" javaType="org.example.backend.entity.ReservationStatus"
+                 typeHandler="org.example.backend.mapper.ReservationStatusTypeHandler"/>
+            <arg column="conflict_flag" name="conflictFlag" javaType="_boolean"/>
+            <arg column="reviewer_name" name="reviewerName" javaType="java.lang.String"/>
+            <arg column="review_remark" name="reviewRemark" javaType="java.lang.String"/>
+            <arg column="created_at" name="createdAt" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_at" name="updatedAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="overlapCount"
+               type="org.example.backend.mapper.ReservationOverlapCount">
+        <constructor>
+            <arg column="overlap_count" name="value" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="ownedColumns">
+        id, applicant_user_id, applicant_name, department, contact, lab_id, reservation_date,
+        time_range, scene, attendee_count, reason, status, conflict_flag, reviewer_name,
+        review_remark, created_at, updated_at
+    </sql>
+
+    <sql id="scopePredicate">
+        <choose>
+            <when test="scope.applicantUserId != null">
+                applicant_user_id = #{scope.applicantUserId}
+            </when>
+            <when test="scope.laboratoryIds != null">
+                <choose>
+                    <when test="scope.laboratoryIds.isEmpty()">
+                        1 = 0
+                    </when>
+                    <otherwise>
+                        lab_id in
+                        <foreach collection="scope.laboratoryIds" item="laboratoryId" open="(" separator="," close=")">
+                            #{laboratoryId}
+                        </foreach>
+                    </otherwise>
+                </choose>
+            </when>
+        </choose>
+    </sql>
+
+    <select id="findAll" resultMap="reservationRecord">
+        select <include refid="ownedColumns"/>
+        from lab_reservation
+        <where><include refid="scopePredicate"/></where>
+        order by created_at desc, id desc
+    </select>
+
+    <select id="findOne" resultMap="reservationRecord">
+        select <include refid="ownedColumns"/>
+        from lab_reservation
+        <where>
+            id = #{id}
+            <choose>
+                <when test="scope.applicantUserId != null">
+                    and applicant_user_id = #{scope.applicantUserId}
+                </when>
+                <when test="scope.laboratoryIds != null">
+                    <choose>
+                        <when test="scope.laboratoryIds.isEmpty()">
+                            and 1 = 0
+                        </when>
+                        <otherwise>
+                            and lab_id in
+                            <foreach collection="scope.laboratoryIds" item="laboratoryId" open="(" separator="," close=")">
+                                #{laboratoryId}
+                            </foreach>
+                        </otherwise>
+                    </choose>
+                </when>
+            </choose>
+        </where>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into lab_reservation (
+            applicant_user_id, applicant_name, department, contact, lab_id, reservation_date, time_range,
+            scene, attendee_count, reason, status, conflict_flag, reviewer_name, review_remark
+        ) values (
+            #{applicantUserId}, #{applicantName}, #{department}, #{contact}, #{labId}, #{reservationDate}, #{timeRange},
+            #{scene}, #{attendeeCount}, #{reason}, #{status}, #{conflictFlag}, #{reviewerName}, #{reviewRemark}
+        )
+    </insert>
+
+    <select id="countActiveOverlaps" resultMap="overlapCount">
+        select count(1) as overlap_count
+        from lab_reservation
+        where lab_id = #{check.labId}
+          and reservation_date = #{check.reservationDate}
+          and (time_to_sec(str_to_date(substring_index(#{check.timeRange}, '-', 1), '%H:%i')) / 60)
+              &lt; (time_to_sec(str_to_date(substring_index(time_range, '-', -1), '%H:%i')) / 60)
+          and (time_to_sec(str_to_date(substring_index(time_range, '-', 1), '%H:%i')) / 60)
+              &lt; (time_to_sec(str_to_date(substring_index(#{check.timeRange}, '-', -1), '%H:%i')) / 60)
+          and status not in
+          <foreach collection="check.terminalStatuses" item="terminalStatus" open="(" separator="," close=")">
+              #{terminalStatus,typeHandler=org.example.backend.mapper.ReservationStatusTypeHandler}
+          </foreach>
+          and (#{check.excludingReservationId} is null or id &lt;&gt; #{check.excludingReservationId})
+    </select>
+
+    <update id="updateReview">
+        update lab_reservation
+        set status = #{update.status,typeHandler=org.example.backend.mapper.ReservationStatusTypeHandler},
+            conflict_flag = #{update.conflictFlag},
+            reviewer_name = #{update.reviewerName},
+            review_remark = #{update.reviewRemark},
+            updated_at = now()
+        where id = #{update.reservationId}
+          and status in
+          <foreach collection="update.allowedCurrentStatuses" item="allowedStatus" open="(" separator="," close=")">
+              #{allowedStatus,typeHandler=org.example.backend.mapper.ReservationStatusTypeHandler}
+          </foreach>
+    </update>
+</mapper>
