@@ -126,4 +126,4 @@ if ($SkipRun) {
     return
 }
 
-& mvn.cmd "-Dspring-boot.run.arguments=--spring.profiles.active=local --server.port=$Port" -pl legacy-app spring-boot:run
+& mvn.cmd "-Dspring-boot.run.arguments=--spring.profiles.active=local --server.port=$Port" spring-boot:run
