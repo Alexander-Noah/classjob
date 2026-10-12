@@ -37,14 +37,36 @@ $backendRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..')).
 $maven = (Get-Command mvn.cmd -ErrorAction Stop).Source
 $childEnvironment = @{
     SMART_LAB_FLYWAY_ENABLED = 'true'
+    SMART_LAB_FLYWAY_TARGET = $target
+    SPRING_FLYWAY_ENABLED = 'true'
+    SPRING_FLYWAY_TARGET = $target
+    SPRING_MAIN_WEB_APPLICATION_TYPE = 'none'
     SMART_LAB_DB_URL = "jdbc:mysql://${DbHost}:$Port/$Database"
     SMART_LAB_DB_USERNAME = $User
     SMART_LAB_DB_PASSWORD = $env:MYSQL_PWD
 }
 $arguments = @(
-    '-pl', 'legacy-app', '-DskipTests', 'spring-boot:run',
-    "-Dspring-boot.run.arguments=--spring.flyway.target=$target --spring.main.web-application-type=none"
+    '-pl', 'legacy-app', '-DskipTests',
+    '-Dspring-boot.run.main-class=org.example.backend.database.CoreDatabaseMigrationRunner',
+    'spring-boot:run'
 )
 $process = Start-Process -FilePath $maven -ArgumentList $arguments -WorkingDirectory $backendRoot `
     -Environment $childEnvironment -NoNewWindow -Wait -PassThru
 if ($process.ExitCode -ne 0) { throw "Flyway $Phase migration failed with exit code $($process.ExitCode)" }
+
+$expectedVersion = if ($target -eq '20261010.2') { '20261010.02' } else { '20261010.03' }
+$mysql = (Get-Command mysql -ErrorAction Stop).Source
+$historyExistsSql = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$Database' AND table_name='flyway_schema_history'"
+$historyExistsOutput = @(& $mysql "--host=$DbHost" "--port=$Port" "--user=$User" '--batch' '--skip-column-names' "--execute=$historyExistsSql")
+$historyExistsExitCode = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+$historyExists = $historyExistsOutput | Select-Object -First 1
+if ($historyExistsExitCode -ne 0 -or [int]$historyExists -ne 1) {
+    throw "Flyway $Phase exited successfully but did not create flyway_schema_history"
+}
+$versionSql = "SELECT COUNT(*) FROM ``$Database``.flyway_schema_history WHERE version='$expectedVersion' AND success=1"
+$versionCheckOutput = @(& $mysql "--host=$DbHost" "--port=$Port" "--user=$User" '--batch' '--skip-column-names' "--execute=$versionSql")
+$versionCheckExitCode = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+$versionCheck = $versionCheckOutput | Select-Object -First 1
+if ($versionCheckExitCode -ne 0 -or [int]$versionCheck -ne 1) {
+    throw "Flyway $Phase exited successfully but did not record version $expectedVersion"
+}

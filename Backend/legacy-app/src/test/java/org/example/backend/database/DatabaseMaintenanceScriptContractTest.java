@@ -28,6 +28,8 @@ class DatabaseMaintenanceScriptContractTest {
                 () -> assertTrue(restore.contains("constraint")),
                 () -> assertTrue(migrate.contains("restore-rehearsal.json")),
                 () -> assertTrue(migrate.contains("tableArchives")),
+                () -> assertTrue(migrate.contains("CoreDatabaseMigrationRunner")),
+                () -> assertTrue(migrate.contains("SMART_LAB_FLYWAY_TARGET")),
                 () -> assertTrue(migrate.contains("SMART_LAB_FLYWAY_ENABLED")),
                 () -> assertTrue(migrate.contains("20261010.3"))
         );

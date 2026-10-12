@@ -20,7 +20,7 @@ Remove-Item Env:MYSQL_PWD
 
 The archive also contains `table-archives/*.sql`, one SQL archive per source table. `manifest.json` records each archive SHA-256 and the source table's primary, unique, and foreign-key signature. `restore-rehearsal.json` records the row-count and constraint verification result without storing credentials or ciphertext values.
 
-Flyway remains disabled during ordinary application startup. The migration wrapper enables it only for its child Maven process and targets the approved expand or shrink version.
+Flyway remains disabled during ordinary application startup. The migration wrapper invokes the dedicated `CoreDatabaseMigrationRunner` with the approved expand or shrink target, then verifies the corresponding successful row in `flyway_schema_history`; starting the web application alone is not considered a migration.
 
 After `Shrink`, the expected physical table set is exactly:
 
