@@ -9,8 +9,8 @@ import org.example.backend.labresource.api.LabCatalogQuery;
 import org.example.backend.labresource.api.LabView;
 import org.example.backend.reservation.application.LabAvailabilityPort;
 import org.example.backend.reservation.domain.TimeRange;
-import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
-import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
+import org.example.backend.reservation.application.LaboratorySummaryPort;
+import org.example.backend.reservation.application.ManagedLaboratoryIdsPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -59,13 +59,13 @@ class ReservationLabResourceBridgeConfigurationTest {
                 ShuffledLabsFixture.class,
                 ReservationLabResourceBridgeConfiguration.class
         )) {
-            Map<Long, org.example.backend.reservation.application.port.out.LaboratorySummary> summaries = context
+            Map<Long, org.example.backend.reservation.application.LaboratorySummary> summaries = context
                     .getBean(LaboratorySummaryPort.class)
                     .findByIds(Set.of(3L, 7L));
 
             assertEquals(Map.of(
-                    3L, new org.example.backend.reservation.application.port.out.LaboratorySummary("材料实验室", "MAT-3"),
-                    7L, new org.example.backend.reservation.application.port.out.LaboratorySummary("电子实验室", "ELE-7")
+                    3L, new org.example.backend.reservation.application.LaboratorySummary("材料实验室", "MAT-3"),
+                    7L, new org.example.backend.reservation.application.LaboratorySummary("电子实验室", "ELE-7")
             ), summaries);
         }
     }
@@ -100,7 +100,7 @@ class ReservationLabResourceBridgeConfigurationTest {
                 ReservationLabResourceBridgeConfiguration.class
         )) {
             assertEquals(Map.of(
-                    3L, new org.example.backend.reservation.application.port.out.LaboratorySummary("材料实验室", "MAT-3")
+                    3L, new org.example.backend.reservation.application.LaboratorySummary("材料实验室", "MAT-3")
             ), context.getBean(LaboratorySummaryPort.class).findByIds(Set.of(3L)));
         }
     }

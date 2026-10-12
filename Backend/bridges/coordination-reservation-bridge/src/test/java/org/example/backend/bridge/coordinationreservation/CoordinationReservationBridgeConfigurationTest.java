@@ -4,7 +4,7 @@ import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
 import org.example.backend.reservation.api.ReservationSnapshotQuery;
 import org.example.backend.reservation.api.ReservationSnapshotView;
-import org.example.backend.teachingcoordination.application.ReservationSnapshotPort;
+import org.example.backend.teachingcoordination.api.ReservationSnapshotPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;

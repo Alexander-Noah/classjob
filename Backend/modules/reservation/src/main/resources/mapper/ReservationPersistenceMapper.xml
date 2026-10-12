@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper">
+<mapper namespace="org.example.backend.reservation.infrastructure.ReservationPersistenceMapper">
     <resultMap id="reservationRecord"
-               type="org.example.backend.reservation.application.port.out.ReservationRecord">
+               type="org.example.backend.reservation.application.ReservationRecord">
         <constructor>
             <idArg column="id" name="id" javaType="java.lang.Long"/>
             <arg column="applicant_user_id" name="applicantUserId" javaType="java.lang.Long"/>
@@ -18,7 +18,7 @@
             <arg column="attendee_count" name="attendeeCount" javaType="java.lang.Integer"/>
             <arg column="reason" name="reason" javaType="java.lang.String"/>
             <arg column="status" name="status" javaType="org.example.backend.reservation.domain.ReservationStatus"
-                 typeHandler="org.example.backend.reservation.adapter.out.persistence.ReservationStatusTypeHandler"/>
+                 typeHandler="org.example.backend.reservation.infrastructure.ReservationStatusTypeHandler"/>
             <arg column="conflict_flag" name="conflictFlag" javaType="_boolean"/>
             <arg column="reviewer_name" name="reviewerName" javaType="java.lang.String"/>
             <arg column="review_remark" name="reviewRemark" javaType="java.lang.String"/>
@@ -28,7 +28,7 @@
     </resultMap>
 
     <resultMap id="overlapCount"
-               type="org.example.backend.reservation.adapter.out.persistence.ReservationOverlapCount">
+               type="org.example.backend.reservation.infrastructure.ReservationOverlapCount">
         <constructor>
             <arg column="overlap_count" name="value" javaType="_long"/>
         </constructor>
@@ -115,14 +115,14 @@
               &lt; (time_to_sec(str_to_date(substring_index(#{check.timeRange}, '-', -1), '%H:%i')) / 60)
           and status not in
           <foreach collection="check.terminalStatuses" item="terminalStatus" open="(" separator="," close=")">
-              #{terminalStatus,typeHandler=org.example.backend.reservation.adapter.out.persistence.ReservationStatusTypeHandler}
+              #{terminalStatus,typeHandler=org.example.backend.reservation.infrastructure.ReservationStatusTypeHandler}
           </foreach>
           and (#{check.excludingReservationId} is null or id &lt;&gt; #{check.excludingReservationId})
     </select>
 
     <update id="updateReview">
         update lab_reservation
-        set status = #{update.status,typeHandler=org.example.backend.reservation.adapter.out.persistence.ReservationStatusTypeHandler},
+        set status = #{update.status,typeHandler=org.example.backend.reservation.infrastructure.ReservationStatusTypeHandler},
             conflict_flag = #{update.conflictFlag},
             reviewer_name = #{update.reviewerName},
             review_remark = #{update.reviewRemark},
@@ -130,7 +130,7 @@
         where id = #{update.reservationId}
           and status in
           <foreach collection="update.allowedCurrentStatuses" item="allowedStatus" open="(" separator="," close=")">
-              #{allowedStatus,typeHandler=org.example.backend.reservation.adapter.out.persistence.ReservationStatusTypeHandler}
+              #{allowedStatus,typeHandler=org.example.backend.reservation.infrastructure.ReservationStatusTypeHandler}
           </foreach>
     </update>
 </mapper>

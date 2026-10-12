@@ -13,7 +13,8 @@ class BridgeBoundaryTest {
                         "..mapper..",
                         "..repository..",
                         "..service.impl..",
-                        "..adapter.out.."
+                        "..adapter.out..",
+                        "..infrastructure.."
                 )
                 .check(ArchitectureClasses.ALL);
     }

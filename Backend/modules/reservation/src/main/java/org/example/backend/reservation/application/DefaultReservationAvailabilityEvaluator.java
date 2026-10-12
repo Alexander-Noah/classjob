@@ -2,8 +2,8 @@ package org.example.backend.reservation.application;
 
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
-import org.example.backend.reservation.application.port.out.ReservationOverlapCheck;
-import org.example.backend.reservation.application.port.out.ReservationPersistencePort;
+import org.example.backend.reservation.application.ReservationOverlapCheck;
+import org.example.backend.reservation.application.ReservationPersistencePort;
 import org.example.backend.reservation.domain.ReservationStatus;
 
 import java.util.EnumSet;

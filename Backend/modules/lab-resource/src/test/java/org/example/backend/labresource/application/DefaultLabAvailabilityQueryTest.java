@@ -1,8 +1,8 @@
 package org.example.backend.labresource.application;
 
 import org.example.backend.kernel.capability.CapabilityStatus;
-import org.example.backend.labresource.application.port.out.LabRecord;
-import org.example.backend.labresource.application.port.out.LabRecordReadPort;
+import org.example.backend.labresource.application.LabRecord;
+import org.example.backend.labresource.application.LabRecordReadPort;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

@@ -2,13 +2,13 @@ package org.example.backend.teachingschedule.application;
 
 import org.example.backend.kernel.capability.CapabilityStatus;
 import org.example.backend.teachingschedule.api.ScheduleOccupancyRequest;
-import org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData;
-import org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria;
-import org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow;
-import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
+import org.example.backend.teachingschedule.application.ScheduleCalendarData;
+import org.example.backend.teachingschedule.application.ScheduleOccupancyCriteria;
+import org.example.backend.teachingschedule.application.ScheduleOccupancyRow;
+import org.example.backend.teachingschedule.application.TeachingScheduleReadPort;
 import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
-import org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData;
+import org.example.backend.teachingschedule.application.ScheduleSummaryData;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

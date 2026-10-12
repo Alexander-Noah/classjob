@@ -3,8 +3,8 @@ package org.example.backend.bridge.coordinationreservation;
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
 import org.example.backend.reservation.api.ReservationSnapshotQuery;
-import org.example.backend.teachingcoordination.application.ReservationSnapshot;
-import org.example.backend.teachingcoordination.application.ReservationSnapshotPort;
+import org.example.backend.teachingcoordination.api.ReservationSnapshot;
+import org.example.backend.teachingcoordination.api.ReservationSnapshotPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

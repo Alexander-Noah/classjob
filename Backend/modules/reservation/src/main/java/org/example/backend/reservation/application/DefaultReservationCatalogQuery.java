@@ -5,12 +5,12 @@ import org.example.backend.reservation.api.ReservationActor;
 import org.example.backend.reservation.api.ReservationActorRole;
 import org.example.backend.reservation.api.ReservationCatalogQuery;
 import org.example.backend.reservation.api.ReservationView;
-import org.example.backend.reservation.application.port.out.LaboratorySummary;
-import org.example.backend.reservation.application.port.out.LaboratorySummaryPort;
-import org.example.backend.reservation.application.port.out.ManagedLaboratoryIdsPort;
-import org.example.backend.reservation.application.port.out.ReservationPersistencePort;
-import org.example.backend.reservation.application.port.out.ReservationRecord;
-import org.example.backend.reservation.application.port.out.ReservationRecordScope;
+import org.example.backend.reservation.application.LaboratorySummary;
+import org.example.backend.reservation.application.LaboratorySummaryPort;
+import org.example.backend.reservation.application.ManagedLaboratoryIdsPort;
+import org.example.backend.reservation.application.ReservationPersistencePort;
+import org.example.backend.reservation.application.ReservationRecord;
+import org.example.backend.reservation.application.ReservationRecordScope;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;

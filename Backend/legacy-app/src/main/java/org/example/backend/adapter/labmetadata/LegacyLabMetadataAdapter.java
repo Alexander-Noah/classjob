@@ -1,7 +1,7 @@
 package org.example.backend.adapter.labmetadata;
 
-import org.example.backend.labresource.application.port.out.DeviceCountPort;
-import org.example.backend.labresource.application.port.out.ManagerNamePort;
+import org.example.backend.labresource.application.DeviceCountPort;
+import org.example.backend.labresource.application.ManagerNamePort;
 import org.example.backend.mapper.LabResourceMetadataMapper;
 
 import java.util.LinkedHashMap;

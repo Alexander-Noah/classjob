@@ -1,6 +1,6 @@
 package org.example.backend.controller;
 
-import org.example.backend.teachingschedule.adapter.in.web.TeachingScheduleQueryController;
+import org.example.backend.teachingschedule.web.TeachingScheduleQueryController;
 import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.example.backend.teachingschedule.api.ScheduleSummaryView;

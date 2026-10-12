@@ -3,8 +3,8 @@ package org.example.backend.labresource.application;
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.labresource.api.LabAvailabilityQuery;
 import org.example.backend.labresource.api.LabAvailabilityView;
-import org.example.backend.labresource.application.port.out.LabRecord;
-import org.example.backend.labresource.application.port.out.LabRecordReadPort;
+import org.example.backend.labresource.application.LabRecord;
+import org.example.backend.labresource.application.LabRecordReadPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

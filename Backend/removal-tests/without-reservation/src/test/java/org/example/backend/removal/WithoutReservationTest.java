@@ -2,7 +2,7 @@ package org.example.backend.removal;
 
 import org.example.backend.bridge.coordinationenvironment.CoordinationEnvironmentBridgeConfiguration;
 import org.example.backend.bridge.coordinationschedule.CoordinationScheduleBridgeConfiguration;
-import org.example.backend.environmentreadiness.bootstrap.EnvironmentReadinessModuleConfiguration;
+import org.example.backend.environmentreadiness.EnvironmentReadinessModuleConfiguration;
 import org.example.backend.environmentreadiness.api.EnvironmentSnapshotQuery;
 import org.example.backend.identityaccess.IdentityAccessModuleConfiguration;
 import org.example.backend.kernel.bootstrap.KernelConfiguration;
@@ -10,13 +10,13 @@ import org.example.backend.kernel.capability.CapabilityStatus;
 import org.example.backend.kernel.module.ModuleCatalog;
 import org.example.backend.kernel.module.ModuleId;
 import org.example.backend.labresource.api.LabAvailabilityQuery;
-import org.example.backend.labresource.bootstrap.LabResourceModuleConfiguration;
+import org.example.backend.labresource.LabResourceModuleConfiguration;
 import org.example.backend.platform.security.SecurityPlatformConfiguration;
 import org.example.backend.platform.websupport.WebSupportConfiguration;
-import org.example.backend.teachingcoordination.application.ReservationSnapshotPort;
-import org.example.backend.teachingcoordination.bootstrap.TeachingCoordinationModuleConfiguration;
+import org.example.backend.teachingcoordination.api.ReservationSnapshotPort;
+import org.example.backend.teachingcoordination.TeachingCoordinationModuleConfiguration;
 import org.example.backend.teachingschedule.api.ScheduleSnapshotQuery;
-import org.example.backend.teachingschedule.bootstrap.TeachingScheduleModuleConfiguration;
+import org.example.backend.teachingschedule.TeachingScheduleModuleConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +32,7 @@ class WithoutReservationTest {
     @Test
     void startsWhenReservationArtifactIsPhysicallyAbsent() {
         assertThrows(ClassNotFoundException.class, () -> Class.forName(
-                "org.example.backend.reservation.bootstrap.ReservationModuleConfiguration"));
+                "org.example.backend.reservation.ReservationModuleConfiguration"));
         assertThrows(ClassNotFoundException.class, () -> Class.forName(
                 "org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration"));
         assertThrows(ClassNotFoundException.class, () -> Class.forName(

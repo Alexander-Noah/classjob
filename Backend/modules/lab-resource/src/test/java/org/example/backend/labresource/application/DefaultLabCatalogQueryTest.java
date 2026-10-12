@@ -1,10 +1,10 @@
 package org.example.backend.labresource.application;
 
 import org.example.backend.labresource.api.LabAccessScope;
-import org.example.backend.labresource.application.port.out.DeviceCountPort;
-import org.example.backend.labresource.application.port.out.LabRecord;
-import org.example.backend.labresource.application.port.out.LabRecordReadPort;
-import org.example.backend.labresource.application.port.out.ManagerNamePort;
+import org.example.backend.labresource.application.DeviceCountPort;
+import org.example.backend.labresource.application.LabRecord;
+import org.example.backend.labresource.application.LabRecordReadPort;
+import org.example.backend.labresource.application.ManagerNamePort;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 

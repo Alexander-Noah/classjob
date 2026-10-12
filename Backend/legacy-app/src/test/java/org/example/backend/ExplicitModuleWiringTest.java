@@ -21,15 +21,15 @@ class ExplicitModuleWiringTest {
     private static final String LEGACY_CONTROLLER =
             "org.example.backend.controller.ClassTimetableController";
     private static final String MODULE_CONTROLLER =
-            "org.example.backend.teachingschedule.adapter.in.web.TeachingScheduleQueryController";
+            "org.example.backend.teachingschedule.web.TeachingScheduleQueryController";
     private static final String LEGACY_LAB_CONTROLLER =
             "org.example.backend.controller.LabController";
     private static final String MODULE_LAB_CONTROLLER =
-            "org.example.backend.labresource.adapter.in.web.LabQueryController";
+            "org.example.backend.labresource.web.LabQueryController";
     private static final String LEGACY_RESERVATION_CONTROLLER =
             "org.example.backend.controller.ReservationsController";
     private static final String MODULE_RESERVATION_CONTROLLER =
-            "org.example.backend.reservation.adapter.in.web.ReservationController";
+            "org.example.backend.reservation.web.ReservationController";
 
     @Test
     void hostUsesExplicitLegacyScanAndImportsModuleRuntimeConfiguration() {
@@ -50,10 +50,10 @@ class ExplicitModuleWiringTest {
                 .collect(java.util.stream.Collectors.toSet());
         assertTrue(importedTypes.contains("org.example.backend.kernel.bootstrap.KernelConfiguration"));
         assertTrue(importedTypes.contains(
-                "org.example.backend.teachingschedule.bootstrap.TeachingScheduleRuntimeConfiguration"
+                "org.example.backend.teachingschedule.TeachingScheduleRuntimeConfiguration"
         ));
         assertTrue(importedTypes.contains(
-                "org.example.backend.labresource.bootstrap.LabResourceRuntimeConfiguration"
+                "org.example.backend.labresource.LabResourceRuntimeConfiguration"
         ));
         assertTrue(importedTypes.contains(
                 "org.example.backend.bridge.reservationlab.ReservationLabResourceBridgeConfiguration"
@@ -62,7 +62,7 @@ class ExplicitModuleWiringTest {
                 "org.example.backend.bridge.reservationschedule.ReservationTeachingScheduleBridgeConfiguration"
         ));
         assertTrue(importedTypes.contains(
-                "org.example.backend.reservation.bootstrap.ReservationPersistenceRuntimeConfiguration"
+                "org.example.backend.reservation.ReservationPersistenceRuntimeConfiguration"
         ));
 
         MapperScan mapperScan = BackendApplication.class.getAnnotation(MapperScan.class);

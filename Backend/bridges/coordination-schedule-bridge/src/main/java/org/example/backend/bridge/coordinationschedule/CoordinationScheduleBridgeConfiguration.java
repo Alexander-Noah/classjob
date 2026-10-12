@@ -2,8 +2,8 @@ package org.example.backend.bridge.coordinationschedule;
 
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
-import org.example.backend.teachingcoordination.application.ScheduleSnapshot;
-import org.example.backend.teachingcoordination.application.ScheduleSnapshotPort;
+import org.example.backend.teachingcoordination.api.ScheduleSnapshot;
+import org.example.backend.teachingcoordination.api.ScheduleSnapshotPort;
 import org.example.backend.teachingschedule.api.ScheduleSnapshotQuery;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

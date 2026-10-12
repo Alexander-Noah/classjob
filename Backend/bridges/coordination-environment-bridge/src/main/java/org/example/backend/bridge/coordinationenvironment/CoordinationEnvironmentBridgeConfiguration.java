@@ -3,8 +3,8 @@ package org.example.backend.bridge.coordinationenvironment;
 import org.example.backend.environmentreadiness.api.EnvironmentSnapshotQuery;
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
-import org.example.backend.teachingcoordination.application.EnvironmentSnapshot;
-import org.example.backend.teachingcoordination.application.EnvironmentSnapshotPort;
+import org.example.backend.teachingcoordination.api.EnvironmentSnapshot;
+import org.example.backend.teachingcoordination.api.EnvironmentSnapshotPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

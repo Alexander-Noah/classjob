@@ -1,7 +1,7 @@
 package org.example.backend.controller;
 
 import org.example.backend.config.GlobalExceptionHandler;
-import org.example.backend.labresource.adapter.in.web.LabQueryController;
+import org.example.backend.labresource.web.LabQueryController;
 import org.example.backend.labresource.api.LabAccessScope;
 import org.example.backend.labresource.api.LabCatalogQuery;
 import org.example.backend.labresource.api.LabView;

@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.example.backend.labresource.adapter.out.persistence.LabRecordReadMapper">
+<mapper namespace="org.example.backend.labresource.infrastructure.LabRecordReadMapper">
     <resultMap id="labRecord"
-               type="org.example.backend.labresource.application.port.out.LabRecord">
+               type="org.example.backend.labresource.application.LabRecord">
         <constructor>
             <idArg column="id" name="id" javaType="java.lang.Long"/>
             <arg column="lab_code" name="labCode" javaType="java.lang.String"/>

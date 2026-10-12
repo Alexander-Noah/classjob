@@ -4,8 +4,8 @@ import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.example.backend.teachingschedule.api.ScheduleSummaryView;
 import org.example.backend.teachingschedule.api.TeachingScheduleQuery;
-import org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData;
-import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
+import org.example.backend.teachingschedule.application.ScheduleSummaryData;
+import org.example.backend.teachingschedule.application.TeachingScheduleReadPort;
 
 import java.util.List;
 

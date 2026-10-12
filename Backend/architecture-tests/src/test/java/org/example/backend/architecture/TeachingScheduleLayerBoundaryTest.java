@@ -6,14 +6,14 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 class TeachingScheduleLayerBoundaryTest {
     @Test
-    void apiAndApplicationLayersDoNotDependOnAdaptersOrBootstrap() {
+    void apiAndApplicationLayersDoNotDependOnWebOrInfrastructure() {
         noClasses().that().resideInAnyPackage(
                         "..teachingschedule.api..",
                         "..teachingschedule.application.."
                 )
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "..teachingschedule.adapter..",
-                        "..teachingschedule.bootstrap.."
+                        "..teachingschedule.web..",
+                        "..teachingschedule.infrastructure.."
                 )
                 .because("module policy points inward and infrastructure implements application ports")
                 .check(ArchitectureClasses.ALL);
@@ -24,8 +24,8 @@ class TeachingScheduleLayerBoundaryTest {
         noClasses().that().resideInAPackage("..teachingschedule.api..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "..teachingschedule.application..",
-                        "..teachingschedule.adapter..",
-                        "..teachingschedule.bootstrap.."
+                        "..teachingschedule.web..",
+                        "..teachingschedule.infrastructure.."
                 )
                 .because("the public API remains stable when internal layers are replaced")
                 .check(ArchitectureClasses.ALL);

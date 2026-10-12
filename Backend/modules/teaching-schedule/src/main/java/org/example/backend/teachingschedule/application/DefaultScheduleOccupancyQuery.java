@@ -4,10 +4,10 @@ import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.teachingschedule.api.ScheduleOccupancyQuery;
 import org.example.backend.teachingschedule.api.ScheduleOccupancyRequest;
 import org.example.backend.teachingschedule.api.ScheduleOccupancyView;
-import org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData;
-import org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria;
-import org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow;
-import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
+import org.example.backend.teachingschedule.application.ScheduleCalendarData;
+import org.example.backend.teachingschedule.application.ScheduleOccupancyCriteria;
+import org.example.backend.teachingschedule.application.ScheduleOccupancyRow;
+import org.example.backend.teachingschedule.application.TeachingScheduleReadPort;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

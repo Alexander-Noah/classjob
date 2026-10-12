@@ -3,8 +3,8 @@ package org.example.backend.teachingschedule.application;
 import org.example.backend.teachingschedule.api.ScheduleEntryView;
 import org.example.backend.teachingschedule.api.ScheduleSearchCriteria;
 import org.example.backend.teachingschedule.api.ScheduleSummaryView;
-import org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData;
-import org.example.backend.teachingschedule.application.port.out.TeachingScheduleReadPort;
+import org.example.backend.teachingschedule.application.ScheduleSummaryData;
+import org.example.backend.teachingschedule.application.TeachingScheduleReadPort;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -99,13 +99,13 @@ class DefaultTeachingScheduleQueryTest {
         private List<String> semesters = List.of();
 
         @Override
-        public org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData findActiveCalendar() {
+        public org.example.backend.teachingschedule.application.ScheduleCalendarData findActiveCalendar() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public List<org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow> findOccupancyCandidates(
-                org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria criteria) {
+        public List<org.example.backend.teachingschedule.application.ScheduleOccupancyRow> findOccupancyCandidates(
+                org.example.backend.teachingschedule.application.ScheduleOccupancyCriteria criteria) {
             throw new UnsupportedOperationException();
         }
 

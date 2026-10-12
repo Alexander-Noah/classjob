@@ -2,13 +2,13 @@ package org.example.backend.reservation;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.example.backend.kernel.capability.CapabilityResult;
-import org.example.backend.reservation.adapter.out.persistence.MyBatisReservationPersistenceAdapter;
-import org.example.backend.reservation.adapter.out.persistence.ReservationPersistenceMapper;
+import org.example.backend.reservation.infrastructure.MyBatisReservationPersistenceAdapter;
+import org.example.backend.reservation.infrastructure.ReservationPersistenceMapper;
 import org.example.backend.reservation.api.ReservationActor;
 import org.example.backend.reservation.api.ReservationCatalogQuery;
 import org.example.backend.reservation.api.ReservationView;
 import org.example.backend.reservation.application.*;
-import org.example.backend.reservation.application.port.out.*;
+import org.example.backend.reservation.application.*;
 import org.example.backend.reservation.domain.ReservationStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

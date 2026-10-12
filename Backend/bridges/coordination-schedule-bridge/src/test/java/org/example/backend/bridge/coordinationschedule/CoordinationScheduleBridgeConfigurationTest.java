@@ -2,7 +2,7 @@ package org.example.backend.bridge.coordinationschedule;
 
 import org.example.backend.kernel.capability.CapabilityResult;
 import org.example.backend.kernel.capability.CapabilityStatus;
-import org.example.backend.teachingcoordination.application.ScheduleSnapshotPort;
+import org.example.backend.teachingcoordination.api.ScheduleSnapshotPort;
 import org.example.backend.teachingschedule.api.ScheduleSnapshotQuery;
 import org.example.backend.teachingschedule.api.ScheduleSnapshotView;
 import org.junit.jupiter.api.Test;

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.example.backend.teachingschedule.adapter.out.persistence.TeachingScheduleReadMapper">
+<mapper namespace="org.example.backend.teachingschedule.infrastructure.TeachingScheduleReadMapper">
     <resultMap id="scheduleEntryView" type="org.example.backend.teachingschedule.api.ScheduleEntryView">
         <constructor>
             <idArg column="id" name="id" javaType="java.lang.Long"/>
@@ -25,7 +25,7 @@
     </resultMap>
 
     <resultMap id="scheduleSummaryData"
-               type="org.example.backend.teachingschedule.application.port.out.ScheduleSummaryData">
+               type="org.example.backend.teachingschedule.application.ScheduleSummaryData">
         <constructor>
             <arg column="total" name="total" javaType="_long"/>
             <arg column="class_count" name="classCount" javaType="_long"/>
@@ -36,7 +36,7 @@
     </resultMap>
 
     <resultMap id="scheduleCalendarData"
-               type="org.example.backend.teachingschedule.application.port.out.ScheduleCalendarData">
+               type="org.example.backend.teachingschedule.application.ScheduleCalendarData">
         <constructor>
             <arg column="semester" name="semester" javaType="java.lang.String"/>
             <arg column="semester_start_date" name="semesterStartDate" javaType="java.lang.String"/>
@@ -44,7 +44,7 @@
     </resultMap>
 
     <resultMap id="scheduleOccupancyRow"
-               type="org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyRow">
+               type="org.example.backend.teachingschedule.application.ScheduleOccupancyRow">
         <constructor>
             <arg column="classroom" name="classroom" javaType="java.lang.String"/>
             <arg column="start_section" name="startSection" javaType="java.lang.Integer"/>
@@ -59,7 +59,7 @@
     </select>
 
     <select id="findOccupancyCandidates"
-            parameterType="org.example.backend.teachingschedule.application.port.out.ScheduleOccupancyCriteria"
+            parameterType="org.example.backend.teachingschedule.application.ScheduleOccupancyCriteria"
             resultMap="scheduleOccupancyRow">
         select classroom, start_section, end_section
         from class_timetable
