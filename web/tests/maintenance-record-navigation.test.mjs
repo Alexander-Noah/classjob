@@ -45,7 +45,7 @@ test('entry and viewing permissions stay separate while legacy repair access exp
 test('lab-admin navigation and dashboards point to maintenance-record viewing', () => {
   const navigation = readSource('../src/constants/navigation.js')
   const frontendDashboard = readSource('../src/constants/dashboard.js')
-  const backendDashboard = readSource('../../Backend/legacy-app/src/main/java/org/example/backend/service/impl/DashboardServiceImpl.java')
+  const backendDashboard = readSource('../../Backend/src/main/java/org/example/backend/service/impl/DashboardServiceImpl.java')
 
   assert.match(navigation, /title: '设备维护管理'[\s\S]*?children:\s*\[\s*'\/lab-admin\/maintenance-records',\s*'\/lab-admin\/maintenance-records\/new',\s*'\/lab-admin\/notices'\s*\]/)
   for (const source of [frontendDashboard, backendDashboard]) {
