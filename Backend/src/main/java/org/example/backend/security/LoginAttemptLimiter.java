@@ -40,7 +40,9 @@ public class LoginAttemptLimiter {
         String key = key(username, request);
         attempts.compute(key, (ignored, state) -> {
             long now = Instant.now().getEpochSecond();
-            AttemptState next = state == null || state.lockedUntilEpochSecond <= now ? new AttemptState() : state;
+            AttemptState next = state == null
+                    || (state.lockedUntilEpochSecond > 0 && state.lockedUntilEpochSecond <= now)
+                    ? new AttemptState() : state;
             next.failureCount++;
             if (next.failureCount >= maxAttempts) {
                 next.lockedUntilEpochSecond = now + lockSeconds;
