@@ -3,6 +3,7 @@ package org.example.backend.config;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.result.Result;
+import org.example.backend.service.CrawlerCredentialException;
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,14 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(CrawlerCredentialException.class)
+    public ResponseEntity<Result> handleCrawlerCredentialException(CrawlerCredentialException exception, HttpServletRequest request) {
+        log.warn("crawler credentials require update method={} uri={} requestId={}",
+                request.getMethod(), request.getRequestURI(), MDC.get("requestId"), exception);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Result.error(409, CrawlerCredentialException.USER_MESSAGE));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Result> handleIllegalArgumentException(IllegalArgumentException exception, HttpServletRequest request) {
         log.warn("bad request method={} uri={} requestId={} message={}",
@@ -70,9 +79,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 requestId,
                 exception);
-        String message = requestId == null || requestId.isBlank()
-                ? "系统处理失败，请联系管理员查看后端日志"
-                : "系统处理失败，请联系管理员并提供请求编号：" + requestId;
+        String message = "服务暂时不可用，请稍后重试";
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Result.error(message));

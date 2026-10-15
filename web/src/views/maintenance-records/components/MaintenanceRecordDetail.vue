@@ -8,6 +8,7 @@ defineOptions({
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   record: { type: Object, default: null },
+  editable: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue', 'edit'])
 const visible = computed({
@@ -32,7 +33,7 @@ const visible = computed({
     </el-descriptions>
     <template #footer>
       <el-button @click="visible = false">关闭</el-button>
-      <el-button v-if="record" type="primary" @click="emit('edit', record)">编辑记录</el-button>
+      <el-button v-if="record && editable" type="primary" @click="emit('edit', record)">编辑记录</el-button>
     </template>
   </el-drawer>
 </template>

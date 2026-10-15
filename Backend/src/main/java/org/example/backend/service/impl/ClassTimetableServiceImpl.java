@@ -6,6 +6,7 @@ import org.example.backend.entity.AcademicCredentialView;
 import org.example.backend.entity.ClassTimetableEntity;
 import org.example.backend.mapper.ClassTimetableMapper;
 import org.example.backend.service.ClassTimetableService;
+import org.example.backend.service.CrawlerCredentialException;
 import org.example.backend.service.TeachingScheduleQuery;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -681,10 +682,24 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         view.setCredentialKey(CRAWLER_CREDENTIAL_KEY);
         String usernameCipher = row == null ? "" : stringValue(row.get("usernameCipher"));
         String passwordCipher = row == null ? "" : stringValue(row.get("passwordCipher"));
-        view.setConfigured(!isBlank(usernameCipher) && !isBlank(passwordCipher));
-        if (Boolean.TRUE.equals(view.getConfigured())) {
-            view.setUsernameMasked(maskUsername(decrypt(usernameCipher)));
-            view.setUpdatedAt(stringValue(row.get("updatedAt")));
+        view.setConfigured(!isBlank(usernameCipher) || !isBlank(passwordCipher));
+        view.setUsable(false);
+        view.setStatus("not_configured");
+        if (!Boolean.TRUE.equals(view.getConfigured())) return view;
+        view.setUpdatedAt(stringValue(row.get("updatedAt")));
+        view.setStatus("needs_update");
+        view.setMessage(CrawlerCredentialException.USER_MESSAGE);
+        if (isBlank(usernameCipher) || isBlank(passwordCipher)) return view;
+        try {
+            String username = decrypt(usernameCipher);
+            decrypt(passwordCipher);
+            view.setUsernameMasked(maskUsername(username));
+            view.setUsable(true);
+            view.setStatus("ready");
+            view.setMessage(null);
+        } catch (CrawlerCredentialException exception) {
+            log.warn("Stored timetable credentials cannot be read; reconfiguration is required, cause={}",
+                    exception.getCause() == null ? "unknown" : exception.getCause().getClass().getSimpleName());
         }
         return view;
     }
@@ -834,7 +849,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (Exception exception) {
-            throw new IllegalStateException("教务账号解密失败，请确认 timetable.crawler.credential-secret 未变更", exception);
+            throw new CrawlerCredentialException(exception);
         }
     }
 

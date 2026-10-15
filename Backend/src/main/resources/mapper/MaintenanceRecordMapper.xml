@@ -5,6 +5,8 @@
 <mapper namespace="org.example.backend.mapper.MaintenanceRecordMapper">
     <sql id="MaintenanceRecordColumns">
         r.id,
+        r.lab_id as labId,
+        r.device_id as deviceId,
         coalesce(r.order_no, '未填写') as recordNo,
         coalesce(l.lab_name, '未填写') as lab,
         coalesce(d.device_name, '未填写') as device,
@@ -23,6 +25,7 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
+        where coalesce(r.status, '') != '已删除'
         order by r.id desc
     </select>
 
@@ -32,7 +35,9 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
-        where r.order_no = #{id} or cast(r.id as char) = #{id}
+        where (r.order_no = #{id} or cast(r.id as char) = #{id})
+          and coalesce(r.status, '') != '已删除'
+        order by (cast(r.id as char) = #{id}) desc
         limit 1
     </select>
 
@@ -43,6 +48,7 @@
            or l.lab_code = #{reference}
            or l.lab_name = #{reference}
            or concat(l.lab_code, ' ', l.lab_name) = #{reference}
+        order by (cast(l.id as char) = #{reference}) desc
         limit 1
     </select>
 
@@ -56,6 +62,7 @@
         )
           and d.lab_id = #{labId}
           and coalesce(d.deleted, 0) = 0
+        order by (cast(d.id as char) = #{reference}) desc
         limit 1
     </select>
 
@@ -96,11 +103,12 @@
             result_desc = #{record.result},
             contact = #{record.remark},
             updated_at = now()
-        where order_no = #{id} or cast(id as char) = #{id}
+        where id = #{id} and coalesce(status, '') != '已删除'
     </update>
 
-    <delete id="deleteMaintenanceRecord">
-        delete from repair_order
-        where order_no = #{id} or cast(id as char) = #{id}
-    </delete>
+    <update id="deleteMaintenanceRecord">
+        update repair_order
+        set status = '已删除', updated_at = now()
+        where id = #{id} and coalesce(status, '') != '已删除'
+    </update>
 </mapper>

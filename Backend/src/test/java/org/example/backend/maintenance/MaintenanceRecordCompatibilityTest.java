@@ -48,8 +48,8 @@ class MaintenanceRecordCompatibilityTest {
         assertFalse(Arrays.stream(maintenanceRecord.getDeclaredFields())
                 .map(field -> field.getName())
                 .anyMatch(field -> field.equals("status") || field.equals("progress")));
-        assertFalse(mapperXml.contains("r.status"));
-        assertFalse(mapperXml.contains("r.progress"));
+        assertFalse(mapperXml.substring(0, mapperXml.indexOf("</sql>")).contains("r.status"));
+        assertFalse(mapperXml.substring(0, mapperXml.indexOf("</sql>")).contains("r.progress"));
     }
 
     @Test

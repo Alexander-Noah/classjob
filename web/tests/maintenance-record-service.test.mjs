@@ -36,6 +36,8 @@ test('maintenance record model maps legacy repair fields to the Task 1 DTO', asy
     {
       id: 7,
       recordNo: 'R-007',
+      labId: '',
+      deviceId: '',
       lab: '软件开发实训室',
       device: '联想启天M410',
       maintenanceType: '设备故障',

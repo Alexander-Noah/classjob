@@ -6,6 +6,8 @@ import lombok.Data;
 public class MaintenanceRecord {
     private String id;
     private String recordNo;
+    private Long labId;
+    private Long deviceId;
     private String lab;
     private String device;
     private String maintenanceType;

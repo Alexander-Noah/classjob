@@ -47,7 +47,7 @@ const conversationHistories = ref([])
 const activeConversationId = ref('')
 const historyKeyword = ref('')
 const isHistoryRestoring = ref(false)
-const aiConfigDrawerVisible = ref(false)
+const aiConfigDialogVisible = ref(false)
 const isDirectAiLoading = ref(false)
 const isTestingDirectAi = ref(false)
 const directAiConfig = reactive(createDefaultDirectAiConfig())
@@ -471,14 +471,14 @@ const buildWsProtocols = () => {
   const token = getAuthToken()
   if (!token) return []
 
-  return [`smart-lab.jwt.${token}`]
+  return ['smart-lab.ai.v1', `smart-lab.jwt.${token}`]
 }
 
 const handleAssistantSocketError = () => {
   if (directAiConfig.enabled) return
   if (hasShownSocketError) return
   hasShownSocketError = true
-  ElMessage.error('AI 语音服务连接异常，请稍后重试')
+  ElMessage.error('智能助手连接失败，请点击“重新连接”后重试')
 }
 
 const connectService = () => {
@@ -540,7 +540,7 @@ const saveBackendAiConfig = async () => {
       systemPrompt: directAiConfig.systemPrompt?.trim() || createDefaultDirectAiConfig().systemPrompt,
     })
     applyBackendAiConfig(savedConfig)
-    aiConfigDrawerVisible.value = false
+    aiConfigDialogVisible.value = false
     ElMessage.success('AI 接口配置已保存')
   } catch (error) {
     ElMessage.error(error?.message || 'AI 接口配置保存失败')
@@ -589,7 +589,7 @@ const submitQuestion = async (text) => {
 
   if (directAiConfig.enabled) {
     if (!isDirectAiConfigured.value) {
-      aiConfigDrawerVisible.value = true
+      aiConfigDialogVisible.value = true
       ElMessage.warning('请先完成 AI 接口配置')
       return false
     }
@@ -777,7 +777,8 @@ onUnmounted(() => {
         </div>
 
         <div class="header-actions">
-          <el-button :icon="Setting" plain @click="aiConfigDrawerVisible = true">API 配置</el-button>
+          <el-button v-if="!directAiConfig.enabled && connectionStatus !== 'connected'" :loading="connectionStatus === 'connecting'" @click="fetchConfigAndConnect">重新连接</el-button>
+          <el-button :icon="Setting" plain @click="aiConfigDialogVisible = true">API 配置</el-button>
           <el-switch v-model="speechEnabled" active-text="播报" inactive-text="静音" @change="toggleSpeech" />
           <el-button
             v-if="!isCapturingVoice"
@@ -851,7 +852,7 @@ onUnmounted(() => {
       </footer>
     </main>
 
-    <el-drawer v-model="aiConfigDrawerVisible" title="AI 接口配置" size="420px">
+    <el-dialog v-model="aiConfigDialogVisible" title="AI 接口配置" width="min(800px, calc(100vw - 32px))" align-center :close-on-click-modal="false" append-to-body>
       <div class="api-config-panel">
         <el-alert
           show-icon
@@ -860,8 +861,8 @@ onUnmounted(() => {
           title="配置保存到当前登录用户账号下，其他用户不可见。API Key 不会在页面回显。"
         />
 
-        <el-form label-position="top">
-          <el-form-item label="启用自定义 API">
+        <el-form label-position="top" class="api-config-form">
+          <el-form-item label="启用自定义 API" class="api-config-full-row">
             <el-switch v-model="directAiConfig.enabled" active-text="启用" inactive-text="停用" />
           </el-form-item>
 
@@ -886,7 +887,7 @@ onUnmounted(() => {
             <el-input v-model="directAiConfig.model" placeholder="qwen-plus / gpt-4o-mini" />
           </el-form-item>
 
-          <el-form-item label="系统提示词">
+          <el-form-item label="系统提示词" class="api-config-full-row">
             <el-input
               v-model="directAiConfig.systemPrompt"
               :autosize="{ minRows: 4, maxRows: 6 }"
@@ -896,13 +897,15 @@ onUnmounted(() => {
           </el-form-item>
         </el-form>
 
+      </div>
+      <template #footer>
         <div class="api-config-actions">
           <el-button plain @click="resetDirectAiConfig">恢复默认</el-button>
           <el-button plain :loading="isTestingDirectAi" @click="testBackendAiConfig">测试连接</el-button>
           <el-button type="primary" @click="saveBackendAiConfig">保存配置</el-button>
         </div>
-      </div>
-    </el-drawer>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -1123,14 +1126,35 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-height: calc(100dvh - 190px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .api-config-panel :deep(.el-form-item) {
   margin-bottom: 16px;
+  min-width: 0;
+}
+
+.api-config-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+}
+
+.api-config-full-row {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+  .api-config-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .api-config-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   padding-top: 8px;

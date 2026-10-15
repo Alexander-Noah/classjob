@@ -81,13 +81,15 @@ class DeviceModuleBoundaryTest {
     }
 
     @Test
-    void globalExceptionFallbackIncludesRequestIdInsteadOfGenericRetryCopy() throws IOException {
+    void globalExceptionFallbackKeepsRequestIdInDiagnosticsRatherThanUserCopy() throws IOException {
         String handler = readSource("config", "GlobalExceptionHandler.java");
+        String loggingFilter = readSource("config", "RequestLoggingFilter.java");
 
         assertAll(
-                () -> assertFalse(handler.contains("服务器异常，请稍后重试")),
-                () -> assertTrue(handler.contains("系统处理失败，请联系管理员")),
-                () -> assertTrue(handler.contains("请求编号"))
+                () -> assertTrue(handler.contains("服务暂时不可用，请稍后重试")),
+                () -> assertFalse(handler.contains("请联系管理员并提供请求编号")),
+                () -> assertTrue(handler.contains("MDC.get(\"requestId\")")),
+                () -> assertTrue(loggingFilter.contains("response.setHeader(\"X-Request-Id\", requestId)"))
         );
     }
 

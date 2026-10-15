@@ -70,12 +70,7 @@ export const SYSTEM_ADMIN_PORTAL = {
   title: '系统管理员工作台',
   description:
     '围绕平台治理，集中处理账号权限、系统设置、通知公告、操作审计和全局统计。',
-  stats: [
-    { label: '账号总数', value: '128', trend: '启用 121 个' },
-    { label: '待审核账号', value: '7', trend: '待管理员复核' },
-    { label: '系统通知', value: '28', trend: '本月发布' },
-    { label: '配置项', value: '36', trend: '已绑定权限' },
-  ],
+  stats: [],
   actions: [
     { title: '管理账号权限', tag: '账号', description: '维护系统管理员、实验室管理员、教师和教务人员账号与访问范围。' },
     { title: '配置平台参数', tag: '配置', description: '管理数据字典、日志策略、外部服务和平台基础参数。' },
@@ -84,11 +79,7 @@ export const SYSTEM_ADMIN_PORTAL = {
   ],
   recordsTitle: '平台治理事项',
   columns: ['事项', '范围', '更新时间', '负责人', '状态'],
-  records: [
-    ['角色权限复核', '全平台', '今日 09:30', '陈倩', '待处理'],
-    ['单点认证参数检查', '系统设置', '今日 10:40', '系统管理员', '进行中'],
-    ['平台维护公告发布', '全角色', '今日 11:10', '系统管理员', '已发布'],
-  ],
+  records: [],
   timeline: [
     { title: '审核账号与角色权限', date: '每日' },
     { title: '更新系统配置与日志策略', date: '每周' },

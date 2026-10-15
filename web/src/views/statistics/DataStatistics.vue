@@ -18,6 +18,8 @@ import { useECharts } from '../../composables/useECharts'
 import { echarts } from '../../utils/echartsCore'
 import http from '../../api/http'
 import { fetchDashboardOverview } from '../../api/dashboard'
+import { fetchPlatformSnapshot } from '../../api/services/platformOverview'
+import { buildPlatformStatistics } from '../../modules/platform/platformOverview'
 import { API_ENDPOINTS } from '../../api/endpoints'
 import { exportTableToExcel } from '../../utils/exportExcel'
 
@@ -212,172 +214,18 @@ const LAB_ADMIN_PAGE = {
 }
 
 const SYSTEM_ADMIN_PAGE = {
-  badge: '平台统计',
-  title: '平台统计',
-  description: '从账号治理、权限命中、配置变更和通知触达四个维度查看平台运行状态。',
+  badge: '平台统计', title: '平台统计',
+  description: '显示当前数据库中的账号、角色与通知数量。',
   pageIcon: markRaw(DataAnalysis),
-  actions: [
-    { label: '导出月报', type: 'primary', command: 'report' },
-    { label: '导出数据', type: 'default', command: 'export' },
-  ],
-  toolbarTitle: '平台治理视图',
-  toolbarDescription: '按时间口径查看账号启用率、权限策略执行情况和平台运营变化。',
+  actions: [{ label: '导出数据', type: 'default', command: 'export' }],
+  toolbarTitle: '平台当前数据', toolbarDescription: '实时接口返回的当前数据库快照。',
   charts: {
-    trend: { title: '账号活跃趋势', subtitle: '登录与访问活跃度变化', tag: '折线图' },
-    compare: { title: '治理模块完成度', subtitle: '各平台模块运行质量对比', tag: '柱状图' },
-    distribution: { title: '角色分布', subtitle: '当前平台账号角色占比', tag: '环形图' },
-    ranking: { title: '配置变更排行', subtitle: '近阶段高频治理动作', tag: '排行图' },
+    trend: { title: '账号创建记录', subtitle: '按实际创建日期汇总', tag: '折线图' },
+    compare: { title: '账号状态', subtitle: '当前启用与停用账号数量', tag: '柱状图' },
+    distribution: { title: '角色分布', subtitle: '实际账号角色占比', tag: '环形图' },
+    ranking: { title: '通知状态', subtitle: '实际通知记录状态', tag: '排行图' },
   },
-  detailTitle: '治理明细',
-  periods: {
-    week: {
-      summary: [
-        { label: '账号启用率', value: '94%', trend: '较上周 +2%', iconKey: 'account' },
-        { label: '权限命中率', value: '98%', trend: '无越权异常', iconKey: 'governance' },
-        { label: '配置变更', value: '12', trend: '本周新增', iconKey: 'config' },
-        { label: '通知触达率', value: '91%', trend: '较上周 +3%', iconKey: 'notice' },
-      ],
-      trend: {
-        name: '活跃账号',
-        unit: '个',
-        categories: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-        values: [84, 88, 91, 89, 93, 58, 42],
-        color: '#4f46e5',
-      },
-      compare: {
-        name: '完成度',
-        unit: '%',
-        categories: ['用户权限', '系统设置', '通知公告', '统计服务'],
-        values: [98, 95, 91, 87],
-        color: '#6366f1',
-      },
-      distribution: {
-        name: '角色分布',
-        data: [
-          { name: '实验室管理员', value: 18 },
-          { name: '教师', value: 76 },
-          { name: '维修人员', value: 12 },
-          { name: '系统管理员', value: 6 },
-        ],
-      },
-      ranking: {
-        name: '变更次数',
-        unit: '次',
-        categories: ['权限调整', '系统参数', '通知发布', '服务配置'],
-        values: [12, 9, 7, 3],
-        color: '#8b5cf6',
-      },
-      details: [
-        { metric: '待审核账号', value: '7 个', change: '-1', owner: '用户权限', status: '关注', tagType: 'warning' },
-        { metric: '通知发送成功率', value: '97%', change: '+2%', owner: '通知公告', status: '稳定', tagType: 'info' },
-        { metric: '权限策略命中率', value: '98%', change: '+1%', owner: '角色权限', status: '优化', tagType: 'primary' },
-        { metric: '配置变更成功率', value: '99%', change: '+1%', owner: '系统设置', status: '上升', tagType: 'success' },
-      ],
-      insights: [
-        { title: '教师账号活跃度较高', description: '工作日 08:00 至 16:00 登录最频繁，可优先投放教学相关公告。', type: 'primary' },
-        { title: '权限调整集中发生在实验室管理员', description: '近期新增环境管理能力较多，建议复核实验室管理员菜单授权边界。', type: 'warning' },
-        { title: '公告触达率保持平稳', description: '触达率维持在 90% 以上，通知机制可继续沿用当前分发策略。', type: 'success' },
-      ],
-    },
-    month: {
-      summary: [
-        { label: '账号启用率', value: '95%', trend: '较上月 +1%', iconKey: 'account' },
-        { label: '权限命中率', value: '98%', trend: '稳定无异常', iconKey: 'governance' },
-        { label: '配置变更', value: '37', trend: '本月累计', iconKey: 'config' },
-        { label: '通知触达率', value: '92%', trend: '较上月 +4%', iconKey: 'notice' },
-      ],
-      trend: {
-        name: '活跃账号',
-        unit: '个',
-        categories: ['第 1 周', '第 2 周', '第 3 周', '第 4 周'],
-        values: [86, 89, 92, 94],
-        color: '#4f46e5',
-      },
-      compare: {
-        name: '完成度',
-        unit: '%',
-        categories: ['用户权限', '系统设置', '通知公告', '统计服务'],
-        values: [99, 96, 92, 89],
-        color: '#6366f1',
-      },
-      distribution: {
-        name: '角色分布',
-        data: [
-          { name: '实验室管理员', value: 18 },
-          { name: '教师', value: 77 },
-          { name: '维修人员', value: 13 },
-          { name: '系统管理员', value: 6 },
-        ],
-      },
-      ranking: {
-        name: '变更次数',
-        unit: '次',
-        categories: ['权限调整', '系统参数', '通知发布', '日志策略'],
-        values: [28, 19, 14, 9],
-        color: '#8b5cf6',
-      },
-      details: [
-        { metric: '新建账号', value: '16 个', change: '+4', owner: '用户权限', status: '上升', tagType: 'success' },
-        { metric: '待发布公告', value: '4 条', change: '+1', owner: '通知公告', status: '关注', tagType: 'warning' },
-        { metric: '配置审计覆盖率', value: '100%', change: '持平', owner: '系统设置', status: '稳定', tagType: 'info' },
-        { metric: '越权访问告警', value: '0', change: '持平', owner: '角色权限', status: '优化', tagType: 'primary' },
-      ],
-      insights: [
-        { title: '本月权限调整频次较高', description: '建议在月底前梳理一次角色矩阵，避免权限项持续扩张。', type: 'warning' },
-        { title: '配置审计已形成闭环', description: '关键参数调整均有记录，可继续沉淀标准化变更模板。', type: 'success' },
-        { title: '通知分发更加稳定', description: '维护公告与制度公告的点击和阅读情况都优于上月。', type: 'primary' },
-      ],
-    },
-    term: {
-      summary: [
-        { label: '账号启用率', value: '93%', trend: '较上学期 +5%', iconKey: 'account' },
-        { label: '权限命中率', value: '97%', trend: '风险持续下降', iconKey: 'governance' },
-        { label: '配置变更', value: '126', trend: '学期累计', iconKey: 'config' },
-        { label: '通知触达率', value: '90%', trend: '较上学期 +6%', iconKey: 'notice' },
-      ],
-      trend: {
-        name: '活跃账号',
-        unit: '个',
-        categories: ['2 月', '3 月', '4 月', '5 月', '6 月'],
-        values: [58, 83, 91, 95, 88],
-        color: '#4f46e5',
-      },
-      compare: {
-        name: '完成度',
-        unit: '%',
-        categories: ['用户权限', '系统设置', '通知公告', '统计服务'],
-        values: [97, 94, 90, 86],
-        color: '#6366f1',
-      },
-      distribution: {
-        name: '角色分布',
-        data: [
-          { name: '实验室管理员', value: 17 },
-          { name: '教师', value: 74 },
-          { name: '维修人员', value: 11 },
-          { name: '系统管理员', value: 6 },
-        ],
-      },
-      ranking: {
-        name: '变更次数',
-        unit: '次',
-        categories: ['权限调整', '系统参数', '日志策略', '通知发布'],
-        values: [66, 34, 18, 15],
-        color: '#8b5cf6',
-      },
-      details: [
-        { metric: '学期新增账号', value: '42 个', change: '+9', owner: '用户权限', status: '上升', tagType: 'success' },
-        { metric: '角色矩阵复核次数', value: '5 次', change: '+2', owner: '角色权限', status: '稳定', tagType: 'info' },
-        { metric: '配置灰度发布次数', value: '11 次', change: '+3', owner: '系统设置', status: '优化', tagType: 'primary' },
-        { metric: '通知阅读率', value: '90%', change: '+6%', owner: '通知公告', status: '关注', tagType: 'warning' },
-      ],
-      insights: [
-        { title: '教师角色成为主要活跃用户', description: '教师账号的活跃度持续提升，平台后续公告与功能文案应优先面向教学场景优化。', type: 'primary' },
-        { title: '权限治理压力集中在学期初', description: '3 月和 4 月配置变更最多，建议将角色和菜单初始化流程提前标准化。', type: 'warning' },
-        { title: '平台治理整体趋稳', description: '启用率、命中率和触达率都较上学期更平稳，说明治理策略已经生效。', type: 'success' },
-      ],
-    },
-  },
+  detailTitle: '角色数量明细', periods: {},
 }
 
 const route = useRoute()
@@ -385,16 +233,17 @@ const router = useRouter()
 const activePeriod = ref('week')
 const dashboardOverview = ref(null)
 const linkedStatistics = ref(null)
+const platformSnapshot = ref({ users: null, notices: null, errors: [] })
 
 const roleScope = computed(() => route.meta?.roleScope || DEFAULT_AUTH_ROLE)
 const pageConfig = computed(() => (roleScope.value === 'systemAdmin' ? SYSTEM_ADMIN_PAGE : LAB_ADMIN_PAGE))
 const basePeriodData = computed(() => pageConfig.value.periods[activePeriod.value] || pageConfig.value.periods.week)
 const activePeriodLabel = computed(
-  () => PERIOD_OPTIONS.find((item) => item.value === activePeriod.value)?.label || PERIOD_OPTIONS[0].label,
+  () => roleScope.value === 'systemAdmin' ? '当前数据库快照' : PERIOD_OPTIONS.find((item) => item.value === activePeriod.value)?.label || PERIOD_OPTIONS[0].label,
 )
 const dataSourceLabel = computed(() => {
   if (roleScope.value === 'systemAdmin') {
-    return dashboardOverview.value ? '平台概览接口' : '预置治理口径'
+    return platformSnapshot.value.users !== null ? '账号与通知接口' : '等待接口加载'
   }
 
   return linkedStatistics.value ? '业务接口联动' : '本地统计口径'
@@ -1039,7 +888,7 @@ const buildLinkedStatistics = (records, period) => {
 }
 
 const periodData = computed(() => {
-  if (roleScope.value !== 'labAdmin') return basePeriodData.value
+  if (roleScope.value === 'systemAdmin') return buildPlatformStatistics(platformSnapshot.value.users, platformSnapshot.value.notices)
 
   return linkedStatistics.value || buildLinkedStatistics({}, activePeriod.value)
 })
@@ -1414,7 +1263,7 @@ const loadStatisticsData = async () => {
   if (roleScope.value === 'labAdmin') {
     await loadBusinessStatistics()
   } else {
-    await loadDashboardOverview()
+    platformSnapshot.value = await fetchPlatformSnapshot()
   }
   await renderAllCharts()
 }
@@ -1462,7 +1311,7 @@ onBeforeUnmount(() => {
               <strong>{{ item.value }}</strong>
             </span>
           </div>
-          <el-radio-group v-model="activePeriod" size="small">
+          <el-radio-group v-if="roleScope === 'labAdmin'" v-model="activePeriod" size="small">
             <el-radio-button v-for="item in PERIOD_OPTIONS" :key="item.value" :value="item.value">
               {{ item.label }}
             </el-radio-button>
@@ -1470,6 +1319,8 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </el-card>
+
+    <el-alert v-if="roleScope === 'systemAdmin' && platformSnapshot.errors.length" :title="platformSnapshot.errors.join('；')" type="error" :closable="false" show-icon />
 
     <div class="summary-grid">
       <article v-for="item in summaryCards" :key="item.label" class="summary-card">
@@ -1555,7 +1406,7 @@ onBeforeUnmount(() => {
           <el-table :data="periodData.details" class="detail-table" empty-text="暂无统计明细" stripe>
             <el-table-column prop="metric" label="指标" min-width="180" />
             <el-table-column prop="value" label="当前值" min-width="110" />
-            <el-table-column prop="change" label="环比" min-width="110" />
+            <el-table-column prop="change" :label="roleScope === 'systemAdmin' ? '统计口径' : '环比'" min-width="110" />
             <el-table-column prop="owner" label="关注域" min-width="130" />
             <el-table-column label="状态" min-width="100">
               <template #default="{ row }">

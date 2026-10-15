@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MaintenanceRecordContractTest {
     private static final List<String> MAINTENANCE_FIELDS = List.of(
-            "id", "recordNo", "lab", "device", "maintenanceType", "maintenanceDate",
+            "id", "recordNo", "labId", "deviceId", "lab", "device", "maintenanceType", "maintenanceDate",
             "maintainer", "content", "result", "remark", "updatedAt"
     );
 
@@ -62,7 +62,7 @@ class MaintenanceRecordContractTest {
     @Test
     void serviceRejectsEveryRequiredBlankFieldBeforeWriting() {
         for (String field : List.of(
-                "lab", "device", "maintenanceType", "maintenanceDate", "maintainer", "content", "result"
+                "lab", "maintenanceType", "maintenanceDate", "maintainer", "content", "result"
         )) {
             MaintenanceRecord record = validRecord();
             switch (field) {
@@ -80,7 +80,7 @@ class MaintenanceRecordContractTest {
                     IllegalArgumentException.class,
                     () -> new MaintenanceRecordServiceImpl(new RecordingMapper()).createMaintenanceRecord(record)
             );
-            assertTrue(error.getMessage().contains(field));
+            assertTrue(error.getMessage().startsWith("请填写"));
         }
     }
 
@@ -101,21 +101,37 @@ class MaintenanceRecordContractTest {
                 IllegalArgumentException.class,
                 () -> new MaintenanceRecordServiceImpl(mapper).createMaintenanceRecord(validRecord())
         );
-        assertTrue(error.getMessage().contains("lab not found"));
+        assertTrue(error.getMessage().contains("实验室不存在"));
     }
 
     @Test
-    void deletionIsDisabledAndNeverDelegatesToTheMapper() {
+    void serviceAllowsNoDeviceAndClearingAnExistingDevice() {
         RecordingMapper mapper = new RecordingMapper();
+        MaintenanceRecordServiceImpl service = new MaintenanceRecordServiceImpl(mapper);
+        MaintenanceRecord record = validRecord();
+        record.setDevice(null);
+        service.createMaintenanceRecord(record);
+        assertEquals(null, mapper.insertedDeviceId);
+        assertEquals(null, mapper.requestedDeviceLabId);
 
-        ResponseStatusException error = assertThrows(
-                ResponseStatusException.class,
-                () -> new MaintenanceRecordServiceImpl(mapper).deleteMaintenanceRecord("MR-001")
-        );
+        MaintenanceRecord linked = service.createMaintenanceRecord(validRecord());
+        MaintenanceRecord cleared = validRecord();
+        cleared.setDevice(" ");
+        service.updateMaintenanceRecord(linked.getId(), cleared);
+        assertEquals(null, mapper.insertedDeviceId);
+    }
 
-        assertEquals(HttpStatus.GONE, error.getStatusCode());
-        assertTrue(error.getReason().contains("历史数据必须保留"));
-        assertFalse(mapper.deleteCalled);
+    @Test
+    void deletionRemovesTheRecordFromNormalReads() {
+        RecordingMapper mapper = new RecordingMapper();
+        MaintenanceRecordServiceImpl service = new MaintenanceRecordServiceImpl(mapper);
+        MaintenanceRecord saved = service.createMaintenanceRecord(validRecord());
+        service.deleteMaintenanceRecord(saved.getRecordNo());
+        assertTrue(mapper.deleteCalled);
+        assertTrue(service.listMaintenanceRecords().isEmpty());
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> service.getMaintenanceRecord(saved.getRecordNo()));
+        assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
     }
 
     @Test

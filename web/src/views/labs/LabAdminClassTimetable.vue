@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Search, View } from '@element-plus/icons-vue'
+import { credentialPresentation, crawlerTaskStatusLabel } from '../../modules/timetable/crawlerPresentation'
 import {
   clearClassTimetableCrawlerTasks,
   deleteClassTimetableCrawlerCredential,
@@ -61,7 +62,8 @@ const taskPagination = reactive({
 
 const accountDialogVisible = ref(false)
 const taskDetailVisible = ref(false)
-const credential = ref({ configured: false })
+const credential = ref({ configured: false, status: 'loading' })
+const credentialState = computed(() => credentialPresentation(credential.value))
 const credentialForm = reactive({
   username: '',
   password: '',
@@ -83,9 +85,9 @@ const accountRows = computed(() => {
     username: credential.value.usernameMasked || '已配置账号',
     remark: credentialForm.remark || '课表采集账号',
     sort: 0,
-    status: '启用',
+    status: credential.value.usable === false ? '待更新' : '启用',
     latestSuccessAt: summary.value.latestSyncAt || credential.value.updatedAt || '',
-    latestError: taskRecords.value.find((task) => task.status !== 'success')?.error || '',
+    latestError: credential.value.message || taskRecords.value.find((task) => task.status !== 'success')?.error || '',
   }
   const matchedKeyword = !keyword || row.username.includes(keyword) || row.remark.includes(keyword)
   const matchedStatus = !accountFilter.status || row.status === accountFilter.status
@@ -116,6 +118,7 @@ const scheduleSummary = computed(() => {
 
 const nextRunText = computed(() => {
   if (!configForm.scheduleEnabled) return '自动采集已关闭'
+  if (!credentialState.value.canCollect) return '账号可用后恢复自动采集'
   return configForm.nextRunAt || '保存配置后生成'
 })
 
@@ -201,7 +204,7 @@ const fetchCredential = async () => {
   try {
     credential.value = await getClassTimetableCrawlerCredential()
   } catch {
-    credential.value = { configured: false }
+    credential.value = { ...credential.value, usable: false, status: 'load_failed' }
   }
 }
 
@@ -299,8 +302,8 @@ const queryAccountRows = () => {
 }
 
 const handleCrawler = async () => {
-  if (!credential.value?.configured) {
-    ElMessage.warning('请先新增并保存教务账号')
+  if (!credentialState.value.canCollect) {
+    ElMessage.warning(credentialState.value.description)
     return
   }
 
@@ -375,7 +378,7 @@ onMounted(async () => {
       </div>
       <div class="page-actions">
         <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
-        <el-button :disabled="!credential.configured" :loading="isCrawling" type="primary" @click="handleCrawler">
+        <el-button :disabled="!credentialState.canCollect" :loading="isCrawling" type="primary" @click="handleCrawler">
           立即采集
         </el-button>
       </div>
@@ -384,8 +387,8 @@ onMounted(async () => {
     <section class="status-grid">
       <article class="status-card">
         <span>采集状态</span>
-        <strong>{{ credential.configured ? '账号已配置' : '待配置账号' }}</strong>
-        <small>{{ credential.configured ? credential.usernameMasked || '已加密保存' : '新增账号后才能启动采集' }}</small>
+        <strong>{{ credentialState.title }}</strong>
+        <small>{{ credentialState.description }}</small>
       </article>
       <article class="status-card">
         <span>当前计划</span>
@@ -394,7 +397,7 @@ onMounted(async () => {
       </article>
       <article class="status-card">
         <span>最近任务</span>
-        <strong>{{ latestTask?.status || '暂无记录' }}</strong>
+        <strong>{{ crawlerTaskStatusLabel(latestTask?.status) }}</strong>
         <small>{{ latestTask?.finishedAt || latestTask?.startedAt || '完成采集后生成任务记录' }}</small>
       </article>
     </section>
@@ -531,13 +534,17 @@ onMounted(async () => {
       </div>
 
       <el-alert
-        v-if="!credential.configured"
+        v-if="!credentialState.canCollect && credential.status !== 'loading'"
         class="table-alert"
         show-icon
-        title="还没有配置教务账号，后台采集服务不会启动登录。"
+        :title="credentialState.title"
         type="warning"
         :closable="false"
-      />
+      >
+        <span>{{ credentialState.description }}</span>
+        <el-button v-if="credential.status === 'load_failed'" link type="primary" @click="fetchCredential">重新加载</el-button>
+        <el-button v-else link type="primary" @click="openAccountDialog">{{ credential.configured ? '重新配置账号' : '新增账号' }}</el-button>
+      </el-alert>
 
       <el-table :data="pagedAccountRows" border class="management-table">
         <el-table-column label="ID" prop="id" width="90" />
@@ -546,7 +553,7 @@ onMounted(async () => {
         <el-table-column label="排序" prop="sort" width="100" />
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
-            <el-tag type="success">{{ row.status }}</el-tag>
+            <el-tag :type="credentialState.canCollect ? 'success' : 'warning'">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="最近成功时间" min-width="180" prop="latestSuccessAt" />
@@ -590,7 +597,7 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
-            <el-tag :type="getTaskStatusTagType(row.status)">{{ row.status }}</el-tag>
+            <el-tag :type="getTaskStatusTagType(row.status)">{{ crawlerTaskStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="采集范围" prop="scope" width="120" />
@@ -659,7 +666,7 @@ onMounted(async () => {
       <template v-if="activeTask">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="任务ID">{{ activeTask.id }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ activeTask.status }}</el-descriptions-item>
+          <el-descriptions-item label="状态">{{ crawlerTaskStatusLabel(activeTask.status) }}</el-descriptions-item>
           <el-descriptions-item label="触发方式">{{ formatTriggerType(activeTask.triggerType) }}</el-descriptions-item>
           <el-descriptions-item label="成功账号">{{ activeTask.successAccount || '-' }}</el-descriptions-item>
           <el-descriptions-item label="更新条数">{{ activeTask.updatedCount }}</el-descriptions-item>

@@ -8,7 +8,7 @@ const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8'
 const entryPath = new URL('../src/views/maintenance-records/MaintenanceRecordEntry.vue', import.meta.url)
 const listPath = new URL('../src/views/maintenance-records/MaintenanceRecordList.vue', import.meta.url)
 
-test('maintenance record entry and viewing pages are independent modules', () => {
+test('legacy maintenance entry redirects to the list dialog', () => {
   assert.equal(existsSync(entryPath), true)
   assert.equal(existsSync(listPath), true)
 
@@ -19,8 +19,8 @@ test('maintenance record entry and viewing pages are independent modules', () =>
   assert.doesNotMatch(list, /MaintenanceRecordEntry/)
 })
 
-test('maintenance record entry contains every writable maintenance field', () => {
-  const entry = readSource('../src/views/maintenance-records/MaintenanceRecordEntry.vue')
+test('maintenance record dialog contains every writable maintenance field', () => {
+  const entry = readSource('../src/views/maintenance-records/MaintenanceRecordList.vue')
   const form = readSource('../src/views/maintenance-records/components/MaintenanceRecordForm.vue')
 
   assert.match(entry, /MaintenanceRecordForm/)
@@ -32,7 +32,7 @@ test('maintenance record entry contains every writable maintenance field', () =>
   assert.match(form, /updateMaintenanceRecord/)
 })
 
-test('maintenance record viewing page provides filters detail and export only', () => {
+test('maintenance record management provides filters detail export and CRUD', () => {
   const list = readSource('../src/views/maintenance-records/MaintenanceRecordList.vue')
 
   for (const filter of ['keyword', 'lab', 'device', 'maintenanceType', 'maintainer', 'dateRange']) {
@@ -41,7 +41,9 @@ test('maintenance record viewing page provides filters detail and export only', 
   assert.match(list, /MaintenanceRecordFilters/)
   assert.match(list, /MaintenanceRecordDetail/)
   assert.match(list, /exportTableToExcel/)
-  assert.match(list, /\/lab-admin\/maintenance-records\/new\?id=/)
+  assert.match(list, /deleteMaintenanceRecord/)
+  assert.match(list, /<el-dialog/)
+  assert.match(list, /ElMessageBox.confirm/)
 })
 
 test('maintenance record pages do not expose retired work-order operations', () => {
@@ -53,14 +55,12 @@ test('maintenance record pages do not expose retired work-order operations', () 
   assert.doesNotMatch(sources, /派单|待验收|完成报修|关闭工单|升级工单|维修工单/)
 })
 
-test('entry route loads ignore stale record responses after the requested ID changes or clears', () => {
+test('legacy entry opens create or edit in the merged page', () => {
   const entry = readSource('../src/views/maintenance-records/MaintenanceRecordEntry.vue')
-
-  assert.match(entry, /let loadRequestToken = 0/)
-  assert.match(entry, /const requestedId = recordId\.value/)
-  assert.match(entry, /const requestToken = \+\+loadRequestToken/)
-  assert.match(entry, /requestToken !== loadRequestToken \|\| requestedId !== recordId\.value/)
-  assert.match(entry, /if \(!requestedId\) \{\s*record\.value = \{\}\s*loading\.value = false/)
+  assert.match(entry, /router.replace/)
+  assert.match(entry, /route.query.id/)
+  assert.match(entry, /create: '1'/)
+  assert.doesNotMatch(entry, /<MaintenanceRecordForm/)
 })
 
 test('maintenance export cells neutralize spreadsheet formulas with every dangerous prefix', () => {

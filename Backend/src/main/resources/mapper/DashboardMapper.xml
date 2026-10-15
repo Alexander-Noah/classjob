@@ -549,6 +549,7 @@
                           left join lab l on l.id = r.lab_id
                           left join device d on d.id = r.device_id
                  where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
+                   and coalesce(r.status, '') != '已删除'
                    and date(coalesce(r.updated_at, r.created_at)) = curdate()
 
                  union all

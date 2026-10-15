@@ -42,7 +42,7 @@ export async function clearClassTimetableCrawlerTasks() {
 }
 
 export async function getClassTimetableCrawlerCredential() {
-  return unwrapData(await http.get(API_ENDPOINTS.classTimetables.credential))
+  return unwrapData(await http.get(API_ENDPOINTS.classTimetables.credential, { skipErrorMessage: true }))
 }
 
 export async function saveClassTimetableCrawlerCredential(payload) {

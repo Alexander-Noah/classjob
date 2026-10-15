@@ -11,7 +11,7 @@ import {
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8')
 
-test('maintenance record entry and viewing are independent lab-admin route modules', () => {
+test('maintenance records have one visible list route and a hidden legacy entry route', () => {
   const routeModules = readSource('../src/constants/routeModules.js')
   const router = readSource('../src/router/index.js')
 
@@ -21,17 +21,17 @@ test('maintenance record entry and viewing are independent lab-admin route modul
   assert.notEqual(viewingIndex, -1)
   assert.notEqual(entryIndex, -1)
   assert.ok(viewingIndex < entryIndex, 'viewing route should be declared before the entry route')
-  assert.match(routeModules, /name: 'LabAdminMaintenanceRecordList'[\s\S]*?menuTitle: '维护记录查看'[\s\S]*?roleScope: 'labAdmin'/)
+  assert.match(routeModules, /name: 'LabAdminMaintenanceRecordList'[\s\S]*?menuTitle: '维护记录管理'[\s\S]*?roleScope: 'labAdmin'/)
   assert.match(routeModules, /name: 'LabAdminMaintenanceRecordEntry'[\s\S]*?menuTitle: '维护记录填写'[\s\S]*?roleScope: 'labAdmin'/)
   assert.match(router, /LabAdminMaintenanceRecordList:\s*\(\)\s*=>\s*import\('\.\.\/views\/maintenance-records\/MaintenanceRecordList\.vue'\)/)
   assert.match(router, /LabAdminMaintenanceRecordEntry:\s*\(\)\s*=>\s*import\('\.\.\/views\/maintenance-records\/MaintenanceRecordEntry\.vue'\)/)
 })
 
 test('entry and viewing permissions stay separate while legacy repair access expands to both', () => {
-  assert.deepEqual(getAllowedPaths(['维护记录填写']), ['/lab-admin/maintenance-records/new'])
+  assert.deepEqual(getAllowedPaths(['维护记录填写']), ['/lab-admin/maintenance-records', '/lab-admin/maintenance-records/new'])
   assert.deepEqual(getAllowedPaths(['维护记录查看']), ['/lab-admin/maintenance-records'])
   assert.equal(isPathAllowed('/lab-admin/maintenance-records/new', ['维护记录查看']), false)
-  assert.equal(isPathAllowed('/lab-admin/maintenance-records', ['维护记录填写']), false)
+  assert.equal(isPathAllowed('/lab-admin/maintenance-records', ['维护记录填写']), true)
 
   const parsed = parseUserPermissions({
     permissions: JSON.stringify([{ group: '环境运维', items: ['故障报修'] }]),
@@ -47,7 +47,7 @@ test('lab-admin navigation and dashboards point to maintenance-record viewing', 
   const frontendDashboard = readSource('../src/constants/dashboard.js')
   const backendDashboard = readSource('../../Backend/src/main/java/org/example/backend/service/impl/DashboardServiceImpl.java')
 
-  assert.match(navigation, /title: '设备维护管理'[\s\S]*?children:\s*\[\s*'\/lab-admin\/maintenance-records',\s*'\/lab-admin\/maintenance-records\/new',\s*'\/lab-admin\/notices'\s*\]/)
+  assert.match(navigation, /title: '设备维护管理'[\s\S]*?children:\s*\[\s*'\/lab-admin\/maintenance-records',\s*'\/lab-admin\/notices'\s*\]/)
   for (const source of [frontendDashboard, backendDashboard]) {
     assert.match(source, /维护记录查看/)
     assert.match(source, /\/lab-admin\/maintenance-records/)

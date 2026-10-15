@@ -15,6 +15,8 @@ const firstPresent = (record, fields, fallback = TEXT_FALLBACK) => {
 export function normalizeMaintenanceRecord(record = {}) {
   return {
     id: record?.id ?? record?.recordId ?? '',
+    labId: record?.labId ?? record?.lab_id ?? '',
+    deviceId: record?.deviceId ?? record?.device_id ?? '',
     recordNo: firstPresent(record, ['recordNo', 'record_no', 'orderNo', 'order_no', 'ticket', 'recordCode']),
     lab: firstPresent(record, ['lab', 'labName', 'lab_name', 'laboratoryName', 'laboratory_name']),
     device: firstPresent(record, ['device', 'deviceName', 'device_name']),

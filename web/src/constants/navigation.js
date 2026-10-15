@@ -62,7 +62,7 @@ const LAB_ADMIN_MENU_GROUPS = [
     index: 'lab-admin-maintenance-management',
     title: '设备维护管理',
     iconPath: '/lab-admin/maintenance-records',
-    children: ['/lab-admin/maintenance-records', '/lab-admin/maintenance-records/new', '/lab-admin/notices'],
+    children: ['/lab-admin/maintenance-records', '/lab-admin/notices'],
   },
   {
     index: 'lab-admin-data-intelligence',

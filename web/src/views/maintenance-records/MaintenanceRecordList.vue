@@ -1,9 +1,12 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Download, EditPen, View } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
-import { listMaintenanceRecords } from '../../api/services/maintenanceRecords'
+import { Delete, Download, EditPen, Plus, Refresh, View } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
+import { deleteMaintenanceRecord, getMaintenanceRecord, listMaintenanceRecords } from '../../api/services/maintenanceRecords'
+import { getStoredUser } from '../../api/services/auth'
+import { canWriteMaintenanceRecords, filterMaintenanceRecords } from '../../modules/maintenance-records/maintenanceRecordEditor'
+import MaintenanceRecordForm from './components/MaintenanceRecordForm.vue'
 import TablePagination from '../../components/common/TablePagination.vue'
 import { useTablePagination } from '../../composables/useTablePagination'
 import { exportTableToExcel } from '../../utils/exportExcel'
@@ -14,7 +17,17 @@ import { toMaintenanceRecordExportRow } from './maintenanceRecordExport'
 defineOptions({ name: 'MaintenanceRecordList' })
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
+const loadError = ref('')
+const canWrite = computed(() => canWriteMaintenanceRecords(getStoredUser()))
+const editorVisible = ref(false)
+const editorRecord = ref({})
+const editorKey = ref(0)
+const editorRef = ref()
+const formSaving = ref(false)
+const actionId = ref('')
+let requestToken = 0
 const records = ref([])
 const selectedRecord = ref(null)
 const detailVisible = ref(false)
@@ -34,33 +47,21 @@ const filterOptions = computed(() => ({
   maintainers: [...new Set(records.value.map((item) => item.maintainer).filter(Boolean))],
 }))
 
-const normalizeText = (value) => String(value || '').toLowerCase()
-const filteredRecords = computed(() => {
-  const keyword = normalizeText(filters.keyword).trim()
-  const [fromDate, toDate] = filters.dateRange || []
-
-  return records.value.filter((record) => {
-    const keywordMatched = !keyword || [record.recordNo, record.lab, record.device, record.maintenanceType, record.maintainer, record.content, record.result]
-      .some((value) => normalizeText(value).includes(keyword))
-    const exactMatched = ['lab', 'device', 'maintenanceType', 'maintainer'].every(
-      (field) => !filters[field] || record[field] === filters[field],
-    )
-    const date = String(record.maintenanceDate || '').slice(0, 10)
-    const dateMatched = (!fromDate || date >= fromDate) && (!toDate || date <= toDate)
-    return keywordMatched && exactMatched && dateMatched
-  })
-})
+const filteredRecords = computed(() => filterMaintenanceRecords(records.value, filters))
 
 const { currentPage, pageSize, total, pagedRecords, handleCurrentPageChange, handlePageSizeChange } = useTablePagination(filteredRecords)
 
 const loadRecords = async () => {
+  const token = ++requestToken
   loading.value = true
+  loadError.value = ''
   try {
-    records.value = await listMaintenanceRecords()
+    const rows = await listMaintenanceRecords()
+    if (token === requestToken) records.value = rows
   } catch (error) {
-    ElMessage.error(error?.message || '维护记录加载失败')
+    if (token === requestToken) loadError.value = '维护记录加载失败，请重新加载'
   } finally {
-    loading.value = false
+    if (token === requestToken) loading.value = false
   }
 }
 
@@ -68,13 +69,81 @@ const resetFilters = () => {
   Object.assign(filters, { keyword: '', lab: '', device: '', maintenanceType: '', maintainer: '', dateRange: [] })
 }
 
-const openDetail = (record) => {
-  selectedRecord.value = record
-  detailVisible.value = true
+const showError = (error, fallback) => {
+  if (!error?.__handled) ElMessage.error(error?.userMessage || error?.message || fallback)
 }
-
-const editRecord = (record) => {
-  router.push(`/lab-admin/maintenance-records/new?id=${encodeURIComponent(record.recordNo)}`)
+const recordId = record => String(record.id || record.recordNo)
+const openDetail = async record => {
+  if (actionId.value) return
+  actionId.value = recordId(record)
+  try {
+    selectedRecord.value = await getMaintenanceRecord(actionId.value)
+    detailVisible.value = true
+  } catch (error) { showError(error, '维护记录详情加载失败') }
+  finally { actionId.value = '' }
+}
+const openCreate = () => {
+  if (!canWrite.value) return
+  editorRecord.value = {}
+  editorKey.value++
+  editorVisible.value = true
+}
+const editRecord = async record => {
+  if (!canWrite.value || actionId.value) return
+  actionId.value = recordId(record)
+  try {
+    editorRecord.value = await getMaintenanceRecord(actionId.value)
+    detailVisible.value = false
+    editorKey.value++
+    editorVisible.value = true
+  } catch (error) { showError(error, '维护记录加载失败') }
+  finally { actionId.value = '' }
+}
+const closeEditor = async done => {
+  if (formSaving.value) return
+  if (editorRef.value?.isDirty()) {
+    try {
+      await ElMessageBox.confirm('尚有未保存的修改，确认放弃吗？', '放弃修改', { confirmButtonText: '放弃修改', cancelButtonText: '继续填写', type: 'warning' })
+    } catch { return }
+  }
+  if (typeof done === 'function') done()
+  else editorVisible.value = false
+}
+const recordSaved = async saved => {
+  const index = records.value.findIndex(record => recordId(record) === recordId(saved))
+  if (index === -1) records.value.unshift(saved)
+  else records.value.splice(index, 1, saved)
+  formSaving.value = false
+  editorVisible.value = false
+  await loadRecords()
+}
+const removeRecord = async record => {
+  if (!canWrite.value || actionId.value) return
+  try {
+    await ElMessageBox.confirm(`确认删除维护记录 ${record.recordNo}？删除后将从列表移除，历史信息仍会保留。`, '删除维护记录', { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning' })
+  } catch { return }
+  actionId.value = recordId(record)
+  try {
+    await deleteMaintenanceRecord(actionId.value)
+    records.value = records.value.filter(item => recordId(item) !== actionId.value)
+    if (selectedRecord.value && recordId(selectedRecord.value) === actionId.value) detailVisible.value = false
+    ElMessage.success('维护记录已删除')
+    await loadRecords()
+  } catch (error) { showError(error, '维护记录删除失败') }
+  finally { actionId.value = '' }
+}
+const openLegacyEntry = async () => {
+  const edit = route.query.edit
+  const create = route.query.create
+  if (!edit && !create) return
+  if (canWrite.value) {
+    if (edit) await editRecord({ id: String(edit) })
+    else openCreate()
+  } else ElMessage.warning('当前账号只有查看权限')
+  const query = { ...route.query }
+  delete query.edit
+  delete query.create
+  await router.replace({ path: '/lab-admin/maintenance-records', query })
 }
 
 const exportRecords = () => {
@@ -102,7 +171,8 @@ const exportRecords = () => {
 }
 
 watch(filteredRecords, () => { currentPage.value = 1 })
-onMounted(loadRecords)
+watch(() => [route.query.edit, route.query.create], openLegacyEntry)
+onMounted(async () => { await loadRecords(); await openLegacyEntry() })
 </script>
 
 <template>
@@ -110,10 +180,14 @@ onMounted(loadRecords)
     <header class="page-header">
       <div>
         <p class="eyebrow">设备维护管理</p>
-        <h1>维护记录查看</h1>
-        <p>查询、筛选和导出维护记录；需要变更时进入独立填写页面。</p>
+        <h1>维护记录管理</h1>
+        <p>登记、查询和维护实验室设备的巡检、保养与处理记录。</p>
       </div>
-      <el-button :icon="Download" @click="exportRecords">导出筛选结果</el-button>
+      <div class="header-actions">
+        <el-button :icon="Refresh" :loading="loading" @click="loadRecords">刷新</el-button>
+        <el-button :icon="Download" :disabled="!filteredRecords.length || loading" @click="exportRecords">导出筛选结果</el-button>
+        <el-button v-if="canWrite" type="primary" :icon="Plus" :disabled="loading" @click="openCreate">新增维护记录</el-button>
+      </div>
     </header>
 
     <section class="page-panel">
@@ -121,6 +195,7 @@ onMounted(loadRecords)
     </section>
 
     <section class="page-panel table-panel">
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon><el-button link type="primary" @click="loadRecords">重新加载</el-button></el-alert>
       <div class="section-heading">
         <h2>维护记录</h2>
         <span>共 {{ total }} 条</span>
@@ -132,10 +207,11 @@ onMounted(loadRecords)
         <el-table-column prop="maintenanceType" label="维护类型" min-width="120" />
         <el-table-column prop="maintenanceDate" label="维护日期" min-width="130" />
         <el-table-column prop="maintainer" label="维护人员" min-width="115" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" :width="canWrite ? 230 : 95" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" :icon="View" @click="openDetail(row)">详情</el-button>
-            <el-button link type="primary" :icon="EditPen" @click="editRecord(row)">编辑</el-button>
+            <el-button link type="primary" :icon="View" :disabled="Boolean(actionId)" @click="openDetail(row)">详情</el-button>
+            <el-button v-if="canWrite" link type="primary" :icon="EditPen" :disabled="Boolean(actionId)" @click="editRecord(row)">编辑</el-button>
+            <el-button v-if="canWrite" link type="danger" :icon="Delete" :loading="actionId === recordId(row)" :disabled="Boolean(actionId) && actionId !== recordId(row)" @click="removeRecord(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -148,12 +224,17 @@ onMounted(loadRecords)
       />
     </section>
 
-    <MaintenanceRecordDetail v-model="detailVisible" :record="selectedRecord" @edit="editRecord" />
+    <MaintenanceRecordDetail v-model="detailVisible" :record="selectedRecord" :editable="canWrite" @edit="editRecord" />
+    <el-dialog v-model="editorVisible" :title="editorRecord.id || editorRecord.recordNo ? '编辑维护记录' : '新增维护记录'" width="min(780px, calc(100vw - 32px))" align-center destroy-on-close :close-on-click-modal="false" :close-on-press-escape="!formSaving" :show-close="!formSaving" :before-close="closeEditor">
+      <MaintenanceRecordForm :key="editorKey" ref="editorRef" :record="editorRecord" @saved="recordSaved" @cancel="closeEditor" @saving-change="formSaving = $event" />
+    </el-dialog>
   </section>
 </template>
 
 <style scoped>
 .list-page { display: grid; gap: 16px; padding-bottom: 20px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.header-actions .el-button { margin-left: 0; }
 .page-header, .page-panel { border: 1px solid rgba(148, 163, 184, .28); border-radius: 8px; background: var(--surface-color); }
 .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px; background: linear-gradient(135deg, rgba(15, 118, 110, .12), rgba(37, 99, 235, .06) 48%, var(--surface-color)); }
 .page-header h1, .section-heading h2 { margin: 0; color: var(--text-primary); }

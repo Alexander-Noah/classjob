@@ -42,12 +42,14 @@
     <select id="countRepairOrders" resultType="long">
         select count(1)
         from repair_order
+        where coalesce(status, '') != '已删除'
     </select>
 
     <select id="countRepairOrdersFromUsageRecords" resultType="long">
         select count(1)
         from repair_order
         where description like concat('%', '使用记录#', '%')
+          and coalesce(status, '') != '已删除'
     </select>
 
     <select id="countActiveRepairOrders" resultType="long">
@@ -158,6 +160,7 @@
             coalesce(nullif(fault_type, ''), '未分类') as name,
             count(1) as value
         from repair_order
+        where coalesce(status, '') != '已删除'
         group by coalesce(nullif(fault_type, ''), '未分类')
         order by value desc
         limit 8

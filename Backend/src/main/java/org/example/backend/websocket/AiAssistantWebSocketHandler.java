@@ -8,6 +8,7 @@ import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.SubProtocolCapable;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import org.vosk.Recognizer;
 import tools.jackson.core.type.TypeReference;
@@ -21,13 +22,19 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler {
+public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implements SubProtocolCapable {
     private static final TypeReference<Map<String, Object>> MESSAGE_TYPE = new TypeReference<>() {
     };
 
     private final AiAssistantService aiAssistantService;
     private final SpeechRecognitionService speechRecognitionService;
     private final ObjectMapper objectMapper;
+
+    @Override
+    public List<String> getSubProtocols() {
+        // Negotiate a fixed protocol; the JWT is only consumed by the handshake interceptor.
+        return List.of("smart-lab.ai.v1");
+    }
 
     public AiAssistantWebSocketHandler(
             AiAssistantService aiAssistantService,

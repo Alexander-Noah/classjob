@@ -19,6 +19,8 @@ src/lib/impeccable/[0-9a-f]*/
 # impeccable-live-ignore-end
 
 # Smart Lab local runtime
+.local/
+**/.venv/
 logs/
 Backend/.local-dev-secrets.properties
 Backend/target/
