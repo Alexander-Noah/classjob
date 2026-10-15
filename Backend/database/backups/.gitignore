@@ -1,0 +1,4 @@
+# Never publish decrypted SQL or password files.
+*.sql
+*.key
+*.password*
