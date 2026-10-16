@@ -33,11 +33,12 @@ class MaintenanceRecordCompatibilityTest {
         String mapperXml = mapperXml();
 
         for (String column : List.of(
-                "recordNo", "lab", "device", "maintenanceType", "maintenanceDate",
+                "recordNo", "lab", "maintenanceType", "maintenanceDate",
                 "maintainer", "content", "result", "remark", "updatedAt"
         )) {
             assertTrue(mapperXml.matches("(?s).*coalesce\\(.*'未填写'\\)\\s+as\\s+" + column + ".*"), column);
         }
+        assertTrue(mapperXml.contains("coalesce(d.device_name, '未关联设备') as device"));
     }
 
     @Test

@@ -9,7 +9,7 @@
         r.device_id as deviceId,
         coalesce(r.order_no, '未填写') as recordNo,
         coalesce(l.lab_name, '未填写') as lab,
-        coalesce(d.device_name, '未填写') as device,
+        coalesce(d.device_name, '未关联设备') as device,
         coalesce(r.fault_type, '未填写') as maintenanceType,
         coalesce(date_format(r.created_at, '%Y-%m-%d %H:%i:%s'), '未填写') as maintenanceDate,
         coalesce(r.assignee_name, '未填写') as maintainer,
@@ -25,7 +25,7 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
-        where coalesce(r.status, '') != '已删除'
+        where r.record_kind = 'lab_maintenance' and coalesce(r.status, '') != '已删除'
         order by r.id desc
     </select>
 
@@ -36,6 +36,7 @@
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
         where (r.order_no = #{id} or cast(r.id as char) = #{id})
+          and r.record_kind = 'lab_maintenance'
           and coalesce(r.status, '') != '已删除'
         order by (cast(r.id as char) = #{id}) desc
         limit 1
@@ -68,6 +69,7 @@
 
     <insert id="insertMaintenanceRecord">
         insert into repair_order (
+            record_kind,
             order_no,
             lab_id,
             device_id,
@@ -79,6 +81,7 @@
             contact
         )
         values (
+            'lab_maintenance',
             #{record.recordNo},
             #{labId},
             #{deviceId},
@@ -103,12 +106,12 @@
             result_desc = #{record.result},
             contact = #{record.remark},
             updated_at = now()
-        where id = #{id} and coalesce(status, '') != '已删除'
+        where id = #{id} and record_kind = 'lab_maintenance' and coalesce(status, '') != '已删除'
     </update>
 
     <update id="deleteMaintenanceRecord">
         update repair_order
         set status = '已删除', updated_at = now()
-        where id = #{id} and coalesce(status, '') != '已删除'
+        where id = #{id} and record_kind = 'lab_maintenance' and coalesce(status, '') != '已删除'
     </update>
 </mapper>

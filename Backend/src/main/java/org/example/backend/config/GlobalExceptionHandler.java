@@ -15,6 +15,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Result> handleInvalidRequestBody(org.springframework.http.converter.HttpMessageNotReadableException exception) {
+        return ResponseEntity.badRequest().body(Result.error("填写的数据格式有误，请检查数量和日期后重试"));
+    }
     @ExceptionHandler(CrawlerCredentialException.class)
     public ResponseEntity<Result> handleCrawlerCredentialException(CrawlerCredentialException exception, HttpServletRequest request) {
         log.warn("crawler credentials require update method={} uri={} requestId={}",

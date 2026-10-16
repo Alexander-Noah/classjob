@@ -64,6 +64,7 @@ public class ConsumableServiceImpl implements ConsumableService {
     @Override
     @Transactional
     public List<ConsumableEntity> deleteConsumable(Long id) {
+        protectLoanHistory(id);
         consumableMapper.deleteConsumable(id);
         businessLoopService.recordEvent("consumable", "delete", String.valueOf(id), "已删除", Map.of("id", id));
         return consumableMapper.listConsumables();
@@ -72,6 +73,7 @@ public class ConsumableServiceImpl implements ConsumableService {
     @Override
     @Transactional
     public List<ConsumableEntity> replaceConsumables(List<ConsumableEntity> consumables) {
+        protectLoanHistory(null);
         consumableMapper.deleteAllConsumables();
         for (ConsumableEntity consumable : consumables == null ? Collections.<ConsumableEntity>emptyList() : consumables) {
             ConsumableEntity normalizedConsumable = normalizeConsumable(consumable);
@@ -84,6 +86,7 @@ public class ConsumableServiceImpl implements ConsumableService {
     @Override
     @Transactional
     public List<ConsumableEntity> resetConsumables() {
+        protectLoanHistory(null);
         consumableMapper.deleteAllConsumables();
         for (ConsumableEntity consumable : getDefaultConsumables()) {
             consumableMapper.insertConsumable(normalizeConsumable(consumable));
@@ -94,7 +97,6 @@ public class ConsumableServiceImpl implements ConsumableService {
 
     @Override
     public List<ConsumableStockRecordEntity> listStockRecords(Long consumableId) {
-        consumableMapper.createStockRecordTableIfNotExists();
         List<ConsumableStockRecordEntity> records = consumableMapper.listStockRecords(consumableId);
         return records == null ? List.of() : records;
     }
@@ -102,20 +104,21 @@ public class ConsumableServiceImpl implements ConsumableService {
     @Override
     @Transactional
     public ConsumableMovementResult recordConsumableMovement(Long id, ConsumableStockRecordEntity record) {
-        consumableMapper.createStockRecordTableIfNotExists();
         ConsumableEntity consumable = requireConsumable(id);
         ConsumableStockRecordEntity movement = record == null ? new ConsumableStockRecordEntity() : record;
 
         int quantity = movement.getQuantity() == null ? 0 : movement.getQuantity();
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Movement quantity must be greater than 0");
+            throw new IllegalArgumentException("出入库数量必须为正整数");
         }
 
         String type = normalizeMovementType(movement.getType());
         int beforeStock = consumable.getStock() == null ? 0 : Math.max(consumable.getStock(), 0);
-        int afterStock = MOVEMENT_IN.equals(type) ? beforeStock + quantity : beforeStock - quantity;
+        long computedStock = MOVEMENT_IN.equals(type) ? (long) beforeStock + quantity : (long) beforeStock - quantity;
+        if (computedStock > Integer.MAX_VALUE) throw new IllegalArgumentException("库存数量超出允许范围");
+        int afterStock = (int) computedStock;
         if (afterStock < 0) {
-            throw new IllegalArgumentException("Outbound quantity cannot exceed current stock");
+            throw new IllegalArgumentException("数量不能超过当前可用库存");
         }
 
         consumable.setStock(afterStock);
@@ -233,9 +236,9 @@ public class ConsumableServiceImpl implements ConsumableService {
         if (id == null) {
             throw new IllegalArgumentException("Consumable id is required");
         }
-        ConsumableEntity consumable = consumableMapper.getConsumable(id);
+        ConsumableEntity consumable = consumableMapper.getConsumableForUpdate(id);
         if (consumable == null) {
-            throw new IllegalArgumentException("Consumable not found");
+            throw new IllegalArgumentException("耗材不存在或已删除");
         }
         return consumable;
     }
@@ -250,6 +253,12 @@ public class ConsumableServiceImpl implements ConsumableService {
             return MOVEMENT_OUT;
         }
         throw new IllegalArgumentException("Movement type must be in or out");
+    }
+
+    private void protectLoanHistory(Long id) {
+        if (consumableMapper.countLoanRecords(id) > 0) {
+            throw new IllegalArgumentException("该耗材已有借用记录，不能删除或整体重置，请保留借还历史");
+        }
     }
 
     private String textOrDefault(String value, String defaultValue) {

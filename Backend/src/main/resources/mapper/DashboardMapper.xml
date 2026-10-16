@@ -98,7 +98,7 @@
         select count(*)
         from repair_order r
                  left join lab l on l.id = r.lab_id
-        where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
+        where r.record_kind = 'repair' and (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
           and r.status in ('待派单', '处理中', '待验收')
     </select>
 
@@ -106,7 +106,7 @@
         select count(*)
         from repair_order r
                  left join lab l on l.id = r.lab_id
-        where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
+        where r.record_kind = 'repair' and (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
           and r.priority_level in ('高', '紧急')
           and r.status in ('待派单', '处理中', '待验收')
     </select>
@@ -495,7 +495,7 @@
                  from repair_order r
                           left join lab l on l.id = r.lab_id
                           left join device d on d.id = r.device_id
-                 where (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
+                 where r.record_kind = 'repair' and (#{managerUserId} is null or l.manager_user_id = #{managerUserId})
                    and r.status in ('待派单', '处理中', '待验收')
              ) t
         order by sortTime desc
@@ -524,7 +524,7 @@
     </select>
 
     <select id="listRecentActivities" resultType="java.util.Map">
-        select *
+        select t.*, case when title like '实验室维护：%' then '维护记录' when title like '维修工单：%' then '报修记录' else '动态' end as category
         from (
                  select
                      date_format(coalesce(r.updated_at, r.created_at), '%H:%i') as time,
@@ -541,8 +541,8 @@
 
                  select
                      date_format(coalesce(r.updated_at, r.created_at), '%H:%i') as time,
-                     concat('维修工单：', coalesce(d.device_name, r.order_no, '设备')) as title,
-                     concat(coalesce(l.lab_code, l.lab_name, '实验室'), ' ', coalesce(r.status, ''), '，', coalesce(r.description, r.fault_type, '')) as `desc`,
+                     case when r.record_kind = 'lab_maintenance' then concat('实验室维护：', coalesce(l.lab_code, l.lab_name, '实验室')) else concat('维修工单：', coalesce(d.device_name, r.order_no, '设备')) end as title,
+                     case when r.record_kind = 'lab_maintenance' then concat(coalesce(r.fault_type, '日常维护'), '：', coalesce(r.description, ''), '；维护结果：', coalesce(r.result_desc, '未填写')) else concat(coalesce(l.lab_code, l.lab_name, '实验室'), ' ', coalesce(r.status, ''), '，', coalesce(r.description, r.fault_type, '')) end as `desc`,
                      case when r.status in ('待派单', '处理中') then 'warning' when r.status = '已完成' then 'success' else 'primary' end as type,
                      coalesce(r.updated_at, r.created_at) as sortTime
                  from repair_order r

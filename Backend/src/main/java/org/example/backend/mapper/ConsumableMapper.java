@@ -14,6 +14,9 @@ public interface ConsumableMapper {
     List<ConsumableEntity> listConsumables();
 
     ConsumableEntity getConsumable(@Param("id") Long id);
+    ConsumableEntity getConsumableForUpdate(@Param("id") Long id);
+    int countLoanRecords(@Param("consumableId") Long consumableId);
+    ConsumableStockRecordEntity getStockRecordBySource(@Param("source") String source);
 
     int insertConsumable(ConsumableEntity consumable);
 

@@ -11,7 +11,7 @@ export function canWriteMaintenanceRecords(user = {}) {
   } catch { return false }
 }
 
-const text = value => value === '未填写' ? '' : String(value ?? '')
+const text = value => ['未填写', '未关联设备'].includes(value) ? '' : String(value ?? '')
 export function createMaintenanceDraft(record = {}, user = {}) {
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`

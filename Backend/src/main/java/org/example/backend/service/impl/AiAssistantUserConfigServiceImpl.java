@@ -14,6 +14,7 @@ import org.springframework.web.client.RestClientResponseException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
 
 @Service
 public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigService {
@@ -52,7 +53,11 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
 
         String nextApiKey = firstNonBlank(stringValue(values.get("apiKey")), stringValue(values.get("api_key")));
         if (nextApiKey.isBlank() || "******".equals(nextApiKey)) {
-            nextApiKey = current == null ? "" : firstNonBlank(current.getApiKey());
+            nextApiKey = current != null && sameEndpoint(config.getBaseUrl(), current.getBaseUrl()) ? firstNonBlank(current.getApiKey()) : "";
+        }
+        if (Boolean.TRUE.equals(config.getEnabled())) {
+            validateEndpoint(config.getBaseUrl());
+            if (nextApiKey.isBlank()) throw new IllegalArgumentException("请填写当前模型服务商对应的 API Key");
         }
         config.setApiKey(nextApiKey);
 
@@ -176,6 +181,23 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
     private String normalizeChatCompletionsUrl(String baseUrl) {
         String url = firstNonBlank(baseUrl, DEFAULT_BASE_URL).replaceAll("/+$", "");
         return url.endsWith("/chat/completions") ? url : url + "/chat/completions";
+    }
+
+    private void validateEndpoint(String baseUrl) {
+        try {
+            URI uri = URI.create(normalizeChatCompletionsUrl(baseUrl));
+            if (!("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                    || uri.getHost() == null || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null) {
+                throw new IllegalArgumentException();
+            }
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException("请填写有效的 HTTP 或 HTTPS 接口基础地址，不要包含查询参数或登录信息");
+        }
+    }
+
+    private boolean sameEndpoint(String first, String second) {
+        try { return URI.create(normalizeChatCompletionsUrl(first)).equals(URI.create(normalizeChatCompletionsUrl(second))); }
+        catch (RuntimeException exception) { return false; }
     }
 
     private String buildApiErrorMessage(RestClientResponseException exception) {

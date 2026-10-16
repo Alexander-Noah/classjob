@@ -35,7 +35,7 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
-        where coalesce(r.status, '') != '已删除'
+        where r.record_kind = 'repair' and coalesce(r.status, '') != '已删除'
         order by r.id desc
     </select>
 
@@ -45,7 +45,7 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
-        where (r.order_no = #{id} or cast(r.id as char) = #{id})
+        where r.record_kind = 'repair' and (r.order_no = #{id} or cast(r.id as char) = #{id})
           and coalesce(r.status, '') != '已删除'
         limit 1
     </select>
@@ -89,7 +89,7 @@
     <select id="countOpenRepairByDescriptionMarker" resultType="int">
         select count(1)
         from repair_order
-        where description like concat('%', #{marker}, '%')
+        where record_kind = 'repair' and description like concat('%', #{marker}, '%')
           and status not in ('已完成', '已关闭', '已取消', '已删除')
     </select>
 
@@ -115,7 +115,7 @@
             description = #{repair.description},
             result_desc = #{repair.result},
             updated_at = now()
-        where order_no = #{id} or cast(id as char) = #{id}
+        where record_kind = 'repair' and (order_no = #{id} or cast(id as char) = #{id})
     </update>
 
     <update id="patchRepair">
@@ -127,15 +127,15 @@
             progress = coalesce(#{repair.progress}, progress),
             result_desc = coalesce(nullif(#{repair.result}, ''), result_desc),
             updated_at = now()
-        where order_no = #{id} or cast(id as char) = #{id}
+        where record_kind = 'repair' and (order_no = #{id} or cast(id as char) = #{id})
     </update>
 
     <delete id="deleteRepair">
         delete from repair_order
-        where order_no = #{id} or cast(id as char) = #{id}
+        where record_kind = 'repair' and (order_no = #{id} or cast(id as char) = #{id})
     </delete>
 
     <delete id="deleteAllRepairs">
-        delete from repair_order
+        delete from repair_order where record_kind = 'repair'
     </delete>
 </mapper>

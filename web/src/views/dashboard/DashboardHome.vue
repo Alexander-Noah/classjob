@@ -151,7 +151,7 @@ const normalizeActivityType = (value) => {
 }
 
 const normalizeActivity = (item = {}, index = 0) => {
-  const typeLabel = item.category || item.typeLabel || item.status || item.type || '动态'
+  const typeLabel = item.category || item.typeLabel || item.status || (ACTIVITY_TAG_TYPES.has(item.type) ? '动态' : item.type) || '动态'
 
   return {
     id: item.id || `${item.time || 'activity'}-${index}`,

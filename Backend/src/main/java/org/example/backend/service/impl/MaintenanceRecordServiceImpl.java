@@ -98,7 +98,7 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         if (labId == null || (record.getLabId() != null && !record.getLabId().equals(labId))) {
             throw new IllegalArgumentException("所选实验室不存在，请重新选择");
         }
-        if (record.getDeviceId() == null && (isBlank(record.getDevice()) || "未填写".equals(record.getDevice().trim()))) {
+        if (record.getDeviceId() == null && (isBlank(record.getDevice()) || List.of("未填写", "未关联设备").contains(record.getDevice().trim()))) {
             return new ResolvedReferences(labId, null);
         }
         Long deviceId = maintenanceRecordMapper.findDeviceId(record.getDeviceId() == null ? record.getDevice().trim() : record.getDeviceId().toString(), labId);
@@ -114,7 +114,7 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
                 case "lab" -> "实验室"; case "device" -> "设备";
                 case "maintenanceType" -> "维护类型"; case "maintenanceDate" -> "维护日期";
                 case "maintainer" -> "维护人员"; case "content" -> "维护内容";
-                case "result" -> "处理结果"; default -> field;
+                case "result" -> "维护结果"; default -> field;
             };
             throw new IllegalArgumentException("请填写" + label);
         }

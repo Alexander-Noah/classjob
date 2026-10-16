@@ -158,12 +158,12 @@ const exportRecords = () => {
     columns: [
       { label: '记录编号', prop: 'recordNo' },
       { label: '实验室', prop: 'lab' },
-      { label: '设备', prop: 'device' },
+      { label: '关联设备', prop: 'device' },
       { label: '维护类型', prop: 'maintenanceType' },
       { label: '维护日期', prop: 'maintenanceDate' },
       { label: '维护人员', prop: 'maintainer' },
       { label: '维护内容', prop: 'content' },
-      { label: '处理结果', prop: 'result' },
+      { label: '维护结果', prop: 'result' },
       { label: '备注', prop: 'remark' },
     ],
   })
@@ -179,9 +179,9 @@ onMounted(async () => { await loadRecords(); await openLegacyEntry() })
   <section class="list-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">设备维护管理</p>
+        <p class="eyebrow">实验室维护管理</p>
         <h1>维护记录管理</h1>
-        <p>登记、查询和维护实验室设备的巡检、保养与处理记录。</p>
+        <p>记录实验室的日常巡检、环境清洁、设施保养与安全检查，设备可按需关联。</p>
       </div>
       <div class="header-actions">
         <el-button :icon="Refresh" :loading="loading" @click="loadRecords">刷新</el-button>
@@ -203,7 +203,7 @@ onMounted(async () => { await loadRecords(); await openLegacyEntry() })
       <el-table v-loading="loading" :data="pagedRecords" empty-text="暂无维护记录">
         <el-table-column prop="recordNo" label="记录编号" min-width="175" />
         <el-table-column prop="lab" label="实验室" min-width="130" />
-        <el-table-column prop="device" label="设备" min-width="150" />
+        <el-table-column prop="device" label="关联设备" min-width="150" />
         <el-table-column prop="maintenanceType" label="维护类型" min-width="120" />
         <el-table-column prop="maintenanceDate" label="维护日期" min-width="130" />
         <el-table-column prop="maintainer" label="维护人员" min-width="115" />

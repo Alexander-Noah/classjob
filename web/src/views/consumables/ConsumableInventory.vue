@@ -15,6 +15,7 @@ import http from '../../api/http'
 import { API_ENDPOINTS } from '../../api/endpoints'
 import { exportTableToExcel } from '../../utils/exportExcel'
 import { readSpreadsheetRows } from '../../utils/importExcel'
+import ConsumableLoans from './components/ConsumableLoans.vue'
 
 defineOptions({ name: 'ConsumableInventory' })
 
@@ -28,6 +29,7 @@ const movementDialogVisible = ref(false)
 const movementType = ref('in')
 const inventoryDialogMode = ref('create')
 const fileInputRef = ref(null)
+const loanPanelRef = ref()
 
 const filters = reactive({
   keyword: '',
@@ -120,7 +122,7 @@ const normalizeStockRecord = (item = {}) => ({
   beforeStock: toNumber(item.beforeStock),
   afterStock: toNumber(item.afterStock),
   operator: item.operator || item.operatorName || '系统',
-  source: item.source || item.sourceTarget || '-',
+  source: String(item.source || item.sourceTarget || '-').replace(/^(借用归还#\d+):[0-9a-f-]{36}$/i, '$1'),
   reason: item.reason || '-',
   remark: item.remark || '',
   time: item.time || item.operatedAt || item.createdAt || formatDateTime(),
@@ -129,6 +131,12 @@ const normalizeStockRecord = (item = {}) => ({
 const selectedRecord = computed(() => records.value.find((item) => String(item.id) === String(selectedId.value)) || null)
 
 const categoryOptions = computed(() => [...new Set(records.value.map((item) => item.category).filter(Boolean))])
+const defaultCategories = ['网络耗材', '电脑配件', '外设配件', '电子元器件', '实验材料', '办公耗材', '打印耗材', '清洁用品', '安全防护用品', '其他']
+const categorySelectOptions = computed(() => [...new Set([
+  ...defaultCategories,
+  ...categoryOptions.value,
+  inventoryForm.category,
+].filter(Boolean))])
 
 const filteredRecords = computed(() => {
   const keyword = filters.keyword.trim().toLowerCase()
@@ -181,6 +189,11 @@ const filteredStockRecords = computed(() => {
 const loadStockRecords = async () => {
   const response = await http.get(API_ENDPOINTS.consumables.records)
   stockRecords.value = getResponseData(response.data).map(normalizeStockRecord)
+}
+
+const loansChanged = async () => {
+  try { await Promise.all([loadRecords(), loadStockRecords()]) }
+  catch { ElMessage.warning('借还已登记，库存显示刷新失败，请刷新页面查看') }
 }
 
 const loadRecords = async () => {
@@ -242,6 +255,10 @@ const submitInventory = async () => {
   const payload = getInventoryPayload()
   if (!payload.name) {
     ElMessage.warning('请填写耗材名称')
+    return
+  }
+  if (!inventoryForm.category.trim()) {
+    ElMessage.warning('请选择耗材分类')
     return
   }
 
@@ -438,6 +455,7 @@ onMounted(async () => {
         <el-button type="primary" :icon="Plus" @click="openCreateDialog">新增耗材</el-button>
         <el-button type="success" :icon="SortDown" @click="openMovementDialog('in')">入库</el-button>
         <el-button type="warning" :icon="SortUp" @click="openMovementDialog('out')">出库</el-button>
+        <el-button @click="loanPanelRef?.openBorrow()">借用登记</el-button>
         <el-button :icon="Upload" @click="pickImportFile">导入</el-button>
         <el-button :icon="Download" @click="exportInventory">导出库存</el-button>
         <input ref="fileInputRef" class="hidden-input" type="file" accept=".xlsx,.csv" @change="handleImportFile" />
@@ -490,16 +508,19 @@ onMounted(async () => {
             <el-tag :type="row.tagType">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="{ row }">
             <el-button link type="success" :icon="SortDown" @click.stop="openMovementDialog('in', row)">入库</el-button>
             <el-button link type="warning" :icon="SortUp" @click.stop="openMovementDialog('out', row)">出库</el-button>
+            <el-button link type="primary" :disabled="row.stock <= 0" @click.stop="loanPanelRef?.openBorrow(row)">借用</el-button>
             <el-button link type="primary" :icon="EditPen" @click.stop="openEditDialog(row)">编辑</el-button>
             <el-button link type="danger" :icon="Delete" @click.stop="deleteRecord(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </section>
+
+    <ConsumableLoans ref="loanPanelRef" :consumables="records" @changed="loansChanged" />
 
     <section class="page-panel">
       <div class="section-title">
@@ -557,7 +578,9 @@ onMounted(async () => {
           <el-input v-model="inventoryForm.name" placeholder="如：网线、鼠标、固态硬盘" />
         </el-form-item>
         <el-form-item label="分类" required>
-          <el-input v-model="inventoryForm.category" placeholder="如：网络耗材、电脑配件" />
+          <el-select v-model="inventoryForm.category" filterable placeholder="请选择耗材分类" style="width: 100%">
+            <el-option v-for="category in categorySelectOptions" :key="category" :label="category" :value="category" />
+          </el-select>
         </el-form-item>
         <el-row :gutter="12">
           <el-col :span="12">

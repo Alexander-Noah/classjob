@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.ConsumableLoanMapper">
+    <sql id="Columns">
+        id, request_key as requestKey, consumable_id as consumableId, consumable_name as consumableName,
+        unit, borrower, contact, quantity, returned_quantity as returnedQuantity,
+        quantity - returned_quantity as remainingQuantity, purpose,
+        date_format(due_date, '%Y-%m-%d') as dueDate, remark, operator_name as operator,
+        date_format(borrowed_at, '%Y-%m-%d %H:%i:%s') as borrowedAt,
+        date_format(last_returned_at, '%Y-%m-%d %H:%i:%s') as lastReturnedAt,
+        case when returned_quantity = quantity then '已归还'
+             when due_date &lt; curdate() then '已逾期'
+             when returned_quantity > 0 then '部分归还' else '借用中' end as status
+    </sql>
+    <select id="list" resultType="org.example.backend.entity.ConsumableLoanEntity">
+        select <include refid="Columns"/> from consumable_loan order by id desc
+    </select>
+    <select id="get" resultType="org.example.backend.entity.ConsumableLoanEntity">
+        select <include refid="Columns"/> from consumable_loan where id = #{id}
+    </select>
+    <select id="lock" resultType="org.example.backend.entity.ConsumableLoanEntity">
+        select <include refid="Columns"/> from consumable_loan where id = #{id} for update
+    </select>
+    <select id="byRequest" resultType="org.example.backend.entity.ConsumableLoanEntity">
+        select <include refid="Columns"/> from consumable_loan where request_key = #{requestKey}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into consumable_loan(request_key,consumable_id,consumable_name,unit,borrower,contact,quantity,purpose,due_date,remark,operator_name)
+        values(#{requestKey},#{consumableId},#{consumableName},#{unit},#{borrower},#{contact},#{quantity},#{purpose},#{dueDate},#{remark},#{operator})
+    </insert>
+    <update id="addReturned">
+        update consumable_loan set returned_quantity = returned_quantity + #{quantity}, last_returned_at = now()
+        where id = #{id} and quantity - returned_quantity >= #{quantity}
+    </update>
+</mapper>

@@ -47,7 +47,7 @@ test('lab-admin navigation and dashboards point to maintenance-record viewing', 
   const frontendDashboard = readSource('../src/constants/dashboard.js')
   const backendDashboard = readSource('../../Backend/src/main/java/org/example/backend/service/impl/DashboardServiceImpl.java')
 
-  assert.match(navigation, /title: '设备维护管理'[\s\S]*?children:\s*\[\s*'\/lab-admin\/maintenance-records',\s*'\/lab-admin\/notices'\s*\]/)
+  assert.match(navigation, /title: '实验室维护管理'[\s\S]*?children:\s*\[\s*'\/lab-admin\/maintenance-records',\s*'\/lab-admin\/notices'\s*\]/)
   for (const source of [frontendDashboard, backendDashboard]) {
     assert.match(source, /维护记录查看/)
     assert.match(source, /\/lab-admin\/maintenance-records/)

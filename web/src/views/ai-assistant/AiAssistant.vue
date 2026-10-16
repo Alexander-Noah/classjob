@@ -13,6 +13,7 @@ import { listAiConversationHistories, saveAiConversationHistories } from '../../
 import { AssistantAudio } from '../../services/assistantAudio'
 import { AssistantWebSocket } from '../../services/assistantWebSocket'
 import { BrowserSpeechRecognition } from '../../services/browserSpeechRecognition'
+import { AI_PROVIDERS, aiConfigFingerprint, canReuseSavedAiKey, inferAiProvider, normalizedApiEndpoint, selectAiProvider } from '../../modules/ai-assistant/providerPresets'
 
 defineOptions({
   name: 'AiAssistant',
@@ -51,6 +52,22 @@ const aiConfigDialogVisible = ref(false)
 const isDirectAiLoading = ref(false)
 const isTestingDirectAi = ref(false)
 const directAiConfig = reactive(createDefaultDirectAiConfig())
+const providerId = ref('qwen')
+const savedDirectAiConfig = ref(null)
+const lastApiEndpoint = ref(normalizedApiEndpoint(directAiConfig.baseUrl))
+const currentProvider = computed(() => AI_PROVIDERS.find(provider => provider.id === providerId.value) || AI_PROVIDERS.at(-1))
+const modelOptions = computed(() => [...new Set([...currentProvider.value.models, directAiConfig.model].filter(Boolean))])
+const savedApiKeyAvailable = computed(() => canReuseSavedAiKey(directAiConfig, savedDirectAiConfig.value))
+const changeProvider = value => {
+  Object.assign(directAiConfig, selectAiProvider(directAiConfig, value))
+  lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
+}
+const addressChanged = () => {
+  const endpoint = normalizedApiEndpoint(directAiConfig.baseUrl)
+  if (endpoint !== lastApiEndpoint.value) { directAiConfig.apiKey = ''; directAiConfig.apiKeyConfigured = false }
+  lastApiEndpoint.value = endpoint
+  providerId.value = inferAiProvider(directAiConfig.baseUrl)
+}
 
 let historySaveTimer = 0
 let pendingRemoteConversations = []
@@ -88,7 +105,7 @@ const isDirectAiConfigured = computed(() =>
   Boolean(
     directAiConfig.enabled &&
       directAiConfig.baseUrl?.trim() &&
-      (directAiConfig.apiKey?.trim() || directAiConfig.apiKeyConfigured) &&
+      (directAiConfig.apiKey?.trim() || savedApiKeyAvailable.value) &&
       directAiConfig.model?.trim(),
   ),
 )
@@ -506,6 +523,8 @@ const fetchConfigAndConnect = async () => {
 
 const resetDirectAiConfig = () => {
   Object.assign(directAiConfig, createDefaultDirectAiConfig())
+  providerId.value = 'qwen'
+  lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
 }
 
 const applyBackendAiConfig = (config = {}) => {
@@ -515,6 +534,9 @@ const applyBackendAiConfig = (config = {}) => {
     apiKey: '',
     apiKeyConfigured: Boolean(config.apiKeyConfigured),
   })
+  providerId.value = inferAiProvider(directAiConfig.baseUrl)
+  savedDirectAiConfig.value = { ...directAiConfig }
+  lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
 }
 
 const loadBackendAiConfig = async () => {
@@ -526,6 +548,10 @@ const loadBackendAiConfig = async () => {
 }
 
 const saveBackendAiConfig = async () => {
+  if (!normalizedApiEndpoint(directAiConfig.baseUrl)) {
+    ElMessage.warning('请填写有效的 HTTP 或 HTTPS 接口基础地址')
+    return
+  }
   if (directAiConfig.enabled && !isDirectAiConfigured.value) {
     ElMessage.warning('请填写 API 地址、API Key 和文本模型')
     return
@@ -542,6 +568,7 @@ const saveBackendAiConfig = async () => {
     applyBackendAiConfig(savedConfig)
     aiConfigDialogVisible.value = false
     ElMessage.success('AI 接口配置已保存')
+    if (!directAiConfig.enabled) await fetchConfigAndConnect()
   } catch (error) {
     ElMessage.error(error?.message || 'AI 接口配置保存失败')
   }
@@ -555,6 +582,11 @@ const testBackendAiConfig = async () => {
 
   if (directAiConfig.apiKey?.trim()) {
     ElMessage.warning('请先保存当前 API Key 后再测试连接')
+    return
+  }
+
+  if (aiConfigFingerprint(directAiConfig) !== aiConfigFingerprint(savedDirectAiConfig.value || {})) {
+    ElMessage.warning('配置已修改，请先保存后再测试连接')
     return
   }
 
@@ -588,6 +620,11 @@ const submitQuestion = async (text) => {
   if (!question) return false
 
   if (directAiConfig.enabled) {
+    if (directAiConfig.apiKey?.trim() || aiConfigFingerprint(directAiConfig) !== aiConfigFingerprint(savedDirectAiConfig.value || {})) {
+      aiConfigDialogVisible.value = true
+      ElMessage.warning('请先保存当前模型服务商和模型配置')
+      return false
+    }
     if (!isDirectAiConfigured.value) {
       aiConfigDialogVisible.value = true
       ElMessage.warning('请先完成 AI 接口配置')
@@ -866,14 +903,32 @@ onUnmounted(() => {
             <el-switch v-model="directAiConfig.enabled" active-text="启用" inactive-text="停用" />
           </el-form-item>
 
+          <el-form-item label="模型服务商">
+            <el-select v-model="providerId" placeholder="选择模型服务商" style="width: 100%" @change="changeProvider">
+              <el-option v-for="provider in AI_PROVIDERS" :key="provider.id" :label="provider.label" :value="provider.id" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="文本模型">
+            <el-select v-model="directAiConfig.model" filterable allow-create default-first-option placeholder="选择模型或输入完整模型 ID" style="width: 100%">
+              <el-option v-for="model in modelOptions" :key="model" :label="model" :value="model" />
+            </el-select>
+          </el-form-item>
+
+          <div class="api-config-full-row provider-hint">
+            <span>{{ currentProvider.hint }}</span>
+            <el-link v-if="currentProvider.docsUrl" :href="currentProvider.docsUrl" target="_blank" rel="noopener noreferrer" type="primary">官方接入文档</el-link>
+          </div>
+
           <el-form-item label="API 地址">
             <el-input
               v-model="directAiConfig.baseUrl"
               placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1"
+              @change="addressChanged"
             />
           </el-form-item>
 
-          <el-form-item :label="directAiConfig.apiKeyConfigured ? 'API Key（已保存，留空则不修改）' : 'API Key'">
+          <el-form-item :label="savedApiKeyAvailable ? 'API Key（已保存，留空则不修改）' : 'API Key'">
             <el-input
               v-model="directAiConfig.apiKey"
               clearable
@@ -881,10 +936,6 @@ onUnmounted(() => {
               show-password
               type="password"
             />
-          </el-form-item>
-
-          <el-form-item label="文本模型">
-            <el-input v-model="directAiConfig.model" placeholder="qwen-plus / gpt-4o-mini" />
           </el-form-item>
 
           <el-form-item label="系统提示词" class="api-config-full-row">
@@ -1144,6 +1195,16 @@ onUnmounted(() => {
 
 .api-config-full-row {
   grid-column: 1 / -1;
+}
+
+.provider-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: -4px 0 18px;
 }
 
 @media (max-width: 600px) {

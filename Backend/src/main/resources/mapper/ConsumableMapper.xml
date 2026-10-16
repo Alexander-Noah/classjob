@@ -68,6 +68,22 @@
         where id = #{id}
     </select>
 
+    <select id="getConsumableForUpdate" resultType="org.example.backend.entity.ConsumableEntity">
+        select id, name, category, stock, unit, warn_threshold as warnThreshold,
+               status, tag_type as tagType
+        from consumable_inventory where id = #{id} for update
+    </select>
+
+    <select id="countLoanRecords" resultType="int">
+        select count(*) from consumable_loan
+        <where><if test="consumableId != null">consumable_id = #{consumableId}</if></where>
+    </select>
+
+    <select id="getStockRecordBySource" resultType="org.example.backend.entity.ConsumableStockRecordEntity">
+        select id, quantity, consumable_id as consumableId, operator_name as operator, remark
+        from consumable_stock_record where source_target = #{source} limit 1
+    </select>
+
     <insert id="insertConsumable" useGeneratedKeys="true" keyProperty="id">
         insert into consumable_inventory (
             name,

@@ -372,7 +372,7 @@
         from repair_order r
         left join lab l on l.id = r.lab_id
         left join device d on d.id = r.device_id
-        where r.status not in ('已完成', '已关闭', '已取消')
+        where r.record_kind = 'repair' and r.status not in ('已完成', '已关闭', '已取消', '已删除')
         order by r.id desc
         limit 20
     </select>

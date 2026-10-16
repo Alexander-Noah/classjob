@@ -25,7 +25,7 @@ const rules = {
   maintenanceDate: [{ required: true, message: '请选择维护日期', trigger: 'change' }],
   maintainer: [{ required: true, whitespace: true, message: '请填写维护人员', trigger: 'blur' }],
   content: [{ required: true, whitespace: true, message: '请填写维护内容', trigger: 'blur' }],
-  result: [{ required: true, whitespace: true, message: '请填写处理结果', trigger: 'blur' }],
+  result: [{ required: true, whitespace: true, message: '请填写维护结果', trigger: 'blur' }],
 }
 watch(() => props.record, async record => {
   Object.assign(form, createMaintenanceDraft(record, getStoredUser()))
@@ -82,14 +82,14 @@ onMounted(loadOptions)
           <el-option v-for="lab in labs" :key="lab.id" :value="String(lab.id)" :label="[lab.code || lab.labCode, lab.name || lab.labName].filter(Boolean).join(' · ')" />
         </el-select>
       </el-form-item>
-      <el-form-item label="设备（选填）" prop="deviceId">
+      <el-form-item label="关联设备（选填）" prop="deviceId">
         <el-select v-model="form.deviceId" filterable clearable :disabled="!form.labId" :placeholder="form.labId ? '可选择设备，也可留空' : '请先选择实验室'" class="full-width" no-data-text="该实验室暂无设备，可不选择">
           <el-option v-for="device in availableDevices" :key="device.id" :value="String(device.id)" :label="[device.assetNo, device.deviceName].filter(Boolean).join(' · ')" />
         </el-select>
       </el-form-item>
       <el-form-item label="维护类型" prop="maintenanceType">
         <el-select v-model="form.maintenanceType" filterable allow-create default-first-option placeholder="选择或填写维护类型" class="full-width">
-          <el-option v-for="type in ['巡检', '保养', '故障处理', '设备清洁', '软件维护', '其他']" :key="type" :label="type" :value="type" />
+          <el-option v-for="type in ['巡检', '环境清洁', '设施保养', '安全检查', '软件维护', '其他']" :key="type" :label="type" :value="type" />
         </el-select>
       </el-form-item>
       <el-form-item label="维护日期" prop="maintenanceDate">
@@ -100,10 +100,10 @@ onMounted(loadOptions)
       </el-form-item>
     </div>
     <el-form-item label="维护内容" prop="content">
-      <el-input v-model="form.content" type="textarea" :rows="3" placeholder="描述本次检查或维护内容" maxlength="5000" show-word-limit />
+      <el-input v-model="form.content" type="textarea" :rows="3" placeholder="记录实验室环境、设施、安全检查及本次维护内容" maxlength="5000" show-word-limit />
     </el-form-item>
-    <el-form-item label="处理结果" prop="result">
-      <el-input v-model="form.result" type="textarea" :rows="3" placeholder="填写处理结果或后续建议" maxlength="5000" show-word-limit />
+    <el-form-item label="维护结果" prop="result">
+      <el-input v-model="form.result" type="textarea" :rows="3" placeholder="填写维护完成情况、检查结论及后续建议" maxlength="5000" show-word-limit />
     </el-form-item>
     <el-form-item label="备注" prop="remark">
       <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="可选填写补充说明" maxlength="100" show-word-limit />

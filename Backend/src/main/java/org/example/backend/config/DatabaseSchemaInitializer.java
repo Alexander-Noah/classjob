@@ -4,18 +4,23 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.example.backend.mapper.ConsumableMapper;
 
 @Component
 public class DatabaseSchemaInitializer implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
+    private final ConsumableMapper consumableMapper;
 
-    public DatabaseSchemaInitializer(JdbcTemplate jdbcTemplate) {
+    public DatabaseSchemaInitializer(JdbcTemplate jdbcTemplate, ConsumableMapper consumableMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.consumableMapper = consumableMapper;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         ensureUserAvatarColumn();
+        ensureMaintenanceRecordKind();
+        ensureConsumableLoans();
         ensureDeviceAssetColumns();
         ensureDeviceRuntimeAndAccessTables();
         ensureNoticeColumns();
@@ -24,6 +29,52 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
         ensureAiAssistantConversationTable();
         ensureAiAssistantUserConfigTable();
         ensureLanTeacherStudentTables();
+    }
+
+    private void ensureConsumableLoans() {
+        consumableMapper.createStockRecordTableIfNotExists();
+        jdbcTemplate.execute("""
+                create table if not exists consumable_loan (
+                  id bigint primary key auto_increment,
+                  request_key varchar(36) not null,
+                  consumable_id bigint not null,
+                  consumable_name varchar(100) not null,
+                  unit varchar(20) not null,
+                  borrower varchar(100) not null,
+                  contact varchar(100) default null,
+                  quantity int not null,
+                  returned_quantity int not null default 0,
+                  purpose varchar(200) not null,
+                  due_date date not null,
+                  remark varchar(500) default null,
+                  operator_name varchar(100) not null,
+                  borrowed_at datetime not null default current_timestamp,
+                  last_returned_at datetime default null,
+                  unique key uk_consumable_loan_request (request_key),
+                  key idx_consumable_loan_item (consumable_id),
+                  key idx_consumable_loan_due (due_date),
+                  constraint fk_consumable_loan_item foreign key (consumable_id) references consumable_inventory(id),
+                  constraint ck_consumable_loan_quantities check (quantity > 0 and returned_quantity >= 0 and returned_quantity <= quantity)
+                ) engine=InnoDB default charset=utf8mb4 comment='耗材借用及归还台账'
+                """);
+    }
+
+    private void ensureMaintenanceRecordKind() {
+        Integer count = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_schema = database() and table_name = 'repair_order' and column_name = 'record_kind'
+                """, Integer.class);
+        if (count != null && count > 0) return;
+        jdbcTemplate.execute("""
+                alter table repair_order
+                  add column record_kind varchar(32) not null default 'repair' comment 'repair报修，lab_maintenance实验室维护',
+                  add index idx_repair_record_kind (record_kind, id)
+                """);
+        // MR numbers were generated exclusively by the laboratory maintenance editor.
+        jdbcTemplate.update("""
+                update repair_order set record_kind = 'lab_maintenance', updated_at = updated_at
+                where order_no regexp '^MR-[0-9]{14}-[0-9]{4}$'
+                """);
     }
 
     private void ensureDeviceAssetColumns() {
