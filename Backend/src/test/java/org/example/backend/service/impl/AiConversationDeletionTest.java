@@ -1,0 +1,28 @@
+package org.example.backend.service.impl;
+
+import org.example.backend.mapper.AiConversationMapper;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
+class AiConversationDeletionTest {
+    private final AiConversationMapper mapper = mock(AiConversationMapper.class);
+    private final AiConversationServiceImpl service = new AiConversationServiceImpl(mapper);
+
+    @Test
+    void deletionIsScopedToTheAuthenticatedUser() {
+        service.deleteConversation(7, "conversation-example");
+        verify(mapper).deleteByUserAndConversationId(7, "conversation-example");
+        verifyNoMoreInteractions(mapper);
+    }
+
+    @Test
+    void invalidUserOrConversationCannotReachTheDatabase() {
+        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(null, "example"));
+        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(0, "example"));
+        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(7, " "));
+        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(7, null));
+        verifyNoInteractions(mapper);
+    }
+}

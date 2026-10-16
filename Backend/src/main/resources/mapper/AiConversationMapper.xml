@@ -49,6 +49,11 @@
             updated_at = now()
     </insert>
 
+    <delete id="deleteByUserAndConversationId">
+        delete from ai_assistant_conversation
+        where user_id = #{userId} and conversation_id = #{conversationId}
+    </delete>
+
     <delete id="trimUserConversations">
         delete from ai_assistant_conversation
         where user_id = #{userId}

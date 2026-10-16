@@ -13,17 +13,6 @@ import java.util.regex.Pattern;
 
 @Service
 public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQuery {
-    private static final LocalTime[] SECTION_STARTS = {
-            LocalTime.of(8, 30), LocalTime.of(8, 30), LocalTime.of(10, 20), LocalTime.of(10, 20),
-            LocalTime.of(14, 0), LocalTime.of(14, 0), LocalTime.of(15, 50), LocalTime.of(15, 50),
-            LocalTime.of(18, 40), LocalTime.of(18, 40), LocalTime.of(20, 20), LocalTime.of(20, 20)
-    };
-    private static final LocalTime[] SECTION_ENDS = {
-            LocalTime.of(10, 0), LocalTime.of(10, 0), LocalTime.of(11, 50), LocalTime.of(11, 50),
-            LocalTime.of(15, 30), LocalTime.of(15, 30), LocalTime.of(17, 20), LocalTime.of(17, 20),
-            LocalTime.of(20, 10), LocalTime.of(20, 10), LocalTime.of(21, 50), LocalTime.of(21, 50)
-    };
-
     private final TeachingScheduleReadService readService;
 
     public DefaultScheduleOccupancyQuery(TeachingScheduleReadService readService) {
@@ -99,8 +88,8 @@ public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQue
     }
 
     private boolean overlaps(ScheduleOccupancyRequest request, ScheduleOccupancyRow row) {
-        LocalTime classStart = SECTION_STARTS[row.startSection() - 1];
-        LocalTime classEnd = SECTION_ENDS[row.endSection() - 1];
+        LocalTime classStart = TeachingSectionTimes.start(row.startSection());
+        LocalTime classEnd = TeachingSectionTimes.end(row.endSection());
         return request.startsAt().isBefore(classEnd) && classStart.isBefore(request.endsAt());
     }
 

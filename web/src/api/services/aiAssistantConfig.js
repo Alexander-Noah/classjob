@@ -48,7 +48,7 @@ export const saveAiAssistantUserConfig = async (config) => {
   })
 }
 
-export const testAiAssistantUserConfig = async () => {
+export const testAiAssistantUserConfig = async (config) => {
   // 如果未登录，抛出友好错误
   if (!isAuthenticated()) {
     throw new Error('请先登录后再测试AI接口')
@@ -56,10 +56,11 @@ export const testAiAssistantUserConfig = async () => {
 
   return requestJson(API_ENDPOINTS.aiAssistant.testUserConfig, {
     method: 'POST',
+    body: config ? JSON.stringify(config) : undefined,
   })
 }
 
-export const requestAiAssistantAnswer = async ({ question }) => {
+export const requestAiAssistantAnswer = async ({ question, history = [] }) => {
   // 如果未登录，抛出友好错误
   if (!isAuthenticated()) {
     throw new Error('请先登录后再使用AI助手')
@@ -67,6 +68,6 @@ export const requestAiAssistantAnswer = async ({ question }) => {
   
   return requestJson(API_ENDPOINTS.aiAssistant.chat, {
     method: 'POST',
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   })
 }

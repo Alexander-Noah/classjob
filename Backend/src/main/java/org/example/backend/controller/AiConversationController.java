@@ -5,6 +5,8 @@ import org.example.backend.result.Result;
 import org.example.backend.security.JwtAuthenticationFilter;
 import org.example.backend.service.AiConversationService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +40,15 @@ public class AiConversationController {
                 ? Collections.emptyList()
                 : request.getConversations();
         return Result.success("保存 AI 会话记录成功", aiConversationService.saveConversations(userId, conversations));
+    }
+
+    @DeleteMapping("/ai-assistant/conversations/{conversationId}")
+    public Result deleteConversation(
+            @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
+            @PathVariable("conversationId") String conversationId
+    ) {
+        aiConversationService.deleteConversation(userId, conversationId);
+        return Result.success("删除 AI 会话记录成功", null);
     }
 
     @Data

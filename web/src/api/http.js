@@ -73,6 +73,7 @@ http.interceptors.response.use(
       ElMessage.error(message)
     }
     error.userMessage = message
+    error.message = message
     error.__handled = true
     return Promise.reject(error)
   },

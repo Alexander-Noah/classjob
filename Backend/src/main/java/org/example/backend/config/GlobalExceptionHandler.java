@@ -15,6 +15,16 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Result> handleUploadTooLarge(
+            org.springframework.web.multipart.MaxUploadSizeExceededException exception, HttpServletRequest request) {
+        String message = "/files/avatars".equals(request.getServletPath()) || request.getRequestURI().endsWith("/files/avatars")
+                ? "头像文件不能超过 2MB，请选择较小的图片后重试"
+                : "上传文件超过服务器大小限制，请缩小文件后重试";
+        log.warn("upload too large method={} uri={} requestId={}", request.getMethod(), request.getRequestURI(), MDC.get("requestId"));
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Result.error(413, message));
+    }
+
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<Result> handleInvalidRequestBody(org.springframework.http.converter.HttpMessageNotReadableException exception) {
         return ResponseEntity.badRequest().body(Result.error("填写的数据格式有误，请检查数量和日期后重试"));

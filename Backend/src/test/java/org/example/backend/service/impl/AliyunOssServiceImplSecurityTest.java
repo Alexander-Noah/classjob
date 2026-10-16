@@ -13,6 +13,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AliyunOssServiceImplSecurityTest {
     @Test
+    void acceptsAvatarsAboveTheOldOneMegabyteLimitThroughTwoMegabytes() throws Exception {
+        Object service = newAliyunOssService();
+        for (int size : new int[]{1536 * 1024, 2 * 1024 * 1024}) {
+            MultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png",
+                    java.util.Arrays.copyOf(validPngBytes(), size));
+            assertDoesNotThrow(() -> invokeValidateFile(service, file));
+        }
+    }
+
+    @Test
+    void rejectsAvatarsOverTwoMegabytes() throws Exception {
+        Object service = newAliyunOssService();
+        MultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png",
+                java.util.Arrays.copyOf(validPngBytes(), 2 * 1024 * 1024 + 1));
+        assertThrows(IllegalArgumentException.class, () -> invokeValidateFile(service, file));
+    }
+
+    @Test
     void rejectsDisguisedImageUpload() throws Exception {
         Object service = newAliyunOssService();
         MultipartFile file = new MockMultipartFile(

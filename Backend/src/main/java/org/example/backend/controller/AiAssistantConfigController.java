@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.example.backend.result.Result;
 import org.example.backend.security.JwtAuthenticationFilter;
 import org.example.backend.service.AiAssistantUserConfigService;
+import org.example.backend.service.AiPlatformChatService;
 import org.example.backend.service.TongyiAgentService;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,13 +23,16 @@ import java.util.Map;
 public class AiAssistantConfigController {
     private final TongyiAgentService tongyiAgentService;
     private final AiAssistantUserConfigService userConfigService;
+    private final AiPlatformChatService platformChatService;
 
     public AiAssistantConfigController(
             TongyiAgentService tongyiAgentService,
-            AiAssistantUserConfigService userConfigService
+            AiAssistantUserConfigService userConfigService,
+            AiPlatformChatService platformChatService
     ) {
         this.tongyiAgentService = tongyiAgentService;
         this.userConfigService = userConfigService;
+        this.platformChatService = platformChatService;
     }
 
     @GetMapping({"/config", "/ai-assistant/config"})
@@ -66,9 +70,10 @@ public class AiAssistantConfigController {
 
     @PostMapping("/ai-assistant/user-config/test")
     public Result testUserConfig(
-            @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId
+            @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
+            @RequestBody(required = false) Map<String, Object> payload
     ) {
-        return Result.success("AI 接口连接测试成功", userConfigService.testConnection(userId));
+        return Result.success("AI 接口连接测试成功", userConfigService.testConnection(userId, payload));
     }
 
     @PostMapping("/ai-assistant/chat")
@@ -78,8 +83,15 @@ public class AiAssistantConfigController {
     ) {
         Map<String, Object> request = payload == null ? Collections.emptyMap() : payload;
         String question = String.valueOf(request.getOrDefault("question", ""));
-        return Result.success("AI 回答成功", Map.of(
-                "answer", userConfigService.chat(userId, question)
-        ));
+        java.util.List<Map<String, Object>> history = new java.util.ArrayList<>();
+        if (request.get("history") instanceof java.util.List<?> items) {
+            for (Object item : items) {
+                if (item instanceof Map<?, ?> message) {
+                    history.add(Map.of("role", String.valueOf(message.get("role")),
+                            "content", String.valueOf(message.get("content"))));
+                }
+            }
+        }
+        return Result.success("AI 回答成功", platformChatService.chat(userId, question, history));
     }
 }

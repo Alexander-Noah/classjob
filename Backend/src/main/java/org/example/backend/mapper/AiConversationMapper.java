@@ -8,6 +8,8 @@ import java.util.List;
 
 @Mapper
 public interface AiConversationMapper {
+    int deleteByUserAndConversationId(@Param("userId") Integer userId, @Param("conversationId") String conversationId);
+
     List<AiConversationEntity> listByUser(@Param("userId") Integer userId);
 
     int upsertConversation(AiConversationEntity conversation);

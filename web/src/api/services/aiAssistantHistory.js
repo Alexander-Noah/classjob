@@ -27,6 +27,13 @@ const requestJson = async (path, options = {}) => {
   return payload?.data || payload
 }
 
+export const deleteAiConversationHistory = async (conversationId) => {
+  if (!isAuthenticated()) return
+  await requestJson(`${API_ENDPOINTS.aiAssistant.conversations}/${encodeURIComponent(conversationId)}`, {
+    method: 'DELETE',
+  })
+}
+
 export const listAiConversationHistories = async () => {
   // 如果未登录，直接返回空数组，避免401错误
   if (!isAuthenticated()) {

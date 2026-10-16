@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, provide, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Clock, Iphone, Message, OfficeBuilding, UploadFilled, UserFilled } from '@element-plus/icons-vue'
@@ -9,6 +9,7 @@ import { API_BASE_URL } from '../../api/config'
 import { DEFAULT_AUTH_ROLE } from '../../constants/auth'
 import { getRoleLayout, getRoleMenus } from '../../constants/navigation'
 import { useCurrentTime } from '../../composables/useCurrentTime'
+import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 
 defineOptions({
   name: 'AdminLayout',
@@ -37,6 +38,7 @@ const { currentTime } = useCurrentTime()
 const currentRole = computed(() => route.meta?.roleScope || getStoredRole() || DEFAULT_AUTH_ROLE)
 const roleLayout = computed(() => getRoleLayout(currentRole.value))
 const currentUser = computed(() => sessionUser.value || {})
+provide('sessionUserProfile', currentUser)
 const currentUserName = computed(() => currentUser.value.realName || currentUser.value.name || currentUser.value.username || roleLayout.value.user.name)
 const currentUserRole = computed(() => currentUser.value.roleName || currentUser.value.role || roleLayout.value.user.role)
 const API_ROOT = String(API_BASE_URL || '').replace(/\/$/, '')
@@ -44,17 +46,6 @@ const buildAvatarProxyUrl = (objectKey = '') => {
   const normalizedObjectKey = String(objectKey || '').trim().replace(/^\/+/, '')
   if (!normalizedObjectKey) return ''
   return `${API_ROOT}/files/avatar-proxy?objectKey=${encodeURIComponent(normalizedObjectKey)}`
-}
-const normalizeAvatarUrl = (value = '') => {
-  let avatarUrl = String(value || '').trim()
-  if (!avatarUrl) return ''
-  if (/^(https?:)?\/\//i.test(avatarUrl) || /^(data|blob):/i.test(avatarUrl) || avatarUrl.startsWith('/')) {
-    return avatarUrl
-  }
-  if (/^[\w.-]+\.[a-z]{2,}\//i.test(avatarUrl)) {
-    return `https://${avatarUrl}`
-  }
-  return buildAvatarProxyUrl(avatarUrl)
 }
 const resolveUploadedAvatarUrl = (uploaded = {}) => {
   const directUrl = normalizeAvatarUrl(uploaded.avatarUrl || uploaded.url || '')
@@ -160,7 +151,9 @@ const saveProfile = async ({ closeDialog = true, successMessage = '个人信息�
     }
     ElMessage.success(successMessage)
   } catch (error) {
-    ElMessage.error(error?.message || '保存个人信息失败')
+    if (!error?.__handled) {
+      ElMessage.error(error?.userMessage || error?.message || '保存个人信息失败')
+    }
   } finally {
     profileSubmitting.value = false
   }

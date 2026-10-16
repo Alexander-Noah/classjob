@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.backend.mapper.AiScheduleReadMapper">
+    <sql id="Filters">
+        <where>
+            <choose>
+                <when test="labPatterns != null and labPatterns.size() > 0">
+                    and (
+                    <foreach collection="labPatterns" item="pattern" separator=" or ">
+                        classroom regexp #{pattern}
+                    </foreach>
+                    )
+                </when>
+                <otherwise>and 1 = 0</otherwise>
+            </choose>
+            <if test="semester != null">and semester = #{semester}</if>
+            <if test="teacher != null">and teacher like concat('%', #{teacher}, '%')</if>
+            <if test="classroom != null">and classroom like concat('%', #{classroom}, '%')</if>
+            <if test="courseName != null">and course_name like concat('%', #{courseName}, '%')</if>
+            <if test="className != null">and (class_name like concat('%', #{className}, '%') or row_class_name like concat('%', #{className}, '%'))</if>
+            <if test="weekday != null">and weekday = #{weekday}</if>
+            <if test="week != null">
+                and find_in_set(convert(cast(#{week} as char) using utf8mb4) collate utf8mb4_general_ci,
+                    convert(week_expanded using utf8mb4) collate utf8mb4_general_ci) &gt; 0
+            </if>
+            <if test="sectionStart != null">and end_section &gt;= #{sectionStart} and start_section &lt;= #{sectionEnd}</if>
+            <if test="keyword != null">
+                and (course_name like concat('%', #{keyword}, '%') or teacher like concat('%', #{keyword}, '%')
+                    or class_name like concat('%', #{keyword}, '%') or classroom like concat('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+    <select id="count" resultType="long">
+        select count(*) from class_timetable <include refid="Filters"/>
+    </select>
+    <select id="search" resultMap="org.example.backend.mapper.TeachingScheduleReadMapper.scheduleEntryView">
+        select id, semester, row_class_name, class_name, weekday, section_code, section_text,
+            start_section, end_section, course_name, teacher, week_raw, week_text, week_expanded, classroom, create_time
+        from class_timetable <include refid="Filters"/>
+        order by weekday, start_section, classroom, id
+        limit #{limit} offset #{offset}
+    </select>
+    <select id="aggregate" resultType="map">
+        select
+        <choose>
+            <when test="groupBy == 'teacher'">teacher</when>
+            <when test="groupBy == 'classroom'">classroom</when>
+            <when test="groupBy == 'courseName'">course_name</when>
+            <when test="groupBy == 'className'">class_name</when>
+            <otherwise>weekday</otherwise>
+        </choose>
+        as label, count(*) as count from class_timetable
+        <include refid="Filters"/>
+        group by label order by count desc, label
+    </select>
+</mapper>

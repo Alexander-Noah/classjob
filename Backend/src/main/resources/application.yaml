@@ -6,6 +6,12 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      # Match the avatar limit enforced by the frontend and OSS service.
+      max-file-size: 2MB
+      # Leave room for multipart headers in addition to the file.
+      max-request-size: 3MB
   application:
     # 应用名称，主要用于日志、监控和服务识别。
     name: Backend

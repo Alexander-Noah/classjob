@@ -1,15 +1,16 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
-import { ElMessage } from 'element-plus'
-import { ChatDotRound, Microphone, Promotion, Setting } from '@element-plus/icons-vue'
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ChatDotRound, Delete, Microphone, Promotion, Setting } from '@element-plus/icons-vue'
 import { getAuthToken, getStoredUser } from '../../api/services/auth'
+import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 import {
   getAiAssistantUserConfig,
   requestAiAssistantAnswer,
   saveAiAssistantUserConfig,
   testAiAssistantUserConfig,
 } from '../../api/services/aiAssistantConfig'
-import { listAiConversationHistories, saveAiConversationHistories } from '../../api/services/aiAssistantHistory'
+import { deleteAiConversationHistory, listAiConversationHistories, saveAiConversationHistories } from '../../api/services/aiAssistantHistory'
 import { AssistantAudio } from '../../services/assistantAudio'
 import { AssistantWebSocket } from '../../services/assistantWebSocket'
 import { BrowserSpeechRecognition } from '../../services/browserSpeechRecognition'
@@ -22,6 +23,9 @@ defineOptions({
 const HISTORY_STORAGE_KEY = 'smart-lab:ai-assistant:conversations'
 const TTS_STORAGE_KEY = 'smart-lab:ai-tts-enabled'
 const MAX_HISTORY_COUNT = 30
+const currentUser = inject('sessionUserProfile', computed(() => getStoredUser() || {}))
+const currentUserName = computed(() => currentUser.value.realName || currentUser.value.name || currentUser.value.username || '我')
+const currentUserAvatar = computed(() => normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
 
 const createDefaultDirectAiConfig = () => ({
   enabled: false,
@@ -48,10 +52,16 @@ const conversationHistories = ref([])
 const activeConversationId = ref('')
 const historyKeyword = ref('')
 const isHistoryRestoring = ref(false)
+const deletingConversationId = ref('')
 const aiConfigDialogVisible = ref(false)
 const isDirectAiLoading = ref(false)
 const isTestingDirectAi = ref(false)
 const directAiConfig = reactive(createDefaultDirectAiConfig())
+const testedAiConfigFingerprint = ref('')
+const isSavingDirectAi = ref(false)
+const draftAiConfigFingerprint = computed(() => JSON.stringify([aiConfigFingerprint(directAiConfig), directAiConfig.apiKey?.trim() || '']))
+const hasPassedAiTest = computed(() => testedAiConfigFingerprint.value === draftAiConfigFingerprint.value)
+watch(draftAiConfigFingerprint, () => { testedAiConfigFingerprint.value = '' }, { flush: 'sync' })
 const providerId = ref('qwen')
 const savedDirectAiConfig = ref(null)
 const lastApiEndpoint = ref(normalizedApiEndpoint(directAiConfig.baseUrl))
@@ -70,6 +80,7 @@ const addressChanged = () => {
 }
 
 let historySaveTimer = 0
+let remoteSaveChain = Promise.resolve()
 let pendingRemoteConversations = []
 let hasShownSocketError = false
 
@@ -109,13 +120,14 @@ const isDirectAiConfigured = computed(() =>
       directAiConfig.model?.trim(),
   ),
 )
-const canSend = computed(() => !isDirectAiLoading.value && Boolean(inputValue.value.trim()))
+const canSend = computed(() => !deletingConversationId.value && !isDirectAiLoading.value && Boolean(inputValue.value.trim()))
 const connectionStatusText = computed(() => {
   if (connectionStatus.value === 'connected') return '服务在线'
   if (connectionStatus.value === 'connecting') return '正在连接'
   return '服务离线'
 })
 const currentServiceStatusText = computed(() => {
+  if (isDirectAiLoading.value) return '正在查询平台数据'
   if (!directAiConfig.enabled) return connectionStatusText.value
   if (!isDirectAiConfigured.value) return '自定义 API 未完成配置'
   return isDirectAiLoading.value ? '自定义 API 调用中' : '自定义 API 已启用'
@@ -271,7 +283,8 @@ const flushRemoteSave = async () => {
 
   try {
     pendingRemoteConversations = []
-    await saveAiConversationHistories(conversations)
+    remoteSaveChain = remoteSaveChain.catch(() => {}).then(() => saveAiConversationHistories(conversations))
+    await remoteSaveChain
   } catch (error) {
     console.warn('[AiAssistant] failed to save conversation history', error)
   }
@@ -296,6 +309,7 @@ const saveConversations = ({ syncRemote = true } = {}) => {
 }
 
 const persistCurrentConversation = () => {
+  if (deletingConversationId.value) return
   if (!activeConversationId.value) return
 
   const nextConversation = normalizeConversation({
@@ -350,6 +364,7 @@ const scrollToBottom = async () => {
 }
 
 const startNewConversation = async () => {
+  if (deletingConversationId.value) return
   persistCurrentConversation()
   const conversation = createConversation()
   conversationHistories.value = [conversation, ...sortedConversations.value].slice(0, MAX_HISTORY_COUNT)
@@ -361,6 +376,7 @@ const startNewConversation = async () => {
 }
 
 const switchConversation = async (conversationId) => {
+  if (deletingConversationId.value) return
   if (conversationId === activeConversationId.value) return
   persistCurrentConversation()
 
@@ -373,7 +389,46 @@ const switchConversation = async (conversationId) => {
   await scrollToBottom()
 }
 
+const deleteConversation = async (conversation) => {
+  if (isHistoryRestoring.value || deletingConversationId.value || isDirectAiLoading.value) return
+  try {
+    await ElMessageBox.confirm(`确定删除“${conversation.title}”及其全部聊天记录吗？删除后无法恢复。`, '删除聊天记录', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  if (isDirectAiLoading.value || deletingConversationId.value) return
+  deletingConversationId.value = conversation.id
+  try {
+    // Drain earlier upserts before deleting so they cannot recreate this conversation.
+    await flushRemoteSave()
+    await deleteAiConversationHistory(conversation.id)
+    const wasActive = activeConversationId.value === conversation.id
+    const remaining = sortedConversations.value.filter(item => item.id !== conversation.id)
+    conversationHistories.value = remaining.length ? remaining : [createConversation()]
+    if (wasActive) {
+      const next = conversationHistories.value[0]
+      activeConversationId.value = next.id
+      messages.value = next.messages
+      inputValue.value = ''
+      stopVoiceCapture()
+      window.speechSynthesis?.cancel()
+    }
+    saveConversations()
+    ElMessage.success('聊天记录已删除')
+    await scrollToBottom()
+  } catch (error) {
+    ElMessage.error(error?.message || '删除失败，请重试')
+  } finally {
+    deletingConversationId.value = ''
+  }
+}
+
 const appendMessage = async (role, content, { shouldSpeak = false } = {}) => {
+  if (deletingConversationId.value) return
   if (!content?.trim()) return
 
   messages.value.push({
@@ -548,6 +603,11 @@ const loadBackendAiConfig = async () => {
 }
 
 const saveBackendAiConfig = async () => {
+  if (isSavingDirectAi.value || isTestingDirectAi.value) return
+  if (directAiConfig.enabled && !hasPassedAiTest.value) {
+    ElMessage.warning('请先测试连接，测试成功后再保存配置')
+    return
+  }
   if (!normalizedApiEndpoint(directAiConfig.baseUrl)) {
     ElMessage.warning('请填写有效的 HTTP 或 HTTPS 接口基础地址')
     return
@@ -557,6 +617,7 @@ const saveBackendAiConfig = async () => {
     return
   }
 
+  isSavingDirectAi.value = true
   try {
     const savedConfig = await saveAiAssistantUserConfig({
       enabled: Boolean(directAiConfig.enabled),
@@ -571,34 +632,35 @@ const saveBackendAiConfig = async () => {
     if (!directAiConfig.enabled) await fetchConfigAndConnect()
   } catch (error) {
     ElMessage.error(error?.message || 'AI 接口配置保存失败')
+  } finally {
+    isSavingDirectAi.value = false
   }
 }
 
 const testBackendAiConfig = async () => {
+  if (isTestingDirectAi.value || isSavingDirectAi.value) return
   if (!directAiConfig.enabled) {
     ElMessage.warning('请先启用自定义 API')
     return
   }
 
-  if (directAiConfig.apiKey?.trim()) {
-    ElMessage.warning('请先保存当前 API Key 后再测试连接')
-    return
-  }
-
-  if (aiConfigFingerprint(directAiConfig) !== aiConfigFingerprint(savedDirectAiConfig.value || {})) {
-    ElMessage.warning('配置已修改，请先保存后再测试连接')
-    return
-  }
-
   if (!isDirectAiConfigured.value) {
-    ElMessage.warning('请先保存完整的 AI 接口配置')
+    ElMessage.warning('请填写 API 地址、API Key 和文本模型')
     return
   }
 
   isTestingDirectAi.value = true
+  testedAiConfigFingerprint.value = ''
+  const fingerprint = draftAiConfigFingerprint.value
+  const draft = { ...directAiConfig }
   try {
-    const result = await testAiAssistantUserConfig()
-    ElMessage.success(`AI 接口连接正常：${result?.model || directAiConfig.model}`)
+    const result = await testAiAssistantUserConfig(draft)
+    if (draftAiConfigFingerprint.value !== fingerprint) {
+      ElMessage.warning('配置已修改，请重新测试连接')
+      return
+    }
+    testedAiConfigFingerprint.value = fingerprint
+    ElMessage.success(`AI 接口连接正常：${result?.model || draft.model}，可以保存配置`)
   } catch (error) {
     ElMessage.error(error?.message || 'AI 接口连接测试失败，请检查 API 地址、Key、模型名称或服务器网络')
   } finally {
@@ -606,8 +668,11 @@ const testBackendAiConfig = async () => {
   }
 }
 
-const requestBackendAiAnswer = async (question) => {
-  const payload = await requestAiAssistantAnswer({ question })
+const requestBackendAiAnswer = async (question, history) => {
+  const payload = await requestAiAssistantAnswer({
+    question,
+    history,
+  })
   const answer = String(payload?.answer || '').trim()
   if (!answer) {
     throw new Error('AI 接口未返回可展示内容')
@@ -616,6 +681,7 @@ const requestBackendAiAnswer = async (question) => {
 }
 
 const submitQuestion = async (text, onSubmitted) => {
+  if (deletingConversationId.value || isDirectAiLoading.value) return false
   const question = text?.trim()
   if (!question) return false
 
@@ -630,32 +696,37 @@ const submitQuestion = async (text, onSubmitted) => {
       ElMessage.warning('请先完成 AI 接口配置')
       return false
     }
-
-    await appendMessage('user', question)
-    onSubmitted?.()
-    isDirectAiLoading.value = true
-    try {
-      const answer = await requestBackendAiAnswer(question)
-      await appendAssistantText(answer)
-      return true
-    } catch (error) {
-      await appendAssistantText(`自定义 AI 接口调用失败：${error?.message || '请检查后端保存的 API 地址、Key、模型名称或服务器网络。'}`)
-      return true
-    } finally {
-      isDirectAiLoading.value = false
-    }
   }
 
-  if (!socketRef.value?.isConnected) {
-    connectService()
-    ElMessage.warning('AI 服务正在连接，请稍后再试')
-    return false
-  }
-
+  const conversationId = activeConversationId.value
+  const history = messages.value.slice(-12).map(({ role, content }) => ({ role, content }))
+  isDirectAiLoading.value = true
   await appendMessage('user', question)
-  socketRef.value.sendText(question)
   onSubmitted?.()
-  return true
+  try {
+    const answer = await requestBackendAiAnswer(question, history)
+    if (activeConversationId.value === conversationId) {
+      await appendAssistantText(answer)
+    } else {
+      const conversation = conversationHistories.value.find(item => item.id === conversationId)
+      if (conversation) {
+        conversation.messages.push({ id: `${Date.now()}-${Math.random()}`, role: 'assistant', content: answer, time: formatTime() })
+        conversation.preview = getMessagePreview(conversation.messages)
+        conversation.updatedAt = Date.now()
+        saveConversations()
+      }
+    }
+    return true
+  } catch (error) {
+    if (activeConversationId.value === conversationId) {
+      await appendAssistantText(`AI 查询失败：${error?.message || '请检查 AI 配置或稍后重试。'}`)
+    } else {
+      ElMessage.error(error?.message || 'AI 查询失败，请重试')
+    }
+    return true
+  } finally {
+    isDirectAiLoading.value = false
+  }
 }
 
 const sendMessage = async () => {
@@ -749,6 +820,7 @@ const stopVoiceCapture = async () => {
 }
 
 const clearMessages = () => {
+  if (deletingConversationId.value) return
   messages.value = createDefaultMessages()
   persistCurrentConversation()
   scrollToBottom()
@@ -782,14 +854,13 @@ onUnmounted(() => {
       </div>
 
       <div class="history-list">
-        <button
+        <div
           v-for="conversation in filteredConversations"
           :key="conversation.id"
           class="history-item"
           :class="{ active: conversation.id === activeConversationId }"
-          type="button"
-          @click="switchConversation(conversation.id)"
         >
+          <button class="history-select" type="button" @click="switchConversation(conversation.id)">
           <span class="history-avatar">
             <el-icon><ChatDotRound /></el-icon>
           </span>
@@ -800,7 +871,19 @@ onUnmounted(() => {
             </span>
             <span class="history-item-preview">{{ conversation.preview }}</span>
           </span>
-        </button>
+          </button>
+          <el-button
+            class="history-delete"
+            :icon="Delete"
+            text
+            circle
+            :aria-label="`删除聊天：${conversation.title}`"
+            title="删除聊天记录"
+            :loading="deletingConversationId === conversation.id"
+            :disabled="isHistoryRestoring || isDirectAiLoading || Boolean(deletingConversationId)"
+            @click.stop="deleteConversation(conversation)"
+          />
+        </div>
 
         <el-empty v-if="!filteredConversations.length" description="暂无会话" />
       </div>
@@ -812,7 +895,7 @@ onUnmounted(() => {
           <h1>{{ activeConversationTitle }}</h1>
           <span>
             <i class="status-dot" :class="connectionStatus"></i>
-            {{ currentServiceStatusText }} · {{ messages.length }} 条消息
+            {{ currentServiceStatusText }} · 平台业务数据已接入（不含资产） · {{ messages.length }} 条消息
           </span>
         </div>
 
@@ -840,12 +923,18 @@ onUnmounted(() => {
 
       <div ref="messageListRef" class="message-list">
         <article v-for="message in messages" :key="message.id" class="message-row" :class="message.role">
-          <div class="avatar" :class="message.role">
-            {{ message.role === 'assistant' ? '智' : '我' }}
-          </div>
+          <el-avatar
+            v-if="message.role === 'user'"
+            class="avatar user"
+            :src="currentUserAvatar"
+            :size="44"
+            :aria-label="`${currentUserName}的头像`"
+            shape="square"
+          >{{ currentUserName.slice(0, 1) }}</el-avatar>
+          <div v-else class="avatar assistant">智</div>
           <div class="message-column">
             <div class="message-meta">
-              <strong>{{ message.role === 'assistant' ? '智能助手' : '我' }}</strong>
+              <strong>{{ message.role === 'assistant' ? '智能助手' : currentUserName }}</strong>
               <span>{{ message.time }}</span>
             </div>
             <div class="message-bubble">
@@ -954,9 +1043,10 @@ onUnmounted(() => {
       </div>
       <template #footer>
         <div class="api-config-actions">
-          <el-button plain @click="resetDirectAiConfig">恢复默认</el-button>
-          <el-button plain :loading="isTestingDirectAi" @click="testBackendAiConfig">测试连接</el-button>
-          <el-button type="primary" @click="saveBackendAiConfig">保存配置</el-button>
+          <span v-if="directAiConfig.enabled" class="config-test-status">{{ hasPassedAiTest ? '连接测试成功，可以保存' : '请先测试连接，成功后再保存' }}</span>
+          <el-button plain :disabled="isTestingDirectAi || isSavingDirectAi" @click="resetDirectAiConfig">恢复默认</el-button>
+          <el-button plain :loading="isTestingDirectAi" :disabled="isSavingDirectAi" @click="testBackendAiConfig">测试连接</el-button>
+          <el-button type="primary" :loading="isSavingDirectAi" :disabled="isTestingDirectAi || (directAiConfig.enabled && !hasPassedAiTest)" @click="saveBackendAiConfig">保存配置</el-button>
         </div>
       </template>
     </el-dialog>
@@ -1038,6 +1128,34 @@ onUnmounted(() => {
 
 .history-item:hover {
   background: rgba(255, 255, 255, 0.55);
+}
+
+.history-select {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.history-delete {
+  flex-shrink: 0;
+  color: #737985;
+}
+
+.history-item.active .history-delete {
+  color: white;
+}
+
+.history-delete:not(:disabled):hover {
+  color: #f56c6c;
+  background: #fef0f0;
 }
 
 .history-item.active {
@@ -1224,6 +1342,13 @@ onUnmounted(() => {
   padding-top: 8px;
 }
 
+.config-test-status {
+  align-self: center;
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 .voice-status {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1278,6 +1403,12 @@ onUnmounted(() => {
 .avatar.user {
   color: #ffffff;
   background: #07c160;
+}
+
+.avatar.user :deep(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .message-column {

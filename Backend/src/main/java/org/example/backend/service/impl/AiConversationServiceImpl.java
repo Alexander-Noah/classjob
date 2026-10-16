@@ -52,6 +52,16 @@ public class AiConversationServiceImpl implements AiConversationService {
         return listConversations(userId);
     }
 
+    @Override
+    @Transactional
+    public void deleteConversation(Integer userId, String conversationId) {
+        requireUserId(userId);
+        if (conversationId == null || conversationId.isBlank()) {
+            throw new IllegalArgumentException("会话 ID 不能为空");
+        }
+        conversationMapper.deleteByUserAndConversationId(userId, conversationId);
+    }
+
     private void requireUserId(Integer userId) {
         if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("登录状态无效，请重新登录");

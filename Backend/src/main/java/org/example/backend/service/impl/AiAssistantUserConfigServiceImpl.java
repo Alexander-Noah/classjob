@@ -41,6 +41,12 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
     @Transactional
     public Map<String, Object> saveConfig(Integer userId, Map<String, Object> payload) {
         requireUserId(userId);
+        AiAssistantUserConfigEntity config = buildDraftConfig(userId, payload);
+        configMapper.upsertConfig(config);
+        return getConfig(userId);
+    }
+
+    private AiAssistantUserConfigEntity buildDraftConfig(Integer userId, Map<String, Object> payload) {
         Map<String, Object> values = payload == null ? Map.of() : payload;
         AiAssistantUserConfigEntity current = configMapper.getByUserId(userId);
 
@@ -61,15 +67,21 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         }
         config.setApiKey(nextApiKey);
 
-        configMapper.upsertConfig(config);
-        return getConfig(userId);
+        return config;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> testConnection(Integer userId) {
+        return testConnection(userId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> testConnection(Integer userId, Map<String, Object> payload) {
         requireUserId(userId);
-        AiAssistantUserConfigEntity config = resolveConfig(userId);
+        AiAssistantUserConfigEntity config = payload == null ? resolveConfig(userId) : buildDraftConfig(userId, payload);
+        validateEndpoint(config.getBaseUrl());
         requireEnabledConfig(config);
 
         String answer = requestChatCompletion(config, "请只回复 OK，用于验证当前接口连接是否可用。");
@@ -97,10 +109,23 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
     }
 
     private String requestChatCompletion(AiAssistantUserConfigEntity config, String question) {
+        return requestChatCompletion(config, question, firstNonBlank(config.getSystemPrompt(), DEFAULT_SYSTEM_PROMPT));
+    }
+
+    @Override
+    public String chatWithContext(Integer userId, String instruction, String question) {
+        requireUserId(userId);
+        AiAssistantUserConfigEntity config = resolveConfig(userId);
+        requireEnabledConfig(config);
+        return requestChatCompletion(config, question, firstNonBlank(config.getSystemPrompt(), DEFAULT_SYSTEM_PROMPT)
+                + "\n" + instruction);
+    }
+
+    private String requestChatCompletion(AiAssistantUserConfigEntity config, String question, String systemPrompt) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", config.getModel());
         body.put("messages", List.of(
-                Map.of("role", "system", "content", firstNonBlank(config.getSystemPrompt(), DEFAULT_SYSTEM_PROMPT)),
+                Map.of("role", "system", "content", systemPrompt),
                 Map.of("role", "user", "content", firstNonBlank(question, "你好"))
         ));
         body.put("temperature", 0.7);

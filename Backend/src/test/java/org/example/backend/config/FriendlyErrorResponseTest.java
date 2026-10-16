@@ -9,6 +9,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FriendlyErrorResponseTest {
     @Test
+    void oversizedAvatarHasAnActionable413Response() {
+        var response = new GlobalExceptionHandler().handleUploadTooLarge(
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(2 * 1024 * 1024),
+                new MockHttpServletRequest("POST", "/files/avatars"));
+        assertEquals(413, response.getStatusCode().value());
+        assertEquals(413, response.getBody().getCode());
+        assertTrue(response.getBody().getMessage().contains("2MB"));
+        assertFalse(response.getBody().getMessage().contains("Exception"));
+    }
+
+    @Test
+    void oversizedOtherUploadsDoNotUseTheAvatarMessage() {
+        var response = new GlobalExceptionHandler().handleUploadTooLarge(
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(2 * 1024 * 1024),
+                new MockHttpServletRequest("POST", "/devices/import"));
+        assertEquals(413, response.getStatusCode().value());
+        assertFalse(response.getBody().getMessage().contains("头像"));
+    }
+
+    @Test
     void genericErrorsKeepInternalDetailsAndRequestIdsOutOfTheUserMessage() {
         MDC.put("requestId", "test-request-identifier");
         try {
