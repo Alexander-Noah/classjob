@@ -754,6 +754,10 @@ watch(
 }
 
 .environment-header-card :deep(.el-card__body) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  flex: none;
   padding: 20px 22px 0;
   background:
     linear-gradient(135deg, #ffffff 0%, #f8fbff 56%, #eef6ff 100%);
@@ -762,6 +766,12 @@ watch(
 .environment-header {
   display: grid;
   gap: 14px;
+}
+
+.environment-header-card {
+  height: auto;
+  max-height: none;
+  align-self: start;
 }
 
 .header-main,
@@ -809,6 +819,7 @@ watch(
 }
 
 .header-actions :deep(.el-button) {
+  margin-left: 0;
   min-width: 86px;
   border-radius: 8px;
   font-weight: 700;

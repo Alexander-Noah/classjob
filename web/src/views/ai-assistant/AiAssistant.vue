@@ -1063,7 +1063,7 @@ onUnmounted(() => {
   overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: #f5f5f5;
+  background: transparent;
 }
 
 .history-panel {
@@ -1072,7 +1072,7 @@ onUnmounted(() => {
   min-width: 0;
   min-height: 0;
   border-right: 1px solid #d9d9dc;
-  background: #e8e8ec;
+  background: rgba(235, 242, 252, 0.18);
 }
 
 .history-searchbar {
@@ -1087,7 +1087,7 @@ onUnmounted(() => {
 
 .history-searchbar :deep(.el-input__wrapper) {
   min-height: 38px;
-  background: #f8f8f8;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 6px;
   box-shadow: none;
 }
@@ -1159,7 +1159,8 @@ onUnmounted(() => {
 }
 
 .history-item.active {
-  background: #07c160;
+  background: rgba(7, 193, 96, 0.18);
+  box-shadow: inset 3px 0 #07c160;
 }
 
 .history-avatar,
@@ -1224,7 +1225,11 @@ onUnmounted(() => {
 .history-item.active .history-item-title,
 .history-item.active .history-item-preview,
 .history-item.active .history-item-time {
-  color: #ffffff;
+  color: #14532d;
+}
+
+.history-item.active .history-delete {
+  color: #15803d;
 }
 
 .chat-main {
@@ -1232,7 +1237,7 @@ onUnmounted(() => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: #f5f5f5;
+  background: transparent;
 }
 
 .chat-topbar {
@@ -1244,7 +1249,7 @@ onUnmounted(() => {
   height: 74px;
   padding: 0 24px;
   border-bottom: 1px solid #e5e5e5;
-  background: #f7f7f7;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .chat-title-block {
@@ -1378,7 +1383,7 @@ onUnmounted(() => {
   min-height: 0;
   padding: 28px 48px 30px;
   overflow-y: auto;
-  background: #f5f5f5;
+  background: transparent;
 }
 
 .message-row {
@@ -1426,9 +1431,9 @@ onUnmounted(() => {
   min-width: 0;
   padding: 10px 14px;
   color: #111827;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.24);
   border: 1px solid #e9eaec;
-  border-radius: 5px;
+  border-radius: 14px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
@@ -1446,8 +1451,8 @@ onUnmounted(() => {
 }
 
 .message-row.user .message-bubble {
-  background: #95ec69;
-  border-color: #95ec69;
+  background: rgba(149, 236, 105, 0.24);
+  border-color: rgba(94, 185, 62, 0.24);
 }
 
 .message-row.user .message-bubble::before {
@@ -1498,7 +1503,19 @@ onUnmounted(() => {
   min-height: 178px;
   padding: 10px 16px 14px;
   border-top: 1px solid #dedede;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.history-panel,
+.chat-topbar,
+.composer,
+.message-bubble {
+  -webkit-backdrop-filter: blur(1px) saturate(1.15);
+  backdrop-filter: blur(1px) saturate(1.15);
+}
+
+.history-search :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .composer-toolbar,

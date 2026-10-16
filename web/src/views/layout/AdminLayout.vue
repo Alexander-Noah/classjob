@@ -9,6 +9,7 @@ import { API_BASE_URL } from '../../api/config'
 import { DEFAULT_AUTH_ROLE } from '../../constants/auth'
 import { getRoleLayout, getRoleMenus } from '../../constants/navigation'
 import { useCurrentTime } from '../../composables/useCurrentTime'
+import { useAdminGlass } from '../../composables/useAdminGlass'
 import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 
 defineOptions({
@@ -16,6 +17,7 @@ defineOptions({
 })
 
 const isSidebarCollapsed = ref(false)
+const { glassRoot } = useAdminGlass()
 const isMobileMenuOpen = ref(false)
 const profileDialogVisible = ref(false)
 const profileSubmitting = ref(false)
@@ -300,7 +302,7 @@ onBeforeUnmount(clearAvatarPreview)
         </div>
       </el-header>
 
-      <el-main class="admin-content">
+      <el-main ref="glassRoot" class="admin-content">
         <RouterView />
       </el-main>
     </el-container>
@@ -500,6 +502,7 @@ onBeforeUnmount(clearAvatarPreview)
 
 .admin-main {
   min-width: 0;
+  background: #fff url('/admin-background.png') right bottom / cover no-repeat fixed;
 }
 
 .admin-header {
@@ -596,10 +599,37 @@ onBeforeUnmount(clearAvatarPreview)
 }
 
 .admin-content {
+  --surface-color: rgba(255, 255, 255, 0.88);
   width: 100%;
   min-width: 0;
   padding: 20px 24px 28px;
   overflow-x: hidden;
+  background: rgba(244, 246, 250, 0.22);
+}
+
+.admin-content :deep(.el-card) {
+  --el-card-bg-color: var(--surface-color);
+  background-color: var(--surface-color);
+}
+
+.admin-content :deep(:is(.el-card, .page-panel, .hero-actions)) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(235, 244, 255, 0.12) 48%, rgba(255, 255, 255, 0.24));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(30, 41, 59, 0.14), 0 2px 5px rgba(30, 41, 59, 0.06),
+    inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 2px 0 3px rgba(255, 255, 255, 0.8),
+    inset 0 -10px 22px rgba(71, 85, 105, 0.12);
+  -webkit-backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
+  backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
+}
+
+.admin-content :deep(.el-card__body) {
+  background-color: transparent;
+}
+
+.admin-content :deep(.el-button) {
+  border-radius: 12px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .admin-content > :deep(*) {

@@ -686,6 +686,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  flex-wrap: wrap;
   min-height: 154px;
   border-color: rgba(15, 118, 110, 0.16);
   background:
@@ -741,15 +742,20 @@ onMounted(async () => {
 
 .hero-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  max-width: 650px;
+  max-width: 100%;
+  margin-left: auto;
   padding: 10px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.76);
+}
+
+.hero-actions :deep(.el-button) {
+  margin-left: 0;
 }
 
 .hidden-input {

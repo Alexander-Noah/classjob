@@ -191,6 +191,31 @@ canvas {
   border-top: 1px solid var(--border-light);
 }
 
+/* Shared glass surface also covers dialogs teleported outside the page layout. */
+.el-overlay {
+  --el-overlay-color-lighter: rgba(15, 23, 42, 0.22);
+}
+
+body .el-dialog,
+body .el-message-box {
+  --el-dialog-bg-color: transparent;
+  --el-messagebox-bg-color: transparent;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(239, 246, 255, 0.52) 48%, rgba(255, 255, 255, 0.66));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22),
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 2px 0 3px rgba(255, 255, 255, 0.8),
+    inset 0 -10px 22px rgba(71, 85, 105, 0.1);
+  -webkit-backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
+  backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
+}
+
+body .el-dialog > :is(.el-dialog__header, .el-dialog__body, .el-dialog__footer),
+body .el-message-box > :is(.el-message-box__header, .el-message-box__content, .el-message-box__btns) {
+  background: transparent;
+}
+
 @media (max-width: 900px) {
   .el-overlay-dialog {
     padding-left: 16px;
