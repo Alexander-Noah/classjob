@@ -47,6 +47,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final boolean enabled;
 
+    @Value("${management.server.port:-1}")
+    private int managementPort = -1;
+
+    @Value("${server.port:8080}")
+    private int applicationPort = 8080;
+
     public JwtAuthenticationFilter(
             JwtService jwtService,
             @Value("${smart-lab.security.jwt.enabled:true}") boolean enabled
@@ -98,6 +104,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (PUBLIC_PATHS.contains(path)) {
+            return true;
+        }
+
+        // Only the dedicated management listener permits unauthenticated scraping.
+        if ("/actuator/prometheus".equals(path)
+                && request.getLocalPort() == managementPort
+                && managementPort != applicationPort) {
             return true;
         }
 

@@ -148,6 +148,18 @@
         where id = #{id}
     </update>
 
+    <!-- This project runs one backend instance; no old task survives a restart. -->
+    <update id="failInterruptedCrawlerTasks">
+        update timetable_import_job
+        set status = 'failed',
+            finished_at = current_timestamp,
+            error_message = '后端已重启，之前的采集任务已中断，请查看日志后重试'
+        where status = 'running'
+          and source = 'class-all'
+          and config_id = (select id from timetable_integration_config
+                           where config_key = 'lab-admin-class-timetable')
+    </update>
+
     <delete id="clearCrawlerTasks">
         delete from timetable_import_job
     </delete>

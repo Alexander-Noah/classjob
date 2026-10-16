@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: Zhiyun
+    folder: 智云实验室
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

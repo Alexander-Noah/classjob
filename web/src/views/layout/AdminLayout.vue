@@ -219,9 +219,9 @@ onBeforeUnmount(clearAvatarPreview)
           :default-active="activeMenu"
           :default-openeds="defaultOpenMenus"
           class="sidebar-menu"
-          background-color="#0f172a"
-          text-color="#cbd5e1"
-          active-text-color="#ffffff"
+          background-color="transparent"
+          text-color="#334155"
+          active-text-color="#1d4ed8"
           @select="handleMenuSelect"
         >
           <template v-for="menu in navMenus" :key="menu.index">
@@ -405,7 +405,7 @@ onBeforeUnmount(clearAvatarPreview)
 <style scoped>
 .admin-layout {
   min-height: 100vh;
-  background: var(--app-bg);
+  background: #fff url('/admin-background.png') right bottom / cover no-repeat fixed;
   color: var(--text-primary);
 }
 
@@ -415,8 +415,11 @@ onBeforeUnmount(clearAvatarPreview)
   z-index: 20;
   height: 100vh;
   overflow: hidden;
-  background: var(--sidebar-bg);
-  box-shadow: var(--shadow-sidebar);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.64), rgba(235, 244, 255, 0.3));
+  border-right: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 4px 0 24px rgba(30, 41, 59, 0.07), inset -1px 0 1px #fff;
+  -webkit-backdrop-filter: blur(3px) saturate(1.15);
+  backdrop-filter: blur(3px) saturate(1.15);
   transition: width 0.2s ease;
 }
 
@@ -434,7 +437,7 @@ onBeforeUnmount(clearAvatarPreview)
   width: 204px;
   height: 60px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(17%) sepia(28%) saturate(1350%) hue-rotate(179deg) brightness(92%) contrast(92%);
 }
 
 .brand-symbol {
@@ -448,7 +451,7 @@ onBeforeUnmount(clearAvatarPreview)
   width: 174px;
   height: auto;
   max-width: none;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(17%) sepia(28%) saturate(1350%) hue-rotate(179deg) brightness(92%) contrast(92%);
 }
 
 .is-collapsed .brand-lockup { display: none; }
@@ -475,7 +478,7 @@ onBeforeUnmount(clearAvatarPreview)
 
 .sidebar-menu :deep(.el-menu-item:hover),
 .sidebar-menu :deep(.el-sub-menu__title:hover) {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(219, 234, 254, 0.48);
 }
 
 .sidebar-menu :deep(.el-menu--inline) {
@@ -489,11 +492,28 @@ onBeforeUnmount(clearAvatarPreview)
 }
 
 .sidebar-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-  color: #ffffff;
+  color: #1d4ed8;
 }
 
 .sidebar-menu :deep(.el-menu-item.is-active) {
-  background: var(--primary-color);
+  position: relative;
+  background: rgba(37, 99, 235, 0.065);
+  border-radius: 6px;
+  box-shadow: none;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.sidebar-menu :deep(.el-menu-item.is-active::before) {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  border-radius: 999px;
+  background: #2563eb;
+  content: '';
+  transform: translateY(-50%);
 }
 
 .sidebar-mask {
@@ -790,9 +810,9 @@ onBeforeUnmount(clearAvatarPreview)
   gap: 8px;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid #edf2f7;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 8px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
   color: var(--text-secondary);
   font-size: 12px;
 }
@@ -816,9 +836,10 @@ onBeforeUnmount(clearAvatarPreview)
 
 .profile-section {
   padding: 16px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .profile-section h3 {

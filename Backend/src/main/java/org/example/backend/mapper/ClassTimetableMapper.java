@@ -31,6 +31,8 @@ public interface ClassTimetableMapper {
 
     int updateCrawlerTask(Map<String, Object> task);
 
+    int failInterruptedCrawlerTasks();
+
     int clearCrawlerTasks();
 
     Map<String, Object> getCrawlerCredential(@Param("credentialKey") String credentialKey);

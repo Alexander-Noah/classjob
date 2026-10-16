@@ -95,6 +95,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     public void initializeCrawlerScheduler() {
         try {
             ensureDefaultCrawlerConfig();
+            classTimetableMapper.failInterruptedCrawlerTasks();
             rescheduleCrawler();
         } catch (RuntimeException exception) {
             log.warn("课表定时抓取初始化失败，保存配置后会再次尝试初始化", exception);
@@ -180,8 +181,8 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
 
         Path logPath = buildCrawlerLogPath();
-        Map<String, Object> task = insertStartedCrawlerTask(triggerType, credential, logPath);
         Map<String, Object> crawlerConfig = getCrawlerConfig();
+        Map<String, Object> task = insertStartedCrawlerTask(triggerType, credential, logPath);
 
         Map<String, String> crawlerEnv = new HashMap<>();
         crawlerEnv.put("TIMETABLE_USERNAME", credential.username());
@@ -229,9 +230,16 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             }
 
             result.put("output", readLogTail(logPath));
-            result.put("summary", teachingScheduleQuery.summary());
             result.put("finishedAt", LocalDateTime.now().toString());
             updateFinishedCrawlerTask(task, result, credential, logPath);
+            // A failed script must be recorded without waiting for unrelated statistics.
+            if ("success".equals(result.get("status"))) {
+                try {
+                    result.put("summary", teachingScheduleQuery.summary());
+                } catch (RuntimeException exception) {
+                    log.warn("课表导入已完成，但查询课表统计失败", exception);
+                }
+            }
             return result;
         } catch (IOException exception) {
             updateFailedCrawlerTask(task, credential, logPath, "无法启动课表爬虫脚本：" + exception.getMessage());

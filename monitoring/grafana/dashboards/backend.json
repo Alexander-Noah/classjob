@@ -1,0 +1,279 @@
+{
+  "title": "智云实验室 · 后端监控",
+  "uid": "zhiyun-backend",
+  "tags": [
+    "zhiyun",
+    "spring-boot"
+  ],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 0.0,
+        "x": 0,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "up{job=\"zhiyun-backend\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "服务在线"
+    },
+    {
+      "type": "timeseries",
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 0.0,
+        "x": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"zhiyun-backend\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP 请求 / 秒"
+    },
+    {
+      "type": "timeseries",
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 8.0,
+        "x": 0,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"zhiyun-backend\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP P95 延迟"
+    },
+    {
+      "type": "timeseries",
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 8.0,
+        "x": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"zhiyun-backend\",status=~\"5..\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP 5xx / 秒"
+    },
+    {
+      "type": "timeseries",
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 16.0,
+        "x": 0,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "sum(jvm_memory_used_bytes{job=\"zhiyun-backend\",area=\"heap\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "JVM 堆内存"
+    },
+    {
+      "type": "timeseries",
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 16.0,
+        "x": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "process_cpu_usage{job=\"zhiyun-backend\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "进程 CPU"
+    },
+    {
+      "type": "timeseries",
+      "id": 7,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 24.0,
+        "x": 0,
+        "h": 8
+      },
+      "targets": [
+        {
+          "legendFormat": "{{instance}}",
+          "expr": "jvm_threads_live_threads{job=\"zhiyun-backend\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "JVM 线程"
+    },
+    {
+      "type": "timeseries",
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "datasource": {
+        "uid": "zhiyun-prometheus",
+        "type": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "y": 24.0,
+        "x": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections{job=\"zhiyun-backend\"}",
+          "legendFormat": "总连接 · {{pool}}",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_idle{job=\"zhiyun-backend\"}",
+          "legendFormat": "空闲 · {{pool}}",
+          "refId": "B"
+        },
+        {
+          "expr": "hikaricp_connections_active{job=\"zhiyun-backend\"}",
+          "legendFormat": "使用中 · {{pool}}",
+          "refId": "C"
+        },
+        {
+          "expr": "hikaricp_connections_pending{job=\"zhiyun-backend\"}",
+          "legendFormat": "等待 · {{pool}}",
+          "refId": "D"
+        },
+        {
+          "expr": "hikaricp_connections_max{job=\"zhiyun-backend\"}",
+          "legendFormat": "上限 · {{pool}}",
+          "refId": "E"
+        }
+      ],
+      "title": "数据库连接池",
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "placement": "bottom"
+        }
+      },
+      "description": "使用中为 0 表示采集时没有 SQL 正在占用连接；查看总连接和空闲连接确认池状态。15 秒采样可能无法捕获很短的数据库请求。"
+    }
+  ],
+  "editable": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "to": "now",
+    "from": "now-1h"
+  },
+  "refresh": "15s"
+}

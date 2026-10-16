@@ -155,3 +155,23 @@ springdoc:
   packages-to-scan: org.example.backend.controller
   # 暴露所有 Controller 路径到 OpenAPI 文档。
   paths-to-match: /**
+
+# Prometheus / Grafana 监控：IDEA 直接启动即可启用，无需额外 profile。
+management:
+  server:
+    port: ${SMART_LAB_MANAGEMENT_PORT:8081}
+    # 供 Docker Desktop 采集；服务器部署时限制此端口仅供监控网络访问。
+    address: ${SMART_LAB_MANAGEMENT_ADDRESS:0.0.0.0}
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

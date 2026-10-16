@@ -1,5 +1,7 @@
 # 智云实验室后端项目
 
+Prometheus / Grafana 监控配置与启动步骤见 [监控说明](../monitoring/README.md)。
+
 ## 项目简介
 
 智云实验室后端服务，基于Spring Boot + MyBatis构建的实验室协同管控平台后端API服务。

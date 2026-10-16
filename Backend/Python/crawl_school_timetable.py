@@ -17,6 +17,7 @@ import urllib.request
 
 from timetable_navigation import (
     AcademicAuthenticationRequired,
+    TargetSystemUnavailable,
     ensure_academic_authenticated,
     is_identity_login_page,
     wait_for_target_window,
@@ -627,13 +628,17 @@ def main():
     try:
         try:
             login_portal_and_enter_jw(driver)
-        except AcademicSessionRefreshRequired:
+        except (AcademicSessionRefreshRequired, TargetSystemUnavailable) as error:
             if not should_retry_with_visible_authorization(
                     getattr(driver, "_timetable_headless", False),
                     authorization_retried):
                 raise
 
             authorization_retried = True
+            # A portal-only timeout also needs the same visible SSO recovery.
+            # The retry guard above keeps visible failures and repeated failures terminal.
+            PROFILE_AUTH_MARKER.unlink(missing_ok=True)
+            print("后台教务导航失败，准备尝试一次可视恢复：", error)
             driver.quit()
             print("教务会话已过期，正在自动重启可视浏览器；无需重新执行任务。")
             driver = create_driver(automatic_visible_authorization=True)

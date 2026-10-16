@@ -23,7 +23,7 @@ class TimetableImportBoundaryTest(unittest.TestCase):
     def test_java_service_owns_the_atomic_database_import(self):
         source = (
             PROJECT_BACKEND
-            / "legacy-app/src/main/java/org/example/backend/service/impl/ClassTimetableServiceImpl.java"
+            / "src/main/java/org/example/backend/service/impl/ClassTimetableServiceImpl.java"
         ).read_text(encoding="utf-8")
 
         self.assertIn("importStandardCsv", source)

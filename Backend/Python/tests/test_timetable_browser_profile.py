@@ -47,7 +47,7 @@ class TimetableBrowserProfileTest(unittest.TestCase):
 
     def test_crawler_restarts_in_same_run_after_session_expiry(self):
         source = (MODULE_PATH.parent / "crawl_school_timetable.py").read_text(encoding="utf-8")
-        self.assertIn("except AcademicSessionRefreshRequired", source)
+        self.assertIn("except (AcademicSessionRefreshRequired, TargetSystemUnavailable)", source)
         self.assertIn("driver = create_driver()", source)
         self.assertIn("create_driver(automatic_visible_authorization=True)", source)
         self.assertIn("可视自动续权未成功，已切换为人工点击兜底", source)
