@@ -163,9 +163,9 @@ const loadCourseEnvironmentOptions = async () => {
     updateCourseLinkedOptions(business.formModel.course)
   } catch (error) {
     console.error('加载课程环境联动下拉数据失败：', error)
-    courseOptions.value = ['Java程序设计', '人体工程学', '数据库原理'].map(buildOption)
-    allTeacherOptions.value = ['杨君豪', '张明'].map(buildOption)
-    allClassOptions.value = ['软件2405班', '软件工程2班'].map(buildOption)
+    courseOptions.value = []
+    allTeacherOptions.value = []
+    allClassOptions.value = []
     teacherOptions.value = allTeacherOptions.value
     classOptions.value = allClassOptions.value
   }
@@ -220,20 +220,20 @@ const loadLabOptions = async () => {
 }
 
 const loadLinkedEnvironmentRecords = async () => {
-  const loadRecords = async (url, fallbackRecords = []) => {
+  const loadRecords = async (url) => {
     try {
       const res = await http.get(url)
       const list = getResponseList(res.data ?? res)
-      return list.length ? list : fallbackRecords
+      return list
     } catch (error) {
       console.error(`加载${url}联动数据失败：`, error)
-      return fallbackRecords
+      return []
     }
   }
 
   const [softwareList, templateList] = await Promise.all([
-    loadRecords('/lab-software', SOFTWARE_ENVIRONMENT_MODULE.records || []),
-    loadRecords('/environment-templates', ENVIRONMENT_TEMPLATE_MODULE.records || []),
+    loadRecords('/lab-software'),
+    loadRecords('/environment-templates'),
   ])
 
   softwareRecords.value = softwareList
@@ -374,14 +374,28 @@ const detailHighlights = computed(() =>
 const statusOverview = computed(() => business.statusSummary.value.filter((item) => item.count > 0 || item.percentage > 0))
 
 const metrics = computed(() => {
-  const configuredMetrics = activeModuleConfig.value.metrics || []
-  const fallbackMetrics = [
+  const records = business.records.value
+  const countStatus = (status) => records.filter((record) => record.status === status).length
+  if (activeTab.value === 'software') {
+    const labs = new Set(records.map((record) => record.labId || record.lab).filter(Boolean))
+    return [
+      { label: '软件条目', value: records.length, trend: `覆盖 ${labs.size} 间实验室` },
+      { label: '待安装任务', value: countStatus('待安装'), trend: '按软件安装状态统计' },
+      { label: '授权异常', value: records.filter((record) => record.status === '授权异常' || record.license === '授权异常').length, trend: '需管理员复核' },
+    ]
+  }
+  if (activeTab.value === 'course') {
+    return [
+      { label: '环境需求', value: records.length, trend: '已登记的课程环境需求' },
+      { label: '待教师确认', value: countStatus('待教师确认'), trend: '等待教师核验' },
+      { label: '已确认', value: countStatus('已确认'), trend: '已完成教师确认' },
+    ]
+  }
+  return [
     { label: '记录总数', value: business.totalRecordCount.value, trend: `当前筛选 ${business.filteredRecordCount.value} 条` },
     { label: '状态类型', value: business.statusOptions.value.length, trend: '按安装、确认、复用状态管理' },
-    { label: '可用实验室', value: labOptions.value.length || '-', trend: '用于环境归属选择' },
+    { label: '可用实验室', value: labOptions.value.length, trend: '用于环境归属选择' },
   ]
-
-  return (configuredMetrics.length ? configuredMetrics : fallbackMetrics).slice(0, 3)
 })
 
 const workflowSteps = computed(() => {

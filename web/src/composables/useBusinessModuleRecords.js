@@ -629,6 +629,7 @@ export function useBusinessModuleRecords({ route, moduleConfig, pageTitle }) {
   })
 
   return {
+    records: computed(() => recordsState.value),
     keyword,
     statusFilter,
     currentPage,

@@ -129,7 +129,7 @@ smart-lab:
     devices: []
   oss:
     # 是否启用阿里云 OSS 文件上传。
-    enabled: ${SMART_LAB_OSS_ENABLED:false}
+    enabled: ${SMART_LAB_OSS_ENABLED:True}
     # OSS endpoint，例如 oss-cn-hangzhou.aliyuncs.com。
     endpoint: ${ALIYUN_OSS_ENDPOINT:oss-cn-beijing.aliyuncs.com}
     # OSS bucket 名称。

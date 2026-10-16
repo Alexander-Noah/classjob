@@ -207,18 +207,10 @@ onBeforeUnmount(clearAvatarPreview)
         'is-mobile-open': isMobileMenuOpen,
       }"
     >
-      <div class="sidebar-brand">
-        <span class="brand-icon" aria-hidden="true">
-          <el-icon>
-            <OfficeBuilding />
-          </el-icon>
-        </span>
-        <div class="brand-copy">
-          <strong>智云实验室</strong>
-          <span>{{ roleLayout.subtitle }}</span>
-        </div>
+      <div class="sidebar-brand" aria-label="智云实验室 Smart Lab Management">
+        <img class="brand-lockup" src="/login-brand-transparent.png" alt="智云实验室 Smart Lab Management" />
+        <span class="brand-symbol" aria-hidden="true"><img src="/login-brand-transparent.png" alt="" /></span>
       </div>
-
       <el-scrollbar class="sidebar-scroll">
         <el-menu
           :collapse="isSidebarCollapsed"
@@ -429,50 +421,36 @@ onBeforeUnmount(clearAvatarPreview)
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 64px;
-  padding: 0 18px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-  color: #ffffff;
-  white-space: nowrap;
-}
-
-.brand-icon {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  background: var(--primary-color);
-  font-size: 21px;
+  height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.brand-copy {
+.brand-lockup {
+  display: block;
+  width: 204px;
+  height: 60px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-symbol {
+  display: none;
+  width: 44px;
+  height: 48px;
   overflow: hidden;
 }
 
-.brand-copy strong,
-.brand-copy span {
-  display: block;
-  line-height: 1.25;
+.brand-symbol img {
+  width: 174px;
+  height: auto;
+  max-width: none;
+  filter: brightness(0) invert(1);
 }
 
-.brand-copy strong {
-  font-size: 16px;
-}
-
-.brand-copy span {
-  margin-top: 3px;
-  color: #94a3b8;
-  font-size: 12px;
-}
-
-.is-collapsed .brand-copy {
-  display: none;
-}
-
+.is-collapsed .brand-lockup { display: none; }
+.is-collapsed .brand-symbol { display: block; }
 .sidebar-scroll {
   height: calc(100vh - 64px);
 }
@@ -863,9 +841,8 @@ onBeforeUnmount(clearAvatarPreview)
     transform: translateX(0);
   }
 
-  .admin-sidebar.is-collapsed .brand-copy {
-    display: block;
-  }
+  .admin-sidebar.is-collapsed .brand-lockup { display: block; }
+  .admin-sidebar.is-collapsed .brand-symbol { display: none; }
 
   .sidebar-menu {
     width: 100%;
