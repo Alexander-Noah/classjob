@@ -1,0 +1,19 @@
+{
+  "schema": "smart_lab_feature_ui_it_b6cf6a02c54b464aac351c429f174ab8",
+  "startedAt": "2026-10-15T11:29:18.243Z",
+  "success": true,
+  "checks": [
+    "127 SELECT plans on a full isolated clone",
+    "20 original core API reads and administrator login",
+    "16 restored feature API reads",
+    "actual role profiles expose all restored frontend menu entries",
+    "lab/teacher roles work without granting system administration or approval privileges",
+    "consumable creation and inbound stock movement persist",
+    "IoT device creation and lab listing persist; no hardware command sent",
+    "system settings save and reload persist",
+    "activation code generation and listing persist",
+    "environment template create and list persist"
+  ],
+  "completedAt": "2026-10-15T11:29:36.877Z",
+  "isolatedCloneRemoved": true
+}

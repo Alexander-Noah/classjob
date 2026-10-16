@@ -1,0 +1,20 @@
+{
+  "database": "smart_lab_basic",
+  "checkedAt": "2026-10-15T08:02:51.447Z",
+  "passed": true,
+  "insertedChecks": {
+    "job": 1,
+    "lab": 1,
+    "audit": 1,
+    "usage": 1,
+    "config": 1,
+    "device": 1,
+    "notice": 1,
+    "repair": 1,
+    "recipient": 1,
+    "timetable": 1,
+    "reservation": 1,
+    "device_event": 2
+  },
+  "rollbackVerified": true
+}

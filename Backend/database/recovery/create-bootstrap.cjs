@@ -1,0 +1,17 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const credentialPath=path.join(__dirname,'.local-admin-credentials.txt');
+if(fs.existsSync(credentialPath))throw Error('Credentials already exist; refusing to replace them.');
+const password='Zy!'+crypto.randomBytes(15).toString('base64url');
+const salt=crypto.randomBytes(16);
+const encoded=['pbkdf2','120000',salt.toString('base64'),crypto.pbkdf2Sync(password,salt,120000,32,'sha256').toString('base64')].join('$');
+const permissions=JSON.stringify([{group:'平台治理',items:['用户管理','系统设置','激活管理','平台统计','通知公告']}]);
+const sql=`USE smart_lab_recovered_20261015;
+START TRANSACTION;
+INSERT INTO role(role_code,role_name) VALUES ('systemAdmin','系统管理员'),('labAdmin','实验室管理员'),('teacher','教师'),('academic','教务人员');
+INSERT INTO sys_user(username,password,real_name,status,permissions) VALUES ('recovery_admin','${encoded}','恢复管理员',1,'${permissions}');
+INSERT INTO user_role(user_id,role_id) SELECT u.id,r.id FROM sys_user u CROSS JOIN role r WHERE u.username='recovery_admin' AND r.role_code='systemAdmin';
+COMMIT;
+`;
+fs.writeFileSync(path.join(__dirname,'02-bootstrap.sql'),sql);
+fs.writeFileSync(credentialPath,`数据库：smart_lab_recovered_20261015\n系统登录用户名：recovery_admin\n系统登录密码：${password}\n此账号为新建恢复账号。登录后请修改密码。\n`);
+console.log('Created bootstrap SQL and local credentials file; password omitted from output.');

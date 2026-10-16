@@ -1,0 +1,7 @@
+{
+  "success": true,
+  "checkedAt": "2026-10-15T11:31:40.096Z",
+  "frontendStatus": 200,
+  "authenticatedFeatureReads": 16,
+  "backend": "http://127.0.0.1:8080"
+}

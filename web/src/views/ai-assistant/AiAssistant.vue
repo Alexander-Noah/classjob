@@ -615,7 +615,7 @@ const requestBackendAiAnswer = async (question) => {
   return answer
 }
 
-const submitQuestion = async (text) => {
+const submitQuestion = async (text, onSubmitted) => {
   const question = text?.trim()
   if (!question) return false
 
@@ -632,6 +632,7 @@ const submitQuestion = async (text) => {
     }
 
     await appendMessage('user', question)
+    onSubmitted?.()
     isDirectAiLoading.value = true
     try {
       const answer = await requestBackendAiAnswer(question)
@@ -653,10 +654,12 @@ const submitQuestion = async (text) => {
 
   await appendMessage('user', question)
   socketRef.value.sendText(question)
+  onSubmitted?.()
   return true
 }
 
 const sendMessage = async () => {
+  if (isDirectAiLoading.value) return
   const text = inputValue.value.trim()
 
   if (!text) {
@@ -664,9 +667,9 @@ const sendMessage = async () => {
     return
   }
 
-  if (await submitQuestion(text)) {
-    inputValue.value = ''
-  }
+  await submitQuestion(text, () => {
+    if (inputValue.value.trim() === text) inputValue.value = ''
+  })
 }
 
 const toggleSpeech = (value) => {

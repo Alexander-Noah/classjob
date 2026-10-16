@@ -1,0 +1,122 @@
+{
+  "database": "smart_lab_basic",
+  "checkedAt": "2026-10-15T08:04:26.540Z",
+  "foreignKeys": 19,
+  "passed": true,
+  "checks": [
+    {
+      "table": "audit_event",
+      "column": "actor_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "device",
+      "column": "lab_id",
+      "parent": "lab",
+      "orphans": 0
+    },
+    {
+      "table": "device",
+      "column": "owner_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "device_event",
+      "column": "device_id",
+      "parent": "device",
+      "orphans": 0
+    },
+    {
+      "table": "device_event",
+      "column": "operator_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "lab",
+      "column": "manager_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "lab_reservation",
+      "column": "lab_id",
+      "parent": "lab",
+      "orphans": 0
+    },
+    {
+      "table": "lab_reservation",
+      "column": "applicant_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "notice",
+      "column": "created_by",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "notice_recipient",
+      "column": "notice_id",
+      "parent": "notice",
+      "orphans": 0
+    },
+    {
+      "table": "notice_recipient",
+      "column": "user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "repair_order",
+      "column": "device_id",
+      "parent": "device",
+      "orphans": 0
+    },
+    {
+      "table": "repair_order",
+      "column": "lab_id",
+      "parent": "lab",
+      "orphans": 0
+    },
+    {
+      "table": "repair_order",
+      "column": "reporter_user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "timetable_import_job",
+      "column": "config_id",
+      "parent": "timetable_integration_config",
+      "orphans": 0
+    },
+    {
+      "table": "usage_record",
+      "column": "lab_id",
+      "parent": "lab",
+      "orphans": 0
+    },
+    {
+      "table": "usage_record",
+      "column": "user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    },
+    {
+      "table": "user_role",
+      "column": "role_id",
+      "parent": "role",
+      "orphans": 0
+    },
+    {
+      "table": "user_role",
+      "column": "user_id",
+      "parent": "sys_user",
+      "orphans": 0
+    }
+  ]
+}
