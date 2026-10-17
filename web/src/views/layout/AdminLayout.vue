@@ -627,26 +627,6 @@ onBeforeUnmount(clearAvatarPreview)
   background: rgba(244, 246, 250, 0.22);
 }
 
-.admin-content :deep(.el-card) {
-  --el-card-bg-color: var(--surface-color);
-  background-color: var(--surface-color);
-}
-
-.admin-content :deep(:is(.el-card, .page-panel, .hero-actions)) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(235, 244, 255, 0.12) 48%, rgba(255, 255, 255, 0.24));
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 12px 32px rgba(30, 41, 59, 0.14), 0 2px 5px rgba(30, 41, 59, 0.06),
-    inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 2px 0 3px rgba(255, 255, 255, 0.8),
-    inset 0 -10px 22px rgba(71, 85, 105, 0.12);
-  -webkit-backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
-  backdrop-filter: var(--glass-backdrop, blur(1.2px) saturate(1.2));
-}
-
-.admin-content :deep(.el-card__body) {
-  background-color: transparent;
-}
-
 .admin-content > :deep(*) {
   min-width: 0;
 }
