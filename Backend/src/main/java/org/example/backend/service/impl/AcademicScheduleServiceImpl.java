@@ -47,6 +47,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
     private final AcademicCredentialService academicCredentialService;
     private final HttpClient httpClient;
 
+    /**
+     * 构造 AcademicScheduleServiceImpl，初始化当前实例。
+     * @param courseEnvironmentService 课程环境服务参数。
+     * @param academicCredentialService 教务凭据服务参数。
+     */
     public AcademicScheduleServiceImpl(
             CourseEnvironmentService courseEnvironmentService,
             AcademicCredentialService academicCredentialService
@@ -59,6 +64,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
                 .build();
     }
 
+    /**
+     * 解析课表。
+     * @param request 请求参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<AcademicScheduleCourse> parseSchedule(AcademicScheduleImportRequest request) {
         request = ensureRequest(request);
@@ -69,6 +79,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return parseScheduleHtml(html, request);
     }
 
+    /**
+     * 获取课表。
+     * @param request 请求参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<AcademicScheduleCourse> fetchSchedule(AcademicScheduleImportRequest request) {
         request = ensureRequest(request);
@@ -112,6 +127,12 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         }
     }
 
+    /**
+     * 导入课表。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param request 请求参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<CourseEnvironmentEntity> importSchedule(AcademicScheduleImportRequest request) {
@@ -146,10 +167,21 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return savedRecords;
     }
 
+    /**
+     * 确保满足请求。
+     * @param request 请求参数。
+     * @return AcademicScheduleImportRequest 类型的处理结果。
+     */
     private AcademicScheduleImportRequest ensureRequest(AcademicScheduleImportRequest request) {
         return request == null ? new AcademicScheduleImportRequest() : request;
     }
 
+    /**
+     * 解析课表HTML。
+     * @param html HTML参数。
+     * @param request 请求参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<AcademicScheduleCourse> parseScheduleHtml(String html, AcademicScheduleImportRequest request) {
         List<AcademicScheduleCourse> courses = new ArrayList<>();
         Matcher rowMatcher = ROW_PATTERN.matcher(html);
@@ -177,6 +209,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return courses;
     }
 
+    /**
+     * 提取Cells。
+     * @param rowHtml 行HTML参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> extractCells(String rowHtml) {
         List<String> cells = new ArrayList<>();
         Matcher cellMatcher = CELL_PATTERN.matcher(rowHtml);
@@ -186,6 +223,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return cells;
     }
 
+    /**
+     * 解析Period。
+     * @param cellHtml cellHTML参数。
+     * @return PeriodInfo 类型的处理结果。
+     */
     private PeriodInfo parsePeriod(String cellHtml) {
         String text = cleanText(cellHtml).replace(" ", "");
         Matcher matcher = PERIOD_PATTERN.matcher(text);
@@ -195,6 +237,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return new PeriodInfo(matcher.group(1).replace(" ", ""), matcher.group(2).replace("~", "-").replace("—", "-"));
     }
 
+    /**
+     * 提取课程Blocks。
+     * @param cellHtml cellHTML参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> extractCourseBlocks(String cellHtml) {
         String normalizedHtml = cellHtml
                 .replaceAll("(?is)<hr\\b[^>]*>", "\n---COURSE---\n")
@@ -215,6 +262,14 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return blocks;
     }
 
+    /**
+     * 解析课程Block。
+     * @param block block参数。
+     * @param periodInfo periodInfo参数。
+     * @param dayLabel day标签参数。
+     * @param request 请求参数。
+     * @return AcademicScheduleCourse 类型的处理结果。
+     */
     private AcademicScheduleCourse parseCourseBlock(String block, PeriodInfo periodInfo, String dayLabel, AcademicScheduleImportRequest request) {
         List<String> lines = new ArrayList<>();
         for (String line : block.split("\\n")) {
@@ -267,6 +322,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return course;
     }
 
+    /**
+     * 解析课表Uri。
+     * @param request 请求参数。
+     * @return URI 类型的处理结果。
+     */
     private URI resolveScheduleUri(AcademicScheduleImportRequest request) {
         String baseUrl = firstNonBlank(request.getBaseUrl(), DEFAULT_BASE_URL);
         URI baseUri = URI.create(baseUrl);
@@ -282,6 +342,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return baseUri.resolve(schedulePath);
     }
 
+    /**
+     * 登录AndBuildCookie的处理逻辑。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String loginAndBuildCookie(AcademicScheduleImportRequest request) {
         if (isBlank(request.getUsername()) || isBlank(request.getPassword())) {
             throw new IllegalArgumentException("请填写教务账号和密码");
@@ -329,8 +394,8 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
             }
 
             String cookie = cookieManager.getCookieStore().getCookies().stream()
-                    .map(cookieItem -> cookieItem.getName() + "=" + cookieItem.getValue())
-                    .reduce((left, right) -> left + "; " + right)
+                    .map(/** 将当前条目转换为目标结果。 入参：cookieItem。 */ cookieItem -> cookieItem.getName() + "=" + cookieItem.getValue())
+                    .reduce(/** 合并当前条目与累计结果。 入参：left、right。 */ (left, right) -> left + "; " + right)
                     .orElse("");
             if (isBlank(cookie)) {
                 throw new IllegalStateException("教务系统未返回有效登录 Cookie");
@@ -344,6 +409,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         }
     }
 
+    /**
+     * 构建Get。
+     * @param uri uri参数。
+     * @return HttpRequest 类型的处理结果。
+     */
     private HttpRequest buildGet(URI uri) {
         return HttpRequest.newBuilder(uri)
                 .timeout(Duration.ofSeconds(12))
@@ -353,6 +423,16 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
                 .build();
     }
 
+    /**
+     * 构建Encoded凭据。
+     * @param loginClient 登录客户端参数。
+     * @param sessUri sessUri参数。
+     * @param username username参数。
+     * @param password 密码参数。
+     * @return String 类型的处理结果。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     * @throws InterruptedException 当前调用无法继续完成时抛出。
+     */
     private String buildEncodedCredential(HttpClient loginClient, URI sessUri, String username, String password)
             throws IOException, InterruptedException {
         HttpRequest sessRequest = HttpRequest.newBuilder(sessUri)
@@ -396,6 +476,12 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return encoded.toString();
     }
 
+    /**
+     * 构建登录Form。
+     * @param request 请求参数。
+     * @param encoded encoded参数。
+     * @return String 类型的处理结果。
+     */
     private String buildLoginForm(AcademicScheduleImportRequest request, String encoded) {
         List<String> fields = new ArrayList<>();
         fields.add(formField("USERNAME", request.getUsername()));
@@ -409,14 +495,30 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return String.join("&", fields);
     }
 
+    /**
+     * formField的处理逻辑。
+     * @param name 名称参数。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String formField(String name, String value) {
         return URLEncoder.encode(name, StandardCharsets.UTF_8) + "=" + URLEncoder.encode(firstNonBlank(value, ""), StandardCharsets.UTF_8);
     }
 
+    /**
+     * clean文本的处理逻辑。
+     * @param html HTML参数。
+     * @return String 类型的处理结果。
+     */
     private String cleanText(String html) {
         return normalizeLines(TAG_PATTERN.matcher(BR_PATTERN.matcher(html).replaceAll("\n")).replaceAll("\n"));
     }
 
+    /**
+     * 归一化Lines。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeLines(String value) {
         return decodeHtml(value)
                 .replace('\u00a0', ' ')
@@ -425,6 +527,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
                 .trim();
     }
 
+    /**
+     * 解码HTML。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String decodeHtml(String value) {
         return value
                 .replace("&nbsp;", " ")
@@ -434,16 +541,31 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
                 .replace("&quot;", "\"");
     }
 
+    /**
+     * looksLikeMetadata的处理逻辑。
+     * @param line line参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean looksLikeMetadata(String line) {
         return containsAny(line, "第", "节", "周", "星期", "教师", "老师", "讲师", "教室", "实验室", "实训室", "校区")
                 || line.matches(".*\\d{1,2}:\\d{2}.*");
     }
 
+    /**
+     * looksLike实验室的处理逻辑。
+     * @param line line参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean looksLikeLab(String line) {
         return containsAny(line, "实验室", "实训室", "机房", "教室", "楼", "A", "B", "C", "D")
                 && line.matches(".*([A-D]\\d{3}|实验室|实训室|机房|教室|楼).*");
     }
 
+    /**
+     * 判断是否包含Any。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean containsAny(String value, String... keywords) {
         if (value == null) {
             return false;
@@ -456,10 +578,19 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return false;
     }
 
+    /**
+     * 裁剪标签。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimLabel(String value) {
         return value == null ? "" : value.replaceFirst("^(课程|教师|老师|地点|教室|班级)[:：]", "").trim();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (!isBlank(value)) {
@@ -469,6 +600,12 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return "";
     }
 
+    /**
+     * 上限的处理逻辑。
+     * @param value 值参数。
+     * @param maxLength max长度参数。
+     * @return String 类型的处理结果。
+     */
     private String limit(String value, int maxLength) {
         if (value == null || value.length() <= maxLength) {
             return value;
@@ -476,10 +613,20 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         return value.substring(0, maxLength);
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * 判断是否具有登录凭据。
+     * @param request 请求参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasLoginCredential(AcademicScheduleImportRequest request) {
         return request != null && !isBlank(request.getUsername()) && !isBlank(request.getPassword());
     }

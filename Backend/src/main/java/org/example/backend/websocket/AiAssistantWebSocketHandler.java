@@ -34,12 +34,22 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
     private final SpeechRecognitionService speechRecognitionService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 获取Sub协议。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<String> getSubProtocols() {
         // Negotiate a fixed protocol; the JWT is only consumed by the handshake interceptor.
         return List.of("smart-lab.ai.v1");
     }
 
+    /**
+     * 构造 AiAssistantWebSocketHandler，初始化当前实例。
+     * @param aiAssistantService AIAssistant服务参数。
+     * @param speechRecognitionService 语音Recognition服务参数。
+     * @param objectMapper object数据映射器参数。
+     */
     public AiAssistantWebSocketHandler(
             AiAssistantService aiAssistantService,
             SpeechRecognitionService speechRecognitionService,
@@ -50,12 +60,22 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 在执行后处理连接Established。
+     * @param session 会话参数。
+     */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         session.getAttributes().put("sessionId", UUID.randomUUID().toString());
         log.info("AI assistant websocket connected session={}", session.getId());
     }
 
+    /**
+     * 处理文本消息。
+     * @param session 会话参数。
+     * @param message 消息参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         Map<String, Object> payload = readMessage(message.getPayload());
@@ -92,6 +112,12 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         }
     }
 
+    /**
+     * 处理Binary消息。
+     * @param session 会话参数。
+     * @param message 消息参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
         Object recognizerValue = session.getAttributes().get("recognizer");
@@ -107,12 +133,22 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         }
     }
 
+    /**
+     * 在执行后处理连接Closed。
+     * @param session 会话参数。
+     * @param status 状态参数。
+     */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         closeRecognizer(session);
         log.info("AI assistant websocket closed session={} status={}", session.getId(), status);
     }
 
+    /**
+     * 启动语音Recognition。
+     * @param session 会话参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private void startSpeechRecognition(WebSocketSession session) throws Exception {
         closeRecognizer(session);
         if (!speechRecognitionService.isAvailable()) {
@@ -128,6 +164,11 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         sendJson(session, Map.of("type", "listen", "state", "start"));
     }
 
+    /**
+     * 停止语音Recognition。
+     * @param session 会话参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private void stopSpeechRecognition(WebSocketSession session) throws Exception {
         Object recognizerValue = session.getAttributes().remove("recognizer");
         @SuppressWarnings("unchecked")
@@ -152,6 +193,10 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         }
     }
 
+    /**
+     * 关闭Recognizer。
+     * @param session 会话参数。
+     */
     private void closeRecognizer(WebSocketSession session) {
         Object recognizerValue = session.getAttributes().remove("recognizer");
         if (recognizerValue instanceof Recognizer recognizer) {
@@ -160,6 +205,14 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         session.getAttributes().remove("transcriptSegments");
     }
 
+    /**
+     * 发送Answer。
+     * @param session 会话参数。
+     * @param question question参数。
+     * @param agentSessionId agent会话标识参数。
+     * @param images images参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private void sendAnswer(
             WebSocketSession session,
             String question,
@@ -172,6 +225,11 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         sendJson(session, Map.of("type", "tts", "state", "stop"));
     }
 
+    /**
+     * 读取消息。
+     * @param payload 载荷参数。
+     * @return 包含 type、listen、state、detect、text 等字段的结果对象。
+     */
     private Map<String, Object> readMessage(String payload) {
         try {
             return objectMapper.readValue(payload, MESSAGE_TYPE);
@@ -184,16 +242,32 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         }
     }
 
+    /**
+     * 发送JSON。
+     * @param session 会话参数。
+     * @param payload 载荷参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private void sendJson(WebSocketSession session, Map<String, Object> payload) throws Exception {
         if (session.isOpen()) {
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(payload)));
         }
     }
 
+    /**
+     * as字符串的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String asString(Object value) {
         return value == null ? "" : String.valueOf(value);
     }
 
+    /**
+     * asImage列表的处理逻辑。
+     * @param value 值参数。
+     * @return 当前操作得到的记录集合。
+     */
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> asImageList(Object value) {
         if (!(value instanceof List<?> items)) {
@@ -209,12 +283,22 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         return images;
     }
 
+    /**
+     * 追加TranscriptSegment。
+     * @param session 会话参数。
+     * @param text 文本参数。
+     */
     @SuppressWarnings("unchecked")
     private void appendTranscriptSegment(WebSocketSession session, String text) {
         List<String> transcriptSegments = (List<String>) session.getAttributes().get("transcriptSegments");
         appendTranscriptSegment(transcriptSegments, text);
     }
 
+    /**
+     * 追加TranscriptSegment。
+     * @param transcriptSegments transcriptSegments参数。
+     * @param text 文本参数。
+     */
     private void appendTranscriptSegment(List<String> transcriptSegments, String text) {
         if (transcriptSegments == null || text == null || text.isBlank()) {
             return;
@@ -222,6 +306,11 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         transcriptSegments.add(normalizeTranscript(text));
     }
 
+    /**
+     * 连接Transcript。
+     * @param transcriptSegments transcriptSegments参数。
+     * @return String 类型的处理结果。
+     */
     private String joinTranscript(List<String> transcriptSegments) {
         if (transcriptSegments == null || transcriptSegments.isEmpty()) {
             return "";
@@ -229,6 +318,11 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
         return normalizeTranscript(String.join(" ", transcriptSegments));
     }
 
+    /**
+     * 归一化Transcript。
+     * @param text 文本参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeTranscript(String text) {
         return text
                 .trim()

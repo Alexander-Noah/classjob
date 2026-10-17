@@ -11,12 +11,21 @@ defineOptions({
 defineProps({
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
 
 defineEmits(['delete', 'edit', 'inventory', 'selectionChange', 'transfer', 'view'])
 
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getStatusType = (status) => {
   if (status === '正常') return 'success'
   if (status === '维修中') return 'warning'
@@ -24,8 +33,18 @@ const getStatusType = (status) => {
   return 'info'
 }
 
+/**
+ * display实验室名称的处理逻辑。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const displayLabName = (row = {}) => row.labName || row.laboratoryName || row.lab || row.roomNo || row.location || '未绑定'
 
+/**
+ * displayLocation的处理逻辑。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const displayLocation = (row = {}) => row.roomNo || row.location || row.installLocation || '未绑定'
 </script>
 

@@ -19,15 +19,28 @@ import java.util.List;
 public class UsageRecordController {
     private final UsageRecordService usageRecordService;
 
+    /**
+     * 构造 UsageRecordController，初始化当前实例。
+     * @param usageRecordService usage记录服务参数。
+     */
     public UsageRecordController(UsageRecordService usageRecordService) {
         this.usageRecordService = usageRecordService;
     }
 
+    /**
+     * 列出Usage记录集合。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/usage-records")
     public Result listUsageRecords() {
         return Result.success("获取使用记录成功", usageRecordService.listUsageRecords());
     }
 
+    /**
+     * replaceUsage记录集合的处理逻辑。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/usage-records/batch")
     public Result replaceUsageRecords(@RequestBody UsageRecordBatchRequest request) {
         List<UsageRecordEntity> records = request == null || request.getRecords() == null
@@ -36,21 +49,40 @@ public class UsageRecordController {
         return Result.success("批量保存使用记录成功", usageRecordService.replaceUsageRecords(records));
     }
 
+    /**
+     * reviewUsage记录的处理逻辑。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/usage-records/{id}/review")
     public Result reviewUsageRecord(@PathVariable Long id) {
         return Result.success("复核使用记录成功", usageRecordService.updateStatus(id, "正常"));
     }
 
+    /**
+     * abnormalUsage记录的处理逻辑。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/usage-records/{id}/abnormal")
     public Result abnormalUsageRecord(@PathVariable Long id) {
         return Result.success("标记使用记录异常成功", usageRecordService.updateStatus(id, "异常"));
     }
 
+    /**
+     * 归档Usage记录的处理逻辑。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/usage-records/{id}/archive")
     public Result archiveUsageRecord(@PathVariable Long id) {
         return Result.success("归档使用记录成功", usageRecordService.updateStatus(id, "已归档"));
     }
 
+    /**
+     * 重置Usage记录集合。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/usage-records/reset")
     public Result resetUsageRecords() {
         return Result.success("重置使用记录成功", usageRecordService.resetUsageRecords());

@@ -16,9 +16,14 @@ const themeStore = useThemeStore()
 
 activationStore.hydrate()
 
-const renderIcon = (icon: string) => () => h('div', { class: `${icon} text-18px` })
+/**
+ * 渲染Icon。
+ * 入参：icon（icon）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const renderIcon = (icon: string) => /** 处理当前调用传入的回调逻辑。 */ () => h('div', { class: `${icon} text-18px` })
 
-const menuOptions = computed(() => [
+const menuOptions = computed(/** 计算派生状态。 */ () => [
   {
     label: '设备面板',
     key: '/',
@@ -51,22 +56,26 @@ const pageTitleMap: Record<string, string> = {
   '/gateway': '连接设置'
 }
 
-const pageTitle = computed(() => pageTitleMap[route.path] || '本地监测客户端')
-const localHostStatusType = computed(() => {
+const pageTitle = computed(/** 计算派生状态。 */ () => pageTitleMap[route.path] || '本地监测客户端')
+const localHostStatusType = computed(/** 计算派生状态。 */ () => {
   if (monitorStore.localHost.status === 'warning') return 'text-#b45309 bg-#fffbeb ring-#fde68a'
   if (monitorStore.localHost.status === 'online') return 'text-#047857 bg-#ecfdf5 ring-#a7f3d0'
   return 'text-slate-500 bg-slate-100 ring-slate-200'
 })
-const localHostStatusText = computed(() => {
+const localHostStatusText = computed(/** 计算派生状态。 */ () => {
   if (monitorStore.localHost.status === 'warning') return '高负载'
   if (monitorStore.localHost.status === 'online') return '在线'
   return '未采集'
 })
-const localHostMetricsText = computed(() => {
+const localHostMetricsText = computed(/** 计算派生状态。 */ () => {
   const metrics = monitorStore.localHost.metrics
   return `CPU ${Math.round(metrics.cpuUsage)}% / 内存 ${Math.round(metrics.memoryUsage)}%`
 })
 
+/**
+ * 处理MenuSelect。
+ * 入参：key（键）。
+ */
 function handleMenuSelect(key: string) {
   if (!activationStore.isUsable && key !== '/gateway') {
     router.push('/gateway')

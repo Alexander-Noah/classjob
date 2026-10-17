@@ -14,7 +14,7 @@ const ROLE_CODE_MAP = {
   教务人员: 'academic',
 }
 
-const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(([name, code]) => [code, name]))
+const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(/** 将当前条目转换为目标结果。 */ ([name, code]) => [code, name]))
 
 const PERMISSIONS_BY_ROLE = {
   系统管理员: [{ group: '平台治理', items: ['用户管理', '系统设置', '激活管理', '平台统计', '通知公告'] }],
@@ -129,15 +129,40 @@ const MOCK_USERS = [
   },
 ]
 
+/**
+ * 复制记录集合。
+ * 入参：records（记录集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const cloneRecords = (records) => JSON.parse(JSON.stringify(records || []))
 
+/**
+ * 获取角色名称。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRoleName = (record = {}) => record.roleName || ROLE_NAME_MAP[record.roleCode] || record.role || '教师'
 
+/**
+ * 获取角色编码。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRoleCode = (record = {}) => record.roleCode || ROLE_CODE_MAP[getRoleName(record)] || 'teacher'
 
+/**
+ * 获取默认权限。
+ * 入参：roleName（角色名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDefaultPermissions = (roleName) =>
   JSON.stringify(roleName === '维修人员' ? [] : PERMISSIONS_BY_ROLE[roleName] || PERMISSIONS_BY_ROLE.教师)
 
+/**
+ * 确保满足用户Shape。
+ * 入参：record（记录）。
+ * @returns 组装的键值对象。
+ */
 const ensureUserShape = (record = {}) => {
   const roleName = getRoleName(record)
 
@@ -161,6 +186,10 @@ const ensureUserShape = (record = {}) => {
   }
 }
 
+/**
+ * 读取Mock用户。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readMockUsers = () => {
   if (typeof window === 'undefined') return cloneRecords(MOCK_USERS).map(ensureUserShape)
 
@@ -173,11 +202,20 @@ const readMockUsers = () => {
   }
 }
 
+/**
+ * 写入Mock用户。
+ * 入参：users（用户）。
+ */
 const writeMockUsers = (users) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(ADMIN_USERS_STORAGE_KEY, JSON.stringify(users.map(ensureUserShape)))
 }
 
+/**
+ * 归一化用户响应。
+ * 入参：data（数据）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeUsersResponse = (data) => {
   if (Array.isArray(data?.data?.records)) return data.data.records
   if (Array.isArray(data?.records)) return data.records
@@ -186,27 +224,42 @@ const normalizeUsersResponse = (data) => {
   return []
 }
 
+/**
+ * 归一化总数响应。
+ * 入参：data（数据）；fallbackLength（fallback长度）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeTotalResponse = (data, fallbackLength) =>
   Number(data?.data?.total ?? data?.total ?? fallbackLength ?? 0)
 
+/**
+ * 归一化用户响应。
+ * 入参：data（数据）；fallbackUser（fallback用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeUserResponse = (data, fallbackUser) => {
   if (data?.data && typeof data.data === 'object' && !Array.isArray(data.data)) return data.data
   if (data && typeof data === 'object' && !Array.isArray(data) && !('code' in data && !('id' in data))) return data
   return fallbackUser
 }
 
+/**
+ * 筛选Mock用户。
+ * 入参：users（用户）；params（参数）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const filterMockUsers = (users, params = {}) => {
   const keyword = String(params.keyword || '').trim().toLowerCase()
   const role = params.role || params.roleName || ''
   const status = params.status ?? ''
   const department = params.department || ''
 
-  return users.filter((user) => {
+  return users.filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ (user) => {
     const matchKeyword =
       !keyword ||
       [user.realName, user.username, user.employeeNo, user.phone, user.email, user.department]
         .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(keyword))
+        .some(/** 判断当前条目是否满足任一匹配条件。 入参：field。 */ (field) => String(field).toLowerCase().includes(keyword))
     const matchRole = !role || role === '全部' || user.roleName === role
     const matchDepartment = !department || department === '全部' || user.department === department
     const matchStatus =
@@ -220,14 +273,24 @@ const filterMockUsers = (users, params = {}) => {
   })
 }
 
+/**
+ * 更新Mock用户By标识集合。
+ * 入参：ids（标识集合）；mapper（数据映射器）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const updateMockUsersByIds = (ids, mapper) => {
-  const idSet = new Set(ids.map((id) => String(id)))
+  const idSet = new Set(ids.map(/** 将当前条目转换为目标结果。 入参：id。 */ (id) => String(id)))
   const users = readMockUsers()
-  const nextUsers = users.map((user) => (idSet.has(String(user.id)) ? mapper(user) : user))
+  const nextUsers = users.map(/** 将当前条目转换为目标结果。 入参：user。 */ (user) => (idSet.has(String(user.id)) ? mapper(user) : user))
   writeMockUsers(nextUsers)
-  return nextUsers.filter((user) => idSet.has(String(user.id)))
+  return nextUsers.filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ (user) => idSet.has(String(user.id)))
 }
 
+/**
+ * 获取Mock用户页码。
+ * 入参：params（参数）。
+ * @returns 组装的键值对象。
+ */
 const getMockUserPage = (params = {}) => {
   const users = filterMockUsers(readMockUsers(), params)
   const page = Number(params.page || params.currentPage || 1)
@@ -240,6 +303,11 @@ const getMockUserPage = (params = {}) => {
   }
 }
 
+/**
+ * 创建Mock用户。
+ * 入参：payload（载荷）。
+ * @returns savedUser 的当前值。
+ */
 const createMockUser = (payload) => {
   const users = readMockUsers()
   const roleName = payload.roleName || ROLE_NAME_MAP[payload.roleCode] || payload.role || '教师'
@@ -259,9 +327,14 @@ const createMockUser = (payload) => {
   return savedUser
 }
 
+/**
+ * 更新Mock用户。
+ * 入参：id（标识）；payload（载荷）。
+ * @returns savedUser 的当前值。
+ */
 const updateMockUser = (id, payload) => {
   const users = readMockUsers()
-  const nextUsers = users.map((user) =>
+  const nextUsers = users.map(/** 将当前条目转换为目标结果。 入参：user。 */ (user) =>
     String(user.id) === String(id)
       ? ensureUserShape({
           ...user,
@@ -271,21 +344,31 @@ const updateMockUser = (id, payload) => {
         })
       : user,
   )
-  const savedUser = nextUsers.find((user) => String(user.id) === String(id)) || ensureUserShape({ ...payload, id })
-  writeMockUsers(nextUsers.some((user) => String(user.id) === String(id)) ? nextUsers : [savedUser, ...users])
+  const savedUser = nextUsers.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => String(user.id) === String(id)) || ensureUserShape({ ...payload, id })
+  writeMockUsers(nextUsers.some(/** 判断当前条目是否满足任一匹配条件。 入参：user。 */ (user) => String(user.id) === String(id)) ? nextUsers : [savedUser, ...users])
   return savedUser
 }
 
+/**
+ * 删除Mock用户。
+ * 入参：id（标识）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const deleteMockUser = (id) => {
   const users = readMockUsers()
-  const deletedUser = users.find((user) => String(user.id) === String(id))
-  writeMockUsers(users.filter((user) => String(user.id) !== String(id)))
+  const deletedUser = users.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => String(user.id) === String(id))
+  writeMockUsers(users.filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ (user) => String(user.id) !== String(id)))
   return deletedUser || { id }
 }
 
+/**
+ * 更新Mock用户状态。
+ * 入参：id（标识）；status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const updateMockUserStatus = (id, status) => {
   const nextStatus = status === '启用' || status === 1 || status === true ? 1 : 0
-  const updatedUsers = updateMockUsersByIds([id], (user) =>
+  const updatedUsers = updateMockUsersByIds([id], /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) =>
     ensureUserShape({
       ...user,
       status: nextStatus,
@@ -298,8 +381,13 @@ const updateMockUserStatus = (id, status) => {
   return updatedUsers[0] || { id, status: nextStatus }
 }
 
+/**
+ * 重置Mock用户密码。
+ * 入参：id（标识）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resetMockUserPassword = (id) => {
-  const updatedUsers = updateMockUsersByIds([id], (user) =>
+  const updatedUsers = updateMockUsersByIds([id], /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) =>
     ensureUserShape({
       ...user,
       logs: [{ time: '刚刚', content: '系统管理员重置登录密码', type: 'warning' }, ...(user.logs || [])].slice(0, 6),
@@ -308,14 +396,24 @@ const resetMockUserPassword = (id) => {
   return updatedUsers[0] || { id }
 }
 
+/**
+ * batchDeleteMock用户的处理逻辑。
+ * 入参：ids（标识集合）。
+ * @returns deletedUsers 的当前值。
+ */
 const batchDeleteMockUsers = (ids = []) => {
-  const idSet = new Set(ids.map((id) => String(id)))
+  const idSet = new Set(ids.map(/** 将当前条目转换为目标结果。 入参：id。 */ (id) => String(id)))
   const users = readMockUsers()
-  const deletedUsers = users.filter((user) => idSet.has(String(user.id)))
-  writeMockUsers(users.filter((user) => !idSet.has(String(user.id))))
+  const deletedUsers = users.filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ (user) => idSet.has(String(user.id)))
+  writeMockUsers(users.filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ (user) => !idSet.has(String(user.id))))
   return deletedUsers
 }
 
+/**
+ * 获取用户页码。
+ * 入参：params（参数）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function getUserPage(params = {}) {
   if (API_USE_MOCK) return getMockUserPage(params)
 
@@ -335,11 +433,20 @@ export async function getUserPage(params = {}) {
   }
 }
 
+/**
+ * 列出用户。
+ * 入参：params（参数）。
+ * @returns pageData.records 的当前值。
+ */
 export async function listUsers(params = {}) {
   const pageData = await getUserPage({ ...params, page: 1, pageSize: 1000 })
   return pageData.records
 }
 
+/**
+ * 列出用户选项。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function listUserOptions() {
   if (API_USE_MOCK) return readMockUsers().map(ensureUserShape)
 
@@ -351,6 +458,11 @@ export async function listUserOptions() {
   return normalizeUsersResponse(data).map(ensureUserShape)
 }
 
+/**
+ * 创建用户。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function createUser(payload) {
   if (API_USE_MOCK) return createMockUser(payload)
 
@@ -362,6 +474,11 @@ export async function createUser(payload) {
   return normalizeUserResponse(data, payload)
 }
 
+/**
+ * 更新用户。
+ * 入参：id（标识）；payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function updateUser(id, payload) {
   if (API_USE_MOCK) return updateMockUser(id, payload)
 
@@ -373,6 +490,11 @@ export async function updateUser(id, payload) {
   return normalizeUserResponse(data, payload)
 }
 
+/**
+ * 删除用户。
+ * 入参：id（标识）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function deleteUser(id) {
   if (API_USE_MOCK) return deleteMockUser(id)
 
@@ -384,6 +506,11 @@ export async function deleteUser(id) {
   return normalizeUserResponse(data, { id })
 }
 
+/**
+ * 更新用户状态。
+ * 入参：id（标识）；status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function updateUserStatus(id, status) {
   const nextStatus = status === '启用' || status === 1 || status === true ? 1 : 0
   if (API_USE_MOCK) return updateMockUserStatus(id, nextStatus)
@@ -398,6 +525,11 @@ export async function updateUserStatus(id, status) {
   return normalizeUserResponse(data, { id, status: nextStatus })
 }
 
+/**
+ * 重置用户密码。
+ * 入参：id（标识）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function resetUserPassword(id) {
   if (API_USE_MOCK) return resetMockUserPassword(id)
 
@@ -409,22 +541,37 @@ export async function resetUserPassword(id) {
   return normalizeUserResponse(data, { id })
 }
 
+/**
+ * batchEnable用户的处理逻辑。
+ * 入参：ids（标识集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function batchEnableUsers(ids = []) {
-  if (API_USE_MOCK) return updateMockUsersByIds(ids, (user) => ensureUserShape({ ...user, status: 1 }))
+  if (API_USE_MOCK) return updateMockUsersByIds(ids, /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) => ensureUserShape({ ...user, status: 1 }))
 
   const { data } = await http.post(`${API_ENDPOINTS.users.detail}/batch/enable`, { ids })
   if (data?.code && data.code !== 200) throw new Error(data.message || '批量启用失败')
   return normalizeUsersResponse(data)
 }
 
+/**
+ * batchDisable用户的处理逻辑。
+ * 入参：ids（标识集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function batchDisableUsers(ids = []) {
-  if (API_USE_MOCK) return updateMockUsersByIds(ids, (user) => ensureUserShape({ ...user, status: 0 }))
+  if (API_USE_MOCK) return updateMockUsersByIds(ids, /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) => ensureUserShape({ ...user, status: 0 }))
 
   const { data } = await http.post(`${API_ENDPOINTS.users.detail}/batch/disable`, { ids })
   if (data?.code && data.code !== 200) throw new Error(data.message || '批量停用失败')
   return normalizeUsersResponse(data)
 }
 
+/**
+ * batchDelete用户的处理逻辑。
+ * 入参：ids（标识集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function batchDeleteUsers(ids = []) {
   if (API_USE_MOCK) return batchDeleteMockUsers(ids)
 
@@ -433,10 +580,15 @@ export async function batchDeleteUsers(ids = []) {
   return normalizeUsersResponse(data)
 }
 
+/**
+ * batchUpdate角色的处理逻辑。
+ * 入参：ids（标识集合）；role（角色）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function batchUpdateRole(ids = [], role) {
   const roleCode = ROLE_CODE_MAP[role] || 'teacher'
   if (API_USE_MOCK) {
-    return updateMockUsersByIds(ids, (user) =>
+    return updateMockUsersByIds(ids, /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) =>
       ensureUserShape({
         ...user,
         roleName: role,
@@ -451,9 +603,14 @@ export async function batchUpdateRole(ids = [], role) {
   return normalizeUsersResponse(data)
 }
 
+/**
+ * batchUpdate部门的处理逻辑。
+ * 入参：ids（标识集合）；department（部门）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function batchUpdateDepartment(ids = [], department) {
   if (API_USE_MOCK) {
-    return updateMockUsersByIds(ids, (user) => ensureUserShape({ ...user, department }))
+    return updateMockUsersByIds(ids, /** 处理 updateMockUsersByIds 调用中的回调逻辑。 入参：user。 */ (user) => ensureUserShape({ ...user, department }))
   }
 
   const { data } = await http.post(`${API_ENDPOINTS.users.detail}/batch/department`, { ids, department })
@@ -461,6 +618,11 @@ export async function batchUpdateDepartment(ids = [], department) {
   return normalizeUsersResponse(data)
 }
 
+/**
+ * 导入用户。
+ * 入参：file（文件）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function importUsers(file) {
   if (API_USE_MOCK) {
     return {
@@ -481,6 +643,11 @@ export async function importUsers(file) {
   return data?.data || data
 }
 
+/**
+ * 导出用户。
+ * 入参：params（参数）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function exportUsers(params = {}) {
   if (API_USE_MOCK) {
     return {
@@ -494,12 +661,17 @@ export async function exportUsers(params = {}) {
   return data
 }
 
+/**
+ * 上传用户头像。
+ * 入参：file（文件）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function uploadUserAvatar(file) {
   if (API_USE_MOCK) {
-    return new Promise((resolve, reject) => {
+    return new Promise(/** 处理当前调用传入的回调逻辑。 入参：resolve、reject。 */ (resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = () => resolve({ url: reader.result, objectKey: `mock/avatar-${Date.now()}` })
-      reader.onerror = () => reject(new Error('头像读取失败'))
+      reader.onload = /** 处理当前调用传入的回调逻辑。 */ () => resolve({ url: reader.result, objectKey: `mock/avatar-${Date.now()}` })
+      reader.onerror = /** 处理当前调用传入的回调逻辑。 */ () => reject(new Error('头像读取失败'))
       reader.readAsDataURL(file)
     })
   }

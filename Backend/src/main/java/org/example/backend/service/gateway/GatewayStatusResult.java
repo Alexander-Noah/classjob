@@ -14,6 +14,9 @@ public record GatewayStatusResult(
         Map<String, Object> responseResult,
         LocalDateTime reportedAt
 ) {
+    /**
+     * 构造 GatewayStatusResult，初始化当前实例。
+     */
     public GatewayStatusResult {
         responseResult = responseResult == null ? Map.of() : Map.copyOf(responseResult);
         reportedAt = reportedAt == null ? LocalDateTime.now() : reportedAt;

@@ -12,7 +12,17 @@ import java.util.List;
 import java.util.Set;
 
 public interface LabResourceMetadataMapper {
+    /**
+     * 查找Manager名称集合。
+     * @param managerUserIds manager用户标识集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<ManagerNameRow> findManagerNames(@Param("managerUserIds") Set<Long> managerUserIds);
 
+    /**
+     * 统计设备By实验室标识集合。
+     * @param labIds 实验室标识集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<DeviceCountRow> countDevicesByLabIds(@Param("labIds") Set<Long> labIds);
 }

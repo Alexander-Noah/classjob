@@ -11,21 +11,27 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LoginAttemptLimiterTest {
+    /**
+     * repeated失败LockTheSameAccountAnd客户端的处理逻辑。
+     */
     @Test
     void repeatedFailuresLockTheSameAccountAndClient() {
         LoginAttemptLimiter limiter = new LoginAttemptLimiter(3, 60);
         MockHttpServletRequest request = request("127.0.0.1");
 
         for (int attempt = 0; attempt < 3; attempt++) {
-            assertDoesNotThrow(() -> limiter.assertAllowed("Alice", request));
+            assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> limiter.assertAllowed("Alice", request));
             limiter.recordFailure("Alice", request);
         }
 
-        assertThrows(IllegalArgumentException.class, () -> limiter.assertAllowed(" alice ", request));
-        assertDoesNotThrow(() -> limiter.assertAllowed("Bob", request));
-        assertDoesNotThrow(() -> limiter.assertAllowed("Alice", request("127.0.0.2")));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> limiter.assertAllowed(" alice ", request));
+        assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> limiter.assertAllowed("Bob", request));
+        assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> limiter.assertAllowed("Alice", request("127.0.0.2")));
     }
 
+    /**
+     * successful登录ClearsAccumulated失败的处理逻辑。
+     */
     @Test
     void successfulLoginClearsAccumulatedFailures() {
         LoginAttemptLimiter limiter = new LoginAttemptLimiter(3, 60);
@@ -36,11 +42,16 @@ class LoginAttemptLimiterTest {
         limiter.recordFailure("Alice", request);
         limiter.recordFailure("Alice", request);
 
-        assertDoesNotThrow(() -> limiter.assertAllowed("Alice", request));
+        assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> limiter.assertAllowed("Alice", request));
         limiter.recordFailure("Alice", request);
-        assertThrows(IllegalArgumentException.class, () -> limiter.assertAllowed("Alice", request));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> limiter.assertAllowed("Alice", request));
     }
 
+    /**
+     * 请求的处理逻辑。
+     * @param address address参数。
+     * @return MockHttpServletRequest 类型的处理结果。
+     */
     private MockHttpServletRequest request(String address) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr(address);

@@ -18,7 +18,17 @@ defineProps({
 
 defineEmits(['archive', 'close-using', 'mark-abnormal', 'review'])
 
+/**
+ * 判断是否为Action已禁用。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isActionDisabled = (record) => record?.status === '已归档' || Boolean(record?.readonly)
+/**
+ * 判断是否为Abnormal。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isAbnormal = (record) => ['异常', '待复核'].includes(record?.status)
 </script>
 

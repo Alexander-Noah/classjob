@@ -8,6 +8,11 @@ import { iotService } from '../api/services/iot'
 import { labResourceService } from '../api/services/basicResources'
 
 const SILENT_IOT_REQUEST = { skipErrorMessage: true }
+/**
+ * 复制数据。
+ * 入参：data（数据）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const cloneData = (data) => JSON.parse(JSON.stringify(data))
 const airModeOptions = ['制冷', '制热', '自动', '送风', '除湿']
 const accessCredentialActions = {
@@ -62,14 +67,33 @@ const deviceStatusOptions = [
   { label: '停用', type: 'info' },
 ]
 
-const getStatusType = (status) => deviceStatusOptions.find((option) => option.label === status)?.type || 'info'
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const getStatusType = (status) => deviceStatusOptions.find(/** 判断当前条目是否为查找目标。 入参：option。 */ (option) => option.label === status)?.type || 'info'
+/**
+ * 获取实验室Display名称。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabDisplayName = (lab) => lab?.name || lab?.labName || lab?.labCode || lab?.code || ''
+/**
+ * 获取实验室Hardware标识。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabHardwareId = (lab) => {
   const labId = lab?.rawId ?? lab?.id
   const numericId = Number(labId)
   return Number.isFinite(numericId) ? numericId : null
 }
 
+/**
+ * 获取当前Minute。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCurrentMinute = () =>
   new Date().toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -77,6 +101,11 @@ const getCurrentMinute = () =>
     hour12: false,
   })
 
+/**
+ * 归一化实验室状态。
+ * 入参：status（状态）。
+ * @returns 组装的键值对象。
+ */
 const normalizeLabStatus = (status = '') => {
   if (status.includes('维护')) return { status: '维护中', type: 'warning' }
   if (status.includes('使用')) return { status: '使用中', type: 'warning' }
@@ -85,7 +114,17 @@ const normalizeLabStatus = (status = '') => {
   return { status: '运行正常', type: 'success' }
 }
 
+/**
+ * 归一化物联类型。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeIotType = (value = '') => String(value || '').replace(/_/g, '-').toLowerCase()
+/**
+ * 解析网关Mode。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveGatewayMode = (device = {}) => {
   const mode = String(device.gatewayMode || device.gateway_mode || '').trim()
   if (mode) return mode
@@ -96,6 +135,11 @@ const resolveGatewayMode = (device = {}) => {
   return 'real_gateway_unconfigured'
 }
 
+/**
+ * 获取网关ModeCopy。
+ * 入参：mode（mode）。
+ * @returns 组装的键值对象。
+ */
 const getGatewayModeCopy = (mode) => {
   if (mode === 'mock_gateway') {
     return {
@@ -111,21 +155,30 @@ const getGatewayModeCopy = (mode) => {
   }
 }
 
+/**
+ * 创建Room实验室。
+ * 入参：lab（实验室）；deviceRecords（设备记录集合）；index（索引）。
+ * @returns 组装的键值对象。
+ */
 const createRoomLab = (lab, deviceRecords = [], index = 0) => {
   const labName = getLabDisplayName(lab)
   const labId = lab.id ?? lab.rawId
   const currentDevices = deviceRecords
     .filter(
+      /**
+       * 判断当前条目是否符合筛选条件。
+       * 入参：device。
+       */
       (device) =>
         String(device.labId || device.lab_id || '') === String(labId) ||
         device.labName === labName ||
         device.lab === labName,
     )
-  const accessDevice = currentDevices.find((device) => device.type === 'access-control')
-  const cameraDevice = currentDevices.find((device) => device.type === 'camera')
-  const sensorDevice = currentDevices.find((device) => device.type === 'sensor')
+  const accessDevice = currentDevices.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.type === 'access-control')
+  const cameraDevice = currentDevices.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.type === 'camera')
+  const sensorDevice = currentDevices.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.type === 'sensor')
   const hasIotDevices = currentDevices.length > 0
-  const faultCount = currentDevices.filter((device) => device.status === '故障' || device.status === '异常' || device.online === false).length
+  const faultCount = currentDevices.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '故障' || device.status === '异常' || device.online === false).length
   const statusInfo = !hasIotDevices
     ? { status: '未接入', type: 'info' }
     : faultCount
@@ -168,6 +221,10 @@ const createRoomLab = (lab, deviceRecords = [], index = 0) => {
   }
 }
 
+/**
+ * 提供RoomControl。
+ * @returns 组装的键值对象。
+ */
 export function useRoomControl() {
   const keyword = ref('')
   const roomFilter = ref('all')
@@ -187,17 +244,17 @@ export function useRoomControl() {
   const selectedLabDeviceLoading = ref(false)
   const capabilityState = reactive({})
 
-  const selectedLab = computed(() => labs.value.find((lab) => lab.id === selectedLabId.value) || labs.value[0])
+  const selectedLab = computed(/** 计算派生状态。 */ () => labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.id === selectedLabId.value) || labs.value[0])
 
-  const selectedLabControls = computed(() => {
+  const selectedLabControls = computed(/** 计算派生状态。 */ () => {
     if (!selectedLab.value) return []
 
     return selectedLabDevices.value
-      .filter((device) => ['air-conditioner', 'light'].includes(device.type))
-      .map((device, index) => {
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => ['air-conditioner', 'light'].includes(device.type))
+      .map(/** 将当前条目转换为目标结果。 入参：device、index。 */ (device, index) => {
         const isAir = device.type === 'air-conditioner'
         const capabilities = Array.isArray(device.capabilities) ? device.capabilities : []
-        const valueCapability = capabilities.find((item) => ['temperature', 'brightness'].includes(item.key)) || {}
+        const valueCapability = capabilities.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => ['temperature', 'brightness'].includes(item.key)) || {}
         const enabled = Boolean(device.online && device.enabled !== false)
 
         return {
@@ -219,36 +276,36 @@ export function useRoomControl() {
       })
   })
 
-  const roomOptions = computed(() => labs.value.map((lab) => ({ label: lab.name, value: lab.name })))
-  const labDeviceOptions = computed(() => labs.value.map((lab) => ({ label: lab.name, value: lab.name })))
+  const roomOptions = computed(/** 计算派生状态。 */ () => labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => ({ label: lab.name, value: lab.name })))
+  const labDeviceOptions = computed(/** 计算派生状态。 */ () => labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => ({ label: lab.name, value: lab.name })))
 
-  const deviceCategoryOptions = computed(() => [...new Set(iotDevices.value.map((device) => device.category).filter(Boolean))])
+  const deviceCategoryOptions = computed(/** 计算派生状态。 */ () => [...new Set(iotDevices.value.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => device.category).filter(Boolean))])
 
-  const categoryOptions = computed(() => {
-    const categories = new Set(eventRecords.value.map((record) => record.category))
-    return [...categories].map((category) => ({ label: category, value: category }))
+  const categoryOptions = computed(/** 计算派生状态。 */ () => {
+    const categories = new Set(eventRecords.value.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => record.category))
+    return [...categories].map(/** 将当前条目转换为目标结果。 入参：category。 */ (category) => ({ label: category, value: category }))
   })
 
-  const filteredRecords = computed(() => {
+  const filteredRecords = computed(/** 计算派生状态。 */ () => {
     const searchText = keyword.value.trim()
 
-    return eventRecords.value.filter((record) => {
+    return eventRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => {
       const matchesRoom = roomFilter.value === 'all' || record.room === roomFilter.value
       const matchesCategory = categoryFilter.value === 'all' || record.category === categoryFilter.value
       const matchesKeyword =
-        !searchText || Object.values(record).some((value) => String(value).includes(searchText))
+        !searchText || Object.values(record).some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => String(value).includes(searchText))
 
       return matchesRoom && matchesCategory && matchesKeyword
     })
   })
 
-  const filteredManagedDevices = computed(() => {
+  const filteredManagedDevices = computed(/** 计算派生状态。 */ () => {
     const searchText = deviceKeyword.value.trim().toLowerCase()
 
-    return iotDevices.value.filter((device) => {
+    return iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => {
       const matchesKeyword =
         !searchText ||
-        [device.code, device.name, device.lab, device.category, device.location, device.owner, device.status, device.health].some((value) =>
+        [device.code, device.name, device.lab, device.category, device.location, device.owner, device.status, device.health].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) =>
           String(value || '').toLowerCase().includes(searchText),
         )
       const matchesLab = deviceLabFilter.value === 'all' || device.lab === deviceLabFilter.value
@@ -259,17 +316,21 @@ export function useRoomControl() {
     })
   })
 
-  const alertLabs = computed(() =>
+  const alertLabs = computed(/** 计算派生状态。 */ () =>
     labs.value.filter(
+      /**
+       * 判断当前条目是否符合筛选条件。
+       * 入参：lab。
+       */
       (lab) => lab.statusType === 'warning' || lab.door.statusType === 'warning' || lab.camera.statusType === 'warning' || lab.sensor.statusType === 'warning',
     ),
   )
 
-  const roomMetrics = computed(() => {
-    const onlineDevices = iotDevices.value.filter((device) => device.online).length
+  const roomMetrics = computed(/** 计算派生状态。 */ () => {
+    const onlineDevices = iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.online).length
     const deviceTotal = iotDevices.value.length
-    const warningEvents = eventRecords.value.filter((record) => ['warning', 'danger'].includes(record.tagType)).length
-    const faultDevices = iotDevices.value.filter((device) => device.status === '故障' || device.status === '异常' || !device.online).length
+    const warningEvents = eventRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => ['warning', 'danger'].includes(record.tagType)).length
+    const faultDevices = iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '故障' || device.status === '异常' || !device.online).length
     const modeInfo = gatewayModeInfo.value
 
     return [
@@ -280,11 +341,11 @@ export function useRoomControl() {
     ]
   })
 
-  const deviceManagementMetrics = computed(() => {
+  const deviceManagementMetrics = computed(/** 计算派生状态。 */ () => {
     const total = iotDevices.value.length
-    const onlineCount = iotDevices.value.filter((device) => device.online).length
-    const faultCount = iotDevices.value.filter((device) => device.status === '故障' || device.status === '异常').length
-    const maintenanceCount = iotDevices.value.filter((device) => device.status === '维护中').length
+    const onlineCount = iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.online).length
+    const faultCount = iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '故障' || device.status === '异常').length
+    const maintenanceCount = iotDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '维护中').length
 
     return {
       total,
@@ -294,11 +355,11 @@ export function useRoomControl() {
     }
   })
 
-  const controlMetrics = computed(() => {
+  const controlMetrics = computed(/** 计算派生状态。 */ () => {
     const controls = selectedLabControls.value
-    const onlineCount = controls.filter((control) => control.enabled).length
-    const lightCount = controls.filter((control) => control.controlKind === 'light').length
-    const airCount = controls.filter((control) => control.controlKind === 'air').length
+    const onlineCount = controls.filter(/** 判断当前条目是否符合筛选条件。 入参：control。 */ (control) => control.enabled).length
+    const lightCount = controls.filter(/** 判断当前条目是否符合筛选条件。 入参：control。 */ (control) => control.controlKind === 'light').length
+    const airCount = controls.filter(/** 判断当前条目是否符合筛选条件。 入参：control。 */ (control) => control.controlKind === 'air').length
 
     return {
       total: controls.length,
@@ -308,11 +369,11 @@ export function useRoomControl() {
     }
   })
 
-  const deviceCapabilityMetrics = computed(() => {
+  const deviceCapabilityMetrics = computed(/** 计算派生状态。 */ () => {
     const total = selectedLabDevices.value.length
-    const onlineCount = selectedLabDevices.value.filter((device) => device.online).length
-    const configuredCount = selectedLabDevices.value.filter((device) => device.configured).length
-    const categoryCount = new Set(selectedLabDevices.value.map((device) => device.type || device.category).filter(Boolean)).size
+    const onlineCount = selectedLabDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.online).length
+    const configuredCount = selectedLabDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.configured).length
+    const categoryCount = new Set(selectedLabDevices.value.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => device.type || device.category).filter(Boolean)).size
 
     return {
       total,
@@ -322,7 +383,7 @@ export function useRoomControl() {
     }
   })
 
-  const selectedRisk = computed(() => {
+  const selectedRisk = computed(/** 计算派生状态。 */ () => {
     const lab = selectedLab.value
     if (!lab) return { label: '未选择', type: 'info', description: '请选择机房查看态势' }
 
@@ -341,9 +402,9 @@ export function useRoomControl() {
     return { label: '运行正常', type: 'success', description: '门禁、视频与环境状态稳定' }
   })
 
-  const gatewayModeInfo = computed(() => {
+  const gatewayModeInfo = computed(/** 计算派生状态。 */ () => {
     const devices = selectedLabDevices.value.length ? selectedLabDevices.value : iotDevices.value
-    const hasMockGateway = devices.some((device) => resolveGatewayMode(device) === 'mock_gateway')
+    const hasMockGateway = devices.some(/** 判断当前条目是否满足任一匹配条件。 入参：device。 */ (device) => resolveGatewayMode(device) === 'mock_gateway')
     const hasAnyDevice = devices.length > 0
     const copy = getGatewayModeCopy(hasMockGateway ? 'mock_gateway' : 'real_gateway_unconfigured')
     if (!hasAnyDevice) {
@@ -356,6 +417,10 @@ export function useRoomControl() {
     return copy
   })
 
+  /**
+   * 追加事件记录。
+   * 入参：category（分类）；event（事件）；status（状态）；tagType（tag类型）。
+   */
   const appendEventRecord = (category, event, status = '成功', tagType = 'success') => {
     if (!selectedLab.value) return
 
@@ -372,8 +437,18 @@ export function useRoomControl() {
     ].slice(0, 30)
   }
 
+  /**
+   * 获取能力状态键。
+   * 入参：device（设备）；capability（能力）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getCapabilityStateKey = (device, capability) => `${device.code || device.id}::${capability.key}`
 
+  /**
+   * 获取默认能力值。
+   * 入参：device（设备）；capability（能力）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getDefaultCapabilityValue = (device, capability) => {
     if (capability.value !== undefined && capability.value !== null) return capability.value
     if (capability.type === 'switch') return Boolean(device.online)
@@ -387,6 +462,11 @@ export function useRoomControl() {
     return ''
   }
 
+  /**
+   * inferHardwareControl类型的处理逻辑。
+   * 入参：device（设备）。
+   * @returns 文本结果。
+   */
   const inferHardwareControlType = (device = {}) => {
     const type = normalizeIotType(device.type || device.deviceType || '')
     const text = `${device.category || ''}${device.name || ''}${device.iotName || ''}${device.deviceName || ''}${device.specs || ''}`.toLowerCase()
@@ -402,6 +482,11 @@ export function useRoomControl() {
     return ''
   }
 
+  /**
+   * 构建默认能力。
+   * 入参：device（设备）；type（类型）。
+   * @returns 生成的数组。
+   */
   const buildDefaultCapabilities = (device = {}, type) => {
     const enabled = Boolean(device.online ?? device.status !== '故障')
 
@@ -442,6 +527,11 @@ export function useRoomControl() {
     return []
   }
 
+  /**
+   * 归一化能力设备。
+   * 入参：device（设备）。
+   * @returns 组装的键值对象。
+   */
   const normalizeCapabilityDevice = (device = {}) => {
     const status = device.status || (device.online ? '正常' : '离线')
     const type = inferHardwareControlType(device)
@@ -482,13 +572,16 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 重置能力状态。
+   */
   const resetCapabilityState = () => {
-    Object.keys(capabilityState).forEach((key) => {
+    Object.keys(capabilityState).forEach(/** 处理遍历到的当前条目。 入参：key。 */ (key) => {
       delete capabilityState[key]
     })
 
-    selectedLabDevices.value.forEach((device) => {
-      ;(device.capabilities || []).forEach((capability) => {
+    selectedLabDevices.value.forEach(/** 处理遍历到的当前条目。 入参：device。 */ (device) => {
+      ;(device.capabilities || []).forEach(/** 处理遍历到的当前条目。 入参：capability。 */ (capability) => {
         const key = getCapabilityStateKey(device, capability)
         const defaultValue = getDefaultCapabilityValue(device, capability)
         capabilityState[key] = {
@@ -499,6 +592,10 @@ export function useRoomControl() {
     })
   }
 
+  /**
+   * 选择实验室。
+   * 入参：lab（实验室）。
+   */
   const selectLab = (lab) => {
     selectedLabId.value = lab.id
     roomFilter.value = lab.name
@@ -506,12 +603,15 @@ export function useRoomControl() {
     ElMessage.success(`已进入${lab.name}`)
   }
 
+  /**
+   * 重置Control状态。
+   */
   const resetControlState = () => {
-    Object.keys(controlState).forEach((key) => {
+    Object.keys(controlState).forEach(/** 处理遍历到的当前条目。 入参：key。 */ (key) => {
       delete controlState[key]
     })
 
-    selectedLabControls.value.forEach((control) => {
+    selectedLabControls.value.forEach(/** 处理遍历到的当前条目。 入参：control。 */ (control) => {
       controlState[control.id] = {
         enabled: control.enabled,
         value: control.value,
@@ -520,8 +620,17 @@ export function useRoomControl() {
     })
   }
 
+  /**
+   * 获取Control来源设备。
+   * 入参：control（control）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getControlSourceDevice = (control) =>
     selectedLabDevices.value.find(
+      /**
+       * 判断当前条目是否为查找目标。
+       * 入参：device。
+       */
       (device) =>
         String(device.id) === String(control.sourceDeviceId) ||
         String(device.code || device.iotCode || '') === String(control.sourceDeviceCode || control.code || ''),
@@ -530,6 +639,11 @@ export function useRoomControl() {
       name: control.name,
     }
 
+  /**
+   * 归一化物联设备列表。
+   * 入参：payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const normalizeIotDeviceList = (payload = {}) => {
     if (Array.isArray(payload?.devices)) return payload.devices
     if (Array.isArray(payload?.records)) return payload.records
@@ -539,6 +653,11 @@ export function useRoomControl() {
     return []
   }
 
+  /**
+   * 归一化物联命令Log列表。
+   * 入参：payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const normalizeIotCommandLogList = (payload = {}) => {
     if (Array.isArray(payload?.records)) return payload.records
     if (Array.isArray(payload?.logs)) return payload.logs
@@ -548,6 +667,11 @@ export function useRoomControl() {
     return []
   }
 
+  /**
+   * 归一化物联命令Log。
+   * 入参：record（记录）。
+   * @returns 组装的键值对象。
+   */
   const normalizeIotCommandLog = (record = {}) => {
     const resultStatus = record.resultStatus || record.result_status || record.status || 'pending'
     const tagTypeMap = {
@@ -568,8 +692,18 @@ export function useRoomControl() {
     }
   }
 
-  const findSelectedIotDevice = (types = []) => selectedLabDevices.value.find((device) => types.includes(device.type))
+  /**
+   * 查找已选择物联设备。
+   * 入参：types（类型集合）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
+  const findSelectedIotDevice = (types = []) => selectedLabDevices.value.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => types.includes(device.type))
 
+  /**
+   * 构建物联Control载荷。
+   * 入参：device（设备）；action（action）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const buildIotControlPayload = (device, action, payload = {}) => ({
     iotDeviceId: Number.isFinite(Number(device?.id)) ? Number(device.id) : undefined,
     iotCode: device?.iotCode || device?.code,
@@ -581,10 +715,14 @@ export function useRoomControl() {
     sourceType: resolveGatewayMode(device) === 'mock_gateway' ? 'mock' : 'gateway',
   })
 
+  /**
+   * 应用Hardware状态目标实验室。
+   * 入参：lab（实验室）；hardwareStatus（hardware状态）。
+   */
   const applyHardwareStatusToLab = (lab, hardwareStatus = {}) => {
     const hardwareDevices = normalizeIotDeviceList(hardwareStatus).map(normalizeCapabilityDevice)
-    const accessStatus = hardwareDevices.find((device) => device.type === 'access-control')
-    const cameraStatus = hardwareDevices.find((device) => device.type === 'camera')
+    const accessStatus = hardwareDevices.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.type === 'access-control')
+    const cameraStatus = hardwareDevices.find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.type === 'camera')
 
     if (accessStatus) {
       lab.door.status = accessStatus.status || (accessStatus.online ? '在线' : '离线')
@@ -605,6 +743,11 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 刷新Hardware状态For实验室。
+   * 入参：lab（实验室）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const refreshHardwareStatusForLab = async (lab) => {
     const labId = getLabHardwareId(lab)
     if (!labId) return false
@@ -614,6 +757,10 @@ export function useRoomControl() {
     return true
   }
 
+  /**
+   * 加载已选择实验室设备。
+   * 入参：解构参数（notifyOnError、false）。
+   */
   const loadSelectedLabDevices = async ({ notifyOnError = false } = {}) => {
     const lab = selectedLab.value
     const labId = getLabHardwareId(lab)
@@ -630,7 +777,7 @@ export function useRoomControl() {
       const devices = normalizeIotDeviceList(result)
       const hardwareDevices = devices
         .map(normalizeCapabilityDevice)
-        .filter((device) => ['access-control', 'light', 'air-conditioner', 'camera', 'sensor'].includes(device.type))
+        .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => ['access-control', 'light', 'air-conditioner', 'camera', 'sensor'].includes(device.type))
       selectedLabDevices.value = hardwareDevices
     } catch (error) {
       selectedLabDevices.value = []
@@ -643,12 +790,15 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 加载Room资源。
+   */
   const loadRoomResources = async () => {
     try {
       const [loadedLabs, loadedIotDevices, loadedCommandLogs] = await Promise.all([
         labResourceService.list(),
-        iotService.listIotDevices({}, SILENT_IOT_REQUEST).catch(() => ({})),
-        iotService.listIotCommandLogs({ page: 1, pageSize: 30 }, SILENT_IOT_REQUEST).catch(() => ({})),
+        iotService.listIotDevices({}, SILENT_IOT_REQUEST).catch(/** 处理异步失败结果。 */ () => ({})),
+        iotService.listIotCommandLogs({ page: 1, pageSize: 30 }, SILENT_IOT_REQUEST).catch(/** 处理异步失败结果。 */ () => ({})),
       ])
       labRecords.value = Array.isArray(loadedLabs) && loadedLabs.length ? loadedLabs : []
       const iotRows = normalizeIotDeviceList(loadedIotDevices).map(normalizeCapabilityDevice)
@@ -657,13 +807,13 @@ export function useRoomControl() {
       hardwareOverview.value = {
         ...(!Array.isArray(loadedIotDevices) ? loadedIotDevices || {} : {}),
         total: iotRows.length,
-        configuredCount: iotRows.filter((device) => device.configured).length,
+        configuredCount: iotRows.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.configured).length,
         enabled: iotRows.length > 0,
       }
 
       if (labRecords.value.length) {
-        labs.value = labRecords.value.map((lab, index) => createRoomLab(lab, iotRows, index))
-        if (!labs.value.some((lab) => lab.id === selectedLabId.value)) {
+        labs.value = labRecords.value.map(/** 将当前条目转换为目标结果。 入参：lab、index。 */ (lab, index) => createRoomLab(lab, iotRows, index))
+        if (!labs.value.some(/** 判断当前条目是否满足任一匹配条件。 入参：lab。 */ (lab) => lab.id === selectedLabId.value)) {
           selectedLabId.value = labs.value[0]?.id || ''
         }
       }
@@ -676,10 +826,13 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 刷新All。
+   */
   const refreshAll = async () => {
     await loadRoomResources()
-    const results = await Promise.allSettled(labs.value.map((lab) => refreshHardwareStatusForLab(lab)))
-    const syncedCount = results.filter((result) => result.status === 'fulfilled' && result.value).length
+    const results = await Promise.allSettled(labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => refreshHardwareStatusForLab(lab)))
+    const syncedCount = results.filter(/** 判断当前条目是否符合筛选条件。 入参：result。 */ (result) => result.status === 'fulfilled' && result.value).length
 
     if (syncedCount) {
       appendEventRecord('网关状态', `已同步 ${syncedCount} 间实验室网关状态`)
@@ -690,6 +843,10 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 处理Access命令。
+   * 入参：command（命令）。
+   */
   const handleAccessCommand = async (command) => {
     const lab = selectedLab.value
 
@@ -736,6 +893,10 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 处理Access凭据。
+   * 入参：action（action）。
+   */
   const handleAccessCredential = async (action) => {
     const lab = selectedLab.value
     const config = accessCredentialActions[action]
@@ -804,6 +965,9 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 处理Camera视图。
+   */
   const handleCameraView = async () => {
     const lab = selectedLab.value
     if (!lab) return
@@ -844,6 +1008,9 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 处理SensorCheck。
+   */
   const handleSensorCheck = async () => {
     const lab = selectedLab.value
 
@@ -862,12 +1029,16 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 更新来源Control。
+   * 入参：control（control）。
+   */
   const updateSourceControl = (control) => {
     const state = controlState[control.id]
     const sourceControl = [
       ...(selectedLab.value?.lights || []),
       ...(selectedLab.value?.airConditioners || []),
-    ].find((device) => device.id === control.id)
+    ].find(/** 判断当前条目是否为查找目标。 入参：device。 */ (device) => device.id === control.id)
 
     if (!sourceControl || !state) return
 
@@ -878,6 +1049,10 @@ export function useRoomControl() {
     sourceControl.statusType = state.enabled ? 'success' : 'info'
   }
 
+  /**
+   * 处理ControlChange。
+   * 入参：control（control）。
+   */
   const handleControlChange = async (control) => {
     const state = controlState[control.id]
 
@@ -917,6 +1092,10 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 处理设备媒体能力。
+   * 入参：device（设备）；capability（能力）。
+   */
   const handleDeviceMediaCapability = (device, capability) => {
     const streamUrl = device.streamUrl || device.hlsUrl || device.webrtcUrl || device.flvUrl || device.snapshotProxyUrl
     const resolvedUrl = iotService.toBackendUrl(streamUrl)
@@ -931,6 +1110,10 @@ export function useRoomControl() {
     ElMessage.warning(`${device.name}未配置可打开的视频流或抓拍地址`)
   }
 
+  /**
+   * 处理设备能力。
+   * 入参：device（设备）；capability（能力）。
+   */
   const handleDeviceCapability = async (device, capability) => {
     if (!device || !capability) return
 
@@ -1000,29 +1183,52 @@ export function useRoomControl() {
     }
   }
 
+  /**
+   * 更新Managed设备。
+   */
   const updateManagedDevice = async () => {
     ElMessage.warning('物联感知与控制页面不再维护设备资产台账，请到设备资产页面处理资产信息')
   }
 
+  /**
+   * 处理Managed设备状态。
+   * 入参：device（设备）；status（状态）。
+   */
   const handleManagedDeviceStatus = (device, status) => {
     updateManagedDevice(device, { status })
   }
 
+  /**
+   * 处理Managed设备Online。
+   * 入参：device（设备）；online（online）。
+   */
   const handleManagedDeviceOnline = (device, online) => {
     updateManagedDevice(device, { online })
   }
 
+  /**
+   * 库存Managed设备的处理逻辑。
+   * 入参：device（设备）。
+   */
   const inventoryManagedDevice = (device) => {
     updateManagedDevice(device, { inventory: true })
   }
 
+  /**
+   * 选择Managed设备实验室。
+   * 入参：device（设备）。
+   */
   const selectManagedDeviceLab = (device) => {
-    const targetLab = labs.value.find((lab) => lab.name === device.lab || String(lab.rawId) === String(device.labId))
+    const targetLab = labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.name === device.lab || String(lab.rawId) === String(device.labId))
     if (targetLab) {
       selectLab(targetLab)
     }
   }
 
+  /**
+   * 应用ScenePreset。
+   * 入参：preset（preset）。
+   */
   const applyScenePreset = async (preset) => {
     const lab = selectedLab.value
 
@@ -1058,7 +1264,7 @@ export function useRoomControl() {
 
     const previousControlState = cloneData(controlState)
 
-    selectedLabControls.value.forEach((control) => {
+    selectedLabControls.value.forEach(/** 处理遍历到的当前条目。 入参：control。 */ (control) => {
       const state = controlState[control.id]
 
       if (!state) return
@@ -1069,7 +1275,7 @@ export function useRoomControl() {
     })
 
     try {
-      const hardwareCommands = selectedLabControls.value.map((control) => {
+      const hardwareCommands = selectedLabControls.value.map(/** 将当前条目转换为目标结果。 入参：control。 */ (control) => {
         const state = controlState[control.id]
         const sourceDevice = getControlSourceDevice(control)
 
@@ -1088,7 +1294,7 @@ export function useRoomControl() {
       })
 
       const results = await Promise.all(hardwareCommands)
-      const failedResult = results.find((result) => result.success === false)
+      const failedResult = results.find(/** 判断当前条目是否为查找目标。 入参：result。 */ (result) => result.success === false)
       if (failedResult) {
         throw new Error(failedResult.response || failedResult.status || '网关返回执行失败')
       }
@@ -1102,7 +1308,7 @@ export function useRoomControl() {
 
       selectedLabControls.value.forEach(updateSourceControl)
     } catch (error) {
-      Object.keys(controlState).forEach((key) => {
+      Object.keys(controlState).forEach(/** 处理遍历到的当前条目。 入参：key。 */ (key) => {
         delete controlState[key]
       })
       Object.assign(controlState, previousControlState)
@@ -1120,7 +1326,17 @@ export function useRoomControl() {
     ElMessage.success(`${lab.name}已切换为${nextPreset.label}`)
   }
 
+  /**
+   * 获取Control标签。
+   * 入参：control（control）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getControlLabel = (control) => (control.controlKind === 'air' ? '目标温度' : '亮度')
+  /**
+   * 获取Control值。
+   * 入参：control（control）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getControlValue = (control) => `${controlState[control.id]?.value ?? control.value}${control.unit}`
 
   watch([selectedLabId, selectedLabControls], resetControlState, { immediate: true })

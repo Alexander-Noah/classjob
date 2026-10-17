@@ -19,17 +19,31 @@ public class LabServiceImpl implements LabService {
     private final LabMapper labMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 LabServiceImpl，初始化当前实例。
+     * @param labMapper 实验室数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public LabServiceImpl(LabMapper labMapper, BusinessLoopService businessLoopService) {
         this.labMapper = labMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取实验室。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<LabEntity> getLabs() {
         List<LabEntity> labs = labMapper.getLabs();
         return labs == null ? List.of() : labs;
     }
 
+    /**
+     * 获取实验室。
+     * @param managerUserId manager用户标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<LabEntity> getLabs(Integer managerUserId) {
         if (managerUserId == null) {
@@ -39,6 +53,11 @@ public class LabServiceImpl implements LabService {
         return labs == null ? List.of() : labs;
     }
 
+    /**
+     * 添加实验室。
+     * @param lab 实验室参数。
+     * @return LabEntity 类型的处理结果。
+     */
     @Override
     public LabEntity addLab(LabEntity lab) {
         if (lab.getOpenStatus() == null || lab.getOpenStatus().isBlank()) {
@@ -54,6 +73,11 @@ public class LabServiceImpl implements LabService {
         return result;
     }
 
+    /**
+     * 获取实验室By标识。
+     * @param id 标识参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     public Object getLabById(Integer id) {
         LabEntity lab = labMapper.getLabById(id);
@@ -63,6 +87,11 @@ public class LabServiceImpl implements LabService {
         return null;
     }
 
+    /**
+     * 更新实验室。
+     * @param id 标识参数。
+     * @param lab 实验室参数。
+     */
     @Override
     public void updateLab(Integer id, LabEntity lab) {
         labMapper.updateLab(id, lab);
@@ -72,6 +101,11 @@ public class LabServiceImpl implements LabService {
         ));
     }
 
+    /**
+     * 更新实验室。
+     * @param labs 实验室参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<LabEntity> updateLabs(List<LabEntity> labs) {
         if (labs == null || labs.isEmpty()) {
@@ -87,6 +121,11 @@ public class LabServiceImpl implements LabService {
         return getLabs();
     }
 
+    /**
+     * 删除实验室。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     */
     @Override
     @Transactional
     public void deleteLab(Integer id) {

@@ -13,6 +13,10 @@ defineOptions({
 const props = defineProps({
   labs: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   selectedLabId: {
@@ -26,10 +30,10 @@ defineEmits(['select'])
 const keyword = ref('')
 const statusFilter = ref('all')
 
-const statusOptions = computed(() => {
+const statusOptions = computed(/** 计算派生状态。 */ () => {
   const statusMap = new Map()
 
-  props.labs.forEach((lab) => {
+  props.labs.forEach(/** 处理遍历到的当前条目。 入参：lab。 */ (lab) => {
     statusMap.set(lab.status, {
       label: lab.status,
       type: lab.statusType,
@@ -39,13 +43,13 @@ const statusOptions = computed(() => {
   return [...statusMap.values()]
 })
 
-const visibleLabs = computed(() => {
+const visibleLabs = computed(/** 计算派生状态。 */ () => {
   const searchText = keyword.value.trim().toLowerCase()
 
-  return props.labs.filter((lab) => {
+  return props.labs.filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) => {
     const matchesKeyword =
       !searchText ||
-      [lab.name, lab.location, lab.capacity, lab.door.doorState, lab.sensor.temperature].some((value) =>
+      [lab.name, lab.location, lab.capacity, lab.door.doorState, lab.sensor.temperature].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) =>
         String(value).toLowerCase().includes(searchText),
       )
     const matchesStatus = statusFilter.value === 'all' || lab.status === statusFilter.value

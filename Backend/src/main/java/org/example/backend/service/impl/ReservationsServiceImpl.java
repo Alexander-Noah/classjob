@@ -40,6 +40,13 @@ public class ReservationsServiceImpl implements ReservationsService {
     private final ClassTimetableMapper classTimetableMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 ReservationsServiceImpl，初始化当前实例。
+     * @param reservationsMapper 预约数据映射器参数。
+     * @param labMapper 实验室数据映射器参数。
+     * @param classTimetableMapper class课表数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public ReservationsServiceImpl(
             ReservationsMapper reservationsMapper,
             LabMapper labMapper,
@@ -52,12 +59,21 @@ public class ReservationsServiceImpl implements ReservationsService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取预约。
+     * @return Object 类型的处理结果。
+     */
     @Override
     public Object getReservations() {
         refreshExpiredReservations();
         return reservationsMapper.getReservations();
     }
 
+    /**
+     * 插入预约。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param reservation 预约参数。
+     */
     @Override
     @Transactional
     public void insertReservation(ReservationsEntity reservation) {
@@ -69,12 +85,23 @@ public class ReservationsServiceImpl implements ReservationsService {
         ));
     }
 
+    /**
+     * 获取预约。
+     * @param id 标识参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     public Object getReservation(Integer id) {
         refreshExpiredReservations();
         return reservationsMapper.getReservation(id);
     }
 
+    /**
+     * 更新预约。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param reservation 预约参数。
+     */
     @Override
     @Transactional
     public void updateReservation(Integer id, ReservationsEntity reservation) {
@@ -98,6 +125,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         ));
     }
 
+    /**
+     * 删除预约。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     */
     @Override
     @Transactional
     public void deleteReservation(Integer id) {
@@ -109,6 +141,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         businessLoopService.recordEvent("reservation", "delete", String.valueOf(id), "已删除", Map.of("reservationId", id));
     }
 
+    /**
+     * replace预约的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param reservations 预约参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     /** 非空列表按全量台账替换；空列表仅查询，不能用此入口清空预约记录。 */
@@ -128,6 +166,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         return reservationsMapper.getReservations();
     }
 
+    /**
+     * 获取Approved。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param reservationPatch 预约Patch参数。
+     * @return ReservationsEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ReservationsEntity getApproved(Integer id, ReservationsEntity reservationPatch) {
@@ -163,6 +208,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         return reservation;
     }
 
+    /**
+     * 获取Rejected。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param reservationPatch 预约Patch参数。
+     * @return ReservationsEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ReservationsEntity getRejected(Integer id, ReservationsEntity reservationPatch) {
@@ -194,6 +246,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         return reservation;
     }
 
+    /**
+     * 获取Scan预约Profile。
+     * @param labId 实验室标识参数。
+     * @param labCode 实验室编码参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getScanReservationProfile(Integer labId, String labCode) {
         LabEntity lab = resolveLab(labId == null ? null : labId.longValue(), labCode, null);
@@ -219,6 +277,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         return profile;
     }
 
+    /**
+     * 提交Scan预约。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param reservation 预约参数。
+     * @return ReservationsEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ReservationsEntity submitScanReservation(ReservationsEntity reservation) {
@@ -241,6 +305,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         return savedReservation;
     }
 
+    /**
+     * 获取Scan预约状态。
+     * @param id 标识参数。
+     * @param contact contact参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getScanReservationStatus(Integer id, String contact) {
         if (id == null) {
@@ -273,6 +343,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         return status;
     }
 
+    /**
+     * 归一化预约。
+     * @param id 标识参数。
+     * @param reservation 预约参数。
+     */
     private void normalizeReservation(Integer id, ReservationsEntity reservation) {
         normalizeTextFields(reservation);
         validateApplicantFields(reservation, false);
@@ -317,6 +392,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 准备Scan预约。
+     * @param reservation 预约参数。
+     */
     private void prepareScanReservation(ReservationsEntity reservation) {
         normalizeTextFields(reservation);
         validateApplicantFields(reservation, true);
@@ -334,6 +413,9 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 刷新Expired预约。
+     */
     private void refreshExpiredReservations() {
         List<ReservationsEntity> reservations = reservationsMapper.getReservations();
         for (ReservationsEntity reservation : reservations) {
@@ -353,6 +435,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * expire预约的处理逻辑。
+     * @param reservation 预约参数。
+     */
     private void expireReservation(ReservationsEntity reservation) {
         if (reservation == null || reservation.getId() == null || STATUS_EXPIRED.equals(reservation.getStatus())) {
             return;
@@ -369,6 +455,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         reservation.setConflict(false);
     }
 
+    /**
+     * 校验状态TransitionForUpdate。
+     * @param previousReservation previous预约参数。
+     * @param nextReservation next预约参数。
+     */
     private void validateStatusTransitionForUpdate(ReservationsEntity previousReservation, ReservationsEntity nextReservation) {
         if (previousReservation == null || nextReservation == null) {
             return;
@@ -401,6 +492,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 判断是否为Past预约开始。
+     * @param reservation 预约参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isPastReservationStart(ReservationsEntity reservation) {
         if (reservation == null || reservation.getReservationDate() == null || isBlank(reservation.getTimeRange())) {
             return false;
@@ -419,6 +515,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 收集AvailabilityIssues。
+     * @param id 标识参数。
+     * @param reservation 预约参数。
+     * @param includeCapacity includeCapacity参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> collectAvailabilityIssues(Integer id, ReservationsEntity reservation, boolean includeCapacity) {
         validateRequiredFields(reservation);
         LabEntity lab = resolveReservationLab(reservation);
@@ -445,6 +548,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         return issues;
     }
 
+    /**
+     * 校验RequiredFields。
+     * @param reservation 预约参数。
+     */
     private void validateRequiredFields(ReservationsEntity reservation) {
         if (reservation == null) {
             throw new IllegalArgumentException("请填写预约信息");
@@ -469,6 +576,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         validateOptionalMeaningfulText("补充说明", reservation.getReviewRemark(), 4, 120);
     }
 
+    /**
+     * 校验ApplicantFields。
+     * @param reservation 预约参数。
+     * @param strictContact strictContact参数。
+     */
     private void validateApplicantFields(ReservationsEntity reservation, boolean strictContact) {
         validateMeaningfulText("申请人姓名", reservation.getApplicantName(), 2, 50);
         validateOptionalMeaningfulText("学院、班级或组织", reservation.getDepartment(), 2, 80);
@@ -478,6 +590,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         validateContact(strictContact ? "联系方式" : "联系人", reservation.getContact(), strictContact);
     }
 
+    /**
+     * 归一化文本Fields。
+     * @param reservation 预约参数。
+     */
     private void normalizeTextFields(ReservationsEntity reservation) {
         if (reservation == null) {
             return;
@@ -493,6 +609,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         reservation.setReviewRemark(trimToNull(reservation.getReviewRemark()));
     }
 
+    /**
+     * 校验Meaningful文本。
+     * @param label 标签参数。
+     * @param value 值参数。
+     * @param minLength min长度参数。
+     * @param maxLength max长度参数。
+     */
     private void validateMeaningfulText(String label, String value, int minLength, int maxLength) {
         if (isBlank(value)) {
             throw new IllegalArgumentException("请填写" + label);
@@ -511,6 +634,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 校验OptionalMeaningful文本。
+     * @param label 标签参数。
+     * @param value 值参数。
+     * @param minLength min长度参数。
+     * @param maxLength max长度参数。
+     */
     private void validateOptionalMeaningfulText(String label, String value, int minLength, int maxLength) {
         if (isBlank(value)) {
             return;
@@ -518,6 +648,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         validateMeaningfulText(label, value, minLength, maxLength);
     }
 
+    /**
+     * 校验Contact。
+     * @param label 标签参数。
+     * @param value 值参数。
+     * @param strict strict参数。
+     */
     private void validateContact(String label, String value, boolean strict) {
         if (isBlank(value)) {
             throw new IllegalArgumentException("请填写" + label);
@@ -539,28 +675,58 @@ public class ReservationsServiceImpl implements ReservationsService {
                 : label + "请填写姓名、手机号、邮箱或座机");
     }
 
+    /**
+     * 判断是否具有Unsafe内容。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasUnsafeContent(String value) {
         return value != null && value.matches("(?i).*(<\\s*script|javascript:|on\\w+\\s*=|<[^>]+>).*");
     }
 
+    /**
+     * 判断是否具有Meaningful文本。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasMeaningfulText(String value) {
         return value != null && value.matches(".*[\\p{IsHan}A-Za-z].*");
     }
 
+    /**
+     * 判断是否为Mobile。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isMobile(String value) {
         String compactValue = value == null ? "" : value.replaceAll("\\s+", "");
         return compactValue.matches("^1[3-9]\\d{9}$");
     }
 
+    /**
+     * 判断是否为Landline。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isLandline(String value) {
         String compactValue = value == null ? "" : value.replaceAll("\\s+", "");
         return compactValue.matches("^0\\d{2,3}-?\\d{7,8}(-?\\d{1,6})?$");
     }
 
+    /**
+     * 判断是否为邮箱。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isEmail(String value) {
         return value != null && value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     }
 
+    /**
+     * 裁剪目标Null。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimToNull(String value) {
         if (value == null) {
             return null;
@@ -569,6 +735,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         return trimmed.isBlank() ? null : trimmed;
     }
 
+    /**
+     * 解析预约实验室。
+     * @param reservation 预约参数。
+     * @return LabEntity 类型的处理结果。
+     */
     private LabEntity resolveReservationLab(ReservationsEntity reservation) {
         LabEntity lab = resolveLab(reservation.getLabId(), reservation.getLabCode(), reservation.getLabName());
         if (lab == null) {
@@ -581,6 +752,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         return lab;
     }
 
+    /**
+     * 刷新实验室状态。
+     * @param labId 实验室标识参数。
+     */
     private void refreshLabStatus(Long labId) {
         if (labId == null) {
             return;
@@ -600,6 +775,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         labMapper.updateLabOpenStatus(labId.intValue(), nextStatus);
     }
 
+    /**
+     * 解析实验室。
+     * @param labId 实验室标识参数。
+     * @param labCode 实验室编码参数。
+     * @param labName 实验室名称参数。
+     * @return LabEntity 类型的处理结果。
+     */
     private LabEntity resolveLab(Long labId, String labCode, String labName) {
         LabEntity lab = null;
         if (labId != null) {
@@ -619,7 +801,7 @@ public class ReservationsServiceImpl implements ReservationsService {
 
         return labMapper.getLabs()
                 .stream()
-                .filter(item -> {
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item -> {
                     String itemCode = normalizeToken(item.getLabCode());
                     String itemName = normalizeToken(item.getLabName());
                     String itemDisplayName = normalizeToken(formatLabDisplayName(item));
@@ -630,6 +812,11 @@ public class ReservationsServiceImpl implements ReservationsService {
                 .orElse(null);
     }
 
+    /**
+     * 解析教务周次。
+     * @param reservationDate 预约日期参数。
+     * @return Integer 类型的处理结果。
+     */
     private Integer resolveAcademicWeek(LocalDate reservationDate) {
         if (reservationDate == null) {
             return null;
@@ -653,6 +840,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 解析Weekday。
+     * @param reservationDate 预约日期参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveWeekday(LocalDate reservationDate) {
         if (reservationDate == null) {
             return null;
@@ -670,6 +862,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         };
     }
 
+    /**
+     * 判断是否为有效时间范围。
+     * @param timeRange 时间区间参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isValidTimeRange(String timeRange) {
         if (isBlank(timeRange) || !timeRange.matches("^\\d{1,2}:\\d{2}-\\d{1,2}:\\d{2}$")) {
             return false;
@@ -683,6 +880,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
+    /**
+     * 格式化实验室Display名称。
+     * @param lab 实验室参数。
+     * @return String 类型的处理结果。
+     */
     private String formatLabDisplayName(LabEntity lab) {
         String code = firstNonBlank(lab.getLabCode(), "");
         String name = firstNonBlank(lab.getLabName(), "");
@@ -695,6 +897,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         return code + " " + name;
     }
 
+    /**
+     * 提取Leading编码。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String extractLeadingCode(String value) {
         if (isBlank(value)) {
             return "";
@@ -704,14 +911,28 @@ public class ReservationsServiceImpl implements ReservationsService {
         return spaceIndex > 0 ? text.substring(0, spaceIndex) : text;
     }
 
+    /**
+     * 归一化令牌。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeToken(String value) {
         return value == null ? "" : value.trim().replaceAll("\\s+", "").toLowerCase();
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {

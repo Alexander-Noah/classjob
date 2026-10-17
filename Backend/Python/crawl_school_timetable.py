@@ -74,6 +74,9 @@ def clean_text(text):
     return text.strip()
 
 
+# 添加utf8meta。
+# 入参：html（HTML）。
+# 返回：由当前表达式或分支生成的处理结果。
 def add_utf8_meta(html):
     if not html:
         return html
@@ -90,6 +93,8 @@ def add_utf8_meta(html):
     )
 
 
+# 保存HTML。
+# 入参：filename（filename）；html（HTML）。
 def save_html(filename, html):
     file_path = OUTPUT_DIR / filename
 
@@ -101,6 +106,8 @@ def save_html(filename, html):
     print("已保存：", file_path)
 
 
+# 保存文本。
+# 入参：filename（filename）；html（HTML）。
 def save_text(filename, html):
     file_path = OUTPUT_DIR / filename
 
@@ -126,19 +133,31 @@ def js_click(driver, element):
     driver.execute_script("arguments[0].click();", element)
 
 
+# 等待elementby标识。
+# 入参：driver（驱动）；element_id（element标识）；timeout（超时）。
+# 返回：由当前表达式或分支生成的处理结果。
 def wait_element_by_id(driver, element_id, timeout=20):
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.ID, element_id))
     )
 
 
+# 等待elementbyxpath。
+# 入参：driver（驱动）；xpath（xpath）；timeout（超时）。
+# 返回：由当前表达式或分支生成的处理结果。
 def wait_element_by_xpath(driver, xpath, timeout=20):
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.XPATH, xpath))
     )
 
 
+# 等待输入by标识。
+# 入参：driver（驱动）；element_id（element标识）；value（值）；timeout（超时）。
+# 返回：element 的当前值。
 def wait_input_by_id(driver, element_id, value, timeout=20):
+    # 查找visible输入。
+    # 入参：current_driver（当前驱动）。
+    # 返回：由当前表达式或分支生成的处理结果。
     def find_visible_input(current_driver):
         return next(
             (element for element in current_driver.find_elements(By.ID, element_id) if element.is_displayed()),
@@ -157,6 +176,9 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
     这里找可见元素再点击。
     """
     WebDriverWait(driver, timeout).until(
+        # 处理当前调用传入的回调逻辑。
+        # 入参：d。
+        # 处理当前调用传入的回调逻辑。
         lambda d: len(d.find_elements(By.ID, element_id)) > 0
     )
 
@@ -172,8 +194,13 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
     raise Exception(f"没有找到可见元素：{element_id}")
 
 
+# clickportalapp的处理逻辑。
+# 入参：driver（驱动）；app_id（app标识）；timeout（超时）。
 def click_portal_app(driver, app_id, timeout=30):
     selector = f'[amp-appid="{app_id}"]'
+    # 查找readyapp。
+    # 入参：current_driver（当前驱动）。
+    # 返回：由当前表达式或分支生成的处理结果。
     def find_ready_app(current_driver):
         for element in current_driver.find_elements(By.CSS_SELECTOR, selector):
             if element.is_displayed() and str(element.get_attribute("amp-url") or "").strip():
@@ -185,11 +212,16 @@ def click_portal_app(driver, app_id, timeout=30):
     click_with_pointer(driver, element, PORTAL_INTERACTION_DELAY_SECONDS)
 
 
+# portalappisvisible的处理逻辑。
+# 入参：driver（驱动）；app_id（app标识）。
+# 返回：由当前表达式或分支生成的处理结果。
 def portal_app_is_visible(driver, app_id):
     selector = f'[amp-appid="{app_id}"]'
     return any(element.is_displayed() for element in driver.find_elements(By.CSS_SELECTOR, selector))
 
 
+# 归还目标portal窗口。
+# 入参：driver（驱动）。
 def return_to_portal_window(driver):
     portal_host = urllib.parse.urlparse(ACADEMIC_SYSTEM.portal_url).hostname
     if len(driver.window_handles) > 1:
@@ -204,7 +236,12 @@ def return_to_portal_window(driver):
     raise RuntimeError("无法返回办事大厅窗口进行人工授权")
 
 
+# clickportalenter服务的处理逻辑。
+# 入参：driver（驱动）；timeout（超时）。
 def click_portal_enter_service(driver, timeout=30):
+    # 查找visibleenterbutton。
+    # 入参：current_driver（当前驱动）。
+    # 返回：由当前表达式或分支生成的处理结果。
     def find_visible_enter_button(current_driver):
         candidates = current_driver.find_elements(By.ID, "ampDetailEnter")
         candidates.extend(
@@ -353,6 +390,9 @@ def build_big_table_payload():
     }
 
 
+# 解码响应正文。
+# 入参：response（响应）。
+# 返回：由当前表达式或分支生成的处理结果。
 def decode_response_body(response):
     content_type = response.headers.get("Content-Type", "")
     charset_match = re.search(r"charset=([\w-]+)", content_type, re.IGNORECASE)
@@ -449,6 +489,9 @@ def fetch_big_table_by_browser(driver):
     return html
 
 
+# 获取bigtable。
+# 入参：driver（驱动）。
+# 返回：由当前表达式或分支生成的处理结果。
 def fetch_big_table(driver):
     try:
         html = fetch_big_table_by_http(driver)
@@ -483,6 +526,9 @@ def login_portal_and_enter_jw(driver):
             click_visible_element_by_id(driver, "ampLoginBtn", timeout=20)
             print("已点击门户登录按钮")
             WebDriverWait(driver, 20).until(
+                # 处理当前调用传入的回调逻辑。
+                # 入参：current_driver。
+                # 处理当前调用传入的回调逻辑。
                 lambda current_driver: is_identity_login_page(
                     current_driver.current_url,
                     current_driver.title,
@@ -504,6 +550,9 @@ def login_portal_and_enter_jw(driver):
 
     try:
         WebDriverWait(driver, 45).until(
+            # 处理当前调用传入的回调逻辑。
+            # 入参：current_driver。
+            # 处理当前调用传入的回调逻辑。
             lambda current_driver: portal_app_is_visible(current_driver, ACADEMIC_SYSTEM.portal_app_id)
         )
     except Exception as error:
@@ -574,6 +623,9 @@ def login_portal_and_enter_jw(driver):
         wait_input_by_id(driver, "userAccount", USERNAME, timeout=15)
         wait_input_by_id(driver, "userPassword", PASSWORD, timeout=15)
 
+        # 教务页码is已认证状态的处理逻辑。
+        # 入参：current_driver（当前驱动）。
+        # 返回：由当前表达式或分支生成的处理结果。
         def academic_page_is_authenticated(current_driver):
             try:
                 ensure_academic_authenticated(
@@ -620,6 +672,7 @@ def create_driver(automatic_visible_authorization=False):
     return driver
 
 
+# 执行当前模块的主入口流程。
 def main():
     global SEMESTER
 

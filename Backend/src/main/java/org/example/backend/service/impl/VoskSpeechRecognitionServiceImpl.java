@@ -30,16 +30,29 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
     private final ObjectMapper objectMapper;
     private final Model model;
 
+    /**
+     * 构造 VoskSpeechRecognitionServiceImpl，初始化当前实例。
+     * @param objectMapper object数据映射器参数。
+     * @param environment 环境参数。
+     */
     public VoskSpeechRecognitionServiceImpl(ObjectMapper objectMapper, Environment environment) {
         this.objectMapper = objectMapper;
         this.model = loadModel(environment);
     }
 
+    /**
+     * 判断是否为可用。
+     * @return 当前判断的布尔结果。
+     */
     @Override
     public boolean isAvailable() {
         return model != null;
     }
 
+    /**
+     * 创建Recognizer。
+     * @return Recognizer 类型的处理结果。
+     */
     @Override
     public Recognizer createRecognizer() {
         if (model == null) {
@@ -52,6 +65,11 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         }
     }
 
+    /**
+     * 获取结果文本。
+     * @param recognizer recognizer参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String getResultText(Recognizer recognizer) {
         if (recognizer == null) {
@@ -60,6 +78,11 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         return readText(recognizer.getResult(), "text", "Vosk 结果");
     }
 
+    /**
+     * 获取Partial文本。
+     * @param recognizer recognizer参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String getPartialText(Recognizer recognizer) {
         if (recognizer == null) {
@@ -68,6 +91,11 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         return readText(recognizer.getPartialResult(), "partial", "Vosk 部分结果");
     }
 
+    /**
+     * 获取Final文本。
+     * @param recognizer recognizer参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String getFinalText(Recognizer recognizer) {
         if (recognizer == null) {
@@ -76,6 +104,13 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         return readText(recognizer.getFinalResult(), "text", "Vosk 最终结果");
     }
 
+    /**
+     * 读取文本。
+     * @param resultPayload 结果载荷参数。
+     * @param textKey 文本键参数。
+     * @param resultName 结果名称参数。
+     * @return String 类型的处理结果。
+     */
     private String readText(String resultPayload, String textKey, String resultName) {
         try {
             Map<String, Object> result = objectMapper.readValue(resultPayload, MAP_TYPE);
@@ -87,6 +122,11 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         }
     }
 
+    /**
+     * 加载模型。
+     * @param environment 环境参数。
+     * @return Model 类型的处理结果。
+     */
     private Model loadModel(Environment environment) {
         String configuredPath = firstNonBlank(
                 environment.getProperty("speech.vosk.model-path"),
@@ -114,6 +154,11 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         }
     }
 
+    /**
+     * 加载来源AsciiTemp路径。
+     * @param sourcePath 来源路径参数。
+     * @return Model 类型的处理结果。
+     */
     private Model loadFromAsciiTempPath(Path sourcePath) {
         Path targetPath = Path.of(System.getProperty("java.io.tmpdir"), "smart-lab-vosk-model-cn-0.22").toAbsolutePath().normalize();
         try {
@@ -126,6 +171,12 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         }
     }
 
+    /**
+     * 复制目录。
+     * @param sourcePath 来源路径参数。
+     * @param targetPath 目标路径参数。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private void copyDirectory(Path sourcePath, Path targetPath) throws Exception {
         if (Files.exists(targetPath.resolve("am").resolve("final.mdl"))) {
             return;
@@ -143,6 +194,10 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         }
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {
@@ -152,7 +207,12 @@ public class VoskSpeechRecognitionServiceImpl implements SpeechRecognitionServic
         return DEFAULT_MODEL_PATH;
     }
 
+    /**
+     * 判断是否具有非Ascii。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasNonAscii(String value) {
-        return value != null && !value.chars().allMatch(character -> character < 128);
+        return value != null && !value.chars().allMatch(/** 处理 allMatch 调用中的回调逻辑。 入参：character。 */ character -> character < 128);
     }
 }

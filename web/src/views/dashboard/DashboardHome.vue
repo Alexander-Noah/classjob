@@ -57,13 +57,18 @@ const DASHBOARD_ICON_MAP = {
   statistics: markRaw(TrendCharts),
 }
 
-const sourceDoorAlerts = computed(() => dashboardData.value.doorAlerts)
-const schedules = computed(() => dashboardData.value.todaySchedules)
-const scheduleView = computed(() => buildDashboardScheduleView(schedules.value, currentTime.value, { limit: 8 }))
-const scheduleRows = computed(() => scheduleView.value.visibleItems)
-const doorReminderView = computed(() =>
+const sourceDoorAlerts = computed(/** 计算派生状态。 */ () => dashboardData.value.doorAlerts)
+const schedules = computed(/** 计算派生状态。 */ () => dashboardData.value.todaySchedules)
+const scheduleView = computed(/** 计算派生状态。 */ () => buildDashboardScheduleView(schedules.value, currentTime.value, { limit: 8 }))
+const scheduleRows = computed(/** 计算派生状态。 */ () => scheduleView.value.visibleItems)
+const doorReminderView = computed(/** 计算派生状态。 */ () =>
   buildDoorReminderList(schedules.value, sourceDoorAlerts.value, currentTime.value, { limit: 5 }),
 )
+/**
+ * 归一化路径。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizePath = (path) => {
   if (!path) return ''
   if (path.startsWith('/lab-admin')) return path
@@ -79,6 +84,11 @@ const normalizePath = (path) => {
   return redirectMap[path] || path
 }
 
+/**
+ * 获取响应数据。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getResponseData = (payload) => {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
@@ -87,17 +97,32 @@ const getResponseData = (payload) => {
   return []
 }
 
+/**
+ * 转换为库存数值。
+ * 入参：value（值）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toStockNumber = (value, fallback = 0) => {
   const number = Number(String(value ?? '').replace(/[^\d.-]/g, ''))
   return Number.isFinite(number) ? number : fallback
 }
 
+/**
+ * 获取Consumable状态。
+ * 入参：stock（库存）；warnThreshold（warnThreshold）。
+ * @returns 组装的键值对象。
+ */
 const getConsumableState = (stock, warnThreshold) => {
   if (stock <= 0) return { status: '待补货', tagType: 'danger' }
   if (stock <= warnThreshold) return { status: '低库存', tagType: 'warning' }
   return { status: '库存充足', tagType: 'success' }
 }
 
+/**
+ * 归一化耗材库存。
+ * 入参：item（条目）。
+ * @returns 组装的键值对象。
+ */
 const normalizeConsumable = (item = {}) => {
   const stock = Math.max(toStockNumber(item.stock), 0)
   const warnThreshold = Math.max(toStockNumber(item.warnThreshold, 5), 0)
@@ -115,35 +140,40 @@ const normalizeConsumable = (item = {}) => {
   }
 }
 
-const consumableCategoryRows = computed(() => {
-  const groups = consumableRecords.value.reduce((result, item) => {
+const consumableCategoryRows = computed(/** 计算派生状态。 */ () => {
+  const groups = consumableRecords.value.reduce(/** 合并当前条目与累计结果。 入参：result、item。 */ (result, item) => {
     const current = result[item.category] || { category: item.category, count: 0, stock: 0 }
     current.count += 1
     current.stock += item.stock
     result[item.category] = current
     return result
   }, {})
-  return Object.values(groups).sort((first, second) => second.stock - first.stock)
+  return Object.values(groups).sort(/** 比较当前两项的排序先后。 入参：first、second。 */ (first, second) => second.stock - first.stock)
 })
 
-const maxConsumableStock = computed(() => Math.max(...consumableCategoryRows.value.map((item) => item.stock), 1))
-const visibleConsumableCategoryRows = computed(() => consumableCategoryRows.value.slice(0, 4))
-const hiddenConsumableCategoryCount = computed(() => Math.max(consumableCategoryRows.value.length - visibleConsumableCategoryRows.value.length, 0))
+const maxConsumableStock = computed(/** 计算派生状态。 */ () => Math.max(...consumableCategoryRows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.stock), 1))
+const visibleConsumableCategoryRows = computed(/** 计算派生状态。 */ () => consumableCategoryRows.value.slice(0, 4))
+const hiddenConsumableCategoryCount = computed(/** 计算派生状态。 */ () => Math.max(consumableCategoryRows.value.length - visibleConsumableCategoryRows.value.length, 0))
 
-const consumableSummary = computed(() => {
-  const warningCount = consumableRecords.value.filter((item) => item.tagType === 'warning' || item.tagType === 'danger').length
-  const totalStock = consumableRecords.value.reduce((sum, item) => sum + item.stock, 0)
+const consumableSummary = computed(/** 计算派生状态。 */ () => {
+  const warningCount = consumableRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.tagType === 'warning' || item.tagType === 'danger').length
+  const totalStock = consumableRecords.value.reduce(/** 合并当前条目与累计结果。 入参：sum、item。 */ (sum, item) => sum + item.stock, 0)
 
   return {
     totalKinds: consumableRecords.value.length,
     totalStock,
     warningCount,
-    categoryCount: new Set(consumableRecords.value.map((item) => item.category).filter(Boolean)).size,
+    categoryCount: new Set(consumableRecords.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.category).filter(Boolean)).size,
   }
 })
 
 const ACTIVITY_TAG_TYPES = new Set(['primary', 'success', 'warning', 'danger', 'info'])
 
+/**
+ * 归一化Activity类型。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeActivityType = (value) => {
   const type = String(value || '').trim()
   if (ACTIVITY_TAG_TYPES.has(type)) return type
@@ -153,6 +183,11 @@ const normalizeActivityType = (value) => {
   return 'info'
 }
 
+/**
+ * 归一化Activity。
+ * 入参：item（条目）；index（索引）。
+ * @returns 组装的键值对象。
+ */
 const normalizeActivity = (item = {}, index = 0) => {
   const typeLabel = item.category || item.typeLabel || item.status || (ACTIVITY_TAG_TYPES.has(item.type) ? '动态' : item.type) || '动态'
 
@@ -166,10 +201,10 @@ const normalizeActivity = (item = {}, index = 0) => {
   }
 }
 
-const generatedActivities = computed(() => {
+const generatedActivities = computed(/** 计算派生状态。 */ () => {
   const items = []
 
-  doorReminderView.value.visibleItems.slice(0, 2).forEach((item, index) => {
+  doorReminderView.value.visibleItems.slice(0, 2).forEach(/** 处理遍历到的当前条目。 入参：item、index。 */ (item, index) => {
     items.push({
       id: `door-${item.id || index}`,
       time: item.time,
@@ -180,7 +215,7 @@ const generatedActivities = computed(() => {
     })
   })
 
-  scheduleRows.value.slice(0, 3).forEach((item, index) => {
+  scheduleRows.value.slice(0, 3).forEach(/** 处理遍历到的当前条目。 入参：item、index。 */ (item, index) => {
     items.push({
       id: `schedule-${item.id || index}`,
       time: item.time,
@@ -191,13 +226,13 @@ const generatedActivities = computed(() => {
     })
   })
 
-  const warningItems = consumableRecords.value.filter((item) => item.tagType === 'warning' || item.tagType === 'danger')
+  const warningItems = consumableRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.tagType === 'warning' || item.tagType === 'danger')
   if (warningItems.length) {
     items.push({
       id: 'consumable-warning',
       time: '库存',
       title: `耗材库存预警 ${warningItems.length} 项`,
-      desc: warningItems.slice(0, 3).map((item) => item.name).join('、'),
+      desc: warningItems.slice(0, 3).map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.name).join('、'),
       type: 'warning',
       typeLabel: '耗材',
     })
@@ -206,20 +241,23 @@ const generatedActivities = computed(() => {
   return items.map(normalizeActivity).slice(0, 6)
 })
 
-const recentActivities = computed(() => {
+const recentActivities = computed(/** 计算派生状态。 */ () => {
   const source = Array.isArray(dashboardData.value.recentActivities) ? dashboardData.value.recentActivities : []
   const normalizedSource = source.map(normalizeActivity)
   return (normalizedSource.length ? normalizedSource : generatedActivities.value).slice(0, 6)
 })
 
-const stats = computed(() =>
-  dashboardData.value.stats.map((stat) => ({
+const stats = computed(/** 计算派生状态。 */ () =>
+  dashboardData.value.stats.map(/** 将当前条目转换为目标结果。 入参：stat。 */ (stat) => ({
     ...stat,
     title: stat.title || stat.label || '实验室信息',
     icon: DASHBOARD_ICON_MAP[stat.iconKey] || markRaw(DataAnalysis),
   })),
 )
 
+/**
+ * 加载Dashboard概况。
+ */
 const loadDashboardOverview = async () => {
   isLoading.value = true
   errorMessage.value = ''
@@ -238,6 +276,10 @@ const loadDashboardOverview = async () => {
   }
 }
 
+/**
+ * 获取Consumable记录集合。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const fetchConsumableRecords = async () => {
   try {
     const response = await http.get(API_ENDPOINTS.consumables.list)
@@ -247,20 +289,24 @@ const fetchConsumableRecords = async () => {
   }
 }
 
+/**
+ * 打开路径。
+ * 入参：path（路径）。
+ */
 const openPath = (path) => {
   const nextPath = normalizePath(path)
   if (!nextPath) return
   router.push(nextPath)
 }
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   loadDashboardOverview()
-  clockTimer = window.setInterval(() => {
+  clockTimer = window.setInterval(/** 执行周期安排的任务。 */ () => {
     currentTime.value = new Date()
   }, 60000)
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   if (clockTimer) {
     window.clearInterval(clockTimer)
   }

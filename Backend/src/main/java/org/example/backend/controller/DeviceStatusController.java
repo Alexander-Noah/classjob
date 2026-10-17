@@ -22,35 +22,70 @@ import java.util.Map;
 public class DeviceStatusController {
     private final DeviceStatusService deviceStatusService;
 
+    /**
+     * 构造 DeviceStatusController，初始化当前实例。
+     * @param deviceStatusService 设备状态服务参数。
+     */
     public DeviceStatusController(DeviceStatusService deviceStatusService) {
         this.deviceStatusService = deviceStatusService;
     }
 
+    /**
+     * 列出实验室运行时状态。
+     * @param labId 实验室标识参数。
+     * @param query 查询参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-status/labs/{labId:\\d+}")
     public Result listLabRuntimeStatus(@PathVariable Long labId, @RequestParam(required = false) Map<String, String> query) {
         return Result.success("获取实验室设备运行状态成功", deviceStatusService.listLabRuntimeStatus(labId, safeQuery(query)));
     }
 
+    /**
+     * 获取设备运行时状态。
+     * @param deviceId 设备标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-status/devices/{deviceId:\\d+}")
     public Result getDeviceRuntimeStatus(@PathVariable Long deviceId) {
         return Result.success("获取设备运行状态成功", deviceStatusService.getDeviceRuntimeStatus(deviceId));
     }
 
+    /**
+     * 列出事件。
+     * @param query 查询参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-status/events")
     public Result listEvents(@RequestParam(required = false) Map<String, String> query) {
         return Result.success("获取设备状态事件成功", deviceStatusService.listEvents(safeQuery(query)));
     }
 
+    /**
+     * report运行时状态的处理逻辑。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/device-status/report")
     public Result reportRuntimeStatus(@RequestBody(required = false) Map<String, Object> payload) {
         return Result.success("设备运行状态上报成功", deviceStatusService.reportRuntimeStatus(payload == null ? Map.of() : payload));
     }
 
+    /**
+     * 获取摘要。
+     * @param query 查询参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-status/summary")
     public Result getSummary(@RequestParam(required = false) Map<String, String> query) {
         return Result.success("获取设备运行状态汇总成功", deviceStatusService.getSummary(safeQuery(query)));
     }
 
+    /**
+     * 安全查询的处理逻辑。
+     * @param query 查询参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, String> safeQuery(Map<String, String> query) {
         return query == null ? Map.of() : query;
     }

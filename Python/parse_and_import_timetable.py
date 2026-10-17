@@ -84,6 +84,9 @@ def clean_text(text):
     return text.strip()
 
 
+# 转换为整数。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def to_int(value):
     if value is None:
         return None
@@ -99,6 +102,9 @@ def to_int(value):
         return None
 
 
+# clean的处理逻辑。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def clean(value):
     if value is None:
         return ""
@@ -225,6 +231,9 @@ def parse_course_div(div):
     }
 
 
+# 解析big课表。
+# 入参：html（HTML）。
+# 返回：result 的当前值。
 def parse_big_timetable(html):
     soup = BeautifulSoup(html, "lxml")
 
@@ -328,6 +337,9 @@ def create_table_if_not_exists(cursor):
     cursor.execute(sql)
 
 
+# 导入dataframe目标mysql。
+# 入参：df（df）。
+# 返回：由当前表达式或分支生成的处理结果。
 def import_dataframe_to_mysql(df):
     if pymysql is None:
         print("未安装 pymysql，已跳过 Python 直连 MySQL 导入；后端将使用 JDBC 导入标准 CSV。")

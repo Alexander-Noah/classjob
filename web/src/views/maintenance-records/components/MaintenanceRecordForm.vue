@@ -12,7 +12,7 @@ import { getStoredUser } from '../../../api/services/auth'
 import { buildMaintenancePayload, createMaintenanceDraft, devicesForMaintenanceLab } from '../../../modules/maintenance-records/maintenanceRecordEditor'
 
 defineOptions({ name: 'MaintenanceRecordForm' })
-const props = defineProps({ record: { type: Object, default: () => ({}) } })
+const props = defineProps({ record: { type: Object, /** 构造当前类型的默认状态。 @returns 由当前表达式或分支生成的处理结果。 */ default: () => ({}) } })
 const emit = defineEmits(['saved', 'cancel', 'saving-change'])
 const formRef = ref()
 const saving = ref(false)
@@ -22,7 +22,7 @@ const labs = ref([])
 const devices = ref([])
 const form = reactive(createMaintenanceDraft())
 const original = ref('')
-const availableDevices = computed(() => devicesForMaintenanceLab(devices.value, form.labId))
+const availableDevices = computed(/** 计算派生状态。 */ () => devicesForMaintenanceLab(devices.value, form.labId))
 const rules = {
   labId: [{ required: true, message: '请选择实验室', trigger: 'change' }],
   maintenanceType: [{ required: true, whitespace: true, message: '请填写维护类型', trigger: 'blur' }],
@@ -31,13 +31,16 @@ const rules = {
   content: [{ required: true, whitespace: true, message: '请填写维护内容', trigger: 'blur' }],
   result: [{ required: true, whitespace: true, message: '请填写维护结果', trigger: 'blur' }],
 }
-watch(() => props.record, async record => {
+watch(/** 响应被监听状态的变化。 */ () => props.record, /** 响应被监听状态的变化。 入参：record。 */ async record => {
   Object.assign(form, createMaintenanceDraft(record, getStoredUser()))
   original.value = JSON.stringify(form)
   await nextTick()
   formRef.value?.clearValidate()
 }, { immediate: true })
-watch(saving, value => emit('saving-change', value))
+watch(saving, /** 响应被监听状态的变化。 入参：value。 */ value => emit('saving-change', value))
+/**
+ * 加载选项。
+ */
 const loadOptions = async () => {
   loadingOptions.value = true
   optionError.value = ''
@@ -49,13 +52,19 @@ const loadOptions = async () => {
     optionError.value = '实验室或设备列表加载失败，请重试'
   } finally { loadingOptions.value = false }
 }
+/**
+ * 实验室变化的处理逻辑。
+ */
 const labChanged = () => {
   form.deviceId = ''
   formRef.value?.clearValidate('deviceId')
 }
+/**
+ * 提交当前操作。
+ */
 const submit = async () => {
   if (saving.value || loadingOptions.value || optionError.value) return
-  const valid = await formRef.value?.validate().catch(() => false)
+  const valid = await formRef.value?.validate().catch(/** 处理异步失败结果。 */ () => false)
   if (!valid) return
   saving.value = true
   try {
@@ -69,7 +78,7 @@ const submit = async () => {
     if (!error?.__handled) ElMessage.error(error?.userMessage || error?.message || '维护记录保存失败，请重试')
   } finally { saving.value = false }
 }
-defineExpose({ isDirty: () => JSON.stringify(form) !== original.value })
+defineExpose({ /** 判断是否为Dirty。 @returns 由当前表达式或分支生成的处理结果。 */ isDirty: () => JSON.stringify(form) !== original.value })
 onMounted(loadOptions)
 </script>
 

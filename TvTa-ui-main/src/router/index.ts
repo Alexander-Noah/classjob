@@ -16,22 +16,34 @@ const router = createRouter({
     {
       path: '/devices',
       name: 'devices',
+      /**
+       * component的处理逻辑。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       component: () => import('../views/DevicesView.vue')
     },
     {
       path: '/logs',
       name: 'logs',
+      /**
+       * component的处理逻辑。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       component: () => import('../views/LogsView.vue')
     },
     {
       path: '/gateway',
       name: 'gateway',
+      /**
+       * component的处理逻辑。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       component: () => import('../views/GatewayView.vue')
     }
   ]
 })
 
-router.beforeEach((to) => {
+router.beforeEach(/** 处理 beforeEach 调用中的回调逻辑。 入参：to。 */ (to) => {
   const activationStore = useActivationStore()
   activationStore.hydrate()
 

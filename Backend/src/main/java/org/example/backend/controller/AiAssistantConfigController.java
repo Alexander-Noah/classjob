@@ -30,6 +30,12 @@ public class AiAssistantConfigController {
     private final AiAssistantUserConfigService userConfigService;
     private final AiPlatformChatService platformChatService;
 
+    /**
+     * 构造 AiAssistantConfigController，初始化当前实例。
+     * @param tongyiAgentService tongyiAgent服务参数。
+     * @param userConfigService 用户配置服务参数。
+     * @param platformChatService platformChat服务参数。
+     */
     public AiAssistantConfigController(
             TongyiAgentService tongyiAgentService,
             AiAssistantUserConfigService userConfigService,
@@ -40,6 +46,11 @@ public class AiAssistantConfigController {
         this.platformChatService = platformChatService;
     }
 
+    /**
+     * 获取配置。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping({"/config", "/ai-assistant/config"})
     public Result getConfig(HttpServletRequest request) {
         String host = request.getServerName();
@@ -58,6 +69,11 @@ public class AiAssistantConfigController {
         return Result.success("获取 AI 助手配置成功", data);
     }
 
+    /**
+     * 获取用户配置。
+     * @param userId 用户标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/ai-assistant/user-config")
     public Result getUserConfig(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId
@@ -65,6 +81,12 @@ public class AiAssistantConfigController {
         return Result.success("获取 AI 接口配置成功", userConfigService.getConfig(userId));
     }
 
+    /**
+     * 保存用户配置。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/ai-assistant/user-config")
     public Result saveUserConfig(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
@@ -73,6 +95,12 @@ public class AiAssistantConfigController {
         return Result.success("保存 AI 接口配置成功", userConfigService.saveConfig(userId, payload));
     }
 
+    /**
+     * 验证用户配置。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/ai-assistant/user-config/test")
     public Result testUserConfig(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
@@ -81,6 +109,12 @@ public class AiAssistantConfigController {
         return Result.success("AI 接口连接测试成功", userConfigService.testConnection(userId, payload));
     }
 
+    /**
+     * chat的处理逻辑。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/ai-assistant/chat")
     public Result chat(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,

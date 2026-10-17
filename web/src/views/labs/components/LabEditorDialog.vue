@@ -20,6 +20,10 @@ const props = defineProps({
   },
   managerOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   modelValue: {
@@ -28,10 +32,18 @@ const props = defineProps({
   },
   safetyOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   title: {
@@ -40,6 +52,10 @@ const props = defineProps({
   },
   typeOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -47,7 +63,16 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 

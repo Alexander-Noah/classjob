@@ -56,10 +56,18 @@ const tabConfigs = [
 ]
 
 const activeTab = computed({
+  /**
+   * 获取当前操作。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   get() {
     const tab = String(route.query.tab || 'software')
-    return tabConfigs.some((item) => item.name === tab) ? tab : 'software'
+    return tabConfigs.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.name === tab) ? tab : 'software'
   },
+  /**
+   * 设置当前操作。
+   * 入参：tab（tab）。
+   */
   set(tab) {
     router.replace({
       path: route.path,
@@ -71,9 +79,9 @@ const activeTab = computed({
   },
 })
 
-const activeTabConfig = computed(() => tabConfigs.find((item) => item.name === activeTab.value) || tabConfigs[0])
-const activeModuleConfig = computed(() => activeTabConfig.value.config)
-const pageTitle = computed(() => activeModuleConfig.value.pageTitle || '环境管理')
+const activeTabConfig = computed(/** 计算派生状态。 */ () => tabConfigs.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.name === activeTab.value) || tabConfigs[0])
+const activeModuleConfig = computed(/** 计算派生状态。 */ () => activeTabConfig.value.config)
+const pageTitle = computed(/** 计算派生状态。 */ () => activeModuleConfig.value.pageTitle || '环境管理')
 
 const business = useBusinessModuleRecords({
   route,
@@ -81,6 +89,11 @@ const business = useBusinessModuleRecords({
   pageTitle,
 })
 
+/**
+ * 获取响应列表。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getResponseList = (payload) => {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
@@ -92,8 +105,23 @@ const getResponseList = (payload) => {
   return []
 }
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) => String(value ?? '').trim()
+/**
+ * 构建选项。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildOption = (value) => ({ label: value, value, name: value })
+/**
+ * 转换为选项值。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toOptionValue = (value) => {
   const numberValue = Number(value)
   return Number.isNaN(numberValue) ? value : numberValue
@@ -111,15 +139,33 @@ const softwareRecords = ref([])
 const templateRecords = ref([])
 const selectedEnvironmentRecord = ref(null)
 
+/**
+ * 获取课程名称。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCourseName = (item) =>
   normalizeText(item.courseName || item.course || item.name || item.subjectName || item.lessonName)
 
+/**
+ * 获取教师名称。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTeacherName = (item) =>
   normalizeText(item.teacher || item.teacherName || item.realName || item.username)
 
+/**
+ * 获取Class名称。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getClassName = (item) =>
   normalizeText(item.className || item.rowClassName || item.class_name || item.row_class_name || item.clazz || item.class)
 
+/**
+ * 加载课程环境选项。
+ */
 const loadCourseEnvironmentOptions = async () => {
   try {
     const res = await http.get('/class-timetables', {
@@ -135,7 +181,7 @@ const loadCourseEnvironmentOptions = async () => {
     const teacherMap = {}
     const classMap = {}
 
-    list.forEach((item) => {
+    list.forEach(/** 处理遍历到的当前条目。 入参：item。 */ (item) => {
       const courseName = getCourseName(item)
       const teacherName = getTeacherName(item)
       const className = getClassName(item)
@@ -159,10 +205,10 @@ const loadCourseEnvironmentOptions = async () => {
     allTeacherOptions.value = Array.from(teacherSet).map(buildOption)
     allClassOptions.value = Array.from(classSet).map(buildOption)
     courseTeacherMap.value = Object.fromEntries(
-      Object.entries(teacherMap).map(([courseName, teachers]) => [courseName, Array.from(teachers)]),
+      Object.entries(teacherMap).map(/** 将当前条目转换为目标结果。 */ ([courseName, teachers]) => [courseName, Array.from(teachers)]),
     )
     courseClassMap.value = Object.fromEntries(
-      Object.entries(classMap).map(([courseName, classNames]) => [courseName, Array.from(classNames)]),
+      Object.entries(classMap).map(/** 将当前条目转换为目标结果。 */ ([courseName, classNames]) => [courseName, Array.from(classNames)]),
     )
     updateCourseLinkedOptions(business.formModel.course)
   } catch (error) {
@@ -175,6 +221,10 @@ const loadCourseEnvironmentOptions = async () => {
   }
 }
 
+/**
+ * 更新课程Linked选项。
+ * 入参：courseName（课程名称）。
+ */
 const updateCourseLinkedOptions = (courseName) => {
   const course = normalizeText(courseName)
 
@@ -187,11 +237,11 @@ const updateCourseLinkedOptions = (courseName) => {
   teacherOptions.value = (courseTeacherMap.value[course] || []).map(buildOption)
   classOptions.value = (courseClassMap.value[course] || []).map(buildOption)
 
-  if (!teacherOptions.value.some((item) => item.value === business.formModel.teacher)) {
+  if (!teacherOptions.value.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.value === business.formModel.teacher)) {
     business.formModel.teacher = ''
   }
 
-  if (!classOptions.value.some((item) => item.value === business.formModel.className)) {
+  if (!classOptions.value.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.value === business.formModel.className)) {
     business.formModel.className = ''
   }
 
@@ -199,13 +249,16 @@ const updateCourseLinkedOptions = (courseName) => {
   if (classOptions.value.length === 1) business.formModel.className = classOptions.value[0].value
 }
 
+/**
+ * 加载实验室选项。
+ */
 const loadLabOptions = async () => {
   try {
     const res = await http.get('/labs')
     const list = getResponseList(res.data ?? res)
 
     labOptions.value = list
-      .map((item) => {
+      .map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => {
         const id = item.id ?? item.labId
         const name = item.labName ?? item.name ?? item.lab ?? item.roomName ?? item.classroomName ?? item.location
 
@@ -217,13 +270,21 @@ const loadLabOptions = async () => {
           labName: name,
         })
       })
-      .filter((item) => item.value !== undefined && item.value !== null && item.value !== '' && item.label)
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.value !== undefined && item.value !== null && item.value !== '' && item.label)
   } catch (error) {
     console.error('加载实验室下拉列表失败：', error)
   }
 }
 
+/**
+ * 加载Linked环境记录集合。
+ */
 const loadLinkedEnvironmentRecords = async () => {
+  /**
+   * 加载记录集合。
+   * 入参：url（URL）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const loadRecords = async (url) => {
     try {
       const res = await http.get(url)
@@ -244,25 +305,55 @@ const loadLinkedEnvironmentRecords = async () => {
   templateRecords.value = templateList
 }
 
+/**
+ * unique选项的处理逻辑。
+ * 入参：records（记录集合）；getter（getter）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const uniqueOptions = (records, getter) => {
   const values = records.map(getter).map(normalizeText).filter(Boolean)
   return Array.from(new Set(values)).map(buildOption)
 }
 
+/**
+ * 获取Software名称。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getSoftwareName = (record) => normalizeText(record.name || record.softwareName)
+/**
+ * 获取Software版本。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getSoftwareVersion = (record) => normalizeText(record.version || record.softwareVersion)
+/**
+ * 获取SoftwareLicense。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getSoftwareLicense = (record) => normalizeText(record.license || record.licenseInfo)
+/**
+ * 获取模板名称。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTemplateName = (record) => normalizeText(record.name)
+/**
+ * 获取模板课程。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTemplateCourse = (record) => normalizeText(record.course)
 
-const softwareNameOptions = computed(() => uniqueOptions(softwareRecords.value, getSoftwareName))
-const templateNameOptions = computed(() => uniqueOptions(templateRecords.value, getTemplateName))
-const softwareVersionOptions = computed(() => uniqueOptions(softwareRecords.value, getSoftwareVersion))
-const softwareListOptions = computed(() => uniqueOptions(templateRecords.value, (record) => record.softwareList))
-const templateCourseOptions = computed(() => {
+const softwareNameOptions = computed(/** 计算派生状态。 */ () => uniqueOptions(softwareRecords.value, getSoftwareName))
+const templateNameOptions = computed(/** 计算派生状态。 */ () => uniqueOptions(templateRecords.value, getTemplateName))
+const softwareVersionOptions = computed(/** 计算派生状态。 */ () => uniqueOptions(softwareRecords.value, getSoftwareVersion))
+const softwareListOptions = computed(/** 计算派生状态。 */ () => uniqueOptions(templateRecords.value, /** 处理 uniqueOptions 调用中的回调逻辑。 入参：record。 */ (record) => record.softwareList))
+const templateCourseOptions = computed(/** 计算派生状态。 */ () => {
   const options = [...courseOptions.value, ...uniqueOptions(templateRecords.value, getTemplateCourse)]
   const optionMap = new Map()
-  options.forEach((option) => {
+  options.forEach(/** 处理遍历到的当前条目。 入参：option。 */ (option) => {
     if (option.value && !optionMap.has(option.value)) {
       optionMap.set(option.value, option)
     }
@@ -270,27 +361,46 @@ const templateCourseOptions = computed(() => {
   return Array.from(optionMap.values())
 })
 
+/**
+ * 查找SoftwareBy名称。
+ * 入参：name（名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findSoftwareByName = (name) => {
   const targetName = normalizeText(name)
-  return softwareRecords.value.find((record) => getSoftwareName(record) === targetName)
+  return softwareRecords.value.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => getSoftwareName(record) === targetName)
 }
 
+/**
+ * 查找模板By名称。
+ * 入参：name（名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findTemplateByName = (name) => {
   const targetName = normalizeText(name)
-  return templateRecords.value.find((record) => getTemplateName(record) === targetName)
+  return templateRecords.value.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => getTemplateName(record) === targetName)
 }
 
+/**
+ * 查找模板By课程。
+ * 入参：courseName（课程名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findTemplateByCourse = (courseName) => {
   const targetCourse = normalizeText(courseName)
   if (!targetCourse) return null
-  const recordsWithCourse = templateRecords.value.filter((record) => getTemplateCourse(record))
+  const recordsWithCourse = templateRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => getTemplateCourse(record))
 
   return (
-    recordsWithCourse.find((record) => getTemplateCourse(record) === targetCourse) ||
-    recordsWithCourse.find((record) => targetCourse.includes(getTemplateCourse(record)) || getTemplateCourse(record).includes(targetCourse))
+    recordsWithCourse.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => getTemplateCourse(record) === targetCourse) ||
+    recordsWithCourse.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => targetCourse.includes(getTemplateCourse(record)) || getTemplateCourse(record).includes(targetCourse))
   )
 }
 
+/**
+ * 设置IfPresent。
+ * 入参：prop（prop）；value（值）；解构参数（overwrite、false）。
+ */
 const setIfPresent = (prop, value, { overwrite = false } = {}) => {
   const normalizedValue = normalizeText(value)
   if (!normalizedValue) return
@@ -298,6 +408,10 @@ const setIfPresent = (prop, value, { overwrite = false } = {}) => {
   business.formModel[prop] = normalizedValue
 }
 
+/**
+ * 应用SoftwareLinkage。
+ * 入参：softwareName（software名称）；解构参数（overwrite、false）。
+ */
 const applySoftwareLinkage = (softwareName, { overwrite = false } = {}) => {
   const software = findSoftwareByName(softwareName)
   if (!software) return
@@ -314,6 +428,10 @@ const applySoftwareLinkage = (softwareName, { overwrite = false } = {}) => {
   setIfPresent('lab', software.labName || software.lab, { overwrite })
 }
 
+/**
+ * 应用模板Linkage。
+ * 入参：template（模板）；解构参数（overwrite、false）。
+ */
 const applyTemplateLinkage = (template, { overwrite = false } = {}) => {
   if (!template) return
 
@@ -325,6 +443,10 @@ const applyTemplateLinkage = (template, { overwrite = false } = {}) => {
   setIfPresent('status', template.status, { overwrite: false })
 }
 
+/**
+ * 应用课程模板Suggestion。
+ * 入参：courseName（课程名称）；解构参数（overwrite、false）。
+ */
 const applyCourseTemplateSuggestion = (courseName, { overwrite = false } = {}) => {
   const template = findTemplateByCourse(courseName)
   if (!template) return
@@ -333,7 +455,7 @@ const applyCourseTemplateSuggestion = (courseName, { overwrite = false } = {}) =
   setIfPresent('labType', template.labs, { overwrite: false })
 }
 
-const dialogFieldOptions = computed(() => ({
+const dialogFieldOptions = computed(/** 计算派生状态。 */ () => ({
   ...business.formFieldOptions.value,
   labId: labOptions.value,
   lab: labOptions.value,
@@ -350,42 +472,56 @@ const dialogFieldOptions = computed(() => ({
 }))
 
 const primaryKey = computed(
+  /**
+   * 计算派生状态。
+   */
   () => activeModuleConfig.value.primaryKey || activeModuleConfig.value.tableColumns?.[0]?.prop || 'name',
 )
 
 const statusColumn = computed(
+  /**
+   * 计算派生状态。
+   */
   () =>
-    activeModuleConfig.value.tableColumns?.find((column) => column.type === 'tag') ||
-    activeModuleConfig.value.tableColumns?.find((column) => column.prop === 'status'),
+    activeModuleConfig.value.tableColumns?.find(/** 判断当前条目是否为查找目标。 入参：column。 */ (column) => column.type === 'tag') ||
+    activeModuleConfig.value.tableColumns?.find(/** 判断当前条目是否为查找目标。 入参：column。 */ (column) => column.prop === 'status'),
 )
 
-const detailFields = computed(() => activeModuleConfig.value.tableColumns || [])
+const detailFields = computed(/** 计算派生状态。 */ () => activeModuleConfig.value.tableColumns || [])
 const detailTitle = computed(
+  /**
+   * 计算派生状态。
+   */
   () => selectedEnvironmentRecord.value?.[primaryKey.value] || activeModuleConfig.value.recordName || '环境记录',
 )
-const detailStatus = computed(() => selectedEnvironmentRecord.value?.[statusColumn.value?.prop])
+const detailStatus = computed(/** 计算派生状态。 */ () => selectedEnvironmentRecord.value?.[statusColumn.value?.prop])
 
-const detailHighlights = computed(() =>
+const detailHighlights = computed(/** 计算派生状态。 */ () =>
   detailFields.value
-    .filter((column) => column.prop !== primaryKey.value && column.prop !== statusColumn.value?.prop)
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：column。 */ (column) => column.prop !== primaryKey.value && column.prop !== statusColumn.value?.prop)
     .slice(0, 4)
-    .map((column) => ({
+    .map(/** 将当前条目转换为目标结果。 入参：column。 */ (column) => ({
       label: column.label,
       value: selectedEnvironmentRecord.value?.[column.prop] || '-',
     })),
 )
 
-const statusOverview = computed(() => business.statusSummary.value.filter((item) => item.count > 0 || item.percentage > 0))
+const statusOverview = computed(/** 计算派生状态。 */ () => business.statusSummary.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.count > 0 || item.percentage > 0))
 
-const metrics = computed(() => {
+const metrics = computed(/** 计算派生状态。 */ () => {
   const records = business.records.value
-  const countStatus = (status) => records.filter((record) => record.status === status).length
+  /**
+   * 统计状态。
+   * 入参：status（状态）。
+   * @returns records.filter((record) => record.status === status).length 的当前值。
+   */
+  const countStatus = (status) => records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => record.status === status).length
   if (activeTab.value === 'software') {
-    const labs = new Set(records.map((record) => record.labId || record.lab).filter(Boolean))
+    const labs = new Set(records.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => record.labId || record.lab).filter(Boolean))
     return [
       { label: '软件条目', value: records.length, trend: `覆盖 ${labs.size} 间实验室` },
       { label: '待安装任务', value: countStatus('待安装'), trend: '按软件安装状态统计' },
-      { label: '授权异常', value: records.filter((record) => record.status === '授权异常' || record.license === '授权异常').length, trend: '需管理员复核' },
+      { label: '授权异常', value: records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => record.status === '授权异常' || record.license === '授权异常').length, trend: '需管理员复核' },
     ]
   }
   if (activeTab.value === 'course') {
@@ -402,7 +538,7 @@ const metrics = computed(() => {
   ]
 })
 
-const workflowSteps = computed(() => {
+const workflowSteps = computed(/** 计算派生状态。 */ () => {
   const map = {
     software: [
       { title: '登记清单', desc: '录入软件名称、版本、类型和授权情况' },
@@ -424,7 +560,7 @@ const workflowSteps = computed(() => {
   return map[activeTab.value] || map.software
 })
 
-const checklistItems = computed(() => {
+const checklistItems = computed(/** 计算派生状态。 */ () => {
   const record = selectedEnvironmentRecord.value || {}
   const map = {
     software: [
@@ -450,10 +586,18 @@ const checklistItems = computed(() => {
   return map[activeTab.value] || map.software
 })
 
+/**
+ * 选择环境记录。
+ * 入参：record（记录）。
+ */
 const selectEnvironmentRecord = (record) => {
   selectedEnvironmentRecord.value = record || null
 }
 
+/**
+ * 处理Delete记录。
+ * 入参：record（记录）。
+ */
 const handleDeleteRecord = (record) => {
   if (record?._recordId === selectedEnvironmentRecord.value?._recordId) {
     selectedEnvironmentRecord.value = null
@@ -462,6 +606,9 @@ const handleDeleteRecord = (record) => {
   business.deleteRecord(record)
 }
 
+/**
+ * 处理Submit记录。
+ */
 const handleSubmitRecord = async () => {
   await business.submitRecord()
 
@@ -470,14 +617,21 @@ const handleSubmitRecord = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   loadLabOptions()
   loadCourseEnvironmentOptions()
   loadLinkedEnvironmentRecords()
 })
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => business.formModel.course,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：courseName。
+   */
   (courseName) => {
     if (activeTab.value === 'course') {
       updateCourseLinkedOptions(courseName)
@@ -492,7 +646,14 @@ watch(
 )
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => business.formModel.name,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：name。
+   */
   (name) => {
     if (!business.dialogVisible.value) return
 
@@ -507,7 +668,14 @@ watch(
 )
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => business.dialogVisible.value,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：visible。
+   */
   (visible) => {
     if (!visible) return
 
@@ -526,14 +694,21 @@ watch(
   },
 )
 
-watch(activeTab, () => {
+watch(activeTab, /** 响应被监听状态的变化。 */ () => {
   business.keyword.value = ''
   business.statusFilter.value = 'all'
   selectedEnvironmentRecord.value = null
 })
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => business.pagedRecords.value,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：records。
+   */
   (records) => {
     if (!records.length) {
       selectedEnvironmentRecord.value = null
@@ -542,7 +717,7 @@ watch(
 
     if (
       !selectedEnvironmentRecord.value ||
-      !records.some((record) => record._recordId === selectedEnvironmentRecord.value?._recordId)
+      !records.some(/** 判断当前条目是否满足任一匹配条件。 入参：record。 */ (record) => record._recordId === selectedEnvironmentRecord.value?._recordId)
     ) {
       selectedEnvironmentRecord.value = records[0]
     }

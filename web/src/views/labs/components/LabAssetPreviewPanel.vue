@@ -16,6 +16,10 @@ const props = defineProps({
   },
   assets: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   dialogMode: {
@@ -24,6 +28,11 @@ const props = defineProps({
   },
 })
 
+/**
+ * 获取Tag类型。
+ * 入参：value（值）；typeMap（类型映射）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTagType = (value, typeMap) => typeMap[value] || 'info'
 
 const statusTagTypes = {
@@ -42,11 +51,11 @@ const healthTagTypes = {
   风险: 'danger',
 }
 
-const assetOverview = computed(() => {
+const assetOverview = computed(/** 计算派生状态。 */ () => {
   const total = props.assets.length
-  const onlineCount = props.assets.filter((asset) => asset.online).length
-  const alertCount = props.assets.filter((asset) => ['故障', '维护中'].includes(asset.status)).length
-  const attentionCount = props.assets.filter((asset) => ['关注', '风险'].includes(asset.health)).length
+  const onlineCount = props.assets.filter(/** 判断当前条目是否符合筛选条件。 入参：asset。 */ (asset) => asset.online).length
+  const alertCount = props.assets.filter(/** 判断当前条目是否符合筛选条件。 入参：asset。 */ (asset) => ['故障', '维护中'].includes(asset.status)).length
+  const attentionCount = props.assets.filter(/** 判断当前条目是否符合筛选条件。 入参：asset。 */ (asset) => ['关注', '风险'].includes(asset.health)).length
 
   return [
     { label: '设备记录', value: String(total), trend: total ? '弹窗内直接查看' : '等待补录设备' },
@@ -60,7 +69,7 @@ const assetOverview = computed(() => {
   ]
 })
 
-const assetTableMaxHeight = computed(() => (props.dialogMode ? 'min(38vh, 360px)' : undefined))
+const assetTableMaxHeight = computed(/** 计算派生状态。 */ () => (props.dialogMode ? 'min(38vh, 360px)' : undefined))
 </script>
 
 <template>

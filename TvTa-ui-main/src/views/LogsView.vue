@@ -7,11 +7,11 @@ import { useMonitorStore } from '@/stores/monitor'
 
 const monitorStore = useMonitorStore()
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   monitorStore.startPolling()
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   monitorStore.stopPolling()
 })
 </script>

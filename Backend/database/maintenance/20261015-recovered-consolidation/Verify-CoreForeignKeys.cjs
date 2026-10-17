@@ -3,6 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');
 if (!process.env.MYSQL_PWD) throw new Error('MYSQL_PWD is required');
+/**
+ * 查询当前操作。
+ * 入参：input（输入）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function query(input) {
   const result = cp.spawnSync(process.env.RECOVERY_MYSQL_EXE || 'C:/Program Files/MySQL/MySQL Server 8.4/bin/mysql.exe',
     ['--host=127.0.0.1','--port=3306','--user=root','--batch','--skip-column-names','--raw','--database=smart_lab_basic'],
@@ -11,14 +16,14 @@ function query(input) {
   return result.stdout.trim();
 }
 const edges = query("select table_name,column_name,referenced_table_name,referenced_column_name from information_schema.key_column_usage where table_schema=database() and referenced_table_name is not null;")
-  .split(/\r?\n/).filter(Boolean).map(line => line.split('\t'));
+  .split(/\r?\n/).filter(Boolean).map(/** 将当前条目转换为目标结果。 入参：line。 */ line => line.split('\t'));
 if (!edges.length) throw new Error('Core foreign keys are missing');
-const checks = edges.map(([table, column, parent, parentColumn]) => {
-  if ([table,column,parent,parentColumn].some(name => !/^[a-z_]+$/.test(name))) throw new Error('Unexpected SQL identifier');
+const checks = edges.map(/** 将当前条目转换为目标结果。 */ ([table, column, parent, parentColumn]) => {
+  if ([table,column,parent,parentColumn].some(/** 判断当前条目是否满足任一匹配条件。 入参：name。 */ name => !/^[a-z_]+$/.test(name))) throw new Error('Unexpected SQL identifier');
   const orphans = Number(query('select count(*) from `' + table + '` c left join `' + parent + '` p on p.`' + parentColumn + '`=c.`' + column + '` where c.`' + column + '` is not null and p.`' + parentColumn + '` is null;'));
   return { table, column, parent, orphans };
 });
-const report = { database: 'smart_lab_basic', checkedAt: new Date().toISOString(), foreignKeys: checks.length, passed: checks.every(check => check.orphans === 0), checks };
+const report = { database: 'smart_lab_basic', checkedAt: new Date().toISOString(), foreignKeys: checks.length, passed: checks.every(/** 判断当前条目是否满足全部匹配条件。 入参：check。 */ check => check.orphans === 0), checks };
 fs.writeFileSync(path.join(__dirname, 'foreign-key-verification.json'), JSON.stringify(report, null, 2));
 if (!report.passed) throw new Error('Foreign-key orphans detected');
 console.log('PASS: ' + checks.length + ' foreign keys checked, zero orphan references.');

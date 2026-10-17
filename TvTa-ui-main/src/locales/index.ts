@@ -16,4 +16,9 @@ const i18n = createI18n({
 
 export default i18n
 
+/**
+ * t的处理逻辑。
+ * 入参：key（键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const t = (key: string) => i18n.global.t(key)

@@ -6,9 +6,14 @@ import { existsSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('room control page uses iot endpoints instead of device assets', () => {
+test('room control page uses iot endpoints instead of device assets', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readSource('../src/composables/useRoomControl.js')
 
   assert.doesNotMatch(source, /deviceResourceService/)
@@ -19,7 +24,7 @@ test('room control page uses iot endpoints instead of device assets', () => {
   assert.match(source, /iotService\.listIotCommandLogs/)
 })
 
-test('room control empty state names unconfigured iot devices clearly', () => {
+test('room control empty state names unconfigured iot devices clearly', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readSource('../src/views/room-control/components/DeviceControlPanel.vue')
 
   assert.match(source, /该实验室暂未接入物联设备/)
@@ -28,7 +33,7 @@ test('room control empty state names unconfigured iot devices clearly', () => {
   assert.match(source, /待配置真实网关/)
 })
 
-test('room control page exposes gateway mode without claiming real hardware access', () => {
+test('room control page exposes gateway mode without claiming real hardware access', /** 验证当前测试用例的预期行为。 */ () => {
   const composable = readSource('../src/composables/useRoomControl.js')
   const header = readSource('../src/views/room-control/components/RoomControlHeader.vue')
   const page = readSource('../src/views/room-control/RoomControlCenter.vue')
@@ -44,7 +49,7 @@ test('room control page exposes gateway mode without claiming real hardware acce
   assert.doesNotMatch(header, /已真实接入硬件/)
 })
 
-test('room control does not show mocked hardware before real iot data loads', () => {
+test('room control does not show mocked hardware before real iot data loads', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readSource('../src/composables/useRoomControl.js')
   const legacyOverview = new URL('../src/constants/roomControl.js', import.meta.url)
 

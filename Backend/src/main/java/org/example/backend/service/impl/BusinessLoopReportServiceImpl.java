@@ -24,6 +24,11 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
     private final BusinessLoopReportMapper businessLoopReportMapper;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 构造 BusinessLoopReportServiceImpl，初始化当前实例。
+     * @param businessLoopReportMapper businessLoopReport数据映射器参数。
+     * @param objectMapper object数据映射器参数。
+     */
     public BusinessLoopReportServiceImpl(
             BusinessLoopReportMapper businessLoopReportMapper,
             ObjectMapper objectMapper
@@ -32,6 +37,10 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 获取概况。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getOverview() {
         long reservationTotal = businessLoopReportMapper.countReservations();
@@ -108,6 +117,18 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return overview;
     }
 
+    /**
+     * 总数的处理逻辑。
+     * @param reservationTotal 预约总数参数。
+     * @param usageTotal usage总数参数。
+     * @param repairTotal repair总数参数。
+     * @param deviceTotal 设备总数参数。
+     * @param environmentTemplates 环境模板参数。
+     * @param consumables consumables参数。
+     * @param notices 通知参数。
+     * @param eventTotal 事件总数参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> totals(
             long reservationTotal,
             long usageTotal,
@@ -130,6 +151,16 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return totals;
     }
 
+    /**
+     * chain的处理逻辑。
+     * @param key 键参数。
+     * @param title title参数。
+     * @param total 总数参数。
+     * @param completed completed参数。
+     * @param pending 待处理参数。
+     * @param owner 所有者参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> chain(
             String key,
             String title,
@@ -151,6 +182,15 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return chain;
     }
 
+    /**
+     * card的处理逻辑。
+     * @param label 标签参数。
+     * @param value 值参数。
+     * @param total 总数参数。
+     * @param completed completed参数。
+     * @param trend trend参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> card(
             String label,
             String value,
@@ -167,6 +207,14 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return card;
     }
 
+    /**
+     * 添加Action。
+     * @param actions actions参数。
+     * @param count 数量参数。
+     * @param title title参数。
+     * @param description description参数。
+     * @param path 路径参数。
+     */
     private void addAction(
             List<Map<String, Object>> actions,
             long count,
@@ -186,6 +234,12 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         actions.add(action);
     }
 
+    /**
+     * rate的处理逻辑。
+     * @param completed completed参数。
+     * @param total 总数参数。
+     * @return String 类型的处理结果。
+     */
     private String rate(long completed, long total) {
         if (total <= 0) {
             return "100%";
@@ -195,6 +249,10 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return Math.round((safeCompleted * 100.0) / total) + "%";
     }
 
+    /**
+     * 读取Latest事件。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> readLatestEvents() {
         List<Map<String, Object>> events = new ArrayList<>();
 
@@ -212,6 +270,11 @@ public class BusinessLoopReportServiceImpl implements BusinessLoopReportService 
         return events;
     }
 
+    /**
+     * 统计事件分类。
+     * @param events 事件参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Long> countEventCategories(List<Map<String, Object>> events) {
         Map<String, Long> counts = new LinkedHashMap<>();
 

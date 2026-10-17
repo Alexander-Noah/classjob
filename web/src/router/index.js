@@ -25,11 +25,32 @@ import {
   getRoleHomeModule,
 } from '../constants/routeModules'
 
+/**
+ * AdminLayout的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const AdminLayout = () => import('../views/layout/AdminLayout.vue')
+/**
+ * 登录的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const Login = () => import('../views/login/Login.vue')
+/**
+ * Forbidden的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const Forbidden = () => import('../views/placeholder/Forbidden.vue')
+/**
+ * Scan预约的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const ScanReservation = () => import('../views/reservations/ScanReservation.vue')
 
+/**
+ * 构建Breadcrumb。
+ * 入参：routeModule（routeModule）。
+ * @returns 生成的数组。
+ */
 const buildBreadcrumb = (routeModule) => {
   const roleHomeModule = getRoleHomeModule(routeModule.roleScope)
 
@@ -43,6 +64,11 @@ const buildBreadcrumb = (routeModule) => {
   ]
 }
 
+/**
+ * 构建RouteMeta。
+ * 入参：routeModule（routeModule）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildRouteMeta = (routeModule) => ({
   title: routeModule.title,
   menuTitle: routeModule.menuTitle,
@@ -55,33 +81,137 @@ const buildRouteMeta = (routeModule) => ({
 
 // 路由元信息来自统一模块表，组件使用懒加载，避免首页下载所有业务页面。
 const routeComponentMap = {
+  /**
+   * 实验室AdminPortal的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminPortal: () => import('../views/roles/LabAdminPortal.vue'),
+  /**
+   * 实验室Admin实验室Management的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminLabManagement: () => import('../views/labs/LabManagement.vue'),
+  /**
+   * 实验室Admin设备Management的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminDeviceManagement: () => import('../views/devices/DeviceManagement.vue'),
+  /**
+   * 实验室Admin环境Management的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminEnvironmentManagement: () => import('../views/environments/EnvironmentManagement.vue'),
+  /**
+   * 实验室Admin预约Management的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminReservationManagement: () => import('../views/reservations/ReservationManagement.vue'),
+  /**
+   * 实验室Admin维护记录列表的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminMaintenanceRecordList: () => import('../views/maintenance-records/MaintenanceRecordList.vue'),
+  /**
+   * 实验室Admin维护记录条目的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminMaintenanceRecordEntry: () => import('../views/maintenance-records/MaintenanceRecordEntry.vue'),
+  /**
+   * 实验室AdminConsumable库存的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminConsumableInventory: () => import('../views/consumables/ConsumableInventory.vue'),
+  /**
+   * 实验室AdminUsage记录集合的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminUsageRecords: () => import('../views/records/UsageRecords.vue'),
+  /**
+   * 实验室Admin数据Statistics的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminDataStatistics: () => import('../views/statistics/DataStatistics.vue'),
+  /**
+   * 实验室AdminAIAssistant的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminAiAssistant: () => import('../views/ai-assistant/AiAssistant.vue'),
+  /**
+   * 实验室Admin通知Center的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminNoticeCenter: () => import('../views/notices/NoticeCenter.vue'),
+  /**
+   * 实验室AdminRoomControlCenter的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminRoomControlCenter: () => import('../views/room-control/RoomControlCenter.vue'),
+  /**
+   * 实验室Admin设备状态的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminDeviceStatus: () => import('../views/device-status/DeviceStatusPage.vue'),
+  /**
+   * 实验室AdminClass课表的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminClassTimetable: () => import('../views/labs/LabAdminClassTimetable.vue'),
+  /**
+   * 实验室AdminClass课表数据的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   LabAdminClassTimetableData: () => import('../views/labs/LabAdminClassTimetableData.vue'),
 
+  /**
+   * SystemAdminPortal的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminPortal: () => import('../views/roles/SystemAdminPortal.vue'),
+  /**
+   * SystemAdmin用户权限的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminUserPermissions: () => import('../views/users/UserPermissions.vue'),
+  /**
+   * SystemAdmin设置的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminSettings: () => import('../views/system/SystemSettings.vue'),
+  /**
+   * SystemAdminActivation编码集合的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminActivationCodes: () => import('../views/system/ActivationCodeManagement.vue'),
+  /**
+   * SystemAdmin通知Center的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminNoticeCenter: () => import('../views/notices/NoticeCenter.vue'),
+  /**
+   * SystemAdminStatistics的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   SystemAdminStatistics: () => import('../views/statistics/DataStatistics.vue'),
 
+  /**
+   * 教师Portal的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   TeacherPortal: () => import('../views/roles/TeacherPortal.vue'),
+  /**
+   * 教师课程环境的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   TeacherCourseEnvironments: () => import('../views/teacher/TeacherCourseEnvironments.vue'),
+  /**
+   * 教师课表的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   TeacherSchedule: () => import('../views/teacher/TeacherSchedule.vue'),
+  /**
+   * 教师Class课表数据的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   TeacherClassTimetableData: () => import('../views/labs/LabAdminClassTimetableData.vue'),
 }
 
@@ -112,7 +242,7 @@ const routes = [
       requiresAuth: true,
     },
     children: [
-      ...ROUTE_MODULES.map((routeModule) => ({
+      ...ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => ({
         path: routeModule.routePath,
         name: routeModule.name,
         component: routeComponentMap[routeModule.name],
@@ -245,19 +375,27 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  /**
+   * 滚动Behavior的处理逻辑。
+   * @returns 组装的键值对象。
+   */
   scrollBehavior() {
     return { top: 0 }
   },
 })
 
+/**
+ * 获取Redirect路径。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRedirectPath = () => {
   return AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE]
 }
 
 // 校验顺序：公开页面 → 登录状态/服务端资料 → 角色范围 → 自定义菜单权限。
 // 路由守卫只控制页面访问体验，不能替代后端对接口和数据范围的授权。
-router.beforeEach(async (to) => {
-  const isPublicRoute = to.matched.some((matchedRoute) => matchedRoute.meta?.public)
+router.beforeEach(/** 处理 beforeEach 调用中的回调逻辑。 入参：to。 */ async (to) => {
+  const isPublicRoute = to.matched.some(/** 判断当前条目是否满足任一匹配条件。 入参：matchedRoute。 */ (matchedRoute) => matchedRoute.meta?.public)
   const requiresAuth = !isPublicRoute
   const hasAuth = isAuthenticated()
   const isForbiddenRoute = to.name === 'Forbidden'

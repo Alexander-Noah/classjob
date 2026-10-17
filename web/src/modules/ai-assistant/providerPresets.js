@@ -22,6 +22,11 @@ export const AI_PROVIDERS = [
   { id: 'custom', label: '其他 / 自定义（OpenAI 兼容）', baseUrl: '', models: [], docsUrl: '', hint: '填写服务商提供的 Base URL、API Key 和完整模型 ID。' },
 ]
 
+/**
+ * 规范化结果API端点的处理逻辑。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function normalizedApiEndpoint(value) {
   try {
     const url = new URL(String(value || '').trim())
@@ -31,29 +36,49 @@ export function normalizedApiEndpoint(value) {
   } catch { return '' }
 }
 
+/**
+ * inferAI服务商的处理逻辑。
+ * 入参：baseUrl（基础URL）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function inferAiProvider(baseUrl) {
   const endpoint = normalizedApiEndpoint(baseUrl)
   if (!endpoint) return 'custom'
-  const exact = AI_PROVIDERS.find(provider => provider.baseUrl && normalizedApiEndpoint(provider.baseUrl) === endpoint)
+  const exact = AI_PROVIDERS.find(/** 判断当前条目是否为查找目标。 入参：provider。 */ provider => provider.baseUrl && normalizedApiEndpoint(provider.baseUrl) === endpoint)
   if (exact) return exact.id
   const url = new URL(endpoint)
   if (url.protocol === 'https:' && url.hostname.endsWith('.cn-beijing.maas.aliyuncs.com') && url.pathname === '/compatible-mode/v1') return 'qwen'
   return 'custom'
 }
 
+/**
+ * 选择AI服务商。
+ * 入参：config（配置）；providerId（服务商标识）。
+ * @returns 组装的键值对象。
+ */
 export function selectAiProvider(config, providerId) {
-  const provider = AI_PROVIDERS.find(row => row.id === providerId)
+  const provider = AI_PROVIDERS.find(/** 判断当前条目是否为查找目标。 入参：row。 */ row => row.id === providerId)
   if (!provider || provider.id === 'custom') return { ...config }
   const changed = normalizedApiEndpoint(config.baseUrl) !== normalizedApiEndpoint(provider.baseUrl)
   return { ...config, baseUrl: provider.baseUrl, model: provider.models[0],
     ...(changed ? { apiKey: '', apiKeyConfigured: false } : {}) }
 }
 
+/**
+ * 判断是否允许ReuseSavedAI键。
+ * 入参：draft（draft）；saved（saved）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function canReuseSavedAiKey(draft, saved) {
   const endpoint = normalizedApiEndpoint(draft.baseUrl)
   return Boolean(saved?.apiKeyConfigured && endpoint && endpoint === normalizedApiEndpoint(saved.baseUrl))
 }
 
+/**
+ * AI配置指纹的处理逻辑。
+ * 入参：config（配置）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function aiConfigFingerprint(config = {}) {
   return JSON.stringify([Boolean(config.enabled), normalizedApiEndpoint(config.baseUrl), String(config.model || '').trim(), String(config.systemPrompt || '').trim()])
 }

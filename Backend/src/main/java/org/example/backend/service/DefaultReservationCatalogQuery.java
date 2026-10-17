@@ -20,6 +20,11 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
     private final ReservationPersistenceService reservations;
     private final ReservationLabService laboratories;
 
+    /**
+     * 构造 DefaultReservationCatalogQuery，初始化当前实例。
+     * @param reservations 预约参数。
+     * @param laboratories laboratories参数。
+     */
     public DefaultReservationCatalogQuery(
             ReservationPersistenceService reservations,
             ReservationLabService laboratories
@@ -28,12 +33,23 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         this.laboratories = Objects.requireNonNull(laboratories, "laboratories");
     }
 
+    /**
+     * 列出当前操作。
+     * @param scope scope参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<ReservationView> list(ReservationAccessScope scope) {
         List<ReservationRecord> found = Objects.requireNonNull(reservations.findAll(resolveScope(scope)), "reservation records");
         return enrich(found);
     }
 
+    /**
+     * 查找By标识。
+     * @param id 标识参数。
+     * @param scope scope参数。
+     * @return ReservationView 类型的处理结果。
+     */
     @Override
     public ReservationView findById(long id, ReservationAccessScope scope) {
         Optional<ReservationRecord> found = Objects.requireNonNull(
@@ -44,6 +60,11 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         return enrich(List.of(found.get())).get(0);
     }
 
+    /**
+     * 解析Scope。
+     * @param scope scope参数。
+     * @return ReservationRecordScope 类型的处理结果。
+     */
     private ReservationRecordScope resolveScope(ReservationAccessScope scope) {
         ReservationActor actor = Objects.requireNonNull(scope, "scope").actor();
         if (actor.role() == ReservationActorRole.SYSTEM_ADMINISTRATOR) {
@@ -60,6 +81,11 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         throw new IllegalStateException("Unsupported reservation actor role: " + actor.role());
     }
 
+    /**
+     * enrich的处理逻辑。
+     * @param found found参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<ReservationView> enrich(List<ReservationRecord> found) {
         if (found.isEmpty()) {
             return List.of();
@@ -75,9 +101,14 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         Map<Long, LaboratorySummary> summaries = Objects.requireNonNull(
                 laboratories.findLaboratorySummaries(Set.copyOf(laboratoryIds)), "laboratory summaries");
         validateSummaries(laboratoryIds, summaries);
-        return found.stream().map(record -> toView(record, summaries.get(record.labId()))).toList();
+        return found.stream().map(/** 将当前条目转换为目标结果。 入参：record。 */ record -> toView(record, summaries.get(record.labId()))).toList();
     }
 
+    /**
+     * 校验摘要。
+     * @param requestedIds requested标识集合参数。
+     * @param summaries 摘要参数。
+     */
     private void validateSummaries(Set<Long> requestedIds, Map<Long, LaboratorySummary> summaries) {
         for (Map.Entry<Long, LaboratorySummary> entry : summaries.entrySet()) {
             if (!requestedIds.contains(entry.getKey()) || entry.getValue() == null) {
@@ -86,6 +117,12 @@ public class DefaultReservationCatalogQuery implements ReservationCatalogQuery {
         }
     }
 
+    /**
+     * 转换为视图。
+     * @param record 记录参数。
+     * @param laboratory 实验室参数。
+     * @return ReservationView 类型的处理结果。
+     */
     private ReservationView toView(ReservationRecord record, LaboratorySummary laboratory) {
         return new ReservationView(
                 record.id(),

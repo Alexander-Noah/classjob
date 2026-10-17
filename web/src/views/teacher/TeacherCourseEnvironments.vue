@@ -22,7 +22,7 @@ defineOptions({
 
 const router = useRouter()
 const route = useRoute()
-const roleHomePath = computed(() => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
+const roleHomePath = computed(/** 计算派生状态。 */ () => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
 
 const pageActions = [
   { label: '提交需求', type: 'primary', command: 'create' },
@@ -96,18 +96,33 @@ const DEFAULT_ENVIRONMENT_RECORDS = [
   },
 ]
 
+/**
+ * 归一化列表响应。
+ * 入参：data（数据）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeListResponse = (data) => {
   if (Array.isArray(data?.data)) return data.data
   if (Array.isArray(data)) return data
   return []
 }
 
+/**
+ * 归一化记录响应。
+ * 入参：data（数据）；fallbackRecord（fallback记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeRecordResponse = (data, fallbackRecord) => {
   if (data?.data && typeof data.data === 'object' && !Array.isArray(data.data)) return data.data
   if (data && typeof data === 'object' && !Array.isArray(data) && !('code' in data && !('id' in data))) return data
   return fallbackRecord
 }
 
+/**
+ * 解析环境状态。
+ * 入参：record（记录）。
+ * @returns 文本结果。
+ */
 const resolveEnvironmentStatus = (record = {}) => {
   const statusText = [record.confirmStatus, record.status, record.processStatus].filter(Boolean).join(' ')
   if (statusText.includes('已确认')) return '已确认'
@@ -115,6 +130,11 @@ const resolveEnvironmentStatus = (record = {}) => {
   return '待确认'
 }
 
+/**
+ * 归一化环境记录。
+ * 入参：record（记录）。
+ * @returns 组装的键值对象。
+ */
 const normalizeEnvironmentRecord = (record = {}) => {
   const status = resolveEnvironmentStatus(record)
   const labName = record.lab || [record.assignedLabCode, record.assignedLabName].filter(Boolean).join(' ') || record.labType || '待分配实验室'
@@ -156,7 +176,7 @@ const normalizeEnvironmentRecord = (record = {}) => {
   }
 }
 
-const environmentRecords = ref(DEFAULT_ENVIRONMENT_RECORDS.map((item) => normalizeEnvironmentRecord(item)))
+const environmentRecords = ref(DEFAULT_ENVIRONMENT_RECORDS.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeEnvironmentRecord(item)))
 const isLoading = ref(false)
 
 const keyword = ref('')
@@ -172,11 +192,11 @@ const returnForm = reactive({
 
 const statusOptions = ['全部', '待确认', '已确认', '需调整']
 
-const metrics = computed(() => {
+const metrics = computed(/** 计算派生状态。 */ () => {
   const total = environmentRecords.value.length
-  const pending = environmentRecords.value.filter((item) => item.status === '待确认').length
-  const confirmed = environmentRecords.value.filter((item) => item.status === '已确认').length
-  const returned = environmentRecords.value.filter((item) => item.status === '需调整').length
+  const pending = environmentRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '待确认').length
+  const confirmed = environmentRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '已确认').length
+  const returned = environmentRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '需调整').length
 
   return [
     { label: '课程环境总数', value: String(total), trend: '本周教师可见环境清单' },
@@ -186,12 +206,12 @@ const metrics = computed(() => {
   ]
 })
 
-const filteredEnvironments = computed(() =>
-  environmentRecords.value.filter((item) => {
+const filteredEnvironments = computed(/** 计算派生状态。 */ () =>
+  environmentRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
     const matchStatus = activeStatus.value === '全部' || item.status === activeStatus.value
     const matchKeyword =
       !keyword.value ||
-      [item.course, item.lab, item.software].some((field) =>
+      [item.course, item.lab, item.software].some(/** 判断当前条目是否满足任一匹配条件。 入参：field。 */ (field) =>
         String(field).toLowerCase().includes(keyword.value.toLowerCase()),
       )
 
@@ -199,13 +219,16 @@ const filteredEnvironments = computed(() =>
   }),
 )
 
+/**
+ * 加载环境记录集合。
+ */
 const loadEnvironmentRecords = async () => {
   isLoading.value = true
   try {
     const { data } = await http.get(API_ENDPOINTS.courseEnvironmentRequests.list)
     const records = normalizeListResponse(data)
     if (records.length) {
-      environmentRecords.value = records.map((item) => normalizeEnvironmentRecord(item))
+      environmentRecords.value = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeEnvironmentRecord(item))
       selectedEnvironment.value = environmentRecords.value[0] || null
     }
   } catch (error) {
@@ -215,16 +238,24 @@ const loadEnvironmentRecords = async () => {
   }
 }
 
+/**
+ * replace环境记录的处理逻辑。
+ * 入参：record（记录）。
+ * @returns normalizedRecord 的当前值。
+ */
 const replaceEnvironmentRecord = (record) => {
   const normalizedRecord = normalizeEnvironmentRecord(record)
-  const hasRecord = environmentRecords.value.some((item) => String(item.id) === String(normalizedRecord.id))
+  const hasRecord = environmentRecords.value.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => String(item.id) === String(normalizedRecord.id))
   environmentRecords.value = hasRecord
-    ? environmentRecords.value.map((item) => (String(item.id) === String(normalizedRecord.id) ? normalizedRecord : item))
+    ? environmentRecords.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(normalizedRecord.id) ? normalizedRecord : item))
     : [normalizedRecord, ...environmentRecords.value]
   selectedEnvironment.value = normalizedRecord
   return normalizedRecord
 }
 
+/**
+ * 导出环境记录集合。
+ */
 const exportEnvironmentRecords = () => {
   const exportRows = filteredEnvironments.value
 
@@ -253,6 +284,10 @@ const exportEnvironmentRecords = () => {
   ElMessage.success(`已导出 ${exportedCount} 条课程环境记录`)
 }
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = async (action) => {
   if (action.command === 'create') {
     requestPrefill.value = null
@@ -271,15 +306,26 @@ const handleHeroAction = async (action) => {
   }
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(roleHomePath.value)
 }
 
+/**
+ * 处理OpenDrawer。
+ * 入参：record（记录）。
+ */
 const handleOpenDrawer = (record) => {
   selectedEnvironment.value = record
   drawerVisible.value = true
 }
 
+/**
+ * 构建请求Prefill来源查询。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildRequestPrefillFromQuery = () => ({
   courseName: String(route.query.course || ''),
   className: String(route.query.className || ''),
@@ -289,12 +335,15 @@ const buildRequestPrefillFromQuery = () => ({
   specialRequirements: route.query.lab ? `工作台带入实验室：${route.query.lab}` : '',
 })
 
+/**
+ * 应用Route课程上下文。
+ */
 const applyRouteCourseContext = () => {
   const course = String(route.query.course || '').trim()
   if (!course) return
 
   keyword.value = course
-  const matchedRecord = environmentRecords.value.find((item) => item.course === course)
+  const matchedRecord = environmentRecords.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.course === course)
   if (matchedRecord) {
     selectedEnvironment.value = matchedRecord
     return
@@ -304,6 +353,10 @@ const applyRouteCourseContext = () => {
   requestDialogVisible.value = true
 }
 
+/**
+ * 提交环境请求。
+ * 入参：payload（载荷）。
+ */
 const submitEnvironmentRequest = async (payload) => {
   const currentUser = getStoredUser() || {}
   const numericTeacherId = Number(currentUser.id)
@@ -328,6 +381,10 @@ const submitEnvironmentRequest = async (payload) => {
   }
 }
 
+/**
+ * 处理Confirm。
+ * 入参：record（记录）。
+ */
 const handleConfirm = async (record) => {
   try {
     const { data } = await http.post(`${API_ENDPOINTS.courseEnvironmentRequests.detail}/${record.id}/confirm`)
@@ -339,12 +396,19 @@ const handleConfirm = async (record) => {
   }
 }
 
+/**
+ * 处理Return。
+ * 入参：record（记录）。
+ */
 const handleReturn = (record) => {
   selectedEnvironment.value = record
   returnForm.reason = ''
   returnDialogVisible.value = true
 }
 
+/**
+ * 提交Return。
+ */
 const submitReturn = async () => {
   if (!selectedEnvironment.value) return
 
@@ -370,7 +434,7 @@ const submitReturn = async () => {
   }
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   await loadEnvironmentRecords()
   applyRouteCourseContext()
 })

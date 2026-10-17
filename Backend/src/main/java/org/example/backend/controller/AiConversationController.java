@@ -25,10 +25,19 @@ import java.util.Map;
 public class AiConversationController {
     private final AiConversationService aiConversationService;
 
+    /**
+     * 构造 AiConversationController，初始化当前实例。
+     * @param aiConversationService AI会话服务参数。
+     */
     public AiConversationController(AiConversationService aiConversationService) {
         this.aiConversationService = aiConversationService;
     }
 
+    /**
+     * 列出会话。
+     * @param userId 用户标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/ai-assistant/conversations")
     public Result listConversations(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId
@@ -36,6 +45,12 @@ public class AiConversationController {
         return Result.success("获取 AI 会话记录成功", aiConversationService.listConversations(userId));
     }
 
+    /**
+     * 保存会话。
+     * @param userId 用户标识参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/ai-assistant/conversations")
     public Result saveConversations(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
@@ -47,6 +62,12 @@ public class AiConversationController {
         return Result.success("保存 AI 会话记录成功", aiConversationService.saveConversations(userId, conversations));
     }
 
+    /**
+     * 删除会话。
+     * @param userId 用户标识参数。
+     * @param conversationId 会话标识参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/ai-assistant/conversations/{conversationId}")
     public Result deleteConversation(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,

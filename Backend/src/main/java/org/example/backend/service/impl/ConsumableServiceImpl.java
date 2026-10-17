@@ -28,6 +28,12 @@ public class ConsumableServiceImpl implements ConsumableService {
     private final NoticeMapper noticeMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 ConsumableServiceImpl，初始化当前实例。
+     * @param consumableMapper consumable数据映射器参数。
+     * @param noticeMapper 通知数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public ConsumableServiceImpl(
             ConsumableMapper consumableMapper,
             NoticeMapper noticeMapper,
@@ -38,11 +44,21 @@ public class ConsumableServiceImpl implements ConsumableService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Consumables。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<ConsumableEntity> listConsumables() {
         return consumableMapper.listConsumables();
     }
 
+    /**
+     * 创建耗材库存。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param consumable 耗材库存参数。
+     * @return ConsumableEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ConsumableEntity createConsumable(ConsumableEntity consumable) {
@@ -53,6 +69,13 @@ public class ConsumableServiceImpl implements ConsumableService {
         return savedConsumable;
     }
 
+    /**
+     * 更新耗材库存。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param consumable 耗材库存参数。
+     * @return ConsumableEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ConsumableEntity updateConsumable(Long id, ConsumableEntity consumable) {
@@ -62,6 +85,12 @@ public class ConsumableServiceImpl implements ConsumableService {
         return savedConsumable;
     }
 
+    /**
+     * 删除耗材库存。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<ConsumableEntity> deleteConsumable(Long id) {
@@ -71,6 +100,12 @@ public class ConsumableServiceImpl implements ConsumableService {
         return consumableMapper.listConsumables();
     }
 
+    /**
+     * replaceConsumables的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param consumables consumables参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<ConsumableEntity> replaceConsumables(List<ConsumableEntity> consumables) {
@@ -84,6 +119,11 @@ public class ConsumableServiceImpl implements ConsumableService {
         return consumableMapper.listConsumables();
     }
 
+    /**
+     * 重置Consumables。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<ConsumableEntity> resetConsumables() {
@@ -96,12 +136,24 @@ public class ConsumableServiceImpl implements ConsumableService {
         return consumableMapper.listConsumables();
     }
 
+    /**
+     * 列出库存记录集合。
+     * @param consumableId consumable标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<ConsumableStockRecordEntity> listStockRecords(Long consumableId) {
         List<ConsumableStockRecordEntity> records = consumableMapper.listStockRecords(consumableId);
         return records == null ? List.of() : records;
     }
 
+    /**
+     * 记录ConsumableMovement。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param record 记录参数。
+     * @return ConsumableMovementResult 类型的处理结果。
+     */
     @Override
     @Transactional
     public ConsumableMovementResult recordConsumableMovement(Long id, ConsumableStockRecordEntity record) {
@@ -152,6 +204,11 @@ public class ConsumableServiceImpl implements ConsumableService {
         return new ConsumableMovementResult(savedConsumable, movement, records == null ? List.of() : records);
     }
 
+    /**
+     * 归一化耗材库存。
+     * @param consumable 耗材库存参数。
+     * @return ConsumableEntity 类型的处理结果。
+     */
     private ConsumableEntity normalizeConsumable(ConsumableEntity consumable) {
         ConsumableEntity normalizedConsumable = consumable == null ? new ConsumableEntity() : consumable;
         if (isBlank(normalizedConsumable.getName())) {
@@ -173,6 +230,10 @@ public class ConsumableServiceImpl implements ConsumableService {
         return normalizedConsumable;
     }
 
+    /**
+     * 应用库存状态。
+     * @param consumable 耗材库存参数。
+     */
     private void applyStockStatus(ConsumableEntity consumable) {
         if (consumable.getStock() <= 0) {
             consumable.setStatus("待补货");
@@ -188,6 +249,11 @@ public class ConsumableServiceImpl implements ConsumableService {
         consumable.setTagType("success");
     }
 
+    /**
+     * 关闭LoopAfter库存变化。
+     * @param consumable 耗材库存参数。
+     * @param action action参数。
+     */
     private void closeLoopAfterStockChanged(ConsumableEntity consumable, String action) {
         if (consumable == null) {
             return;
@@ -216,6 +282,10 @@ public class ConsumableServiceImpl implements ConsumableService {
         }
     }
 
+    /**
+     * 获取默认Consumables。
+     * @return 当前操作得到的记录集合。
+     */
     private List<ConsumableEntity> getDefaultConsumables() {
         return List.of(
                 buildConsumable("网线", "网络耗材", 86, "根", "A 区库房", 20),
@@ -224,6 +294,16 @@ public class ConsumableServiceImpl implements ConsumableService {
         );
     }
 
+    /**
+     * 构建耗材库存。
+     * @param name 名称参数。
+     * @param category 分类参数。
+     * @param stock 库存参数。
+     * @param unit unit参数。
+     * @param location location参数。
+     * @param warnThreshold warnThreshold参数。
+     * @return ConsumableEntity 类型的处理结果。
+     */
     private ConsumableEntity buildConsumable(String name, String category, Integer stock, String unit, String location, Integer warnThreshold) {
         ConsumableEntity consumable = new ConsumableEntity();
         consumable.setName(name);
@@ -235,6 +315,11 @@ public class ConsumableServiceImpl implements ConsumableService {
         return consumable;
     }
 
+    /**
+     * 要求提供耗材库存。
+     * @param id 标识参数。
+     * @return ConsumableEntity 类型的处理结果。
+     */
     private ConsumableEntity requireConsumable(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Consumable id is required");
@@ -246,6 +331,11 @@ public class ConsumableServiceImpl implements ConsumableService {
         return consumable;
     }
 
+    /**
+     * 归一化Movement类型。
+     * @param type 类型参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeMovementType(String type) {
         String rawValue = type == null ? "" : type.trim();
         String value = rawValue.toLowerCase();
@@ -258,16 +348,31 @@ public class ConsumableServiceImpl implements ConsumableService {
         throw new IllegalArgumentException("Movement type must be in or out");
     }
 
+    /**
+     * protect借用历史的处理逻辑。
+     * @param id 标识参数。
+     */
     private void protectLoanHistory(Long id) {
         if (consumableMapper.countLoanRecords(id) > 0) {
             throw new IllegalArgumentException("该耗材已有借用记录，不能删除或整体重置，请保留借还历史");
         }
     }
 
+    /**
+     * 文本Or默认的处理逻辑。
+     * @param value 值参数。
+     * @param defaultValue 默认值参数。
+     * @return String 类型的处理结果。
+     */
     private String textOrDefault(String value, String defaultValue) {
         return isBlank(value) ? defaultValue : value.trim();
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

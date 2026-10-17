@@ -12,6 +12,10 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LabResourceMetadataMapperXmlTest {
+    /**
+     * performsOneBatch查询PerMetadata来源的处理逻辑。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Test
     void performsOneBatchQueryPerMetadataSource() throws IOException {
         String xml = mapperXml();
@@ -23,6 +27,11 @@ class LabResourceMetadataMapperXmlTest {
         assertTrue(xml.contains("group by lab_id"));
     }
 
+    /**
+     * 数据映射器Xml的处理逻辑。
+     * @return String 类型的处理结果。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private String mapperXml() throws IOException {
         try (var input = getClass().getResourceAsStream("/mapper/LabResourceMetadataMapper.xml")) {
             if (input == null) {

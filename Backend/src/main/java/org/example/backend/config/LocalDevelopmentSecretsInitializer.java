@@ -19,9 +19,17 @@ public final class LocalDevelopmentSecretsInitializer {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * 构造 LocalDevelopmentSecretsInitializer，初始化当前实例。
+     */
     private LocalDevelopmentSecretsInitializer() {
     }
 
+    /**
+     * 确保满足当前操作。
+     * @param workingDirectory working目录参数。
+     * @return 当前判断的布尔结果。
+     */
     public static boolean ensure(Path workingDirectory) {
         Path baseDirectory = workingDirectory == null
                 ? Path.of("").toAbsolutePath().normalize()
@@ -49,16 +57,31 @@ public final class LocalDevelopmentSecretsInitializer {
         return true;
     }
 
+    /**
+     * 判断是否为Development目录。
+     * @param directory 目录参数。
+     * @return 当前判断的布尔结果。
+     */
     private static boolean isDevelopmentDirectory(Path directory) {
         return Files.isRegularFile(directory.resolve("pom.xml"))
                 && containsBackendApplication(directory.resolve("src/main"));
     }
 
+    /**
+     * 判断是否包含BackendApplication。
+     * @param sourceRoot 来源根目录参数。
+     * @return 当前判断的布尔结果。
+     */
     private static boolean containsBackendApplication(Path sourceRoot) {
         return Files.isDirectory(sourceRoot)
                 && Files.isRegularFile(sourceRoot.resolve("java/org/example/backend/BackendApplication.java"));
     }
 
+    /**
+     * 读取秘密配置。
+     * @param secretsPath 秘密配置路径参数。
+     * @return Properties 类型的处理结果。
+     */
     private static Properties readSecrets(Path secretsPath) {
         Properties secrets = new Properties();
         if (!Files.exists(secretsPath)) {
@@ -73,6 +96,11 @@ public final class LocalDevelopmentSecretsInitializer {
         }
     }
 
+    /**
+     * 写入秘密配置。
+     * @param secretsPath 秘密配置路径参数。
+     * @param secrets 秘密配置参数。
+     */
     private static void writeSecrets(Path secretsPath, Properties secrets) {
         try (OutputStream outputStream = Files.newOutputStream(secretsPath)) {
             secrets.store(outputStream, "Generated local development secrets. Do not commit this file.");
@@ -81,12 +109,21 @@ public final class LocalDevelopmentSecretsInitializer {
         }
     }
 
+    /**
+     * new秘密配置的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private static String newSecret() {
         byte[] bytes = new byte[48];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

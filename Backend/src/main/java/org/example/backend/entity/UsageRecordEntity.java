@@ -39,10 +39,18 @@ public class UsageRecordEntity {
     private String sourceType;
     private Boolean readonly;
 
+    /**
+     * 获取时间。
+     * @return String 类型的处理结果。
+     */
     public String getTime() {
         return useTime == null ? "" : useTime.format(TIME_FORMATTER);
     }
 
+    /**
+     * 获取Tag类型。
+     * @return String 类型的处理结果。
+     */
     public String getTagType() {
         if ("正常".equals(status) || "已归档".equals(status)) return "success";
         if ("异常".equals(status)) return "danger";

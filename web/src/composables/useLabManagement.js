@@ -122,30 +122,54 @@ const SECTION_TIME_RANGES = {
   6: { start: 20 * 60 + 20, end: 21 * 60 + 50 },
 }
 const PRE_CLASS_BUSY_MINUTES = 10
+/**
+ * 复制实验室。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const cloneLabs = () => JSON.parse(JSON.stringify(INITIAL_LABS))
 
+/**
+ * 拆分Features。
+ * 入参：features（features）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const splitFeatures = (features) =>
   Array.isArray(features)
     ? features
     : String(features || '')
         .split(/[,，]/)
-        .map((feature) => feature.trim())
+        .map(/** 将当前条目转换为目标结果。 入参：feature。 */ (feature) => feature.trim())
         .filter(Boolean)
 
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getStatusType = (status) =>
-  STATUS_TAG_TYPES[status] || STATUS_OPTIONS.find((option) => option.label === status)?.type || 'info'
+  STATUS_TAG_TYPES[status] || STATUS_OPTIONS.find(/** 判断当前条目是否为查找目标。 入参：option。 */ (option) => option.label === status)?.type || 'info'
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) =>
   String(value || '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '')
 
+/**
+ * 解析数值列表。
+ * 入参：value（值）。
+ * @returns 生成的数组。
+ */
 const parseNumberList = (value) => {
   const text = String(value || '')
   const numbers = new Set()
 
-  text.split(',').forEach((part) => {
+  text.split(',').forEach(/** 处理遍历到的当前条目。 入参：part。 */ (part) => {
     const range = part.match(/(\d{1,2})\s*[-~至]\s*(\d{1,2})/)
     if (range) {
       const start = Number(range[1])
@@ -163,12 +187,22 @@ const parseNumberList = (value) => {
   return [...numbers]
 }
 
+/**
+ * 获取记录周次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordWeeks = (record) => {
   const expanded = parseNumberList(record.weekExpanded)
   if (expanded.length) return expanded
   return parseNumberList(record.weekText || record.weekRaw)
 }
 
+/**
+ * 获取记录开始节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordStartSection = (record) => {
   const start = Number(record.startSection || 0)
   if (start > 0) return start
@@ -176,6 +210,11 @@ const getRecordStartSection = (record) => {
   return parsed[0] || 0
 }
 
+/**
+ * 获取记录结束节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordEndSection = (record) => {
   const end = Number(record.endSection || 0)
   if (end > 0) return end
@@ -183,6 +222,11 @@ const getRecordEndSection = (record) => {
   return parsed[parsed.length - 1] || getRecordStartSection(record)
 }
 
+/**
+ * 获取记录时间文本。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordTimeText = (record) => {
   const start = getRecordStartSection(record)
   if (!start) return ''
@@ -192,11 +236,21 @@ const getRecordTimeText = (record) => {
   return time ? `第${unit}节 ${time}` : `第${unit}节`
 }
 
+/**
+ * 获取记录时间Unit。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordTimeUnit = (record) => {
   const start = getRecordStartSection(record)
   return start ? Math.ceil(start / 2) : 0
 }
 
+/**
+ * 判断是否为记录进入Busy窗口。
+ * 入参：record（记录）；currentMinute（当前Minute）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRecordInBusyWindow = (record, currentMinute) => {
   const range = SECTION_TIME_RANGES[getRecordTimeUnit(record)]
   if (!range) return false
@@ -204,14 +258,29 @@ const isRecordInBusyWindow = (record, currentMinute) => {
   return currentMinute >= range.start - PRE_CLASS_BUSY_MINUTES && currentMinute < range.end
 }
 
+/**
+ * 转义RegExp。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const escapeRegExp = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+/**
+ * 判断是否具有实验室编码令牌。
+ * 入参：classroom（classroom）；code（编码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasLabCodeToken = (classroom, code) => {
   const normalizedCode = String(code || '').trim()
   if (!normalizedCode) return false
   return new RegExp(`(^|[^0-9A-Za-z])${escapeRegExp(normalizedCode)}([^0-9A-Za-z]|$)`).test(String(classroom || ''))
 }
 
+/**
+ * 判断是否为记录For实验室。
+ * 入参：record（记录）；lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRecordForLab = (record, lab) => {
   const classroomRaw = String(record.classroom || '')
   const classroom = normalizeText(classroomRaw)
@@ -225,12 +294,27 @@ const isRecordForLab = (record, lab) => {
   return hasLabCodeToken(classroomRaw, lab.code || lab.labCode || lab.room)
 }
 
+/**
+ * 获取预约实验室文本。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationLabText = (reservation = {}) =>
   reservation.lab || reservation.labName || reservation.labDisplayName || reservation.roomName || reservation.classroom || ''
 
+/**
+ * 获取预约日期。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationDate = (reservation = {}) =>
   reservation.date || reservation.reservationDate || reservation.useDate || reservation.startDate || ''
 
+/**
+ * 获取预约时间范围文本。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationTimeRangeText = (reservation = {}) => {
   const rangeText = reservation.timeRange || reservation.timeSlot || reservation.period || ''
   if (rangeText) return String(rangeText)
@@ -240,12 +324,22 @@ const getReservationTimeRangeText = (reservation = {}) => {
   return startTime && endTime ? `${startTime}-${endTime}` : ''
 }
 
+/**
+ * 解析时间目标Minutes。
+ * 入参：timeText（时间文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeToMinutes = (timeText) => {
   const match = String(timeText || '').match(/(\d{1,2}):(\d{2})/)
   if (!match) return 0
   return Number(match[1]) * 60 + Number(match[2])
 }
 
+/**
+ * 获取预约时间范围。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationTimeRange = (reservation = {}) => {
   const [startText, endText] = getReservationTimeRangeText(reservation).split('-')
   const start = parseTimeToMinutes(startText)
@@ -253,6 +347,11 @@ const getReservationTimeRange = (reservation = {}) => {
   return start && end && end > start ? { start, end } : null
 }
 
+/**
+ * 判断是否为预约For实验室。
+ * 入参：reservation（预约）；lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReservationForLab = (reservation = {}, lab = {}) => {
   const labTextRaw = String(getReservationLabText(reservation) || '')
   const labText = normalizeText(labTextRaw)
@@ -264,19 +363,39 @@ const isReservationForLab = (reservation = {}, lab = {}) => {
   return hasLabCodeToken(labTextRaw, lab.code || lab.labCode || lab.room)
 }
 
+/**
+ * 判断是否为预约Approved。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReservationApproved = (reservation = {}) => ['已通过', 'approved', 'APPROVED'].includes(reservation.status)
 
+/**
+ * 判断是否为预约For日期。
+ * 入参：reservation（预约）；dateText（日期文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReservationForDate = (reservation = {}, dateText) => {
   if (!dateText) return false
   return String(getReservationDate(reservation) || '') === String(dateText)
 }
 
+/**
+ * 判断是否为预约进入Busy窗口。
+ * 入参：reservation（预约）；currentMinute（当前Minute）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReservationInBusyWindow = (reservation = {}, currentMinute) => {
   const range = getReservationTimeRange(reservation)
   if (!range) return false
   return currentMinute >= range.start - PRE_CLASS_BUSY_MINUTES && currentMinute < range.end
 }
 
+/**
+ * 格式化预约条目。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatReservationItem = (reservation = {}) =>
   [
     '预约',
@@ -287,6 +406,11 @@ const formatReservationItem = (reservation = {}) =>
     .filter(Boolean)
     .join(' · ')
 
+/**
+ * 判断是否为记录进入课表上下文。
+ * 入参：record（记录）；context（上下文）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRecordInScheduleContext = (record, context = {}) => {
   const week = Number(context.week || 0)
   const weekday = Number(context.weekday || 0)
@@ -310,13 +434,23 @@ const isRecordInScheduleContext = (record, context = {}) => {
   return true
 }
 
+/**
+ * 格式化课表条目。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatScheduleItem = (record) =>
   [record.weekday, record.timeText || getRecordTimeText(record), record.sectionText, record.courseName, record.teacher]
     .filter(Boolean)
     .join(' · ')
 
+/**
+ * 排序课表行集合。
+ * 入参：rows（行集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const sortTimetableRows = (rows = []) =>
-  [...rows].sort((left, right) => {
+  [...rows].sort(/** 比较当前两项的排序先后。 入参：left、right。 */ (left, right) => {
     const leftSection = getRecordStartSection(left)
     const rightSection = getRecordStartSection(right)
     if (leftSection !== rightSection) return leftSection - rightSection
@@ -328,6 +462,11 @@ const sortTimetableRows = (rows = []) =>
     return String(left.courseName || '').localeCompare(String(right.courseName || ''), 'zh-Hans-CN')
   })
 
+/**
+ * 获取课表行键。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTimetableRowKey = (record = {}) =>
   [
     record.semester,
@@ -340,9 +479,14 @@ const getTimetableRowKey = (record = {}) =>
     record.classroom,
   ].join('|')
 
+/**
+ * dedupe课表行集合的处理逻辑。
+ * 入参：rows（行集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const dedupeTimetableRows = (rows = []) => {
   const seen = new Set()
-  return rows.filter((row) => {
+  return rows.filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ (row) => {
     const key = getTimetableRowKey(row)
     if (seen.has(key)) return false
     seen.add(key)
@@ -350,6 +494,10 @@ const dedupeTimetableRows = (rows = []) => {
   })
 }
 
+/**
+ * 提供实验室Management。
+ * @returns 组装的键值对象。
+ */
 export function useLabManagement() {
   const keyword = ref('')
   const buildingFilter = ref('all')
@@ -368,11 +516,26 @@ export function useLabManagement() {
   const currentReservationRecords = ref([])
   const currentScheduleContext = ref({})
 
+  /**
+   * 查找Manager。
+   * 入参：managerUserId（manager用户标识）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const findManager = (managerUserId) =>
-    managerOptions.value.find((user) => String(user.id) === String(managerUserId))
+    managerOptions.value.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => String(user.id) === String(managerUserId))
 
+  /**
+   * 获取用户Display名称。
+   * 入参：user（用户）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getUserDisplayName = (user) => user?.realName || user?.username || ''
 
+  /**
+   * 归一化实验室。
+   * 入参：lab（实验室）。
+   * @returns 组装的键值对象。
+   */
   const normalizeLab = (lab) => {
     const capacity = Number(lab.capacity) || 0
     const status = lab.status || lab.openStatus || openStatus
@@ -400,6 +563,11 @@ export function useLabManagement() {
     }
   }
 
+  /**
+   * 转换为服务端实验室载荷。
+   * 入参：lab（实验室）。
+   * @returns 组装的键值对象。
+   */
   const toServerLabPayload = (lab) => {
     const numericId = Number(lab.id)
     const hasNumericId = String(lab.id ?? '').trim() !== '' && Number.isInteger(numericId)
@@ -420,6 +588,9 @@ export function useLabManagement() {
     }
   }
 
+  /**
+   * 加载Manager选项。
+   */
   const loadManagerOptions = async () => {
     try {
       managerOptions.value = await listUserOptions()
@@ -428,6 +599,9 @@ export function useLabManagement() {
     }
   }
 
+  /**
+   * 加载实验室。
+   */
   const loadLabs = async () => {
     const loadedRecords = await labResourceService.list({
       fallbackRecords: cloneLabs(),
@@ -437,27 +611,35 @@ export function useLabManagement() {
     bindLabSchedules(currentScheduleRecords.value, currentScheduleContext.value)
   }
 
+  /**
+   * 持久化实验室。
+   */
   const persistLabs = async () => {
     const persistedRecords = await labResourceService.replace(labs.value.map(toServerLabPayload))
     labs.value = persistedRecords.map(normalizeLab)
   }
 
-  const selectedLab = computed(() => labs.value.find((lab) => lab.id === selectedLabId.value) || labs.value[0])
+  const selectedLab = computed(/** 计算派生状态。 */ () => labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.id === selectedLabId.value) || labs.value[0])
 
+  /**
+   * 获取Bound实验室课表。
+   * 入参：lab（实验室）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getBoundLabSchedule = (lab = selectedLab.value) => {
     if (!lab) return []
     return labScheduleMap.value[String(lab.id)] || []
   }
 
-  const buildingOptions = computed(() => [...new Set(labs.value.map((lab) => lab.building).filter(Boolean))])
+  const buildingOptions = computed(/** 计算派生状态。 */ () => [...new Set(labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => lab.building).filter(Boolean))])
 
-  const filteredLabs = computed(() => {
+  const filteredLabs = computed(/** 计算派生状态。 */ () => {
     const searchText = keyword.value.trim().toLowerCase()
 
-    return labs.value.filter((lab) => {
+    return labs.value.filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) => {
       const matchesKeyword =
         !searchText ||
-        [lab.name, lab.code, lab.building, lab.manager, lab.type, lab.status].some((value) =>
+        [lab.name, lab.code, lab.building, lab.manager, lab.type, lab.status].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) =>
           String(value || '').toLowerCase().includes(searchText),
         )
       const matchesBuilding = buildingFilter.value === 'all' || lab.building === buildingFilter.value
@@ -469,17 +651,21 @@ export function useLabManagement() {
     })
   })
 
-  const statusSummary = computed(() =>
-    STATUS_OPTIONS.map((option) => ({
+  const statusSummary = computed(/** 计算派生状态。 */ () =>
+    STATUS_OPTIONS.map(/** 将当前条目转换为目标结果。 入参：option。 */ (option) => ({
       ...option,
-      count: labs.value.filter((lab) => lab.status === option.label).length,
+      count: labs.value.filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) => lab.status === option.label).length,
     })),
   )
 
-  const dialogTitle = computed(() => (dialogMode.value === 'create' ? '新增实验室' : '编辑实验室'))
+  const dialogTitle = computed(/** 计算派生状态。 */ () => (dialogMode.value === 'create' ? '新增实验室' : '编辑实验室'))
 
+  /**
+   * assignForm模型的处理逻辑。
+   * 入参：lab（实验室）。
+   */
   const assignFormModel = (lab = {}) => {
-    Object.keys(formModel).forEach((key) => {
+    Object.keys(formModel).forEach(/** 处理遍历到的当前条目。 入参：key。 */ (key) => {
       delete formModel[key]
     })
 
@@ -504,6 +690,10 @@ export function useLabManagement() {
     })
   }
 
+  /**
+   * 校验Form。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const validateForm = () => {
     const requiredFields = [
       ['code', '实验室编号'],
@@ -511,7 +701,7 @@ export function useLabManagement() {
       ['building', '所在楼宇'],
       ['managerUserId', '负责人'],
     ]
-    const invalidField = requiredFields.find(([prop]) => !String(formModel[prop] || '').trim())
+    const invalidField = requiredFields.find(/** 判断当前条目是否为查找目标。 */ ([prop]) => !String(formModel[prop] || '').trim())
 
     if (invalidField) {
       ElMessage.warning(`请填写${invalidField[1]}`)
@@ -521,6 +711,10 @@ export function useLabManagement() {
     return true
   }
 
+  /**
+   * 归一化Form实验室。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const normalizeFormLab = () => {
     const selectedManager = findManager(formModel.managerUserId)
     const capacity = Number(formModel.capacity)
@@ -529,25 +723,36 @@ export function useLabManagement() {
       ...formModel,
       capacity,
       manager: getUserDisplayName(selectedManager),
-      devices: dialogMode.value === 'edit' ? labs.value.find((lab) => lab.id === formModel.id)?.devices || 0 : 0,
+      devices: dialogMode.value === 'edit' ? labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.id === formModel.id)?.devices || 0 : 0,
       features: splitFeatures(formModel.featuresText),
       schedule:
         dialogMode.value === 'edit'
-          ? labs.value.find((lab) => lab.id === formModel.id)?.schedule
+          ? labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.id === formModel.id)?.schedule
           : ['今日暂无排课'],
     })
   }
 
+  /**
+   * 选择实验室。
+   * 入参：lab（实验室）。
+   */
   const selectLab = (lab) => {
     selectedLabId.value = lab.id
   }
 
+  /**
+   * 打开CreateDialog。
+   */
   const openCreateDialog = () => {
     dialogMode.value = 'create'
     assignFormModel()
     dialogVisible.value = true
   }
 
+  /**
+   * 打开EditDialog。
+   * 入参：lab（实验室）。
+   */
   const openEditDialog = (lab = selectedLab.value) => {
     if (!lab) return
     dialogMode.value = 'edit'
@@ -555,6 +760,9 @@ export function useLabManagement() {
     dialogVisible.value = true
   }
 
+  /**
+   * 提交实验室。
+   */
   const submitLab = async () => {
     if (!validateForm()) return
 
@@ -573,10 +781,10 @@ export function useLabManagement() {
         labs.value.unshift(normalizedCreatedLab)
         selectedLabId.value = normalizedCreatedLab.id
       } else {
-        labs.value = labs.value.map((lab) => (lab.id === nextLab.id ? nextLab : lab))
+        labs.value = labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => (lab.id === nextLab.id ? nextLab : lab))
         selectedLabId.value = nextLab.id
         const updatedLab = await labResourceService.update(nextLab.id, toServerLabPayload(nextLab))
-        labs.value = labs.value.map((lab) =>
+        labs.value = labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) =>
           lab.id === nextLab.id ? normalizeLab({ ...nextLab, ...updatedLab, id: nextLab.id }) : lab,
         )
       }
@@ -593,6 +801,10 @@ export function useLabManagement() {
     }
   }
 
+  /**
+   * 删除实验室。
+   * 入参：lab（实验室）。
+   */
   const deleteLab = async (lab = selectedLab.value) => {
     if (!lab) return
 
@@ -609,7 +821,7 @@ export function useLabManagement() {
     const previousLabs = [...labs.value]
 
     try {
-      labs.value = labs.value.filter((item) => item.id !== lab.id)
+      labs.value = labs.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.id !== lab.id)
       selectedLabId.value = labs.value[0]?.id || ''
       const nextLabs = await labResourceService.remove(lab.id)
       labs.value = nextLabs.map(normalizeLab)
@@ -626,10 +838,14 @@ export function useLabManagement() {
     ElMessage.success('已删除实验室')
   }
 
+  /**
+   * change实验室状态的处理逻辑。
+   * 入参：status（状态）。
+   */
   const changeLabStatus = async (status) => {
     if (!selectedLab.value) return
 
-    labs.value = labs.value.map((lab) =>
+    labs.value = labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) =>
       lab.id === selectedLab.value.id
         ? {
             ...lab,
@@ -642,17 +858,21 @@ export function useLabManagement() {
     ElMessage.success(`${selectedLab.value.name} 已调整为 ${status}`)
   }
 
+  /**
+   * bind实验室课表的处理逻辑。
+   * 入参：records（记录集合）；context（上下文）；reservations（预约）。
+   */
   const bindLabSchedules = (records = [], context = {}, reservations = currentReservationRecords.value) => {
     currentScheduleRecords.value = Array.isArray(records) ? records : []
     currentReservationRecords.value = Array.isArray(reservations) ? reservations : []
     currentScheduleContext.value = { ...context }
     const nextScheduleMap = {}
 
-    labs.value = labs.value.map((lab) => {
-      const matchedRows = currentScheduleRecords.value.filter((record) => isRecordForLab(record, lab))
+    labs.value = labs.value.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => {
+      const matchedRows = currentScheduleRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForLab(record, lab))
       const visibleRows = sortTimetableRows(
-        dedupeTimetableRows(matchedRows.filter((record) => isRecordInScheduleContext(record, context))),
-      ).map((record) => ({
+        dedupeTimetableRows(matchedRows.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordInScheduleContext(record, context))),
+      ).map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => ({
         ...record,
         timeText: getRecordTimeText(record),
       }))
@@ -660,7 +880,7 @@ export function useLabManagement() {
 
       const statusRows = sortTimetableRows(
         dedupeTimetableRows(
-          matchedRows.filter((record) =>
+          matchedRows.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) =>
             isRecordInScheduleContext(record, {
               week: context.week,
               weekday: context.weekday,
@@ -669,10 +889,10 @@ export function useLabManagement() {
         ),
       )
       const visibleReservations = currentReservationRecords.value
-        .filter((reservation) => isReservationApproved(reservation))
-        .filter((reservation) => isReservationForLab(reservation, lab))
-        .filter((reservation) => isReservationForDate(reservation, context.date))
-        .sort((left, right) => {
+        .filter(/** 判断当前条目是否符合筛选条件。 入参：reservation。 */ (reservation) => isReservationApproved(reservation))
+        .filter(/** 判断当前条目是否符合筛选条件。 入参：reservation。 */ (reservation) => isReservationForLab(reservation, lab))
+        .filter(/** 判断当前条目是否符合筛选条件。 入参：reservation。 */ (reservation) => isReservationForDate(reservation, context.date))
+        .sort(/** 比较当前两项的排序先后。 入参：left、right。 */ (left, right) => {
           const leftRange = getReservationTimeRange(left)
           const rightRange = getReservationTimeRange(right)
           return (leftRange?.start || 0) - (rightRange?.start || 0)
@@ -685,11 +905,11 @@ export function useLabManagement() {
       const currentMinute = Number(context.currentMinute || 0)
       const shouldAutoStatus = context.isToday !== false && !lockedScheduleStatuses.has(lab.status)
       const hasActiveCourse =
-        shouldAutoStatus && currentMinute >= 0 && statusRows.some((record) => isRecordInBusyWindow(record, currentMinute))
+        shouldAutoStatus && currentMinute >= 0 && statusRows.some(/** 判断当前条目是否满足任一匹配条件。 入参：record。 */ (record) => isRecordInBusyWindow(record, currentMinute))
       const hasActiveReservation =
         shouldAutoStatus &&
         currentMinute >= 0 &&
-        visibleReservations.some((reservation) => isReservationInBusyWindow(reservation, currentMinute))
+        visibleReservations.some(/** 判断当前条目是否满足任一匹配条件。 入参：reservation。 */ (reservation) => isReservationInBusyWindow(reservation, currentMinute))
       const nextStatus = lockedScheduleStatuses.has(lab.status)
         ? lab.status
         : shouldAutoStatus
@@ -710,6 +930,9 @@ export function useLabManagement() {
     labScheduleMap.value = nextScheduleMap
   }
 
+  /**
+   * 重置实验室。
+   */
   const resetLabs = async () => {
     try {
       await ElMessageBox.confirm('确认恢复实验室初始数据吗？', '恢复数据', {
@@ -734,6 +957,9 @@ export function useLabManagement() {
     ElMessage.success('已恢复初始实验室数据')
   }
 
+  /**
+   * 导出实验室。
+   */
   const exportLabs = () => {
     const exportRows = filteredLabs.value
 
@@ -766,9 +992,9 @@ export function useLabManagement() {
     ElMessage.success(`已导出 ${exportedCount} 条实验室数据`)
   }
 
-  watch(filteredLabs, (nextLabs) => {
+  watch(filteredLabs, /** 响应被监听状态的变化。 入参：nextLabs。 */ (nextLabs) => {
     if (!nextLabs.length) return
-    if (!nextLabs.some((lab) => lab.id === selectedLabId.value)) {
+    if (!nextLabs.some(/** 判断当前条目是否满足任一匹配条件。 入参：lab。 */ (lab) => lab.id === selectedLabId.value)) {
       selectedLabId.value = nextLabs[0].id
     }
   })

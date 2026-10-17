@@ -9,16 +9,37 @@ const migration=path.join(backend,'src/main/resources/db/core-bootstrap/V2026101
 const core=['sys_user','role','user_role','lab','device','device_event','class_timetable','lab_reservation','timetable_integration_config','timetable_import_job','repair_order','usage_record','notice','notice_recipient','audit_event'];
 const archive=path.join(__dirname,'.local-archives',new Date().toISOString().replace(/[:.]/g,'-')+'-'+crypto.randomUUID());
 const report={database,startedAt:new Date().toISOString(),success:false,archive};
+/**
+ * hash的处理逻辑。
+ * 入参：p（p）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+/**
+ * 检查当前操作。
+ * 入参：ok（ok）；message（消息）。
+ */
 function check(ok,message){if(!ok)throw new Error(message)}
+/**
+ * 查询当前操作。
+ * 入参：sql（SQL）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function query(sql){const r=cp.spawnSync(mysql,[...common,'--batch','--skip-column-names','--raw','--database='+database],{input:sql,encoding:'utf8',windowsHide:true});check(!r.error&&r.status===0,'Database verification query failed');return r.stdout.trim()}
-const counts=()=>Object.fromEntries(core.map(t=>[t,Number(query('select count(*) from `'+t+'`;'))]));
+/**
+ * 数量的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const counts=()=>Object.fromEntries(core.map(/** 将当前条目转换为目标结果。 入参：t。 */ t=>[t,Number(query('select count(*) from `'+t+'`;'))]));
+/**
+ * 执行当前模块的主入口流程。
+ */
 function main(){
  check(process.env.MYSQL_PWD,'MYSQL_PWD is required');check(fs.existsSync(jar),'Build the backend first');
  const sql=fs.readFileSync(migration,'utf8');
  check(!/\b(drop|truncate|delete|alter)\s+(table|from)/i.test(sql),'Restoration must be additive');
- const names=[...sql.matchAll(/create table if not exists ([a-z_]+)/gi)].map(m=>m[1]);
- check(names.length===22 && names.every(n=>!core.includes(n)),'Unexpected feature table set');
+ const names=[...sql.matchAll(/create table if not exists ([a-z_]+)/gi)].map(/** 将当前条目转换为目标结果。 入参：m。 */ m=>m[1]);
+ check(names.length===22 && names.every(/** 判断当前条目是否满足全部匹配条件。 入参：n。 */ n=>!core.includes(n)),'Unexpected feature table set');
  report.beforeCoreCounts=counts();
  report.beforeTableCount=Number(query('select count(*) from information_schema.tables where table_schema=database();'));
  fs.mkdirSync(archive,{recursive:true});
@@ -35,7 +56,7 @@ function main(){
  report.afterCoreCounts=counts();
  check(JSON.stringify(report.beforeCoreCounts)===JSON.stringify(report.afterCoreCounts),'Core row counts changed during migration');
  const actual=new Set(query('show tables;').split(/\r?\n/));
- check([...core,...names,'flyway_schema_history'].every(t=>actual.has(t)) && actual.size===38,'Restored table set differs from the expected 38 tables');
+ check([...core,...names,'flyway_schema_history'].every(/** 判断当前条目是否满足全部匹配条件。 入参：t。 */ t=>actual.has(t)) && actual.size===38,'Restored table set differs from the expected 38 tables');
  report.restoredTables=names;report.afterTableCount=actual.size;
  report.flywayVersion=query('select version from flyway_schema_history where success=1 order by installed_rank desc limit 1;');
  report.success=true;report.completedAt=new Date().toISOString();

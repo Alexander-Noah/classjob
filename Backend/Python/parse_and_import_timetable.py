@@ -61,6 +61,9 @@ def clean_text(text):
     return text.strip()
 
 
+# 转换为整数。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def to_int(value):
     if value is None:
         return None
@@ -76,6 +79,9 @@ def to_int(value):
         return None
 
 
+# clean的处理逻辑。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def clean(value):
     if value is None:
         return ""
@@ -202,6 +208,9 @@ def parse_course_div(div):
     }
 
 
+# 解析big课表。
+# 入参：html（HTML）。
+# 返回：result 的当前值。
 def parse_big_timetable(html):
     soup = BeautifulSoup(html, "lxml")
 

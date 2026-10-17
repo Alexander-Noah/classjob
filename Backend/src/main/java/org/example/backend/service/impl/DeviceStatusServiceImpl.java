@@ -21,10 +21,21 @@ import java.util.Map;
 public class DeviceStatusServiceImpl implements DeviceStatusService {
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 构造 DeviceStatusServiceImpl，初始化当前实例。
+     * @param jdbcTemplate JDBC模板参数。
+     */
     public DeviceStatusServiceImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * 列出实验室运行时状态。
+     * 涉及：读取数据库。
+     * @param labId 实验室标识参数。
+     * @param query 查询参数。
+     * @return 包含 labId、total、devices 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> listLabRuntimeStatus(Long labId, Map<String, String> query) {
         List<Object> args = new ArrayList<>();
@@ -42,6 +53,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         );
     }
 
+    /**
+     * 获取设备运行时状态。
+     * 涉及：读取数据库。
+     * @param deviceId 设备标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getDeviceRuntimeStatus(Long deviceId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
@@ -51,6 +68,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return rows.isEmpty() ? Map.of() : rows.get(0);
     }
 
+    /**
+     * 列出事件。
+     * 涉及：读取数据库。
+     * @param query 查询参数。
+     * @return 包含 lab_id、device_id、terminal_id、event_type、event_level、total、records 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> listEvents(Map<String, String> query) {
         List<Object> args = new ArrayList<>();
@@ -86,6 +109,11 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return Map.of("total", rows.size(), "records", rows);
     }
 
+    /**
+     * report运行时状态的处理逻辑。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> reportRuntimeStatus(Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -118,6 +146,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return result;
     }
 
+    /**
+     * 获取摘要。
+     * 涉及：读取数据库。
+     * @param query 查询参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getSummary(Map<String, String> query) {
         List<Object> args = new ArrayList<>();
@@ -138,6 +172,10 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return rows.isEmpty() ? Map.of("total", 0, "online", 0, "offline", 0, "abnormal", 0) : rows.get(0);
     }
 
+    /**
+     * 运行时SelectSQL的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String runtimeSelectSql() {
         return """
                 select
@@ -169,6 +207,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
                 """;
     }
 
+    /**
+     * 追加运行时筛选条件。
+     * @param sql SQL参数。
+     * @param args 参数参数。
+     * @param query 查询参数。
+     */
     private void appendRuntimeFilters(StringBuilder sql, List<Object> args, Map<String, String> query) {
         appendEquals(sql, args, "online_status", query.get("onlineStatus"));
         appendEquals(sql, args, "runtime_status", query.get("runtimeStatus"));
@@ -185,6 +229,13 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         }
     }
 
+    /**
+     * 追加Equals。
+     * @param sql SQL参数。
+     * @param args 参数参数。
+     * @param column column参数。
+     * @param value 值参数。
+     */
     private void appendEquals(StringBuilder sql, List<Object> args, String column, String value) {
         if (!StringUtils.hasText(value)) {
             return;
@@ -193,6 +244,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         args.add(value.trim());
     }
 
+    /**
+     * 查找Terminal。
+     * 涉及：读取数据库。
+     * @param request 请求参数。
+     * @return TerminalBinding 类型的处理结果。
+     */
     private TerminalBinding findTerminal(Map<String, Object> request) {
         String terminalId = stringValue(request.get("terminalId"));
         String terminalToken = stringValue(request.get("terminalToken"));
@@ -235,6 +292,13 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         );
     }
 
+    /**
+     * 查找Existing运行时状态。
+     * 涉及：读取数据库。
+     * @param terminalId terminal标识参数。
+     * @param deviceId 设备标识参数。
+     * @return ExistingRuntimeStatus 类型的处理结果。
+     */
     private ExistingRuntimeStatus findExistingRuntimeStatus(String terminalId, Long deviceId) {
         List<Object> args = new ArrayList<>();
         StringBuilder sql = new StringBuilder("select id, online_status as onlineStatus, runtime_status as runtimeStatus from device_runtime_status where 1 = 1");
@@ -256,6 +320,19 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return new ExistingRuntimeStatus(longValue(row.get("id")), stringValue(row.get("onlineStatus")), stringValue(row.get("runtimeStatus")));
     }
 
+    /**
+     * upsert运行时状态的处理逻辑。
+     * 涉及：写入数据库。
+     * @param request 请求参数。
+     * @param terminal terminal参数。
+     * @param labId 实验室标识参数。
+     * @param terminalId terminal标识参数。
+     * @param terminalRecordId terminal记录标识参数。
+     * @param onlineStatus online状态参数。
+     * @param runtimeStatus 运行时状态参数。
+     * @param health health参数。
+     * @param reportTime report时间参数。
+     */
     private void upsertRuntimeStatus(
             Map<String, Object> request,
             TerminalBinding terminal,
@@ -322,6 +399,17 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         );
     }
 
+    /**
+     * 记录运行时事件。
+     * 涉及：写入数据库。
+     * @param existing existing参数。
+     * @param terminalId terminal标识参数。
+     * @param terminalRecordId terminal记录标识参数。
+     * @param deviceId 设备标识参数。
+     * @param labId 实验室标识参数。
+     * @param onlineStatus online状态参数。
+     * @param runtimeStatus 运行时状态参数。
+     */
     private void recordRuntimeEvent(ExistingRuntimeStatus existing, String terminalId, Long terminalRecordId, Long deviceId, Long labId, String onlineStatus, String runtimeStatus) {
         String before = firstNonBlank(existing.runtimeStatus(), existing.onlineStatus(), "new");
         String after = runtimeStatus + "/" + onlineStatus;
@@ -349,6 +437,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         );
     }
 
+    /**
+     * 更新TerminalSeenAt。
+     * 涉及：写入数据库。
+     * @param terminalRecordId terminal记录标识参数。
+     * @param reportTime report时间参数。
+     */
     private void updateTerminalSeenAt(Long terminalRecordId, LocalDateTime reportTime) {
         if (terminalRecordId == null) {
             return;
@@ -362,6 +456,11 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
                 """, reportTime, reportTime, terminalRecordId);
     }
 
+    /**
+     * 将输入转换为长整数值。
+     * @param value 值参数。
+     * @return Long 类型的处理结果。
+     */
     private Long longValue(Object value) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -374,6 +473,12 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         }
     }
 
+    /**
+     * 将输入转换为整数值。
+     * @param value 值参数。
+     * @param fallback fallback参数。
+     * @return int 类型的处理结果。
+     */
     private int intValue(Object value, int fallback) {
         if (value instanceof Number number) {
             return number.intValue();
@@ -386,6 +491,11 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         }
     }
 
+    /**
+     * decimal值的处理逻辑。
+     * @param value 值参数。
+     * @return BigDecimal 类型的处理结果。
+     */
     private BigDecimal decimalValue(Object value) {
         if (value instanceof BigDecimal decimal) {
             return decimal;
@@ -401,6 +511,10 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         }
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {
@@ -410,10 +524,20 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
         return "";
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    /**
+     * hashTerminal令牌的处理逻辑。
+     * @param terminalToken terminal令牌参数。
+     * @return String 类型的处理结果。
+     */
     private String hashTerminalToken(String terminalToken) {
         if (!StringUtils.hasText(terminalToken)) {
             return "";
@@ -432,12 +556,20 @@ public class DeviceStatusServiceImpl implements DeviceStatusService {
     }
 
     private record TerminalBinding(Long id, String terminalId, Long labId, String labCode, String labName) {
+        /**
+         * 空值的处理逻辑。
+         * @return TerminalBinding 类型的处理结果。
+         */
         static TerminalBinding empty() {
             return new TerminalBinding(null, "", null, "", "");
         }
     }
 
     private record ExistingRuntimeStatus(Long id, String onlineStatus, String runtimeStatus) {
+        /**
+         * 空值的处理逻辑。
+         * @return ExistingRuntimeStatus 类型的处理结果。
+         */
         static ExistingRuntimeStatus empty() {
             return new ExistingRuntimeStatus(null, "", "");
         }

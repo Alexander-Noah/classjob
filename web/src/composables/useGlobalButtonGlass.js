@@ -14,6 +14,10 @@ export function useGlobalButtonGlass() {
   let frame = 0
   const pending = new Set()
   let removed = false
+  /**
+   * 添加当前操作。
+   * 入参：element（element）。
+   */
   function add(element) {
     if (!isGlassButtonTarget(element)) {
       buttons.get(element)?.()
@@ -29,6 +33,9 @@ export function useGlobalButtonGlass() {
       aberration: 1.1, interactive: true, elasticity: 0,
     }))
   }
+  /**
+   * 同步当前操作。
+   */
   function sync() {
     frame = 0
     if (removed) {
@@ -44,8 +51,8 @@ export function useGlobalButtonGlass() {
     }
     pending.clear()
   }
-  onMounted(() => {
-    observer = new MutationObserver(records => {
+  onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
+    observer = new MutationObserver(/** 处理当前调用传入的回调逻辑。 入参：records。 */ records => {
       for (const record of records) {
         if (isGlassResourceNode(record.target)) continue
         if (record.type === 'attributes') {
@@ -64,10 +71,10 @@ export function useGlobalButtonGlass() {
     pending.add(document.body)
     sync()
   })
-  onBeforeUnmount(() => {
+  onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
     observer?.disconnect()
     cancelAnimationFrame(frame)
-    buttons.forEach(release => release())
+    buttons.forEach(/** 处理遍历到的当前条目。 入参：release。 */ release => release())
     buttons.clear()
     pending.clear()
   })

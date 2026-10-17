@@ -40,6 +40,11 @@ const ENDPOINTS = Object.freeze([
   ['/business-loop/overview', 'object'],
 ]);
 
+/**
+ * populated的处理逻辑。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function populated(value) {
   if (value == null || value === false || value === 0 || value === '') return false;
   if (Array.isArray(value)) return value.length > 0;
@@ -47,6 +52,10 @@ function populated(value) {
   return true;
 }
 
+/**
+ * 断言NoLoad失败。
+ * 入参：value（值）；path（路径）；allowTaskHistory（allowTask历史）。
+ */
 function assertNoLoadFailures(value, path = 'response', allowTaskHistory = false) {
   if (value == null || typeof value !== 'object') return;
   for (const [key, child] of Object.entries(value)) {
@@ -65,6 +74,10 @@ function assertNoLoadFailures(value, path = 'response', allowTaskHistory = false
   }
 }
 
+/**
+ * 运行当前操作。
+ * 入参：env（env）；fetchImpl（fetchImpl）；log（log）。
+ */
 async function run(env = process.env, fetchImpl = globalThis.fetch, log = console.log) {
   for (const name of ['BASE_URL', 'ADMIN_USERNAME', 'ADMIN_PASSWORD']) {
     if (!env[name]) throw new Error(`missing environment variable: ${name}`);
@@ -78,6 +91,11 @@ async function run(env = process.env, fetchImpl = globalThis.fetch, log = consol
     throw new Error('HTTP_TIMEOUT_MS must be an integer between 1 and 120000');
   }
   const prefix = base.href.replace(/\/$/, '');
+  /**
+   * 请求的处理逻辑。
+   * 入参：path（路径）；token（令牌）；body（正文）。
+   * @returns result.data 的当前值。
+   */
   async function request(path, token, body) {
     let response;
     try {
@@ -123,7 +141,7 @@ async function run(env = process.env, fetchImpl = globalThis.fetch, log = consol
 
 module.exports = { run, assertNoLoadFailures, ENDPOINTS };
 if (require.main === module) {
-  run().catch(error => {
+  run().catch(/** 处理异步失败结果。 入参：error。 */ error => {
     console.error(`Core API smoke failed: ${error.message}`);
     process.exitCode = 1;
   });

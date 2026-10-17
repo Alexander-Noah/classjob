@@ -50,6 +50,9 @@ class DevicesServiceTransactionTest {
     @Mock
     private BusinessLoopService businessLoopService;
 
+    /**
+     * 调拨ReturnsReread设备And历史。
+     */
     @Test
     void transferReturnsRereadDeviceAndHistory() {
         DevicesEntity before = device(7L, "DEV-007", "调拨前设备");
@@ -76,6 +79,9 @@ class DevicesServiceTransactionTest {
         order.verify(eventMapper).listTransferEvents(7L);
     }
 
+    /**
+     * 库存ReturnsReread设备And历史的处理逻辑。
+     */
     @Test
     void inventoryReturnsRereadDeviceAndHistory() {
         DevicesEntity before = device(6L, "DEV-006", "盘点前设备");
@@ -101,6 +107,10 @@ class DevicesServiceTransactionTest {
         order.verify(eventMapper).listInventoryEvents(6L);
     }
 
+    /**
+     * spring代理Exposes事务ForTransferAnd库存的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void springProxyExposesTransactionsForTransferAndInventory() throws Exception {
         PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
@@ -137,10 +147,21 @@ class DevicesServiceTransactionTest {
         verify(transactionManager, org.mockito.Mockito.times(2)).getTransaction(any());
     }
 
+    /**
+     * 服务的处理逻辑。
+     * @return DevicesServiceImpl 类型的处理结果。
+     */
     private DevicesServiceImpl service() {
         return new DevicesServiceImpl(devicesMapper, eventMapper, labMapper, businessLoopService);
     }
 
+    /**
+     * 设备的处理逻辑。
+     * @param id 标识参数。
+     * @param code 编码参数。
+     * @param name 名称参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     private DevicesEntity device(Long id, String code, String name) {
         DevicesEntity device = new DevicesEntity();
         device.setId(id);

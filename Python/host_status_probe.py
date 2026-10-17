@@ -47,18 +47,27 @@ DEVICE_CACHE: Dict[str, Dict[str, Any]] = {}
 SERVER_LOGS: List[str] = []
 
 
+# utcnowiso的处理逻辑。
+# 返回：由当前表达式或分支生成的处理结果。
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+# 本地now文本的处理逻辑。
+# 返回：由当前表达式或分支生成的处理结果。
 def local_now_text() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+# 生成当前时间的毫秒表示。
+# 返回：由当前表达式或分支生成的处理结果。
 def now_millis() -> int:
     return int(time.time() * 1000)
 
 
+# bytes目标gib的处理逻辑。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def bytes_to_gib(value: float) -> float:
     return round(value / (1024**3), 2)
 
@@ -70,6 +79,8 @@ def percent(used: float, total: float) -> Optional[float]:
     return round((used / total) * 100, 2)
 
 
+# 获取本地ips。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_local_ips() -> List[str]:
     ips: List[str] = []
     try:
@@ -83,6 +94,9 @@ def get_local_ips() -> List[str]:
     return sorted(ips, key=ip_sort_key)
 
 
+# ipsort键的处理逻辑。
+# 入参：value（值）。
+# 返回：由当前表达式或分支生成的处理结果。
 def ip_sort_key(value: str) -> Tuple[int, str]:
     try:
         ip = ipaddress.ip_address(value)
@@ -98,6 +112,8 @@ def ip_sort_key(value: str) -> Tuple[int, str]:
     return (3, value)
 
 
+# 获取primaryip。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_primary_ip() -> str:
     ips = get_local_ips()
     if ips:
@@ -111,6 +127,9 @@ def get_primary_ip() -> str:
         return "127.0.0.1"
 
 
+# 获取cpu状态。
+# 入参：sample_seconds（sampleseconds）。
+# 返回：status 的当前值。
 def get_cpu_status(sample_seconds: float) -> Dict[str, Any]:
     logical_count = os.cpu_count()
     status: Dict[str, Any] = {
@@ -158,6 +177,8 @@ def get_cpu_status(sample_seconds: float) -> Dict[str, Any]:
     return status
 
 
+# 获取窗口memory。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_windows_memory() -> Optional[Dict[str, Any]]:
     class MEMORYSTATUSEX(ctypes.Structure):
         _fields_ = [
@@ -188,6 +209,8 @@ def get_windows_memory() -> Optional[Dict[str, Any]]:
     }
 
 
+# 获取memory状态。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_memory_status() -> Dict[str, Any]:
     if psutil:
         vm = psutil.virtual_memory()
@@ -216,6 +239,9 @@ def get_memory_status() -> Dict[str, Any]:
     }
 
 
+# 获取disk状态。
+# 入参：paths（路径）。
+# 返回：disks 的当前值。
 def get_disk_status(paths: List[str]) -> List[Dict[str, Any]]:
     disks: List[Dict[str, Any]] = []
     seen = set()
@@ -245,6 +271,8 @@ def get_disk_status(paths: List[str]) -> List[Dict[str, Any]]:
     return disks
 
 
+# 获取network状态。
+# 返回：status 的当前值。
 def get_network_status() -> Dict[str, Any]:
     status: Dict[str, Any] = {
         "hostname": socket.gethostname(),
@@ -267,6 +295,8 @@ def get_network_status() -> Dict[str, Any]:
     return status
 
 
+# 获取进程数量。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_process_count() -> Optional[int]:
     if psutil:
         return len(psutil.pids())
@@ -279,11 +309,17 @@ def get_process_count() -> Optional[int]:
     return max(len(output.splitlines()) - 1, 0)
 
 
+# 判断是否为sensitiveenv键。
+# 入参：key（键）。
+# 返回：由当前表达式或分支生成的处理结果。
 def is_sensitive_env_key(key: str) -> bool:
     upper_key = key.upper()
     return any(word in upper_key for word in SENSITIVE_ENV_WORDS)
 
 
+# 获取环境快照。
+# 入参：keys（键）。
+# 返回：snapshot 的当前值。
 def get_environment_snapshot(keys: List[str]) -> Dict[str, Optional[str]]:
     env = dict(os.environ)
     snapshot: Dict[str, Optional[str]] = {}
@@ -297,6 +333,9 @@ def get_environment_snapshot(keys: List[str]) -> Dict[str, Optional[str]]:
     return snapshot
 
 
+# 获取runningapps。
+# 入参：limit（上限）；monitor_names（监控名称集合）。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_running_apps(limit: int, monitor_names: List[str]) -> List[Dict[str, Any]]:
     monitor_set = {name.lower() for name in monitor_names}
     apps: List[Dict[str, Any]] = []
@@ -347,10 +386,15 @@ def get_running_apps(limit: int, monitor_names: List[str]) -> List[Dict[str, Any
         except (OSError, subprocess.SubprocessError):
             pass
 
+    # 处理当前调用传入的回调逻辑。
+    # 入参：item。
     apps.sort(key=lambda item: str(item.get("name", "")).lower())
     return apps[:limit]
 
 
+# 获取monitoredapp状态。
+# 入参：running_apps（runningapps）；monitor_names（监控名称集合）。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_monitored_app_status(running_apps: List[Dict[str, Any]], monitor_names: List[str]) -> List[Dict[str, Any]]:
     if not monitor_names:
         return []
@@ -365,6 +409,9 @@ def get_monitored_app_status(running_apps: List[Dict[str, Any]], monitor_names: 
     ]
 
 
+# 获取已安装software。
+# 入参：limit（上限）；timeout（超时）。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_installed_software(limit: int, timeout: float) -> List[Dict[str, Any]]:
     if os.name != "nt":
         return []
@@ -422,6 +469,8 @@ def get_installed_software(limit: int, timeout: float) -> List[Dict[str, Any]]:
     return normalized[:limit]
 
 
+# 获取uptimeseconds。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_uptime_seconds() -> Optional[int]:
     if psutil:
         return int(time.time() - psutil.boot_time())
@@ -436,6 +485,9 @@ def get_uptime_seconds() -> Optional[int]:
     return None
 
 
+# evaluatehealth的处理逻辑。
+# 入参：cpu_used（cpuused）；memory_used（memoryused）；disks（disks）；warn（warn）；critical（critical）。
+# 返回：组装的字典。
 def evaluate_health(
     cpu_used: Optional[float],
     memory_used: Optional[float],
@@ -445,6 +497,8 @@ def evaluate_health(
 ) -> Dict[str, Any]:
     checks: List[Dict[str, Any]] = []
 
+    # 添加check。
+    # 入参：name（名称）；value（值）。
     def add_check(name: str, value: Optional[float]) -> None:
         if value is None:
             checks.append({"name": name, "status": "unknown", "value": None})
@@ -472,6 +526,9 @@ def evaluate_health(
     return {"status": overall, "checks": checks}
 
 
+# 收集状态。
+# 入参：args（参数）。
+# 返回：组装的字典。
 def collect_status(args: argparse.Namespace) -> Dict[str, Any]:
     cpu = get_cpu_status(args.sample_seconds)
     memory = get_memory_status()
@@ -506,6 +563,9 @@ def collect_status(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
 
+# 构建本地主机载荷。
+# 入参：args（参数）。
+# 返回：data 的当前值。
 def build_local_host_payload(args: argparse.Namespace) -> Dict[str, Any]:
     data = collect_status(args)
     data["summary"] = {
@@ -522,12 +582,17 @@ def build_local_host_payload(args: argparse.Namespace) -> Dict[str, Any]:
     return data
 
 
+# 推送服务端log。
+# 入参：message（消息）。
 def push_server_log(message: str) -> None:
     SERVER_LOGS.append(f"{local_now_text()} {message}")
     if len(SERVER_LOGS) > 200:
         del SERVER_LOGS[:-200]
 
 
+# 归一化collect载荷。
+# 入参：payload（载荷）；ip_address（ipaddress）。
+# 返回：由当前表达式或分支生成的处理结果。
 def normalize_collect_payload(payload: Dict[str, Any], ip_address: str) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
     device_id = str(payload.get("deviceId") or payload.get("device_id") or "").strip()
     if not device_id:
@@ -552,6 +617,9 @@ def normalize_collect_payload(payload: Dict[str, Any], ip_address: str) -> Tuple
     return device_id, entry, None
 
 
+# 收集设备。
+# 入参：payload（载荷）；ip_address（ipaddress）。
+# 返回：由当前表达式或分支生成的处理结果。
 def collect_device(payload: Dict[str, Any], ip_address: str) -> Tuple[bool, str]:
     device_id, entry, error = normalize_collect_payload(payload, ip_address)
     if error or not device_id or not entry:
@@ -565,6 +633,9 @@ def collect_device(payload: Dict[str, Any], ip_address: str) -> Tuple[bool, str]
     return True, "ok"
 
 
+# 构建网关快照。
+# 入参：args（参数）。
+# 返回：组装的字典。
 def build_gateway_snapshot(args: argparse.Namespace) -> Dict[str, Any]:
     current_ms = now_millis()
     with DEVICE_LOCK:
@@ -590,6 +661,8 @@ def build_gateway_snapshot(args: argparse.Namespace) -> Dict[str, Any]:
                 }
             )
 
+        # 处理当前调用传入的回调逻辑。
+        # 入参：item。
         devices.sort(key=lambda item: str(item.get("hostname") or ""))
         logs = list(SERVER_LOGS[-60:])
 
@@ -614,6 +687,9 @@ def build_gateway_snapshot(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
 
+# 收集static资产。
+# 入参：args（参数）。
+# 返回：组装的字典。
 def collect_static_assets(args: argparse.Namespace) -> Dict[str, Any]:
     env_keys = list(dict.fromkeys(DEFAULT_ENV_KEYS + (args.env_key or [])))
     running_apps = get_running_apps(args.running_app_limit, args.monitor_app or [])
@@ -646,6 +722,9 @@ def collect_static_assets(args: argparse.Namespace) -> Dict[str, Any]:
     }
 
 
+# post状态的处理逻辑。
+# 入参：url（URL）；data（数据）；timeout（超时）；token（令牌）。
+# 返回：组装的字典。
 def post_status(url: str, data: Dict[str, Any], timeout: float, token: Optional[str]) -> Dict[str, Any]:
     body = json.dumps(data, ensure_ascii=False).encode("utf-8")
     headers = {
@@ -679,6 +758,9 @@ def post_status(url: str, data: Dict[str, Any], timeout: float, token: Optional[
         }
 
 
+# 构造API响应。
+# 入参：data（数据）；message（消息）；code（编码）。
+# 返回：组装的字典。
 def make_api_response(data: Any, message: str = "ok", code: int = 200) -> Dict[str, Any]:
     return {
         "code": code,
@@ -690,20 +772,27 @@ def make_api_response(data: Any, message: str = "ok", code: int = 200) -> Dict[s
 class HostStatusRequestHandler(BaseHTTPRequestHandler):
     server_version = "HostStatusProbe/1.0"
 
+    # probe参数的处理逻辑。
+    # 返回：self.server.probe_args 的当前值。
     @property
     def probe_args(self) -> argparse.Namespace:
         return self.server.probe_args  # type: ignore[attr-defined]
 
+    # 记录消息。
+    # 入参：format（格式）；解构参数（args）。
     def log_message(self, format: str, *args: Any) -> None:
         if not getattr(self.server, "quiet", False):  # type: ignore[attr-defined]
             super().log_message(format, *args)
 
+    # 发送cors请求头。
     def send_cors_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type,Authorization")
         self.send_header("Access-Control-Max-Age", "86400")
 
+    # 发送JSON。
+    # 入参：payload（载荷）；status（状态）。
     def send_json(self, payload: Any, status: int = HTTPStatus.OK) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -713,11 +802,13 @@ class HostStatusRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    # 执行选项。
     def do_OPTIONS(self) -> None:
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_cors_headers()
         self.end_headers()
 
+    # 执行GET。
     def do_GET(self) -> None:
         path = urlparse(self.path).path.rstrip("/") or "/"
 
@@ -739,6 +830,7 @@ class HostStatusRequestHandler(BaseHTTPRequestHandler):
 
         self.send_json(make_api_response(None, "not found", 404), HTTPStatus.NOT_FOUND)
 
+    # 执行POST。
     def do_POST(self) -> None:
         path = urlparse(self.path).path.rstrip("/") or "/"
         length = int(self.headers.get("Content-Length", "0") or 0)
@@ -759,6 +851,9 @@ class HostStatusRequestHandler(BaseHTTPRequestHandler):
         self.send_json(make_api_response(None, "not found", 404), HTTPStatus.NOT_FOUND)
 
 
+# serve状态API的处理逻辑。
+# 入参：args（参数）。
+# 返回：整数结果。
 def serve_status_api(args: argparse.Namespace) -> int:
     server = ThreadingHTTPServer((args.host, args.port), HostStatusRequestHandler)
     server.probe_args = args  # type: ignore[attr-defined]
@@ -781,6 +876,8 @@ def serve_status_api(args: argparse.Namespace) -> int:
     return 0
 
 
+# 解析参数。
+# 返回：由当前表达式或分支生成的处理结果。
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect host status as JSON.")
     parser.add_argument(
@@ -904,6 +1001,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# report状态once的处理逻辑。
+# 入参：args（参数）。
+# 返回：整数结果。
 def report_status_once(args: argparse.Namespace) -> int:
     data = collect_status(args)
 
@@ -924,6 +1024,9 @@ def report_status_once(args: argparse.Namespace) -> int:
     return 0
 
 
+# reportstatic资产once的处理逻辑。
+# 入参：args（参数）。
+# 返回：由当前表达式或分支生成的处理结果。
 def report_static_assets_once(args: argparse.Namespace) -> int:
     if not args.static_post_url:
         return 0
@@ -937,6 +1040,8 @@ def report_static_assets_once(args: argparse.Namespace) -> int:
     return 0 if post_result["ok"] else 4
 
 
+# 执行当前模块的主入口流程。
+# 返回：由当前表达式或分支生成的处理结果。
 def main() -> int:
     args = parse_args()
 

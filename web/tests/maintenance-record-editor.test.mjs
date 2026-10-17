@@ -8,7 +8,7 @@ import { buildMaintenancePayload, canWriteMaintenanceRecords, createMaintenanceD
 const labs = [{id:1,name:'实验室甲'},{id:2,name:'实验室乙'}]
 const devices = [{id:11,labId:1,deviceName:'设备甲'},{id:22,labId:2,deviceName:'设备乙'}]
 
-test('maintenance records allow an empty or cleared device even when the laboratory has no devices', () => {
+test('maintenance records allow an empty or cleared device even when the laboratory has no devices', /** 验证当前测试用例的预期行为。 */ () => {
   for (const deviceId of ['', null, undefined]) {
     const payload = buildMaintenancePayload({labId:'1', deviceId}, labs, [])
     assert.equal(payload.deviceId, null)
@@ -16,9 +16,9 @@ test('maintenance records allow an empty or cleared device even when the laborat
   }
 })
 
-test('maintenance device choices and payload cannot cross laboratory boundaries', () => {
-  assert.deepEqual(devicesForMaintenanceLab(devices, '1').map(item=>item.id), [11])
-  assert.throws(()=>buildMaintenancePayload({labId:'1',deviceId:'22'},labs,devices), /属于该实验室/)
+test('maintenance device choices and payload cannot cross laboratory boundaries', /** 验证当前测试用例的预期行为。 */ () => {
+  assert.deepEqual(devicesForMaintenanceLab(devices, '1').map(/** 将当前条目转换为目标结果。 入参：item。 */ item=>item.id), [11])
+  assert.throws(/** 处理 throws 调用中的回调逻辑。 */ ()=>buildMaintenancePayload({labId:'1',deviceId:'22'},labs,devices), /属于该实验室/)
   const payload=buildMaintenancePayload({labId:'1',deviceId:'11',maintenanceType:' 巡检 ',remark:' 备注 '},labs,devices)
   assert.equal(payload.labId,1)
   assert.equal(payload.deviceId,11)
@@ -28,7 +28,7 @@ test('maintenance device choices and payload cannot cross laboratory boundaries'
   assert.equal(payload.remark,'备注')
 })
 
-test('new drafts do not reuse a previous record and editing preserves stable identifiers', () => {
+test('new drafts do not reuse a previous record and editing preserves stable identifiers', /** 验证当前测试用例的预期行为。 */ () => {
   const edit=createMaintenanceDraft({id:7,labId:1,deviceId:11,recordNo:'MR-7',remark:'未填写',content:'原内容',maintenanceDate:'2026-10-15 12:00:00'})
   assert.equal(edit.id,7)
   assert.equal(edit.maintenanceDate,'2026-10-15')
@@ -39,14 +39,14 @@ test('new drafts do not reuse a previous record and editing preserves stable ide
   assert.equal(empty.maintainer,'labadmin')
 })
 
-test('read-only and malformed permissions cannot expose mutation actions', () => {
+test('read-only and malformed permissions cannot expose mutation actions', /** 验证当前测试用例的预期行为。 */ () => {
   assert.equal(canWriteMaintenanceRecords({roleCode:'labAdmin',permissions:'[{"items":["维护记录查看"]}]'}),false)
   assert.equal(canWriteMaintenanceRecords({roleCode:'labAdmin',permissions:'[{"items":["维护记录填写"]}]'}),true)
   assert.equal(canWriteMaintenanceRecords({roleCode:'labAdmin',permissions:'broken'}),false)
   assert.equal(canWriteMaintenanceRecords({roleCode:'teacher',permissions:'["维护记录填写"]'}),false)
 })
 
-test('maintenance filters combine inclusive date range, references and free text', () => {
+test('maintenance filters combine inclusive date range, references and free text', /** 验证当前测试用例的预期行为。 */ () => {
   const rows=[{lab:'甲',device:'设备',maintenanceDate:'2026-10-15 10:00:00',content:'例行巡检'},{lab:'乙',maintenanceDate:'2026-10-16',content:'例行巡检'}]
   assert.equal(filterMaintenanceRecords(rows,{keyword:'巡检',lab:'甲',dateRange:['2026-10-15','2026-10-15']}).length,1)
   assert.equal(filterMaintenanceRecords(rows,{dateRange:['2026-10-17','2026-10-18']}).length,0)

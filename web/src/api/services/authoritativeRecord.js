@@ -2,6 +2,11 @@
  * 服务端权威记录校验与前端列表更新；此模块不负责身份认证或网络请求。
  * 主要导出：requireAuthoritativeRecord、applyAuthoritativeReservationRecord。
  */
+/**
+ * 判断是否具有Authoritative标识。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasAuthoritativeId = (value) => {
   if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0
   if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) return false
@@ -10,6 +15,11 @@ const hasAuthoritativeId = (value) => {
   return Number.isSafeInteger(identifier) && String(identifier) === value
 }
 
+/**
+ * 判断是否具有有效Application标识。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasValidApplicationId = (value) =>
   (typeof value === 'string' && value.trim().length > 0) || (typeof value === 'number' && Number.isFinite(value))
 
@@ -43,8 +53,8 @@ export const applyAuthoritativeReservationRecord = (records, record, { insertIfM
   if (!hasValidApplicationId(record?.id)) throw new Error('预约服务未返回有效记录')
   if (expectedId !== undefined && String(record.id) !== String(expectedId)) throw new Error('预约服务返回了错误的目标记录')
 
-  const hasExistingReservation = records.some((item) => String(item.id) === String(record.id))
+  const hasExistingReservation = records.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => String(item.id) === String(record.id))
   if (!insertIfMissing && !hasExistingReservation) throw new Error('预约服务未返回目标记录')
-  if (hasExistingReservation) return records.map((item) => (String(item.id) === String(record.id) ? record : item))
+  if (hasExistingReservation) return records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(record.id) ? record : item))
   return [record, ...records]
 }

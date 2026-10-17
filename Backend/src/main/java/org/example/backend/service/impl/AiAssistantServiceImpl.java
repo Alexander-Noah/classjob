@@ -20,6 +20,11 @@ public class AiAssistantServiceImpl implements AiAssistantService {
     private final TongyiAgentService tongyiAgentService;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 AiAssistantServiceImpl，初始化当前实例。
+     * @param tongyiAgentService tongyiAgent服务参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public AiAssistantServiceImpl(
             TongyiAgentService tongyiAgentService,
             BusinessLoopService businessLoopService
@@ -28,11 +33,24 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * generateAnswer的处理逻辑。
+     * @param question question参数。
+     * @param scene scene参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String generateAnswer(String question, String scene) {
         return generateAnswer(question, scene, List.of());
     }
 
+    /**
+     * generateAnswer的处理逻辑。
+     * @param question question参数。
+     * @param scene scene参数。
+     * @param images images参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String generateAnswer(String question, String scene, List<Map<String, Object>> images) {
         if (!tongyiAgentService.isConfigured()) {
@@ -61,6 +79,12 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         }
     }
 
+    /**
+     * 记录AI事件。
+     * @param scene scene参数。
+     * @param question question参数。
+     * @param status 状态参数。
+     */
     private void recordAiEvent(String scene, String question, String status) {
         businessLoopService.recordEvent(
                 "ai-assistant",
@@ -74,6 +98,10 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         );
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {

@@ -239,20 +239,23 @@ const dashboardOverview = ref(null)
 const linkedStatistics = ref(null)
 const platformSnapshot = ref({ users: null, notices: null, errors: [] })
 
-const roleScope = computed(() => route.meta?.roleScope || DEFAULT_AUTH_ROLE)
-const pageConfig = computed(() => (roleScope.value === 'systemAdmin' ? SYSTEM_ADMIN_PAGE : LAB_ADMIN_PAGE))
-const basePeriodData = computed(() => pageConfig.value.periods[activePeriod.value] || pageConfig.value.periods.week)
+const roleScope = computed(/** 计算派生状态。 */ () => route.meta?.roleScope || DEFAULT_AUTH_ROLE)
+const pageConfig = computed(/** 计算派生状态。 */ () => (roleScope.value === 'systemAdmin' ? SYSTEM_ADMIN_PAGE : LAB_ADMIN_PAGE))
+const basePeriodData = computed(/** 计算派生状态。 */ () => pageConfig.value.periods[activePeriod.value] || pageConfig.value.periods.week)
 const activePeriodLabel = computed(
-  () => roleScope.value === 'systemAdmin' ? '当前数据库快照' : PERIOD_OPTIONS.find((item) => item.value === activePeriod.value)?.label || PERIOD_OPTIONS[0].label,
+  /**
+   * 计算派生状态。
+   */
+  () => roleScope.value === 'systemAdmin' ? '当前数据库快照' : PERIOD_OPTIONS.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.value === activePeriod.value)?.label || PERIOD_OPTIONS[0].label,
 )
-const dataSourceLabel = computed(() => {
+const dataSourceLabel = computed(/** 计算派生状态。 */ () => {
   if (roleScope.value === 'systemAdmin') {
     return platformSnapshot.value.users !== null ? '账号与通知接口' : '等待接口加载'
   }
 
   return linkedStatistics.value ? '业务接口联动' : '本地统计口径'
 })
-const toolbarMetaItems = computed(() => [
+const toolbarMetaItems = computed(/** 计算派生状态。 */ () => [
   { label: '统计口径', value: activePeriodLabel.value },
   { label: '数据来源', value: dataSourceLabel.value },
   { label: '分析模块', value: '4 组图表' },
@@ -266,18 +269,37 @@ const LOOP_STATUS_TYPE = {
   info: 'info',
 }
 
+/**
+ * 归一化Loop数值。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeLoopNumber = (value) => Number(value || 0)
+/**
+ * 获取Loop数据。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLoopData = () => dashboardOverview.value?.businessLoop || {}
+/**
+ * 构建LoopCards。
+ * 入参：cards（cards）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLoopCards = (cards = []) =>
-  cards.slice(0, 4).map((card, index) => ({
+  cards.slice(0, 4).map(/** 将当前条目转换为目标结果。 入参：card、index。 */ (card, index) => ({
     label: card.label,
     value: String(card.value ?? '-'),
     trend: card.trend || '\u540e\u7aef\u5b9e\u65f6\u95ed\u73af',
     iconKey: LOOP_ICON_KEYS[index] || 'usage',
   }))
 
+/**
+ * 构建Loop详情。
+ * 入参：chains（chains）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLoopDetails = (chains = []) =>
-  chains.map((chain) => ({
+  chains.map(/** 将当前条目转换为目标结果。 入参：chain。 */ (chain) => ({
     metric: chain.title,
     value: `${normalizeLoopNumber(chain.completed)}/${normalizeLoopNumber(chain.total)}`,
     change: chain.rate || '-',
@@ -286,9 +308,14 @@ const buildLoopDetails = (chains = []) =>
     tagType: LOOP_STATUS_TYPE[chain.tagType] || 'primary',
   }))
 
+/**
+ * 构建LoopInsights。
+ * 入参：actions（actions）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLoopInsights = (actions = []) =>
   actions.length
-    ? actions.slice(0, 3).map((action) => ({
+    ? actions.slice(0, 3).map(/** 将当前条目转换为目标结果。 入参：action。 */ (action) => ({
         title: `${action.title} ${action.count ?? ''}`,
         description: action.description,
         type: 'warning',
@@ -301,28 +328,43 @@ const buildLoopInsights = (actions = []) =>
         },
       ]
 
+/**
+ * 构建LoopTrend。
+ * 入参：usageTrend（usageTrend）；fallbackTrend（fallbackTrend）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLoopTrend = (usageTrend = [], fallbackTrend) => {
   if (!Array.isArray(usageTrend) || usageTrend.length === 0) return fallbackTrend
   return {
     ...fallbackTrend,
     name: '\u4f7f\u7528\u8bb0\u5f55',
     unit: '\u6761',
-    categories: usageTrend.map((item) => item.name),
-    values: usageTrend.map((item) => normalizeLoopNumber(item.value)),
+    categories: usageTrend.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.name),
+    values: usageTrend.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeLoopNumber(item.value)),
   }
 }
 
+/**
+ * 构建LoopRanking。
+ * 入参：repairFaultRanking（repairFaultRanking）；fallbackRanking（fallbackRanking）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLoopRanking = (repairFaultRanking = [], fallbackRanking) => {
   if (!Array.isArray(repairFaultRanking) || repairFaultRanking.length === 0) return fallbackRanking
   return {
     ...fallbackRanking,
     name: '\u6545\u969c\u6b21\u6570',
     unit: '\u6b21',
-    categories: repairFaultRanking.map((item) => item.name),
-    values: repairFaultRanking.map((item) => normalizeLoopNumber(item.value)),
+    categories: repairFaultRanking.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.name),
+    values: repairFaultRanking.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeLoopNumber(item.value)),
   }
 }
 
+/**
+ * 归一化响应列表。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeResponseList = (payload) => {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
@@ -334,6 +376,11 @@ const normalizeResponseList = (payload) => {
   return []
 }
 
+/**
+ * 加载Linked记录集合。
+ * 入参：endpoint（端点）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const loadLinkedRecords = async (endpoint) => {
   try {
     const { data } = await http.get(endpoint)
@@ -344,6 +391,11 @@ const loadLinkedRecords = async (endpoint) => {
   }
 }
 
+/**
+ * 加载Linked载荷。
+ * 入参：endpoint（端点）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const loadLinkedPayload = async (endpoint) => {
   try {
     const { data } = await http.get(endpoint)
@@ -354,9 +406,24 @@ const loadLinkedPayload = async (endpoint) => {
   }
 }
 
+/**
+ * 转换为文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toText = (value) => String(value ?? '').trim()
+/**
+ * percent文本的处理逻辑。
+ * 入参：value（值）；total（总数）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const percentText = (value, total) => `${total ? Math.round((value / total) * 100) : 0}%`
 
+/**
+ * 判断是否具有状态。
+ * 入参：record（记录）；keywords（keywords）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasStatus = (record, keywords) => {
   const status = [
     record.status,
@@ -370,9 +437,14 @@ const hasStatus = (record, keywords) => {
     .map(toText)
     .filter(Boolean)
     .join(' ')
-  return keywords.some((keyword) => status.includes(keyword))
+  return keywords.some(/** 判断当前条目是否满足任一匹配条件。 入参：keyword。 */ (keyword) => status.includes(keyword))
 }
 
+/**
+ * 获取实验室名称来源记录。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabNameFromRecord = (record) =>
   toText(
     record.lab ||
@@ -385,12 +457,22 @@ const getLabNameFromRecord = (record) =>
       record.name,
   )
 
+/**
+ * 归一化实验室文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeLabText = (value) =>
   toText(value)
     .toLowerCase()
     .replace(/\s+/g, '')
     .replace(/[（）()【】\[\]_-]/g, '')
 
+/**
+ * 获取实验室Display名称。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabDisplayName = (lab) => {
   const code = toText(lab.labCode || lab.code)
   const name = toText(lab.labName || lab.name)
@@ -398,11 +480,16 @@ const getLabDisplayName = (lab) => {
   return name || code
 }
 
+/**
+ * 创建实验室Resolver。
+ * 入参：labs（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createLabResolver = (labs = []) => {
   const exactMap = new Map()
   const idMap = new Map()
   const labEntries = labs
-    .map((lab) => {
+    .map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => {
       const displayName = getLabDisplayName(lab)
       if (displayName && lab.id != null) idMap.set(String(lab.id), displayName)
       const aliases = [
@@ -419,12 +506,12 @@ const createLabResolver = (labs = []) => {
         .map(normalizeLabText)
         .filter(Boolean)
 
-      aliases.forEach((alias) => exactMap.set(alias, displayName))
+      aliases.forEach(/** 处理遍历到的当前条目。 入参：alias。 */ (alias) => exactMap.set(alias, displayName))
       return { displayName, aliases }
     })
-    .filter((entry) => entry.displayName && entry.aliases.length)
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：entry。 */ (entry) => entry.displayName && entry.aliases.length)
 
-  return (record) => {
+  return /** 处理当前调用传入的回调逻辑。 入参：record。 */ (record) => {
     const labId = record.labId ?? record.assignedLabId
     if (labId != null && idMap.has(String(labId))) return idMap.get(String(labId))
 
@@ -434,16 +521,21 @@ const createLabResolver = (labs = []) => {
 
     if (exactMap.has(normalizedName)) return exactMap.get(normalizedName)
 
-    const matchedLab = labEntries.find(({ aliases }) =>
-      aliases.some((alias) => alias.length >= 2 && normalizedName.includes(alias)),
+    const matchedLab = labEntries.find(/** 判断当前条目是否为查找目标。 */ ({ aliases }) =>
+      aliases.some(/** 判断当前条目是否满足任一匹配条件。 入参：alias。 */ (alias) => alias.length >= 2 && normalizedName.includes(alias)),
     )
     return matchedLab?.displayName || ''
   }
 }
 
+/**
+ * 创建实验室Usage行集合。
+ * 入参：labs（实验室）；records（记录集合）；resolver（resolver）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createLabUsageRows = (labs = [], records = [], resolver) => {
   const counter = new Map()
-  records.forEach((record) => {
+  records.forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     const labName = resolver(record)
     if (!labName) return
     counter.set(labName, (counter.get(labName) || 0) + 1)
@@ -452,16 +544,26 @@ const createLabUsageRows = (labs = [], records = [], resolver) => {
   return labs
     .map(getLabDisplayName)
     .filter(Boolean)
-    .map((name) => ({ name, value: counter.get(name) || 0 }))
-    .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name, 'zh-Hans-CN'))
+    .map(/** 将当前条目转换为目标结果。 入参：name。 */ (name) => ({ name, value: counter.get(name) || 0 }))
+    .sort(/** 比较当前两项的排序先后。 入参：left、right。 */ (left, right) => right.value - left.value || left.name.localeCompare(right.name, 'zh-Hans-CN'))
 }
 
+/**
+ * 获取Repair名称。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRepairName = (record) =>
   toText(record.faultType || record.problemType || record.reason || record.type || record.device || record.deviceName || record.status)
 
+/**
+ * 获取Period分类。
+ * 入参：period（period）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getPeriodCategories = (period) => {
   if (period === 'month') return ['第 1 周', '第 2 周', '第 3 周', '第 4 周', '第 5 周']
-  if (period === 'term') return getTermMonths().map((month) => `${month} 月`)
+  if (period === 'term') return getTermMonths().map(/** 将当前条目转换为目标结果。 入参：month。 */ (month) => `${month} 月`)
   return ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 }
 
@@ -484,11 +586,16 @@ const WEEKDAY_ORDER = {
   周天: 7,
 }
 
+/**
+ * 解析数值列表。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseNumberList = (value) => {
   const numbers = new Set()
   String(value || '')
     .split(',')
-    .forEach((part) => {
+    .forEach(/** 处理遍历到的当前条目。 入参：part。 */ (part) => {
       const range = part.match(/(\d{1,2})\s*[-~至]\s*(\d{1,2})/)
       if (range) {
         const start = Number(range[1])
@@ -502,15 +609,25 @@ const parseNumberList = (value) => {
       const single = part.match(/\d{1,2}/)
       if (single) numbers.add(Number(single[0]))
     })
-  return [...numbers].filter((number) => number > 0)
+  return [...numbers].filter(/** 判断当前条目是否符合筛选条件。 入参：number。 */ (number) => number > 0)
 }
 
+/**
+ * 获取课表周次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTimetableWeeks = (record) => {
   const expanded = parseNumberList(record.weekExpanded)
   if (expanded.length) return expanded
   return parseNumberList(record.weekText || record.weekRaw)
 }
 
+/**
+ * 获取课表Weekday索引。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTimetableWeekdayIndex = (record) => {
   const weekday = toText(record.weekday)
   if (WEEKDAY_ORDER[weekday]) return WEEKDAY_ORDER[weekday]
@@ -519,6 +636,11 @@ const getTimetableWeekdayIndex = (record) => {
   return match ? Number(match[0]) || weekdayMap[match[0]] || 0 : 0
 }
 
+/**
+ * 解析日期文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseDateText = (value) => {
   const text = toText(value).replace(/\//g, '-')
   const match = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/)
@@ -528,6 +650,10 @@ const parseDateText = (value) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/**
+ * 获取默认学期开始日期。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDefaultSemesterStartDate = () => {
   const now = new Date()
   const month = now.getMonth()
@@ -536,6 +662,11 @@ const getDefaultSemesterStartDate = () => {
   return new Date(now.getFullYear(), 1, 1)
 }
 
+/**
+ * 格式化日期键。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDateKey = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -543,6 +674,11 @@ const formatDateKey = (date) => {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * 获取记录时间文本。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordTimeText = (record) =>
   toText(
     record.entryTime ||
@@ -562,6 +698,11 @@ const getRecordTimeText = (record) =>
       record.reportedAt,
   )
 
+/**
+ * 解析记录日期。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseRecordDate = (record) => {
   const text = getRecordTimeText(record).replace(/\//g, '-').replace('T', ' ')
   if (!text || text === '-') return null
@@ -581,6 +722,11 @@ const parseRecordDate = (record) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/**
+ * 获取Period范围。
+ * 入参：period（period）。
+ * @returns 组装的键值对象。
+ */
 const getPeriodRange = (period) => {
   const now = new Date()
   const end = new Date(now)
@@ -609,24 +755,34 @@ const getPeriodRange = (period) => {
   return { start, end }
 }
 
+/**
+ * 筛选记录集合ByPeriod。
+ * 入参：records（记录集合）；period（period）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const filterRecordsByPeriod = (records, period) => {
   const { start, end } = getPeriodRange(period)
-  return records.filter((record) => {
+  return records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => {
     const date = parseRecordDate(record)
     return date && date >= start && date <= end
   })
 }
 
+/**
+ * expand课表Occurrences的处理逻辑。
+ * 入参：records（记录集合）；period（period）；semesterStartDateText（学期开始日期文本）。
+ * @returns occurrences 的当前值。
+ */
 const expandTimetableOccurrences = (records, period, semesterStartDateText) => {
   const { start, end } = getPeriodRange(period)
   const semesterStart = parseDateText(semesterStartDateText) || getDefaultSemesterStartDate()
   const occurrences = []
 
-  records.forEach((record) => {
+  records.forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     const weekdayIndex = getTimetableWeekdayIndex(record)
     if (!weekdayIndex) return
 
-    getTimetableWeeks(record).forEach((week) => {
+    getTimetableWeeks(record).forEach(/** 处理遍历到的当前条目。 入参：week。 */ (week) => {
       const scheduleDate = new Date(semesterStart)
       scheduleDate.setDate(semesterStart.getDate() + (week - 1) * 7 + weekdayIndex - 1)
       scheduleDate.setHours(0, 0, 0, 0)
@@ -643,11 +799,20 @@ const expandTimetableOccurrences = (records, period, semesterStartDateText) => {
   return occurrences
 }
 
+/**
+ * 获取TermMonths。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTermMonths = () => {
   const currentMonth = new Date().getMonth() + 1
   return currentMonth >= 8 || currentMonth === 1 ? [8, 9, 10, 11, 12, 1] : [2, 3, 4, 5, 6]
 }
 
+/**
+ * inferBucket索引的处理逻辑。
+ * 入参：record（记录）；period（period）；categories（分类）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const inferBucketIndex = (record, period, categories) => {
   const date = parseRecordDate(record)
   if (!date) return -1
@@ -663,11 +828,16 @@ const inferBucketIndex = (record, period, categories) => {
   return (date.getDay() + 6) % 7
 }
 
+/**
+ * 构建PeriodSeries。
+ * 入参：records（记录集合）；period（period）。
+ * @returns 组装的键值对象。
+ */
 const buildPeriodSeries = (records, period) => {
   const categories = getPeriodCategories(period)
   const values = Array(categories.length).fill(0)
 
-  records.forEach((record) => {
+  records.forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     const index = inferBucketIndex(record, period, categories)
     if (index >= 0) values[index] += 1
   })
@@ -681,24 +851,44 @@ const buildPeriodSeries = (records, period) => {
   }
 }
 
+/**
+ * top数量行集合的处理逻辑。
+ * 入参：records（记录集合）；resolver（resolver）；limit（上限）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const topCountRows = (records, resolver, limit = 5) => {
   const counter = new Map()
-  records.forEach((record) => {
+  records.forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     const key = resolver(record)
     if (!key) return
     counter.set(key, (counter.get(key) || 0) + 1)
   })
   return Array.from(counter.entries())
-    .sort((a, b) => b[1] - a[1])
+    .sort(/** 比较当前两项的排序先后。 入参：a、b。 */ (a, b) => b[1] - a[1])
     .slice(0, limit)
-    .map(([name, value]) => ({ name, value }))
+    .map(/** 将当前条目转换为目标结果。 */ ([name, value]) => ({ name, value }))
 }
 
+/**
+ * 获取设备状态。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceStatus = (record) => toText(record.status || record.deviceStatus || record.assetStatus || '未标记状态')
 
+/**
+ * 判断是否为设备Deleted。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isDeviceDeleted = (record) =>
   record.deleted === true || record.isDeleted === true || hasStatus(record, ['已删除'])
 
+/**
+ * 判断是否为设备Online。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isDeviceOnline = (record) => {
   const rawOnline = record.online ?? record.isOnline ?? record.onlineStatus ?? record.networkStatus ?? record.connectStatus
 
@@ -709,16 +899,21 @@ const isDeviceOnline = (record) => {
   if (['false', '0', 'no', 'n', 'offline'].includes(onlineText) || onlineText.includes('离线')) return false
 
   const status = getDeviceStatus(record)
-  if (['故障', '维修', '维护', '停用', '报废', '删除', '缺失', '损坏'].some((keyword) => status.includes(keyword))) {
+  if (['故障', '维修', '维护', '停用', '报废', '删除', '缺失', '损坏'].some(/** 判断当前条目是否满足任一匹配条件。 入参：keyword。 */ (keyword) => status.includes(keyword))) {
     return false
   }
 
-  return ['正常', '可用', '借用中', '已盘点'].some((keyword) => status.includes(keyword))
+  return ['正常', '可用', '借用中', '已盘点'].some(/** 判断当前条目是否满足任一匹配条件。 入参：keyword。 */ (keyword) => status.includes(keyword))
 }
 
+/**
+ * 构建LinkedStatistics。
+ * 入参：records（记录集合）；period（period）。
+ * @returns 组装的键值对象。
+ */
 const buildLinkedStatistics = (records, period) => {
   const labs = records.labs || []
-  const devices = (records.devices || []).filter((record) => !isDeviceDeleted(record))
+  const devices = (records.devices || []).filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => !isDeviceDeleted(record))
   const reservations = records.reservations || []
   const usageRecords = records.usageRecords || []
   const classTimetables = records.classTimetables || []
@@ -736,11 +931,11 @@ const buildLinkedStatistics = (records, period) => {
   const periodRepairs = filterRecordsByPeriod(repairs, period)
   const periodCourseEnvironments = filterRecordsByPeriod(courseEnvironments, period)
 
-  const approvedReservations = periodReservations.filter((record) =>
+  const approvedReservations = periodReservations.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) =>
     hasStatus(record, ['已通过', '通过', '已确认', '预约成功', '正常']),
   )
-  const pendingReservations = periodReservations.filter((record) => hasStatus(record, ['待审', '待审核', '待确认']))
-  const pendingEnvironments = periodCourseEnvironments.filter((record) => !hasStatus(record, ['已确认', '可复用', '已完成']))
+  const pendingReservations = periodReservations.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => hasStatus(record, ['待审', '待审核', '待确认']))
+  const pendingEnvironments = periodCourseEnvironments.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => !hasStatus(record, ['已确认', '可复用', '已完成']))
   const resolveLabName = createLabResolver(labs)
   const labUsageSourceRecords = [...periodUsageRecords, ...approvedReservations, ...periodTimetableOccurrences]
   const labUsageRecords = labUsageSourceRecords.filter(resolveLabName)
@@ -748,18 +943,18 @@ const buildLinkedStatistics = (records, period) => {
   const labUsageRecordCount = periodUsageRecords.filter(resolveLabName).length
   const labApprovedReservationCount = approvedReservations.filter(resolveLabName).length
   const labRepairs = periodRepairs.filter(resolveLabName)
-  const activeLabRepairs = labRepairs.filter((record) => !hasStatus(record, ['已完成', '已关闭', '完成', '关闭', '已归档']))
+  const activeLabRepairs = labRepairs.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => !hasStatus(record, ['已完成', '已关闭', '完成', '关闭', '已归档']))
   const labDevices = devices.filter(resolveLabName)
   const onlineLabDevices = labDevices.filter(isDeviceOnline)
-  const abnormalLabDevices = labDevices.filter((record) =>
+  const abnormalLabDevices = labDevices.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) =>
     hasStatus(record, ['故障', '维修', '维护', '停用', '报废', '盘点异常', '设备缺失', '设备损坏']),
   )
   const labUsageRows = createLabUsageRows(labs, labUsageRecords, resolveLabName)
-  const activeLabUsageRows = labUsageRows.filter((item) => item.value > 0)
+  const activeLabUsageRows = labUsageRows.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.value > 0)
   const labUsageCompareRows = labUsageRows.slice(0, 5)
   const repairRows = topCountRows(labRepairs, getRepairName, 4)
   const deviceStatusRows = topCountRows(labDevices, getDeviceStatus, 6)
-  const labCategories = labUsageCompareRows.map((item) => item.name)
+  const labCategories = labUsageCompareRows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.name)
 
   return {
     summary: [
@@ -793,7 +988,7 @@ const buildLinkedStatistics = (records, period) => {
       name: '实验室使用',
       unit: '条',
       categories: labCategories,
-      values: labUsageCompareRows.length ? labUsageCompareRows.map((item) => item.value) : labCategories.map(() => 0),
+      values: labUsageCompareRows.length ? labUsageCompareRows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.value) : labCategories.map(/** 将当前条目转换为目标结果。 */ () => 0),
       color: '#3b82f6',
     },
     distribution: {
@@ -803,8 +998,8 @@ const buildLinkedStatistics = (records, period) => {
     ranking: {
       name: '故障/工单数',
       unit: '单',
-      categories: repairRows.map((item) => item.name),
-      values: repairRows.map((item) => item.value),
+      categories: repairRows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.name),
+      values: repairRows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.value),
       color: '#f59e0b',
     },
     details: [
@@ -891,13 +1086,13 @@ const buildLinkedStatistics = (records, period) => {
   }
 }
 
-const periodData = computed(() => {
+const periodData = computed(/** 计算派生状态。 */ () => {
   if (roleScope.value === 'systemAdmin') return buildPlatformStatistics(platformSnapshot.value.users, platformSnapshot.value.notices)
 
   return linkedStatistics.value || buildLinkedStatistics({}, activePeriod.value)
 })
-const summaryCards = computed(() =>
-  periodData.value.summary.map((item) => ({
+const summaryCards = computed(/** 计算派生状态。 */ () =>
+  periodData.value.summary.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({
     ...item,
     icon: SUMMARY_ICON_MAP[item.iconKey] || DataAnalysis,
   })),
@@ -908,7 +1103,17 @@ const compareChartRef = ref(null)
 const distributionChartRef = ref(null)
 const rankingChartRef = ref(null)
 
+/**
+ * 格式化值。
+ * 入参：value（值）；unit（unit）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatValue = (value, unit) => `${value}${unit || ''}`
+/**
+ * wrapAxis标签的处理逻辑。
+ * 入参：value（值）；lineLength（line长度）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const wrapAxisLabel = (value, lineLength = 8) => {
   const text = String(value ?? '')
   if (text.length <= lineLength) return text
@@ -920,10 +1125,19 @@ const wrapAxisLabel = (value, lineLength = 8) => {
   return lines.join('\n')
 }
 
+/**
+ * 构建Trend选项。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildTrendOption = () => ({
   color: [periodData.value.trend.color],
   tooltip: {
     trigger: 'axis',
+    /**
+     * 值Formatter的处理逻辑。
+     * 入参：value（值）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     valueFormatter: (value) => formatValue(value, periodData.value.trend.unit),
   },
   grid: {
@@ -945,6 +1159,11 @@ const buildTrendOption = () => ({
     splitLine: { lineStyle: { type: 'dashed', color: '#e2e8f0' } },
     axisLabel: {
       color: '#64748b',
+      /**
+       * formatter的处理逻辑。
+       * 入参：value（值）。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       formatter: (value) => formatValue(value, periodData.value.trend.unit),
     },
   },
@@ -972,10 +1191,19 @@ const buildTrendOption = () => ({
   ],
 })
 
+/**
+ * 构建Compare选项。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildCompareOption = () => ({
   tooltip: {
     trigger: 'axis',
     axisPointer: { type: 'shadow' },
+    /**
+     * 值Formatter的处理逻辑。
+     * 入参：value（值）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     valueFormatter: (value) => formatValue(value, periodData.value.compare.unit),
   },
   grid: {
@@ -994,6 +1222,11 @@ const buildCompareOption = () => ({
       interval: 0,
       lineHeight: 16,
       hideOverlap: false,
+      /**
+       * formatter的处理逻辑。
+       * 入参：value（值）。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       formatter: (value) => wrapAxisLabel(value, 8),
     },
   },
@@ -1002,6 +1235,11 @@ const buildCompareOption = () => ({
     splitLine: { lineStyle: { type: 'dashed', color: '#e2e8f0' } },
     axisLabel: {
       color: '#64748b',
+      /**
+       * formatter的处理逻辑。
+       * 入参：value（值）。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       formatter: (value) => formatValue(value, periodData.value.compare.unit),
     },
   },
@@ -1022,6 +1260,10 @@ const buildCompareOption = () => ({
   ],
 })
 
+/**
+ * 构建Distribution选项。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildDistributionOption = () => ({
   color: ['#16a34a', '#f59e0b', '#ef4444', '#60a5fa'],
   tooltip: {
@@ -1060,10 +1302,19 @@ const buildDistributionOption = () => ({
   ],
 })
 
+/**
+ * 构建Ranking选项。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildRankingOption = () => ({
   tooltip: {
     trigger: 'axis',
     axisPointer: { type: 'shadow' },
+    /**
+     * 值Formatter的处理逻辑。
+     * 入参：value（值）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     valueFormatter: (value) => formatValue(value, periodData.value.ranking.unit),
   },
   grid: {
@@ -1078,6 +1329,11 @@ const buildRankingOption = () => ({
     splitLine: { lineStyle: { type: 'dashed', color: '#e2e8f0' } },
     axisLabel: {
       color: '#64748b',
+      /**
+       * formatter的处理逻辑。
+       * 入参：value（值）。
+       * @returns 由当前表达式或分支生成的处理结果。
+       */
       formatter: (value) => formatValue(value, periodData.value.ranking.unit),
     },
   },
@@ -1122,6 +1378,9 @@ const { renderChart: renderRankingChart, resizeChart: resizeRankingChart } = use
   buildRankingOption,
 )
 
+/**
+ * 渲染AllCharts。
+ */
 const renderAllCharts = async () => {
   await Promise.all([
     renderTrendChart(),
@@ -1131,6 +1390,9 @@ const renderAllCharts = async () => {
   ])
 }
 
+/**
+ * 处理窗口Resize。
+ */
 const handleWindowResize = () => {
   resizeTrendChart()
   resizeCompareChart()
@@ -1138,18 +1400,26 @@ const handleWindowResize = () => {
   resizeRankingChart()
 }
 
+/**
+ * 创建Chart行集合。
+ * 入参：chart（chart）；categoryLabel（分类标签）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createChartRows = (chart, categoryLabel) =>
-  (chart.categories || []).map((category, index) => ({
+  (chart.categories || []).map(/** 将当前条目转换为目标结果。 入参：category、index。 */ (category, index) => ({
     section: categoryLabel,
     name: category,
     value: formatValue(chart.values?.[index] ?? '', chart.unit),
     description: chart.name,
   }))
 
+/**
+ * 导出Statistics数据。
+ */
 const exportStatisticsData = () => {
   const data = periodData.value
   const rows = [
-    ...data.summary.map((item) => ({
+    ...data.summary.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({
       section: '核心指标',
       name: item.label,
       value: item.value,
@@ -1157,14 +1427,14 @@ const exportStatisticsData = () => {
     })),
     ...createChartRows(data.trend, pageConfig.value.charts.trend.title),
     ...createChartRows(data.compare, pageConfig.value.charts.compare.title),
-    ...(data.distribution.data || []).map((item) => ({
+    ...(data.distribution.data || []).map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({
       section: pageConfig.value.charts.distribution.title,
       name: item.name,
       value: item.value,
       description: data.distribution.name,
     })),
     ...createChartRows(data.ranking, pageConfig.value.charts.ranking.title),
-    ...(data.details || []).map((item) => ({
+    ...(data.details || []).map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({
       section: pageConfig.value.detailTitle,
       name: item.metric,
       value: item.value,
@@ -1191,6 +1461,10 @@ const exportStatisticsData = () => {
   ElMessage.success(`已导出 ${exportedCount} 条统计数据`)
 }
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = (action) => {
   if (action.command === 'report') {
     loadStatisticsData()
@@ -1206,11 +1480,17 @@ const handleHeroAction = (action) => {
   ElMessage.success(`${action.label}已处理`)
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   const target = AUTH_ROLE_DEFAULT_PATH[roleScope.value] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE]
   router.push(target)
 }
 
+/**
+ * 加载Dashboard概况。
+ */
 const loadDashboardOverview = async () => {
   try {
     dashboardOverview.value = await fetchDashboardOverview()
@@ -1219,6 +1499,9 @@ const loadDashboardOverview = async () => {
   }
 }
 
+/**
+ * 加载BusinessStatistics。
+ */
 const loadBusinessStatistics = async () => {
   if (roleScope.value !== 'labAdmin') {
     linkedStatistics.value = null
@@ -1263,6 +1546,9 @@ const loadBusinessStatistics = async () => {
   )
 }
 
+/**
+ * 加载Statistics数据。
+ */
 const loadStatisticsData = async () => {
   if (roleScope.value === 'labAdmin') {
     await loadBusinessStatistics()
@@ -1272,21 +1558,21 @@ const loadStatisticsData = async () => {
   await renderAllCharts()
 }
 
-watch([roleScope, activePeriod], async () => {
+watch([roleScope, activePeriod], /** 响应被监听状态的变化。 */ async () => {
   await loadBusinessStatistics()
   await renderAllCharts()
 }, { flush: 'post' })
 
-watch(linkedStatistics, () => {
+watch(linkedStatistics, /** 响应被监听状态的变化。 */ () => {
   renderAllCharts()
 }, { flush: 'post' })
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   loadStatisticsData()
   window.addEventListener('resize', handleWindowResize)
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   window.removeEventListener('resize', handleWindowResize)
 })
 </script>

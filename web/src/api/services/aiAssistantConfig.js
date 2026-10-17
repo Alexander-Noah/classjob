@@ -6,12 +6,23 @@ import { API_BASE_URL } from '../config'
 import { API_ENDPOINTS } from '../endpoints'
 import { getAuthToken, isAuthenticated } from './auth'
 
+/**
+ * 构建APIURL。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildApiUrl = (path) => {
   const baseUrl = String(API_BASE_URL || '').replace(/\/$/, '')
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${baseUrl}${normalizedPath}`
 }
 
+/**
+ * 请求JSON的处理逻辑。
+ * 涉及：发起 HTTP 请求。
+ * 入参：path（路径）；options（选项）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const requestJson = async (path, options = {}) => {
   const token = getAuthToken()
   const response = await fetch(buildApiUrl(path), {
@@ -23,7 +34,7 @@ const requestJson = async (path, options = {}) => {
     },
   })
 
-  const payload = await response.json().catch(() => ({}))
+  const payload = await response.json().catch(/** 处理异步失败结果。 */ () => ({}))
   if (!response.ok || (payload?.code && Number(payload.code) !== 200)) {
     throw new Error(payload?.message || 'AI 接口请求失败')
   }
@@ -31,6 +42,10 @@ const requestJson = async (path, options = {}) => {
   return payload?.data || payload
 }
 
+/**
+ * 获取AIAssistant用户配置。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getAiAssistantUserConfig = async () => {
   // 如果未登录，返回空配置
   if (!isAuthenticated()) {
@@ -40,6 +55,11 @@ export const getAiAssistantUserConfig = async () => {
   return requestJson(API_ENDPOINTS.aiAssistant.userConfig)
 }
 
+/**
+ * 保存AIAssistant用户配置。
+ * 入参：config（配置）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const saveAiAssistantUserConfig = async (config) => {
   // 如果未登录，不执行保存操作
   if (!isAuthenticated()) {
@@ -52,6 +72,11 @@ export const saveAiAssistantUserConfig = async (config) => {
   })
 }
 
+/**
+ * 验证AIAssistant用户配置。
+ * 入参：config（配置）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const testAiAssistantUserConfig = async (config) => {
   // 如果未登录，抛出友好错误
   if (!isAuthenticated()) {
@@ -64,6 +89,10 @@ export const testAiAssistantUserConfig = async (config) => {
   })
 }
 
+/**
+ * 请求AIAssistantAnswer的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const requestAiAssistantAnswer = async ({ question, history = [] }) => {
   // 如果未登录，抛出友好错误
   if (!isAuthenticated()) {

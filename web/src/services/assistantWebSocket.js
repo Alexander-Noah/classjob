@@ -7,6 +7,10 @@
  * 不内置重连、离线队列或发送重试；组件负责连接时机、错误提示和卸载时 disconnect。
  */
 export class AssistantWebSocket {
+  /**
+   * 初始化当前实例及其所需状态。
+   * 入参：解构参数（onStatusChange、onTextMessage、onAudioMessage、onError）。
+   */
   constructor({ onStatusChange, onTextMessage, onAudioMessage, onError } = {}) {
     this.ws = null
     this.sessionId = ''
@@ -16,6 +20,10 @@ export class AssistantWebSocket {
     this.onError = onError
   }
 
+  /**
+   * 判断是否为Connected。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   get isConnected() {
     return this.ws?.readyState === WebSocket.OPEN
   }
@@ -32,19 +40,19 @@ export class AssistantWebSocket {
     this.setStatus('connecting')
     this.ws = new WebSocket(url, protocols)
     this.ws.binaryType = 'blob'
-    this.ws.onopen = () => {
+    this.ws.onopen = /** 处理当前调用传入的回调逻辑。 */ () => {
       this.setStatus('connected')
       this.sendHello()
     }
-    this.ws.onclose = () => {
+    this.ws.onclose = /** 处理当前调用传入的回调逻辑。 */ () => {
       this.sessionId = ''
       this.setStatus('disconnected')
     }
-    this.ws.onerror = (event) => {
+    this.ws.onerror = /** 处理当前调用传入的回调逻辑。 入参：event。 */ (event) => {
       this.setStatus('error')
       this.onError?.(event)
     }
-    this.ws.onmessage = async (event) => {
+    this.ws.onmessage = /** 处理当前调用传入的回调逻辑。 入参：event。 */ async (event) => {
       // 二进制帧交给音频回调；文本帧按 JSON 解析，非 JSON 文本仍交由文本回调展示。
       if (event.data instanceof Blob) {
         this.onAudioMessage?.(await event.data.arrayBuffer())
@@ -63,6 +71,9 @@ export class AssistantWebSocket {
     }
   }
 
+  /**
+   * 断开当前操作。
+   */
   disconnect() {
     if (this.ws) {
       this.ws.close()
@@ -77,6 +88,11 @@ export class AssistantWebSocket {
     return true
   }
 
+  /**
+   * 发送Binary。
+   * 入参：data（数据）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   sendBinary(data) {
     if (!this.isConnected) return false
     this.ws.send(data)
@@ -96,6 +112,11 @@ export class AssistantWebSocket {
     })
   }
 
+  /**
+   * 发送文本。
+   * 入参：text（文本）；images（images）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   sendText(text, images = []) {
     return this.sendJson({
       type: 'listen',
@@ -106,18 +127,34 @@ export class AssistantWebSocket {
     })
   }
 
+  /**
+   * 发送Listen开始。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   sendListenStart() {
     return this.sendJson({ type: 'listen', state: 'start', mode: 'auto' })
   }
 
+  /**
+   * 发送ListenStop。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   sendListenStop() {
     return this.sendJson({ type: 'listen', state: 'stop', mode: 'auto' })
   }
 
+  /**
+   * 发送Abort。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   sendAbort() {
     return this.sendJson({ type: 'abort', session_id: this.sessionId })
   }
 
+  /**
+   * 设置状态。
+   * 入参：status（状态）。
+   */
   setStatus(status) {
     this.onStatusChange?.(status)
   }

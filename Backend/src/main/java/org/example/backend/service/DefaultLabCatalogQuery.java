@@ -20,6 +20,12 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
     private final ManagerNamePort managerNames;
     private final DeviceCountPort deviceCounts;
 
+    /**
+     * 构造 DefaultLabCatalogQuery，初始化当前实例。
+     * @param records 记录集合参数。
+     * @param managerNames manager名称集合参数。
+     * @param deviceCounts 设备数量参数。
+     */
     public DefaultLabCatalogQuery(
             LabRecordReadService records,
             ManagerNamePort managerNames,
@@ -30,6 +36,11 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         this.deviceCounts = Objects.requireNonNull(deviceCounts, "deviceCounts");
     }
 
+    /**
+     * 列出当前操作。
+     * @param scope scope参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<LabView> list(LabAccessScope scope) {
         Objects.requireNonNull(scope, "scope");
@@ -38,6 +49,12 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         return enrich(found);
     }
 
+    /**
+     * 查找By标识。
+     * @param id 标识参数。
+     * @param scope scope参数。
+     * @return LabView 类型的处理结果。
+     */
     @Override
     public LabView findById(long id, LabAccessScope scope) {
         Objects.requireNonNull(scope, "scope");
@@ -48,6 +65,11 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         return enrich(List.of(found)).get(0);
     }
 
+    /**
+     * enrich的处理逻辑。
+     * @param found found参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<LabView> enrich(List<LabRecord> found) {
         Set<Long> labIds = new HashSet<>();
         Set<Long> managerUserIds = new HashSet<>();
@@ -69,14 +91,23 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         validateDeviceCounts(labIds, counts);
 
         return found.stream()
-                .map(record -> toView(record, names, counts))
+                .map(/** 将当前条目转换为目标结果。 入参：record。 */ record -> toView(record, names, counts))
                 .toList();
     }
 
+    /**
+     * 要求提供记录集合。
+     * @param found found参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<LabRecord> requireRecords(List<LabRecord> found) {
         return Objects.requireNonNull(found, "lab records");
     }
 
+    /**
+     * 确保满足Unique实验室标识集合。
+     * @param found found参数。
+     */
     private void ensureUniqueLabIds(List<LabRecord> found) {
         Set<Long> identifiers = new HashSet<>();
         for (LabRecord record : found) {
@@ -87,12 +118,21 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         }
     }
 
+    /**
+     * 要求提供有效记录。
+     * @param record 记录参数。
+     */
     private void requireValidRecord(LabRecord record) {
         if (record == null || record.id() == null || record.id() <= 0) {
             throw new IllegalStateException("lab record must have a positive id");
         }
     }
 
+    /**
+     * 校验Manager名称集合。
+     * @param requested requested参数。
+     * @param names 名称集合参数。
+     */
     private void validateManagerNames(Set<Long> requested, Map<Long, String> names) {
         for (Map.Entry<Long, String> entry : names.entrySet()) {
             if (!requested.contains(entry.getKey()) || entry.getValue() == null) {
@@ -101,6 +141,11 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         }
     }
 
+    /**
+     * 校验设备数量。
+     * @param requested requested参数。
+     * @param counts 数量参数。
+     */
     private void validateDeviceCounts(Set<Long> requested, Map<Long, Integer> counts) {
         for (Map.Entry<Long, Integer> entry : counts.entrySet()) {
             if (!requested.contains(entry.getKey()) || entry.getValue() == null || entry.getValue() < 0) {
@@ -109,6 +154,13 @@ public class DefaultLabCatalogQuery implements LabCatalogQuery {
         }
     }
 
+    /**
+     * 转换为视图。
+     * @param record 记录参数。
+     * @param names 名称集合参数。
+     * @param counts 数量参数。
+     * @return LabView 类型的处理结果。
+     */
     private LabView toView(LabRecord record, Map<Long, String> names, Map<Long, Integer> counts) {
         return new LabView(
                 record.id(),

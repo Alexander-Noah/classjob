@@ -27,28 +27,54 @@ public class CourseEnvironmentController {
         log.info("获取课程环境需求列表");
         return Result.success(courseEnvironmentService.getEnvironment());
     }
+    /**
+     * Inserter课程环境的处理逻辑。
+     * @param courseEnvironment 课程环境参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/course-environment-requests")
     public Result InserterCourseEnvironment(@RequestBody CourseEnvironmentEntity courseEnvironment){
         log.info("插入课程环境需求");
         return Result.success(courseEnvironmentService.InserterCourseEnvironment(courseEnvironment));
     }
 
+    /**
+     * 获取课程环境。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/course-environment-requests/{id}")
     public Result getCourseEnvironment(@PathVariable Integer id){
         log.info("获取课程环境需求");
         return Result.success(courseEnvironmentService.getCourseEnvironment(id));
     }
+    /**
+     * 更新课程环境。
+     * @param id 标识参数。
+     * @param courseEnvironment 课程环境参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/course-environment-requests/{id}")
     public Result updateCourseEnvironment(@PathVariable Integer id, @RequestBody CourseEnvironmentEntity courseEnvironment){
         log.info("更新课程环境需求");
         return Result.success(courseEnvironmentService.updateCourseEnvironment(id,courseEnvironment));
     }
 
+    /**
+     * 删除课程环境。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/course-environment-requests/{id}")
     public Result deleteCourseEnvironment(@PathVariable Integer id){
         log.info("删除课程环境需求");
         return Result.success(courseEnvironmentService.deleteCourseEnvironment(id));
     }
+    /**
+     * confirm课程环境的处理逻辑。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/course-environment-requests/{id}/confirm")
     public Result confirmCourseEnvironment(@PathVariable Integer id){
         log.info("确认课程环境需求");

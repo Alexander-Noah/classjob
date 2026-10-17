@@ -23,10 +23,23 @@ public record GatewayCommandRequest(
         String action,
         Map<String, Object> payload
 ) {
+    /**
+     * 构造 GatewayCommandRequest，初始化当前实例。
+     */
     public GatewayCommandRequest {
         payload = payload == null ? Map.of() : Map.copyOf(payload);
     }
 
+    /**
+     * mock的处理逻辑。
+     * @param iotDeviceId 物联设备标识参数。
+     * @param iotCode 物联编码参数。
+     * @param labId 实验室标识参数。
+     * @param deviceType 设备类型参数。
+     * @param action action参数。
+     * @param payload 载荷参数。
+     * @return GatewayCommandRequest 类型的处理结果。
+     */
     public static GatewayCommandRequest mock(
             Long iotDeviceId,
             String iotCode,

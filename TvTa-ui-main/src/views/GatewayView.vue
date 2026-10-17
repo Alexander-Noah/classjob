@@ -15,20 +15,30 @@ const cloudEndpoint = ref(monitorStore.gateway.cloudEndpoint)
 activationStore.hydrate()
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => monitorStore.gateway.cloudEndpoint,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：value。
+   */
   (value) => {
     cloudEndpoint.value = value
   }
 )
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   monitorStore.startPolling()
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   monitorStore.stopPolling()
 })
 
+/**
+ * 保存配置。
+ */
 async function saveConfig() {
   try {
     await monitorStore.updateCloudEndpoint(cloudEndpoint.value.trim())
@@ -38,11 +48,17 @@ async function saveConfig() {
   }
 }
 
+/**
+ * 刷新网关。
+ */
 async function refreshGateway() {
   await monitorStore.refresh()
   message.success('网关状态已刷新')
 }
 
+/**
+ * 切换网关。
+ */
 async function toggleGateway() {
   if (monitorStore.gateway.running) {
     await monitorStore.stopGateway()
@@ -54,6 +70,9 @@ async function toggleGateway() {
   message.success('本地教师网关已启动')
 }
 
+/**
+ * 重置客户端Activation。
+ */
 function resetClientActivation() {
   activationStore.resetActivation()
   message.success('已清除本机激活信息，请回到登录页重新激活')

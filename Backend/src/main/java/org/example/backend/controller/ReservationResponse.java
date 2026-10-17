@@ -43,6 +43,11 @@ public record ReservationResponse(
 ) {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
+    /**
+     * 从输入构造当前操作。
+     * @param view 视图参数。
+     * @return ReservationResponse 类型的处理结果。
+     */
     static ReservationResponse from(ReservationView view) {
         if (view == null) {
             return null;
@@ -59,22 +64,50 @@ public record ReservationResponse(
         );
     }
 
+    /**
+     * 日期的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private static String date(LocalDate value) {
         return value == null ? "" : value.toString();
     }
 
+    /**
+     * reviewer名称的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private static String reviewerName(String value) {
         return value == null || value.isBlank() ? "待审核" : value;
     }
 
+    /**
+     * submittedAt的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private static String submittedAt(LocalDateTime value) {
         return value == null ? "" : value.format(TIME_FORMATTER);
     }
 
+    /**
+     * reviewedAt的处理逻辑。
+     * @param value 值参数。
+     * @param reviewerName reviewer名称参数。
+     * @return String 类型的处理结果。
+     */
     private static String reviewedAt(LocalDateTime value, String reviewerName) {
         return value == null || "待审核".equals(reviewerName) ? "-" : value.format(TIME_FORMATTER);
     }
 
+    /**
+     * 实验室的处理逻辑。
+     * @param labId 实验室标识参数。
+     * @param labName 实验室名称参数。
+     * @param labCode 实验室编码参数。
+     * @return String 类型的处理结果。
+     */
     private static String lab(Long labId, String labName, String labCode) {
         if (labName != null && !labName.isBlank()) {
             if (labCode == null || labCode.isBlank() || labName.startsWith(labCode)) {
@@ -85,6 +118,11 @@ public record ReservationResponse(
         return labId == null ? "" : String.valueOf(labId);
     }
 
+    /**
+     * tag类型的处理逻辑。
+     * @param status 状态参数。
+     * @return String 类型的处理结果。
+     */
     private static String tagType(ReservationStatus status) {
         if (status == ReservationStatus.APPROVED || status == ReservationStatus.COMPLETED) {
             return "success";

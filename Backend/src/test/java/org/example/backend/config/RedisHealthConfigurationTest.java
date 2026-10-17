@@ -13,6 +13,10 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RedisHealthConfigurationTest {
+    /**
+     * redisHealthCheckIsOpt进入For本地Development的处理逻辑。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Test
     void redisHealthCheckIsOptInForLocalDevelopment() throws IOException {
         String applicationProperties = Files.readString(Path.of("src/main/resources/application.properties"));

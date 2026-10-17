@@ -5,9 +5,14 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('device status page is scoped to terminal runtime monitoring', () => {
+test('device status page is scoped to terminal runtime monitoring', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readSource('../src/views/device-status/DeviceStatusPage.vue')
 
   assert.doesNotMatch(source, /getDeviceType(Meta)?/)
@@ -27,10 +32,10 @@ test('device status page is scoped to terminal runtime monitoring', () => {
     '来源',
     '激活时间',
     '最近上报时间',
-  ].forEach((label) => assert.match(source, new RegExp(label)))
+  ].forEach(/** 处理遍历到的当前条目。 入参：label。 */ (label) => assert.match(source, new RegExp(label)))
 })
 
-test('lab admin navigation groups device modules together', () => {
+test('lab admin navigation groups device modules together', /** 验证当前测试用例的预期行为。 */ () => {
   const navigationSource = readSource('../src/constants/navigation.js')
   const routeSource = readSource('../src/constants/routeModules.js')
 

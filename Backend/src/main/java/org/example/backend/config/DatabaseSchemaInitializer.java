@@ -15,11 +15,20 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
     private final ConsumableMapper consumableMapper;
 
+    /**
+     * 构造 DatabaseSchemaInitializer，初始化当前实例。
+     * @param jdbcTemplate JDBC模板参数。
+     * @param consumableMapper consumable数据映射器参数。
+     */
     public DatabaseSchemaInitializer(JdbcTemplate jdbcTemplate, ConsumableMapper consumableMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.consumableMapper = consumableMapper;
     }
 
+    /**
+     * 运行当前操作。
+     * @param args 参数参数。
+     */
     @Override
     public void run(ApplicationArguments args) {
         ensureUserAvatarColumn();
@@ -35,6 +44,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
         ensureLanTeacherStudentTables();
     }
 
+    /**
+     * 确保满足Consumable借用。
+     * 涉及：读取数据库。
+     */
     private void ensureConsumableLoans() {
         consumableMapper.createStockRecordTableIfNotExists();
         jdbcTemplate.execute("""
@@ -63,6 +76,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足维护记录Kind。
+     * 涉及：读取数据库；写入数据库。
+     */
     private void ensureMaintenanceRecordKind() {
         Integer count = jdbcTemplate.queryForObject("""
                 select count(*) from information_schema.columns
@@ -81,6 +98,9 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足设备资产Columns。
+     */
     private void ensureDeviceAssetColumns() {
         addDeviceColumnIfMissing("lab_name", """
                 alter table device
@@ -112,6 +132,12 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 添加设备ColumnIfMissing。
+     * 涉及：读取数据库。
+     * @param columnName column名称参数。
+     * @param ddl ddl参数。
+     */
     private void addDeviceColumnIfMissing(String columnName, String ddl) {
         Integer count = jdbcTemplate.queryForObject("""
                 select count(*)
@@ -128,6 +154,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
         jdbcTemplate.execute(ddl);
     }
 
+    /**
+     * 确保满足设备运行时AndAccessTables。
+     * 涉及：读取数据库。
+     */
     private void ensureDeviceRuntimeAndAccessTables() {
         jdbcTemplate.execute("""
                 create table if not exists lab_activation_code (
@@ -442,6 +472,12 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 添加物联命令LogColumnIfMissing。
+     * 涉及：读取数据库。
+     * @param columnName column名称参数。
+     * @param ddl ddl参数。
+     */
     private void addIotCommandLogColumnIfMissing(String columnName, String ddl) {
         Integer count = jdbcTemplate.queryForObject("""
                 select count(*)
@@ -458,6 +494,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
         jdbcTemplate.execute(ddl);
     }
 
+    /**
+     * 确保满足用户头像Column。
+     * 涉及：读取数据库。
+     */
     private void ensureUserAvatarColumn() {
         Integer count = jdbcTemplate.queryForObject("""
                 select count(*)
@@ -477,6 +517,9 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足通知Columns。
+     */
     private void ensureNoticeColumns() {
         addNoticeColumnIfMissing("priority", """
                 alter table notice
@@ -512,6 +555,12 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 添加通知ColumnIfMissing。
+     * 涉及：读取数据库。
+     * @param columnName column名称参数。
+     * @param ddl ddl参数。
+     */
     private void addNoticeColumnIfMissing(String columnName, String ddl) {
         Integer count = jdbcTemplate.queryForObject("""
                 select count(*)
@@ -528,6 +577,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
         jdbcTemplate.execute(ddl);
     }
 
+    /**
+     * 确保满足通知RecipientTable。
+     * 涉及：读取数据库。
+     */
     private void ensureNoticeRecipientTable() {
         jdbcTemplate.execute("""
                 create table if not exists notice_recipient (
@@ -552,6 +605,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足审批CountersignTable。
+     * 涉及：读取数据库。
+     */
     private void ensureApprovalCountersignTable() {
         jdbcTemplate.execute("""
                 create table if not exists approval_countersign (
@@ -578,6 +635,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足AIAssistant会话Table。
+     * 涉及：读取数据库。
+     */
     private void ensureAiAssistantConversationTable() {
         jdbcTemplate.execute("""
                 create table if not exists ai_assistant_conversation (
@@ -596,6 +657,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足AIAssistant用户配置Table。
+     * 涉及：读取数据库。
+     */
     private void ensureAiAssistantUserConfigTable() {
         jdbcTemplate.execute("""
                 create table if not exists ai_assistant_user_config (
@@ -614,6 +679,10 @@ public class DatabaseSchemaInitializer implements ApplicationRunner {
                 """);
     }
 
+    /**
+     * 确保满足Lan教师学生Tables。
+     * 涉及：读取数据库。
+     */
     private void ensureLanTeacherStudentTables() {
         jdbcTemplate.execute("""
                 create table if not exists teacher_host (

@@ -30,11 +30,16 @@ export const ROLE_LAYOUTS = {
   },
 }
 
+/**
+ * 获取角色Layout。
+ * 入参：roleScope（角色Scope）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getRoleLayout = (roleScope = DEFAULT_AUTH_ROLE) =>
   ROLE_LAYOUTS[roleScope] || ROLE_LAYOUTS[DEFAULT_AUTH_ROLE]
 
 const ROUTE_MODULE_BY_PATH = Object.fromEntries(
-  ROUTE_MODULES.map((routeModule) => [routeModule.path, routeModule]),
+  ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => [routeModule.path, routeModule]),
 )
 
 const LAB_ADMIN_MENU_GROUPS = [
@@ -76,26 +81,41 @@ const LAB_ADMIN_MENU_GROUPS = [
   },
 ]
 
+/**
+ * 判断是否允许AccessMenu。
+ * 入参：routeModule（routeModule）；roleScope（角色Scope）；permissionItems（权限条目集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const canAccessMenu = (routeModule, roleScope, permissionItems) =>
   !permissionItems.length ||
   routeModule.path === ROLE_DEFAULT_PATHS[roleScope] ||
   isPathAllowed(routeModule.path, permissionItems)
 
+/**
+ * 构建Menu条目。
+ * 入参：routeModule（routeModule）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildMenuItem = (routeModule) => ({
   index: routeModule.path,
   title: routeModule.menuTitle,
   icon: routeModule.icon,
 })
 
+/**
+ * 构建实验室AdminMenus。
+ * 入参：permissionItems（权限条目集合）。
+ * @returns 生成的数组。
+ */
 const buildLabAdminMenus = (permissionItems) => {
   const homeModule = ROUTE_MODULE_BY_PATH[ROLE_DEFAULT_PATHS.labAdmin]
   const homeMenu = homeModule && canAccessMenu(homeModule, 'labAdmin', permissionItems) ? [buildMenuItem(homeModule)] : []
 
-  const groupedMenus = LAB_ADMIN_MENU_GROUPS.map((group) => {
+  const groupedMenus = LAB_ADMIN_MENU_GROUPS.map(/** 将当前条目转换为目标结果。 入参：group。 */ (group) => {
     const children = group.children
-      .map((path) => ROUTE_MODULE_BY_PATH[path])
+      .map(/** 将当前条目转换为目标结果。 入参：path。 */ (path) => ROUTE_MODULE_BY_PATH[path])
       .filter(Boolean)
-      .filter((routeModule) => canAccessMenu(routeModule, 'labAdmin', permissionItems))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：routeModule。 */ (routeModule) => canAccessMenu(routeModule, 'labAdmin', permissionItems))
       .map(buildMenuItem)
 
     return {
@@ -104,11 +124,16 @@ const buildLabAdminMenus = (permissionItems) => {
       icon: ROUTE_MODULE_BY_PATH[group.iconPath]?.icon,
       children,
     }
-  }).filter((group) => group.children.length)
+  }).filter(/** 判断当前条目是否符合筛选条件。 入参：group。 */ (group) => group.children.length)
 
   return [...homeMenu, ...groupedMenus]
 }
 
+/**
+ * 获取角色Menus。
+ * 入参：roleScope（角色Scope）；user（用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getRoleMenus = (roleScope = DEFAULT_AUTH_ROLE, user) => {
   const permissionItems = parseUserPermissions(user)
 
@@ -117,6 +142,6 @@ export const getRoleMenus = (roleScope = DEFAULT_AUTH_ROLE, user) => {
   }
 
   return getRouteModulesByRole(roleScope)
-    .filter((routeModule) => canAccessMenu(routeModule, roleScope, permissionItems))
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：routeModule。 */ (routeModule) => canAccessMenu(routeModule, roleScope, permissionItems))
     .map(buildMenuItem)
 }

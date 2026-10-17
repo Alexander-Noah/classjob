@@ -16,6 +16,10 @@ import java.nio.file.Path;
 @MapperScan(basePackages = "org.example.backend.mapper")
 public class BackendApplication {
 
+    /**
+     * 执行当前模块的主入口流程。
+     * @param args 参数参数。
+     */
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(BackendApplication.class);
         if (LocalDevelopmentSecretsInitializer.ensure(Path.of(""))) {

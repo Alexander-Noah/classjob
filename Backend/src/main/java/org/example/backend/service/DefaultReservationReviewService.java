@@ -22,6 +22,12 @@ public class DefaultReservationReviewService {
     private final ReservationCatalogQuery catalog;
     private final ReservationAvailabilityEvaluator availability;
 
+    /**
+     * 构造 DefaultReservationReviewService，初始化当前实例。
+     * @param reservations 预约参数。
+     * @param catalog catalog参数。
+     * @param availability availability参数。
+     */
     public DefaultReservationReviewService(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
                                            ReservationAvailabilityEvaluator availability) {
         this.reservations = Objects.requireNonNull(reservations, "reservations");
@@ -47,6 +53,15 @@ public class DefaultReservationReviewService {
         return review(command, actor, ReservationStatus.REJECTED, REJECTABLE, "驳回");
     }
 
+    /**
+     * review的处理逻辑。
+     * @param command 命令参数。
+     * @param actor 操作者参数。
+     * @param target 目标参数。
+     * @param allowedCurrentStatuses allowed当前Statuses参数。
+     * @param defaultRemark 默认Remark参数。
+     * @return ReservationView 类型的处理结果。
+     */
     private ReservationView review(ReviewReservationCommand command, ReservationActor actor, ReservationStatus target,
                                    Set<ReservationStatus> allowedCurrentStatuses, String defaultRemark) {
         if (command == null || command.reservationId() == null || command.reservationId() <= 0) {
@@ -82,6 +97,10 @@ public class DefaultReservationReviewService {
         return reviewed;
     }
 
+    /**
+     * 断言Currently可用。
+     * @param current 当前参数。
+     */
     private void assertCurrentlyAvailable(ReservationView current) {
         ReservationTimeRangeParser.ParsedReservationTimeRange parsed;
         try {
@@ -95,6 +114,11 @@ public class DefaultReservationReviewService {
         }
     }
 
+    /**
+     * requiredReviewer名称的处理逻辑。
+     * @param actor 操作者参数。
+     * @return String 类型的处理结果。
+     */
     private String requiredReviewerName(ReservationActor actor) {
         if (actor.displayName() == null || actor.displayName().isBlank()) {
             throw new IllegalStateException("Authenticated reviewer display name is required");
@@ -102,6 +126,10 @@ public class DefaultReservationReviewService {
         return actor.displayName();
     }
 
+    /**
+     * 断言CanReview。
+     * @param actor 操作者参数。
+     */
     private void assertCanReview(ReservationActor actor) {
         if (actor.role() == ReservationActorRole.SYSTEM_ADMINISTRATOR
                 || actor.role() == ReservationActorRole.LABORATORY_ADMINISTRATOR) {
@@ -113,6 +141,11 @@ public class DefaultReservationReviewService {
         throw new IllegalStateException("Unsupported reservation actor role: " + actor.role());
     }
 
+    /**
+     * transition的处理逻辑。
+     * @param current 当前参数。
+     * @param target 目标参数。
+     */
     private void transition(ReservationStatus current, ReservationStatus target) {
         if (target == ReservationStatus.APPROVED) {
             ReservationStateMachine.approve(current);
@@ -123,6 +156,12 @@ public class DefaultReservationReviewService {
         }
     }
 
+    /**
+     * 规范化结果Remark的处理逻辑。
+     * @param remark remark参数。
+     * @param defaultRemark 默认Remark参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizedRemark(String remark, String defaultRemark) {
         return remark == null || remark.isBlank() ? defaultRemark : remark.trim();
     }

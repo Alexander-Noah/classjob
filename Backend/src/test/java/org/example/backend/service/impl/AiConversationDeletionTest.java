@@ -15,6 +15,10 @@ class AiConversationDeletionTest {
     private final AiConversationMapper mapper = mock(AiConversationMapper.class);
     private final AiConversationServiceImpl service = new AiConversationServiceImpl(mapper);
 
+    /**
+     * deletionIsScoped目标The已认证状态用户的处理逻辑。
+     * 涉及：写入数据库。
+     */
     @Test
     void deletionIsScopedToTheAuthenticatedUser() {
         service.deleteConversation(7, "conversation-example");
@@ -22,12 +26,15 @@ class AiConversationDeletionTest {
         verifyNoMoreInteractions(mapper);
     }
 
+    /**
+     * invalid用户Or会话CannotReachTheDatabase的处理逻辑。
+     */
     @Test
     void invalidUserOrConversationCannotReachTheDatabase() {
-        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(null, "example"));
-        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(0, "example"));
-        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(7, " "));
-        assertThrows(IllegalArgumentException.class, () -> service.deleteConversation(7, null));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.deleteConversation(null, "example"));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.deleteConversation(0, "example"));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.deleteConversation(7, " "));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.deleteConversation(7, null));
         verifyNoInteractions(mapper);
     }
 }

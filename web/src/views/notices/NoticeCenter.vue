@@ -65,8 +65,8 @@ const formModel = reactive({
   sourceId: '',
 })
 
-const pageTitle = computed(() => (route.meta?.roleScope === 'systemAdmin' ? '平台通知公告' : '通知公告'))
-const pageDescription = computed(() =>
+const pageTitle = computed(/** 计算派生状态。 */ () => (route.meta?.roleScope === 'systemAdmin' ? '平台通知公告' : '通知公告'))
+const pageDescription = computed(/** 计算派生状态。 */ () =>
   route.meta?.roleScope === 'systemAdmin'
     ? '管理全平台通知公告、提醒策略和消息分发，跟踪已读未读状态。'
     : '发布实验室开放安排、维护通知和业务提醒，查看个人未读通知。',
@@ -76,13 +76,38 @@ const pageActions = [
   { label: '同步业务提醒', type: 'default', command: 'sync' },
 ]
 
-const targetLabelMap = Object.fromEntries(TARGET_OPTIONS.map((item) => [item.value, item.label]))
-const roleScope = computed(() => route.meta?.roleScope || getStoredRole() || DEFAULT_AUTH_ROLE)
+const targetLabelMap = Object.fromEntries(TARGET_OPTIONS.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => [item.value, item.label]))
+const roleScope = computed(/** 计算派生状态。 */ () => route.meta?.roleScope || getStoredRole() || DEFAULT_AUTH_ROLE)
+/**
+ * 获取目标标签。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTargetLabel = (value) => targetLabelMap[value] || value || '-'
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getStatusType = (status) => STATUS_TYPES[status] || 'info'
+/**
+ * 获取Read类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReadType = (status) => READ_TYPES[status] || 'info'
+/**
+ * 归一化日期时间。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeDateTime = (value) => (value ? String(value).replace('T', ' ').slice(0, 16) : '-')
 
+/**
+ * 归一化通知。
+ * 入参：notice（通知）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeNotice = (notice = {}) => ({
   ...notice,
   title: notice.title || '系统提醒',
@@ -99,31 +124,34 @@ const normalizeNotice = (notice = {}) => ({
   unreadCount: Number(notice.unreadCount || 0),
 })
 
-const filteredNotices = computed(() => {
+const filteredNotices = computed(/** 计算派生状态。 */ () => {
   const searchText = keyword.value.trim().toLowerCase()
 
-  return notices.value.filter((notice) => {
+  return notices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：notice。 */ (notice) => {
     const matchesStatus = statusFilter.value === 'all' || notice.status === statusFilter.value
     const matchesType = typeFilter.value === 'all' || notice.noticeType === typeFilter.value
     const matchesKeyword =
       !searchText ||
       [notice.title, notice.noticeType, notice.targetRole, notice.content, notice.sourceModule]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(searchText))
+        .some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => String(value).toLowerCase().includes(searchText))
 
     return matchesStatus && matchesType && matchesKeyword
   })
 })
 
-const unreadNotices = computed(() => myNotices.value.filter((notice) => notice.readStatus === '未读'))
+const unreadNotices = computed(/** 计算派生状态。 */ () => myNotices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：notice。 */ (notice) => notice.readStatus === '未读'))
 
-const metrics = computed(() => [
+const metrics = computed(/** 计算派生状态。 */ () => [
   { label: '通知总数', value: String(stats.value.total ?? notices.value.length), trend: `已发布 ${stats.value.publishedCount ?? 0} 条` },
   { label: '草稿箱', value: String(stats.value.draftCount ?? 0), trend: '可继续编辑发布' },
   { label: '未读通知', value: String(stats.value.myUnread ?? unreadNotices.value.length), trend: `已读 ${stats.value.myRead ?? 0} 条` },
   { label: '触达记录', value: String(stats.value.deliveryCount ?? 0), trend: `阅读 ${stats.value.readCount ?? 0} 次` },
 ])
 
+/**
+ * 重置Form。
+ */
 const resetForm = () => {
   Object.assign(formModel, {
     title: '',
@@ -136,6 +164,11 @@ const resetForm = () => {
   })
 }
 
+/**
+ * 安全Load的处理逻辑。
+ * 入参：request（请求）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const safeLoad = async (request, fallback) => {
   try {
     return await request()
@@ -145,16 +178,19 @@ const safeLoad = async (request, fallback) => {
   }
 }
 
+/**
+ * 加载数据。
+ */
 const loadData = async () => {
   loading.value = true
   try {
     const [noticeRows, userRows, statsData] = await Promise.all([
-      safeLoad(() => noticeService.list(), []),
-      safeLoad(() => noticeService.userNotices(), []),
-      safeLoad(() => noticeService.stats(), {}),
+      safeLoad(/** 处理 safeLoad 调用中的回调逻辑。 */ () => noticeService.list(), []),
+      safeLoad(/** 处理 safeLoad 调用中的回调逻辑。 */ () => noticeService.userNotices(), []),
+      safeLoad(/** 处理 safeLoad 调用中的回调逻辑。 */ () => noticeService.stats(), {}),
     ])
     notices.value = noticeRows.map(normalizeNotice)
-    myNotices.value = userRows.map((item) => ({
+    myNotices.value = userRows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({
       ...normalizeNotice(item),
       id: item.id,
       noticeId: item.noticeId || item.id,
@@ -167,14 +203,22 @@ const loadData = async () => {
   }
 }
 
+/**
+ * 加载Recipients。
+ * 入参：noticeId（通知标识）。
+ */
 const loadRecipients = async (noticeId) => {
   if (!noticeId) {
     recipients.value = []
     return
   }
-  recipients.value = await safeLoad(() => noticeService.recipients(noticeId), [])
+  recipients.value = await safeLoad(/** 处理 safeLoad 调用中的回调逻辑。 */ () => noticeService.recipients(noticeId), [])
 }
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = (action) => {
   if (action.command === 'create') {
     openCreateDialog()
@@ -185,6 +229,9 @@ const handleHeroAction = (action) => {
   }
 }
 
+/**
+ * 打开CreateDialog。
+ */
 const openCreateDialog = () => {
   dialogMode.value = 'create'
   editingId.value = ''
@@ -192,6 +239,10 @@ const openCreateDialog = () => {
   dialogVisible.value = true
 }
 
+/**
+ * 打开EditDialog。
+ * 入参：notice（通知）。
+ */
 const openEditDialog = (notice) => {
   dialogMode.value = 'edit'
   editingId.value = notice.id
@@ -207,6 +258,11 @@ const openEditDialog = (notice) => {
   dialogVisible.value = true
 }
 
+/**
+ * 构建载荷。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildPayload = (status) => ({
   title: formModel.title.trim(),
   type: formModel.noticeType,
@@ -221,11 +277,20 @@ const buildPayload = (status) => ({
   publishStatus: status,
 })
 
+/**
+ * 校验Form。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const validateForm = async () => {
   if (!formRef.value) return true
-  return formRef.value.validate().catch(() => false)
+  return formRef.value.validate().catch(/** 处理异步失败结果。 */ () => false)
 }
 
+/**
+ * 保存通知。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const saveNotice = async (status = '草稿') => {
   if (!(await validateForm())) return null
 
@@ -244,11 +309,17 @@ const saveNotice = async (status = '草稿') => {
   }
 }
 
+/**
+ * 保存Draft。
+ */
 const saveDraft = async () => {
   await saveNotice('草稿')
   dialogVisible.value = false
 }
 
+/**
+ * publish来源Dialog的处理逻辑。
+ */
 const publishFromDialog = async () => {
   const savedNotice = await saveNotice('已发布')
   if (!savedNotice?.id) return
@@ -264,28 +335,44 @@ const publishFromDialog = async () => {
   }
 }
 
+/**
+ * publish通知的处理逻辑。
+ * 入参：notice（通知）。
+ */
 const publishNotice = async (notice) => {
   await noticeService.publish(notice.id)
   ElMessage.success('通知已发布并写入通知对象')
   await loadData()
   if (selectedNotice.value?.id === notice.id) {
-    selectedNotice.value = notices.value.find((item) => item.id === notice.id) || null
+    selectedNotice.value = notices.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.id === notice.id) || null
     await loadRecipients(notice.id)
   }
 }
 
+/**
+ * withdraw通知的处理逻辑。
+ * 入参：notice（通知）。
+ */
 const withdrawNotice = async (notice) => {
   await noticeService.withdraw(notice.id)
   ElMessage.success('通知已撤回')
   await loadData()
 }
 
+/**
+ * 归档通知的处理逻辑。
+ * 入参：notice（通知）。
+ */
 const archiveNotice = async (notice) => {
   await noticeService.archive(notice.id)
   ElMessage.success('通知已归档')
   await loadData()
 }
 
+/**
+ * 删除通知。
+ * 入参：notice（通知）。
+ */
 const deleteNotice = async (notice) => {
   try {
     await ElMessageBox.confirm(`确认删除“${notice.title}”吗？删除后保留审计痕迹，不做物理删除。`, '删除通知', {
@@ -306,6 +393,9 @@ const deleteNotice = async (notice) => {
   await loadData()
 }
 
+/**
+ * 同步BusinessReminders。
+ */
 const syncBusinessReminders = async () => {
   syncing.value = true
   try {
@@ -317,12 +407,20 @@ const syncBusinessReminders = async () => {
   }
 }
 
+/**
+ * 视图通知的处理逻辑。
+ * 入参：notice（通知）。
+ */
 const viewNotice = async (notice) => {
   selectedNotice.value = notice
   detailVisible.value = true
   await loadRecipients(notice.id)
 }
 
+/**
+ * 读取My通知。
+ * 入参：notice（通知）。
+ */
 const readMyNotice = async (notice) => {
   selectedNotice.value = notice
   detailVisible.value = true
@@ -334,6 +432,9 @@ const readMyNotice = async (notice) => {
   await loadData()
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(AUTH_ROLE_DEFAULT_PATH[roleScope.value] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE])
 }

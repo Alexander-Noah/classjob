@@ -12,6 +12,10 @@ defineOptions({
 const props = defineProps({
   labs: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   selectedId: {
@@ -22,6 +26,10 @@ const props = defineProps({
 
 defineEmits(['edit', 'reservation-qr', 'select', 'view-assets'])
 
+/**
+ * 获取行Class名称。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRowClassName = ({ row }) => (row.id === props.selectedId ? 'is-active-row' : '')
 </script>
 

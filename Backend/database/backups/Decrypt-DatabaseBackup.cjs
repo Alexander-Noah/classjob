@@ -4,6 +4,11 @@ const crypto = require('node:crypto');
 
 // Format: magic (8), salt (16), IV (12), GCM tag (16), ciphertext.
 const MAGIC = Buffer.from('SLDBENC1');
+/**
+ * 解密备份。
+ * 入参：encrypted（encrypted）；password（密码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function decryptBackup(encrypted, password) {
   if (!password) throw new Error('Set DB_BACKUP_PASSWORD before decrypting.');
   if (encrypted.length < 52 || !encrypted.subarray(0, 8).equals(MAGIC)) {

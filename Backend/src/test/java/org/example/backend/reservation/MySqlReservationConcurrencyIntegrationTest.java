@@ -40,6 +40,10 @@ class MySqlReservationConcurrencyIntegrationTest {
     private static final String USERNAME = System.getProperty("reservation.mysql.username", "root");
     private static final String PASSWORD = System.getProperty("reservation.mysql.password", "root");
 
+    /**
+     * 创建Schema。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     @BeforeAll
     static void createSchema() throws SQLException {
         try (Connection connection = DriverManager.getConnection(ROOT_URL, USERNAME, PASSWORD);
@@ -70,6 +74,10 @@ class MySqlReservationConcurrencyIntegrationTest {
         }
     }
 
+    /**
+     * dropSchema的处理逻辑。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     @AfterAll
     static void dropSchema() throws SQLException {
         if (!SCHEMA.startsWith("smart_lab_reservation_it_")) throw new IllegalStateException("unsafe schema name");
@@ -79,6 +87,10 @@ class MySqlReservationConcurrencyIntegrationTest {
         }
     }
 
+    /**
+     * concurrentOverlappingCreatesPersistOne待处理AndOneConflict的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void concurrentOverlappingCreatesPersistOnePendingAndOneConflict() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfiguration.class)) {
@@ -89,8 +101,8 @@ class MySqlReservationConcurrencyIntegrationTest {
             try {
                 CountDownLatch start = new CountDownLatch(1);
                 List<Future<ReservationView>> futures = List.of(
-                        executor.submit(() -> { start.await(); return handler.create(command, ReservationActor.teacher(101L)); }),
-                        executor.submit(() -> { start.await(); return handler.create(command, ReservationActor.teacher(102L)); })
+                        executor.submit(/** 处理 submit 调用中的回调逻辑。 */ () -> { start.await(); return handler.create(command, ReservationActor.teacher(101L)); }),
+                        executor.submit(/** 处理 submit 调用中的回调逻辑。 */ () -> { start.await(); return handler.create(command, ReservationActor.teacher(102L)); })
                 );
                 start.countDown();
                 List<ReservationStatus> statuses = new ArrayList<>();
@@ -106,63 +118,158 @@ class MySqlReservationConcurrencyIntegrationTest {
     @Configuration(proxyBeanMethods = false)
     @EnableTransactionManagement
     static class TestConfiguration {
+        /**
+         * 数据来源的处理逻辑。
+         * @return DataSource 类型的处理结果。
+         */
         @Bean DataSource dataSource() {
             return new DriverManagerDataSource(ROOT_URL + SCHEMA + "?useSSL=false&allowPublicKeyRetrieval=true", USERNAME, PASSWORD);
         }
+        /**
+         * 事务Manager的处理逻辑。
+         * @param dataSource 数据来源参数。
+         * @return PlatformTransactionManager 类型的处理结果。
+         */
         @Bean PlatformTransactionManager transactionManager(DataSource dataSource) { return new DataSourceTransactionManager(dataSource); }
+        /**
+         * SQL会话Factory的处理逻辑。
+         * @param dataSource 数据来源参数。
+         * @return SqlSessionFactory 类型的处理结果。
+         * @throws Exception 当前调用无法继续完成时抛出。
+         */
         @Bean SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
             SqlSessionFactoryBean factory = new SqlSessionFactoryBean();
             factory.setDataSource(dataSource);
             factory.setMapperLocations(new ClassPathResource("mapper/ReservationPersistenceMapper.xml"));
             return Objects.requireNonNull(factory.getObject());
         }
+        /**
+         * 预约Persistence数据映射器的处理逻辑。
+         * @param factory factory参数。
+         * @return ReservationPersistenceMapper 类型的处理结果。
+         * @throws Exception 当前调用无法继续完成时抛出。
+         */
         @Bean ReservationPersistenceMapper reservationPersistenceMapper(SqlSessionFactory factory) throws Exception {
             MapperFactoryBean<ReservationPersistenceMapper> mapper = new MapperFactoryBean<>(ReservationPersistenceMapper.class);
             mapper.setSqlSessionFactory(factory);
             return Objects.requireNonNull(mapper.getObject());
         }
+        /**
+         * 预约Persistence服务的处理逻辑。
+         * @param mapper 数据映射器参数。
+         * @return ReservationPersistenceService 类型的处理结果。
+         */
         @Bean ReservationPersistenceService reservationPersistenceService(ReservationPersistenceMapper mapper) {
             return new ReservationPersistenceService(new BarrierPersistenceMapper(mapper));
         }
+        /**
+         * 实验室Catalog查询的处理逻辑。
+         * @return LabCatalogQuery 类型的处理结果。
+         */
         @Bean LabCatalogQuery labCatalogQuery() {
             LabView laboratory = new LabView(7L, "LAB-7", "并发实验室", null, null, null, null,
                     50, null, null, null, 0, null, null, null);
             return new LabCatalogQuery() {
+                /**
+                 * 列出当前操作。
+                 * @param scope scope参数。
+                 * @return 当前操作得到的记录集合。
+                 */
                 public List<LabView> list(LabAccessScope scope) { return List.of(laboratory); }
+                /**
+                 * 查找By标识。
+                 * @param id 标识参数。
+                 * @param scope scope参数。
+                 * @return LabView 类型的处理结果。
+                 */
                 public LabView findById(long id, LabAccessScope scope) { return id == 7L ? laboratory : null; }
             };
         }
+        /**
+         * 实验室Availability查询的处理逻辑。
+         * @return LabAvailabilityQuery 类型的处理结果。
+         */
         @Bean LabAvailabilityQuery labAvailabilityQuery() {
-            return (labId, count, startsAt, endsAt) ->
+            return /** 处理当前调用传入的回调逻辑。 入参：labId、count、startsAt、endsAt。 */ (labId, count, startsAt, endsAt) ->
                     CapabilityResult.available(new LabAvailabilityView(labId, 50, true));
         }
+        /**
+         * 安排Occupancy查询。
+         * @return ScheduleOccupancyQuery 类型的处理结果。
+         */
         @Bean ScheduleOccupancyQuery scheduleOccupancyQuery() {
-            return request -> CapabilityResult.available(new ScheduleOccupancyView(false));
+            return /** 处理当前调用传入的回调逻辑。 入参：request。 */ request -> CapabilityResult.available(new ScheduleOccupancyView(false));
         }
+        /**
+         * 预约实验室服务的处理逻辑。
+         * @param catalog catalog参数。
+         * @param availability availability参数。
+         * @return ReservationLabService 类型的处理结果。
+         */
         @Bean ReservationLabService reservationLabService(LabCatalogQuery catalog, LabAvailabilityQuery availability) {
             return new ReservationLabService(catalog, availability);
         }
+        /**
+         * 预约课表服务的处理逻辑。
+         * @param schedules 课表参数。
+         * @param catalog catalog参数。
+         * @return ReservationScheduleService 类型的处理结果。
+         */
         @Bean ReservationScheduleService reservationScheduleService(ScheduleOccupancyQuery schedules, LabCatalogQuery catalog) {
             return new ReservationScheduleService(schedules, catalog);
         }
+        /**
+         * 预约Catalog查询的处理逻辑。
+         * @param reservations 预约参数。
+         * @param laboratories laboratories参数。
+         * @return ReservationCatalogQuery 类型的处理结果。
+         */
         @Bean ReservationCatalogQuery reservationCatalogQuery(ReservationPersistenceService reservations,
                                                                 ReservationLabService laboratories) {
             return new DefaultReservationCatalogQuery(reservations, laboratories);
         }
+        /**
+         * availability的处理逻辑。
+         * @param reservations 预约参数。
+         * @param laboratories laboratories参数。
+         * @param schedules 课表参数。
+         * @return ReservationAvailabilityEvaluator 类型的处理结果。
+         */
         @Bean ReservationAvailabilityEvaluator availability(ReservationPersistenceService reservations,
                                                               ReservationLabService laboratories,
                                                               ReservationScheduleService schedules) {
             return new DefaultReservationAvailabilityEvaluator(reservations, laboratories, schedules);
         }
+        /**
+         * creation的处理逻辑。
+         * @param reservations 预约参数。
+         * @param catalog catalog参数。
+         * @param laboratories laboratories参数。
+         * @param availability availability参数。
+         * @return DefaultReservationCreationService 类型的处理结果。
+         */
         @Bean DefaultReservationCreationService creation(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
                                                           ReservationLabService laboratories,
                                                           ReservationAvailabilityEvaluator availability) {
             return new DefaultReservationCreationService(reservations, catalog, laboratories, availability);
         }
+        /**
+         * review的处理逻辑。
+         * @param reservations 预约参数。
+         * @param catalog catalog参数。
+         * @param availability availability参数。
+         * @return DefaultReservationReviewService 类型的处理结果。
+         */
         @Bean DefaultReservationReviewService review(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
                                                       ReservationAvailabilityEvaluator availability) {
             return new DefaultReservationReviewService(reservations, catalog, availability);
         }
+        /**
+         * 处理器的处理逻辑。
+         * @param creation creation参数。
+         * @param review review参数。
+         * @return ReservationCommandHandler 类型的处理结果。
+         */
         @Bean ReservationCommandHandler handler(DefaultReservationCreationService creation, DefaultReservationReviewService review) {
             return new DefaultReservationCommandHandler(creation, review);
         }
@@ -172,10 +279,36 @@ class MySqlReservationConcurrencyIntegrationTest {
         private final ReservationPersistenceMapper delegate;
         private final CountDownLatch firstChecks = new CountDownLatch(2);
         private final AtomicInteger checks = new AtomicInteger();
+        /**
+         * 构造 BarrierPersistenceMapper，初始化当前实例。
+         * @param delegate delegate参数。
+         */
         private BarrierPersistenceMapper(ReservationPersistenceMapper delegate) { this.delegate = delegate; }
+        /**
+         * 查找All。
+         * @param scope scope参数。
+         * @return 当前操作得到的记录集合。
+         */
         public List<ReservationRecord> findAll(ReservationRecordScope scope) { return delegate.findAll(scope); }
+        /**
+         * 查找One。
+         * @param id 标识参数。
+         * @param scope scope参数。
+         * @return ReservationRecord 类型的处理结果。
+         */
         public ReservationRecord findOne(long id, ReservationRecordScope scope) { return delegate.findOne(id, scope); }
+        /**
+         * 插入当前操作。
+         * 涉及：写入数据库。
+         * @param row 行参数。
+         * @return int 类型的处理结果。
+         */
         public int insert(ReservationInsertRow row) { return delegate.insert(row); }
+        /**
+         * 统计活动Overlaps。
+         * @param check check参数。
+         * @return ReservationOverlapCount 类型的处理结果。
+         */
         public ReservationOverlapCount countActiveOverlaps(ReservationOverlapCheck check) {
             ReservationOverlapCount result = delegate.countActiveOverlaps(check);
             if (checks.incrementAndGet() <= 2) {
@@ -185,6 +318,11 @@ class MySqlReservationConcurrencyIntegrationTest {
             }
             return result;
         }
+        /**
+         * 更新Review。
+         * @param update update参数。
+         * @return int 类型的处理结果。
+         */
         public int updateReview(ReservationReviewUpdate update) { return delegate.updateReview(update); }
     }
 }

@@ -16,6 +16,9 @@ public record ReservationOverlapCheck(
         Set<ReservationStatus> terminalStatuses,
         Long excludingReservationId
 ) {
+    /**
+     * 构造 ReservationOverlapCheck，初始化当前实例。
+     */
     public ReservationOverlapCheck {
         Objects.requireNonNull(labId, "Laboratory ID is required");
         Objects.requireNonNull(reservationDate, "Reservation date is required");

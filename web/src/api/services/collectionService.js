@@ -9,6 +9,11 @@ import { requireAuthoritativeRecord } from './authoritativeRecord'
 // 仅面向可 JSON 序列化的台账数据；Date 会转成字符串，不能传入循环对象或函数。
 const cloneRecords = (records) => JSON.parse(JSON.stringify(records || []))
 
+/**
+ * 读取本地记录集合。
+ * 入参：storageKey（storage键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readLocalRecords = (storageKey) => {
   if (typeof window === 'undefined') return null
 
@@ -21,11 +26,19 @@ const readLocalRecords = (storageKey) => {
   }
 }
 
+/**
+ * 写入本地记录集合。
+ * 入参：storageKey（storage键）；records（记录集合）。
+ */
 const writeLocalRecords = (storageKey, records) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(storageKey, JSON.stringify(records))
 }
 
+/**
+ * 移除本地记录集合。
+ * 入参：storageKey（storage键）。
+ */
 const removeLocalRecords = (storageKey) => {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(storageKey)
@@ -42,6 +55,11 @@ const normalizeListResponse = (data) => {
   return []
 }
 
+/**
+ * 归一化记录响应。
+ * 入参：data（数据）；fallbackRecord（fallback记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeRecordResponse = (data, fallbackRecord) => {
   if (data?.data && typeof data.data === 'object' && !Array.isArray(data.data)) return data.data
   if (data && typeof data === 'object' && !Array.isArray(data) && !('code' in data && !('id' in data))) return data
@@ -56,6 +74,11 @@ const normalizeRecordResponse = (data, fallbackRecord) => {
  * @description 严格记录校验只作用于 create/update，不等于所有批量接口都提供同等保证。
  */
 export function createCollectionService({ endpoints, resourceName, storageKey, serverAuthoritativeRecords = false }) {
+  /**
+   * 列出当前操作。
+   * 入参：解构参数（fallbackRecords）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const list = async ({ fallbackRecords = [] } = {}) => {
     if (API_USE_MOCK) {
       return cloneRecords(readLocalRecords(storageKey) || fallbackRecords)
@@ -65,6 +88,11 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
     return normalizeListResponse(data)
   }
 
+  /**
+   * replace的处理逻辑。
+   * 入参：records（记录集合）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const replace = async (records) => {
     const nextRecords = cloneRecords(records)
 
@@ -91,6 +119,11 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
     return responseContainsList ? normalizedRecords : nextRecords
   }
 
+  /**
+   * 创建当前操作。
+   * 入参：record（记录）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const create = async (record) => {
     const nextRecord = cloneRecords([record])[0]
 
@@ -110,20 +143,30 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
     return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'create') : normalizeRecordResponse(data, nextRecord)
   }
 
+  /**
+   * 更新当前操作。
+   * 入参：id（标识）；record（记录）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const update = async (id, record) => {
     const nextRecord = cloneRecords([record])[0]
 
     if (API_USE_MOCK) {
       const records = readLocalRecords(storageKey) || []
-      const nextRecords = records.map((item) => (String(item.id) === String(id) ? { ...item, ...nextRecord, id } : item))
+      const nextRecords = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(id) ? { ...item, ...nextRecord, id } : item))
       writeLocalRecords(storageKey, nextRecords)
-      return nextRecords.find((item) => String(item.id) === String(id)) || nextRecord
+      return nextRecords.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(id)) || nextRecord
     }
 
     const { data } = await http.put(`${endpoints.list}/${id}`, nextRecord)
     return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'update') : normalizeRecordResponse(data, nextRecord)
   }
 
+  /**
+   * 重置当前操作。
+   * 入参：解构参数（fallbackRecords）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const reset = async ({ fallbackRecords = [] } = {}) => {
     if (API_USE_MOCK) {
       removeLocalRecords(storageKey)
@@ -137,10 +180,15 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
     return list()
   }
 
+  /**
+   * 移除当前操作。
+   * 入参：id（标识）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const remove = async (id) => {
     if (API_USE_MOCK) {
       const records = readLocalRecords(storageKey) || []
-      const nextRecords = records.filter((record) => String(record.id) !== String(id))
+      const nextRecords = records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.id) !== String(id))
       writeLocalRecords(storageKey, nextRecords)
       return nextRecords
     }
@@ -149,10 +197,15 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
     return list()
   }
 
+  /**
+   * 批准当前操作。
+   * 入参：id（标识）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const approve = async (id, payload = {}) => {
     if (API_USE_MOCK) {
       const records = readLocalRecords(storageKey) || []
-      const nextRecords = records.map((item) =>
+      const nextRecords = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) =>
         String(item.id) === String(id)
           ? {
               ...item,
@@ -166,17 +219,22 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
           : item,
       )
       writeLocalRecords(storageKey, nextRecords)
-      return nextRecords.find((item) => String(item.id) === String(id)) || payload
+      return nextRecords.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(id)) || payload
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/approve`, payload)
     return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'approve') : normalizeRecordResponse(data, payload)
   }
 
+  /**
+   * 拒绝当前操作。
+   * 入参：id（标识）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const reject = async (id, payload = {}) => {
     if (API_USE_MOCK) {
       const records = readLocalRecords(storageKey) || []
-      const nextRecords = records.map((item) =>
+      const nextRecords = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) =>
         String(item.id) === String(id)
           ? {
               ...item,
@@ -190,17 +248,22 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
           : item,
       )
       writeLocalRecords(storageKey, nextRecords)
-      return nextRecords.find((item) => String(item.id) === String(id)) || payload
+      return nextRecords.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(id)) || payload
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/reject`, payload)
     return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'reject') : normalizeRecordResponse(data, payload)
   }
 
+  /**
+   * action的处理逻辑。
+   * 入参：id（标识）；actionName（action名称）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const action = async (id, actionName, payload = {}) => {
     if (API_USE_MOCK) {
       const records = readLocalRecords(storageKey) || []
-      const nextRecords = records.map((item) =>
+      const nextRecords = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) =>
         String(item.id) === String(id)
           ? {
               ...item,
@@ -209,7 +272,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
           : item,
       )
       writeLocalRecords(storageKey, nextRecords)
-      return nextRecords.find((item) => String(item.id) === String(id)) || payload
+      return nextRecords.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(id)) || payload
     }
 
     const { data } = await http.post(`${endpoints.list}/${id}/${actionName}`, payload)

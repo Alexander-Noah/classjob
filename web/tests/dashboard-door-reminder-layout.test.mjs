@@ -7,12 +7,17 @@ import assert from 'node:assert/strict'
 
 const source = readFileSync(new URL('../src/views/dashboard/DashboardHome.vue', import.meta.url), 'utf8')
 
+/**
+ * cssBlock的处理逻辑。
+ * 入参：selector（selector）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const cssBlock = (selector) => {
   const match = source.match(new RegExp(`${selector.replace('.', '\\.')}\\s*\\{([\\s\\S]*?)\\n\\}`))
   return match?.[1] || ''
 }
 
-test('door reminder list keeps reminder rows pinned to the top of the card', () => {
+test('door reminder list keeps reminder rows pinned to the top of the card', /** 验证当前测试用例的预期行为。 */ () => {
   const alertListStyles = cssBlock('.alert-list')
   const alertItemStyles = cssBlock('.alert-item')
   const alertEmptyStyles = cssBlock('.alert-empty')

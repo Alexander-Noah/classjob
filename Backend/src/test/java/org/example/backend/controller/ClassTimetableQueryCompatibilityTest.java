@@ -28,12 +28,19 @@ class ClassTimetableQueryCompatibilityTest {
     private TeachingScheduleQuery query;
     private MockMvc mockMvc;
 
+    /**
+     * 设置抬起。
+     */
     @BeforeEach
     void setUp() {
         query = mock(TeachingScheduleQuery.class);
         mockMvc = MockMvcBuilders.standaloneSetup(new TeachingScheduleQueryController(query)).build();
     }
 
+    /**
+     * preserves课表SearchContract的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void preservesTimetableSearchContract() throws Exception {
         when(query.search(eq(new ScheduleSearchCriteria(
@@ -77,6 +84,10 @@ class ClassTimetableQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data[0].createTime").value("2026-02-23T08:00:00"));
     }
 
+    /**
+     * preserves摘要And学期Contracts的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void preservesSummaryAndSemesterContracts() throws Exception {
         ScheduleSummaryView summary = new ScheduleSummaryView(
@@ -106,6 +117,10 @@ class ClassTimetableQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data[0]").value("2026-Spring"));
     }
 
+    /**
+     * 安排条目。
+     * @return ScheduleEntryView 类型的处理结果。
+     */
     private ScheduleEntryView scheduleEntry() {
         return new ScheduleEntryView(
                 7L,

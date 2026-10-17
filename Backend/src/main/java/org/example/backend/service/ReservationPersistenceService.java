@@ -17,15 +17,30 @@ import java.util.Optional;
 public final class ReservationPersistenceService {
     private final ReservationPersistenceMapper mapper;
 
+    /**
+     * 构造 ReservationPersistenceService，初始化当前实例。
+     * @param mapper 数据映射器参数。
+     */
     public ReservationPersistenceService(ReservationPersistenceMapper mapper) {
         this.mapper = Objects.requireNonNull(mapper, "mapper");
     }
 
+    /**
+     * 查找All。
+     * @param scope scope参数。
+     * @return 当前操作得到的记录集合。
+     */
     public List<ReservationRecord> findAll(ReservationRecordScope scope) {
         List<ReservationRecord> records = mapper.findAll(Objects.requireNonNull(scope, "scope"));
         return records == null ? List.of() : records;
     }
 
+    /**
+     * 查找One。
+     * @param id 标识参数。
+     * @param scope scope参数。
+     * @return Optional<ReservationRecord> 类型的处理结果。
+     */
     public Optional<ReservationRecord> findOne(long id, ReservationRecordScope scope) {
         return Optional.ofNullable(mapper.findOne(id, Objects.requireNonNull(scope, "scope")));
     }
@@ -47,6 +62,11 @@ public final class ReservationPersistenceService {
         return row.getId();
     }
 
+    /**
+     * 统计活动Overlaps。
+     * @param check check参数。
+     * @return long 类型的处理结果。
+     */
     public long countActiveOverlaps(ReservationOverlapCheck check) {
         ReservationOverlapCount count = mapper.countActiveOverlaps(Objects.requireNonNull(check, "check"));
         if (count == null) {

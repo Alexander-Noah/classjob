@@ -4,24 +4,34 @@
  */
 const CSV_EXTENSION_PATTERN = /\.csv$/i
 
+/**
+ * 获取文件名称。
+ * 入参：file（文件）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function getFileName(file) {
   return String(file?.name || '').trim()
 }
 
+/**
+ * 行集合目标Objects的处理逻辑。
+ * 入参：rows（行集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function rowsToObjects(rows) {
   const [headerRow = [], ...bodyRows] = rows
-  const headers = headerRow.map((header) => String(header || '').trim())
+  const headers = headerRow.map(/** 将当前条目转换为目标结果。 入参：header。 */ (header) => String(header || '').trim())
 
   return bodyRows
-    .map((row) =>
-      headers.reduce((result, header, index) => {
+    .map(/** 将当前条目转换为目标结果。 入参：row。 */ (row) =>
+      headers.reduce(/** 合并当前条目与累计结果。 入参：result、header、index。 */ (result, header, index) => {
         if (header) {
           result[header] = row[index] ?? ''
         }
         return result
       }, {}),
     )
-    .filter((row) => Object.values(row).some((value) => String(value ?? '').trim()))
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ (row) => Object.values(row).some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => String(value ?? '').trim()))
 }
 
 /** 按引用状态扫描 CSV，支持双引号转义和引号内换行；不做列数或未闭合引号校验。 */
@@ -72,6 +82,11 @@ function parseCsvText(text) {
   return rows
 }
 
+/**
+ * 读取CSV行集合。
+ * 入参：file（文件）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 async function readCsvRows(file) {
   const text = await file.text()
   return rowsToObjects(parseCsvText(text.replace(/^\ufeff/, '')))

@@ -18,6 +18,10 @@ const props = defineProps({
   },
   categoryOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   keyword: {
@@ -30,6 +34,10 @@ const props = defineProps({
   },
   labOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   resultCount: {
@@ -42,6 +50,10 @@ const props = defineProps({
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -56,22 +68,58 @@ const emit = defineEmits([
 ])
 
 const keywordModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.keyword 的当前值。
+   */
   get: () => props.keyword,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:keyword', value),
 })
 
 const categoryModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.categoryFilter 的当前值。
+   */
   get: () => props.categoryFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:categoryFilter', value),
 })
 
 const labModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.labFilter 的当前值。
+   */
   get: () => props.labFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:labFilter', value),
 })
 
 const statusModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.statusFilter 的当前值。
+   */
   get: () => props.statusFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:statusFilter', value),
 })
 </script>

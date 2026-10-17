@@ -42,15 +42,30 @@ const LEGACY_PERMISSION_ITEM_MAP = {
   故障报修: ['维护记录填写', '维护记录查看'],
 }
 
+/**
+ * expand权限条目的处理逻辑。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const expandPermissionItem = (item) => LEGACY_PERMISSION_ITEM_MAP[item] || [item]
 
+/**
+ * 获取Allowed路径。
+ * 入参：permissionItems（权限条目集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getAllowedPaths(permissionItems) {
   if (!Array.isArray(permissionItems) || !permissionItems.length) return []
-  return permissionItems.flatMap((item) => PERMISSION_ROUTE_MAP[item] || [])
+  return permissionItems.flatMap(/** 转换并展开当前条目。 入参：item。 */ (item) => PERMISSION_ROUTE_MAP[item] || [])
 }
 
+/**
+ * 判断是否为Controlled路径。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function isControlledPath(path) {
-  return CONTROLLED_PATHS.some((controlled) => path.startsWith(controlled))
+  return CONTROLLED_PATHS.some(/** 判断当前条目是否满足任一匹配条件。 入参：controlled。 */ (controlled) => path.startsWith(controlled))
 }
 
 /**
@@ -62,7 +77,7 @@ export function isPathAllowed(path, permissionItems) {
   if (!isControlledPath(path)) return true
 
   const allowedPaths = getAllowedPaths(permissionItems)
-  return allowedPaths.some((allowed) =>
+  return allowedPaths.some(/** 判断当前条目是否满足任一匹配条件。 入参：allowed。 */ (allowed) =>
     EXACT_PERMISSION_PATHS.has(allowed) ? path === allowed : path.startsWith(allowed),
   )
 }
@@ -75,7 +90,7 @@ export function parseUserPermissions(user) {
     const parsed = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
 
     if (Array.isArray(parsed)) {
-      return [...new Set(parsed.flatMap((group) => {
+      return [...new Set(parsed.flatMap(/** 转换并展开当前条目。 入参：group。 */ (group) => {
         if (typeof group === 'string') return expandPermissionItem(group)
         if (Array.isArray(group?.items)) return group.items.flatMap(expandPermissionItem)
         return []

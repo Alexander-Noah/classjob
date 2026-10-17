@@ -29,33 +29,66 @@ public class MaintenanceRecordController {
     private final MaintenanceRecordService maintenanceRecordService;
     private final UserService userService;
 
+    /**
+     * 构造 MaintenanceRecordController，初始化当前实例。
+     * @param maintenanceRecordService 维护记录服务参数。
+     * @param userService 用户服务参数。
+     */
     public MaintenanceRecordController(MaintenanceRecordService maintenanceRecordService, UserService userService) {
         this.maintenanceRecordService = maintenanceRecordService;
         this.userService = userService;
     }
 
+    /**
+     * 列出维护记录集合。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/maintenance-records")
     public Result listMaintenanceRecords() {
         return Result.success("获取维护记录列表成功", maintenanceRecordService.listMaintenanceRecords());
     }
 
+    /**
+     * 获取维护记录。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/maintenance-records/{id}")
     public Result getMaintenanceRecord(@PathVariable String id) {
         return Result.success("获取维护记录成功", maintenanceRecordService.getMaintenanceRecord(id));
     }
 
+    /**
+     * 创建维护记录。
+     * @param record 记录参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/maintenance-records")
     public Result createMaintenanceRecord(@RequestBody MaintenanceRecord record, HttpServletRequest request) {
         requireWrite(request);
         return Result.success("新增维护记录成功", maintenanceRecordService.createMaintenanceRecord(record));
     }
 
+    /**
+     * 更新维护记录。
+     * @param id 标识参数。
+     * @param record 记录参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/maintenance-records/{id}")
     public Result updateMaintenanceRecord(@PathVariable String id, @RequestBody MaintenanceRecord record, HttpServletRequest request) {
         requireWrite(request);
         return Result.success("更新维护记录成功", maintenanceRecordService.updateMaintenanceRecord(id, record));
     }
 
+    /**
+     * 删除维护记录。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/maintenance-records/{id}")
     public Result deleteMaintenanceRecord(@PathVariable String id, HttpServletRequest request) {
         requireWrite(request);
@@ -63,6 +96,10 @@ public class MaintenanceRecordController {
         return Result.success("删除维护记录成功");
     }
 
+    /**
+     * 要求提供Write。
+     * @param request 请求参数。
+     */
     private void requireWrite(HttpServletRequest request) {
         Object username = request.getAttribute(AuthenticationAttributes.USERNAME);
         if (username == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "请先登录");

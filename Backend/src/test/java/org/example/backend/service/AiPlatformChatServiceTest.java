@@ -19,15 +19,22 @@ class AiPlatformChatServiceTest {
     private final AiPlatformChatService chat = new AiPlatformChatService(data, config, tongyi);
     private final AiDataActor actor = new AiDataActor(7, "labAdmin", "管理员", Set.of());
 
+    /**
+     * setup的处理逻辑。
+     * @param custom custom参数。
+     */
     private void setup(boolean custom) {
         when(data.actor(7)).thenReturn(actor);
         when(config.getConfig(7)).thenReturn(Map.of("enabled", custom));
         when(tongyi.isConfigured()).thenReturn(true);
         when(data.now()).thenReturn(ZonedDateTime.parse("2026-10-16T15:57:00+08:00[Asia/Shanghai]"));
         when(data.catalog(actor)).thenReturn(List.of(Map.of("dataset", "consumables", "description", "耗材库存")));
-        when(data.encode(any())).thenAnswer(invocation -> new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(invocation.getArgument(0)));
+        when(data.encode(any())).thenAnswer(/** 处理 thenAnswer 调用中的回调逻辑。 入参：invocation。 */ invocation -> new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(invocation.getArgument(0)));
     }
 
+    /**
+     * custom服务商查询PlatformBeforeProducingAnAnswerWith来源的处理逻辑。
+     */
     @Test void customProviderQueriesPlatformBeforeProducingAnAnswerWithSources() {
         setup(true);
         when(config.chatWithContext(eq(7), anyString(), anyString()))
@@ -42,6 +49,9 @@ class AiPlatformChatServiceTest {
         verifyNoInteractions(tongyi);
     }
 
+    /**
+     * 提供默认服务商UsesTheSame数据查询。
+     */
     @Test void defaultProviderUsesTheSameDataQueries() {
         setup(false);
         when(tongyi.callAgent(anyString(), anyString())).thenReturn("{\"queries\":[{\"dataset\":\"consumables\"}]}", "目前没有耗材库存记录。");
@@ -52,6 +62,9 @@ class AiPlatformChatServiceTest {
         verify(config, never()).chatWithContext(any(), anyString(), anyString());
     }
 
+    /**
+     * 当前ClassQuestionsAlwaysUseAuthoritative时间Filtering的处理逻辑。
+     */
     @Test void currentClassQuestionsAlwaysUseAuthoritativeTimeFiltering() {
         setup(true);
         when(config.chatWithContext(eq(7), anyString(), anyString())).thenReturn("张老师在2-206上课。");
@@ -61,6 +74,9 @@ class AiPlatformChatServiceTest {
         verify(config, never()).chatWithContext(any(), anyString(), anyString());
     }
 
+    /**
+     * 当前ClassesUseReadableBound实验室名称集合Without模型GeneratedRoom列表的处理逻辑。
+     */
     @Test void currentClassesUseReadableBoundLabNamesWithoutModelGeneratedRoomLists() {
         setup(true);
         when(data.query(eq(actor), anyMap())).thenReturn(Map.of("dataset", "timetable", "status", "ok", "total", 1,
@@ -72,6 +88,9 @@ class AiPlatformChatServiceTest {
         verifyNoInteractions(config, tongyi);
     }
 
+    /**
+     * 模型CannotLoopForeverOrReadArbitraryTables的处理逻辑。
+     */
     @Test void modelCannotLoopForeverOrReadArbitraryTables() {
         setup(true);
         when(config.chatWithContext(eq(7), anyString(), anyString())).thenReturn("{\"queries\":[{\"dataset\":\"devices\"}]}");

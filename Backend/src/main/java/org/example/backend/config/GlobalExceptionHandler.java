@@ -18,6 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    /**
+     * 处理UploadTooLarge。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<Result> handleUploadTooLarge(
             org.springframework.web.multipart.MaxUploadSizeExceededException exception, HttpServletRequest request) {
@@ -28,10 +34,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Result.error(413, message));
     }
 
+    /**
+     * 处理Invalid请求正文。
+     * @param exception 异常参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<Result> handleInvalidRequestBody(org.springframework.http.converter.HttpMessageNotReadableException exception) {
         return ResponseEntity.badRequest().body(Result.error("填写的数据格式有误，请检查数量和日期后重试"));
     }
+    /**
+     * 处理Crawler凭据异常。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(CrawlerCredentialException.class)
     public ResponseEntity<Result> handleCrawlerCredentialException(CrawlerCredentialException exception, HttpServletRequest request) {
         log.warn("crawler credentials require update method={} uri={} requestId={}",
@@ -40,6 +57,12 @@ public class GlobalExceptionHandler {
                 .body(Result.error(409, CrawlerCredentialException.USER_MESSAGE));
     }
 
+    /**
+     * 处理IllegalArgument异常。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Result> handleIllegalArgumentException(IllegalArgumentException exception, HttpServletRequest request) {
         log.warn("bad request method={} uri={} requestId={} message={}",
@@ -50,6 +73,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Result.error(exception.getMessage()));
     }
 
+    /**
+     * 处理数据IntegrityViolation异常。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Result> handleDataIntegrityViolationException(DataIntegrityViolationException exception, HttpServletRequest request) {
         String message = isDeleteConstraintRequest(request)
@@ -66,6 +95,12 @@ public class GlobalExceptionHandler {
                 .body(Result.error(message));
     }
 
+    /**
+     * 处理响应状态异常。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Result> handleResponseStatusException(ResponseStatusException exception, HttpServletRequest request) {
         String message = exception.getReason() == null || exception.getReason().isBlank()
@@ -82,12 +117,23 @@ public class GlobalExceptionHandler {
                 .body(Result.error(message));
     }
 
+    /**
+     * 判断是否为DeleteConstraint请求。
+     * @param request 请求参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isDeleteConstraintRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return "DELETE".equalsIgnoreCase(request.getMethod())
                 || (uri != null && uri.contains("batch/delete"));
     }
 
+    /**
+     * 处理异常。
+     * @param exception 异常参数。
+     * @param request 请求参数。
+     * @return ResponseEntity<Result> 类型的处理结果。
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Result> handleException(Exception exception, HttpServletRequest request) {
         String requestId = MDC.get("requestId");

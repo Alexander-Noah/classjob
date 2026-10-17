@@ -54,6 +54,9 @@ class MonolithWiringTest {
             "ScheduleConflictPort.java"
     );
 
+    /**
+     * applicationUsesThe根目录PackageAndDoesNotImportModule主机的处理逻辑。
+     */
     @Test
     void applicationUsesTheRootPackageAndDoesNotImportModuleHosts() {
         SpringBootApplication application = BackendApplication.class.getAnnotation(SpringBootApplication.class);
@@ -66,6 +69,9 @@ class MonolithWiringTest {
         assertEquals(Set.of("org.example.backend.mapper"), Set.of(mapperScan.basePackages()));
     }
 
+    /**
+     * featureReadAndWriteRoutesHaveOneController所有者的处理逻辑。
+     */
     @Test
     void featureReadAndWriteRoutesHaveOneControllerOwner() {
         Class<?> legacyLabController = org.example.backend.controller.LabController.class;
@@ -85,17 +91,27 @@ class MonolithWiringTest {
         assertEquals(1, countGetMappings("/public/labs/{id:\\d+}/reservation-profile", legacyReservationController));
     }
 
+    /**
+     * legacyWrite数据映射器Remains可用AlongsideFeature数据映射器的处理逻辑。
+     */
     @Test
     void legacyWriteMapperRemainsAvailableAlongsideFeatureMappers() {
         assertNotNull(ClassTimetableMapper.class.getAnnotation(Mapper.class));
     }
 
+    /**
+     * 目标FeaturesDoNotRetainSingleImplementationForwarding端口的处理逻辑。
+     */
     @Test
     void targetFeaturesDoNotRetainSingleImplementationForwardingPorts() {
         Path services = mainJava().resolve("org/example/backend/service");
-        FORWARDING_PORTS.forEach(name -> assertFalse(Files.exists(services.resolve(name)), name));
+        FORWARDING_PORTS.forEach(/** 处理遍历到的当前条目。 入参：name。 */ name -> assertFalse(Files.exists(services.resolve(name)), name));
     }
 
+    /**
+     * ordinaryFeature服务UseComponentScanning的处理逻辑。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Test
     void ordinaryFeatureServicesUseComponentScanning() throws IOException {
         assertNotNull(LabRecordReadService.class.getAnnotation(Service.class));
@@ -104,39 +120,118 @@ class MonolithWiringTest {
         assertNotNull(ReservationLabService.class.getAnnotation(Service.class));
         assertNotNull(ReservationScheduleService.class.getAnnotation(Service.class));
         assertAll(
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultLabCatalogQuery.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultLabAvailabilityQuery.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultTeachingScheduleQuery.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultScheduleOccupancyQuery.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultReservationCatalogQuery.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultReservationAvailabilityEvaluator.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultReservationCreationService.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultReservationReviewService.class.getAnnotation(Service.class)),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertNotNull(DefaultReservationCommandHandler.class.getAnnotation(Service.class))
         );
 
         String configuration = Files.readString(mainJava().resolve(
                 "org/example/backend/config/FeatureConfiguration.java"));
         assertAll(
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("labRecordReadPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("teachingScheduleReadPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationPersistencePort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("labAvailabilityPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("managedLaboratoryIdsPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("laboratorySummaryPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("scheduleConflictPort(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("labCatalogQuery(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("labAvailabilityQuery(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("teachingScheduleQuery(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("scheduleOccupancyQuery(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationCatalogQuery(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationAvailabilityEvaluator(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationCreationService(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationReviewService(")),
+                /**
+                 * 处理 assertAll 调用中的回调逻辑。
+                 */
                 () -> assertFalse(configuration.contains("reservationCommandHandler("))
         );
     }
 
+    /**
+     * mainJava的处理逻辑。
+     * @return Path 类型的处理结果。
+     */
     private Path mainJava() {
         Path workingDirectory = Path.of(System.getProperty("user.dir"));
         Path repositorySource = workingDirectory.resolve("Backend/src/main/java");
@@ -146,20 +241,32 @@ class MonolithWiringTest {
         return workingDirectory.resolve("src/main/java");
     }
 
+    /**
+     * 统计GetMappings。
+     * @param path 路径参数。
+     * @param controller controller参数。
+     * @return long 类型的处理结果。
+     */
     private long countGetMappings(String path, Class<?> controller) {
         return Arrays.stream(controller.getDeclaredMethods())
-                .map(method -> method.getAnnotation(GetMapping.class))
-                .filter(mapping -> mapping != null)
-                .flatMap(mapping -> Arrays.stream(mapping.value()))
+                .map(/** 将当前条目转换为目标结果。 入参：method。 */ method -> method.getAnnotation(GetMapping.class))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：mapping。 */ mapping -> mapping != null)
+                .flatMap(/** 转换并展开当前条目。 入参：mapping。 */ mapping -> Arrays.stream(mapping.value()))
                 .filter(path::equals)
                 .count();
     }
 
+    /**
+     * 统计PostMappings。
+     * @param path 路径参数。
+     * @param controller controller参数。
+     * @return long 类型的处理结果。
+     */
     private long countPostMappings(String path, Class<?> controller) {
         return Arrays.stream(controller.getDeclaredMethods())
-                .map(method -> method.getAnnotation(PostMapping.class))
-                .filter(mapping -> mapping != null)
-                .flatMap(mapping -> Arrays.stream(mapping.value()))
+                .map(/** 将当前条目转换为目标结果。 入参：method。 */ method -> method.getAnnotation(PostMapping.class))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：mapping。 */ mapping -> mapping != null)
+                .flatMap(/** 转换并展开当前条目。 入参：mapping。 */ mapping -> Arrays.stream(mapping.value()))
                 .filter(path::equals)
                 .count();
     }

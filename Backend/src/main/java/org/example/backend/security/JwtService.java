@@ -25,6 +25,12 @@ public class JwtService {
     private final long expirationSeconds;
     private final String issuer;
 
+    /**
+     * 构造 JwtService，初始化当前实例。
+     * @param secret 秘密配置参数。
+     * @param expirationSeconds expirationSeconds参数。
+     * @param issuer issuer参数。
+     */
     public JwtService(
             @Value("${smart-lab.security.jwt.secret:}") String secret,
             @Value("${smart-lab.security.jwt.expiration-seconds:7200}") long expirationSeconds,
@@ -35,6 +41,11 @@ public class JwtService {
         this.issuer = issuer == null ? "" : issuer.trim();
     }
 
+    /**
+     * 要求提供Strong秘密配置。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String requireStrongSecret(String value) {
         String secretValue = value == null ? "" : value.trim();
         if (secretValue.isBlank()) {
@@ -124,10 +135,20 @@ public class JwtService {
         );
     }
 
+    /**
+     * 编码JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String encodeJson(Map<String, Object> value) {
         return base64Url(toJson(value).getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * 解码JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String decodeJson(String value) {
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(value);
@@ -137,6 +158,11 @@ public class JwtService {
         }
     }
 
+    /**
+     * sign的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String sign(String value) {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
@@ -147,10 +173,20 @@ public class JwtService {
         }
     }
 
+    /**
+     * 基础64URL的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String base64Url(byte[] value) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
     }
 
+    /**
+     * 转换为JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String toJson(Map<String, Object> value) {
         StringBuilder json = new StringBuilder("{");
         boolean first = true;
@@ -168,6 +204,11 @@ public class JwtService {
         return json.append('}').toString();
     }
 
+    /**
+     * 追加JSON值。
+     * @param json JSON参数。
+     * @param value 值参数。
+     */
     private void appendJsonValue(StringBuilder json, Object value) {
         if (value == null) {
             json.append("null");
@@ -182,6 +223,12 @@ public class JwtService {
         json.append('"').append(escapeJson(String.valueOf(value))).append('"');
     }
 
+    /**
+     * JSON值的处理逻辑。
+     * @param json JSON参数。
+     * @param key 键参数。
+     * @return String 类型的处理结果。
+     */
     private String jsonValue(String json, String key) {
         String keyToken = "\"" + escapeJson(key) + "\"";
         int keyIndex = json.indexOf(keyToken);
@@ -221,6 +268,12 @@ public class JwtService {
         return "null".equals(rawValue) ? "" : rawValue;
     }
 
+    /**
+     * 读取JSON字符串。
+     * @param json JSON参数。
+     * @param startIndex 开始索引参数。
+     * @return String 类型的处理结果。
+     */
     private String readJsonString(String json, int startIndex) {
         StringBuilder value = new StringBuilder();
 
@@ -267,6 +320,11 @@ public class JwtService {
         throw new IllegalArgumentException("JSON 字符串未正常结束");
     }
 
+    /**
+     * 转义JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String escapeJson(String value) {
         StringBuilder escaped = new StringBuilder();
 
@@ -294,10 +352,20 @@ public class JwtService {
         return escaped.toString();
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
     }
 
+    /**
+     * 数值值的处理逻辑。
+     * @param value 值参数。
+     * @return long 类型的处理结果。
+     */
     private long numberValue(Object value) {
         try {
             return Long.parseLong(String.valueOf(value));

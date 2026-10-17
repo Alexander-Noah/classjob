@@ -6,5 +6,10 @@ package org.example.backend.service;
 import org.example.backend.service.CapabilityResult;
 
 public interface ScheduleOccupancyQuery {
+    /**
+     * 检查当前操作。
+     * @param request 请求参数。
+     * @return CapabilityResult<ScheduleOccupancyView> 类型的处理结果。
+     */
     CapabilityResult<ScheduleOccupancyView> check(ScheduleOccupancyRequest request);
 }

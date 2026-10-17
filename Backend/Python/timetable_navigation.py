@@ -15,15 +15,24 @@ class TargetSystemUnavailable(RuntimeError):
     pass
 
 
+# 提取 URL 中的主机名。
+# 入参：url（URL）。
+# 返回：由当前表达式或分支生成的处理结果。
 def _hostname(url):
     return (urlparse(str(url or "")).hostname or "").lower()
 
 
+# 判断是否匹配主机。
+# 入参：actual_host（实际主机）；target_host（目标主机）。
+# 返回：由当前表达式或分支生成的处理结果。
 def _matches_host(actual_host, target_host):
     expected = str(target_host or "").strip().lower()
     return bool(expected) and (actual_host == expected or actual_host.endswith(f".{expected}"))
 
 
+# 判断是否为身份登录页码。
+# 入参：current_url（当前URL）；title（title）；page_html（页码HTML）。
+# 返回：由当前表达式或分支生成的处理结果。
 def is_identity_login_page(current_url, title, page_html):
     host = _hostname(current_url)
     normalized_title = str(title or "").strip().lower()
@@ -36,6 +45,9 @@ def is_identity_login_page(current_url, title, page_html):
     )
 
 
+# 确保满足教务已认证状态。
+# 入参：current_url（当前URL）；title（title）；page_html（页码HTML）。
+# 返回：由当前表达式或分支生成的处理结果。
 def ensure_academic_authenticated(current_url, title, page_html):
     # 到达教务域名不等于登录成功，仍需识别登录表单，交给上层触发会话恢复。
     normalized_url = str(current_url or "").strip().lower()

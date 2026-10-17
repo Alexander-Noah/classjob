@@ -28,7 +28,7 @@ const ROLE_CODE_MAP = {
   教师: 'teacher',
 }
 
-const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(([name, code]) => [code, name]))
+const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(/** 将当前条目转换为目标结果。 */ ([name, code]) => [code, name]))
 
 const DEFAULT_PERMISSION_GROUPS = {
   systemAdmin: [{ group: '平台治理', items: ['用户管理', '系统设置', '激活管理', '平台统计', '通知公告'] }],
@@ -91,8 +91,17 @@ const MOCK_USERNAME_ROLE_MAP = {
 
 const RETIRED_MOCK_USERNAMES = new Set(['repair', 'repair01', 'maintenance'])
 
+/**
+ * 判断是否为Retired角色值。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRetiredRoleValue = (value) => value === 'maintenance' || value === '维修人员'
 
+/**
+ * 断言活动会话角色。
+ * 入参：role（角色）；user（用户）。
+ */
 export function assertActiveSessionRole(role, user = {}) {
   if ([role, user?.roleCode, user?.role, user?.roleName].some(isRetiredRoleValue)) {
     const error = new Error(RETIRED_ROLE_MESSAGE)
@@ -101,6 +110,11 @@ export function assertActiveSessionRole(role, user = {}) {
   }
 }
 
+/**
+ * 判断是否为Retired角色错误。
+ * 入参：error（错误）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRetiredRoleError = (error) =>
   error?.code === 'ROLE_RETIRED' ||
   error?.message === RETIRED_ROLE_MESSAGE ||
@@ -124,11 +138,21 @@ const MOCK_ACCOUNT_USERS = {
   },
 }
 
+/**
+ * inferMock角色ByUsername的处理逻辑。
+ * 入参：username（username）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const inferMockRoleByUsername = (username = '') => {
   const normalizedUsername = String(username || '').trim().toLowerCase()
   return MOCK_USERNAME_ROLE_MAP[normalizedUsername] || DEFAULT_AUTH_ROLE
 }
 
+/**
+ * 解析角色编码。
+ * 入参：user（用户）；fallbackRole（fallback角色）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveRoleCode = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
   const rawRole = user.roleCode || user.role || user.roleName || fallbackRole
 
@@ -137,6 +161,11 @@ const resolveRoleCode = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
   return ROLE_NAME_MAP[fallbackRole] ? fallbackRole : DEFAULT_AUTH_ROLE
 }
 
+/**
+ * 归一化会话用户。
+ * 入参：user（用户）；fallbackRole（fallback角色）。
+ * @returns 组装的键值对象。
+ */
 const normalizeSessionUser = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
   assertActiveSessionRole(fallbackRole, user)
   const roleCode = resolveRoleCode(user, fallbackRole)
@@ -156,6 +185,10 @@ const normalizeSessionUser = (user = {}, fallbackRole = DEFAULT_AUTH_ROLE) => {
   }
 }
 
+/**
+ * 读取Mock用户。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readMockUsers = () => {
   const localStorage = getLocalStorage()
   if (!localStorage) return []
@@ -169,11 +202,16 @@ const readMockUsers = () => {
   }
 }
 
+/**
+ * 查找Mock用户。
+ * 入参：解构参数（role、username、id）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findMockUser = ({ role, username, id } = {}) => {
   const normalizedUsername = String(username || '').trim().toLowerCase()
   const normalizedId = String(id || '').trim()
   const users = readMockUsers()
-  const matchedUser = users.find((user) => {
+  const matchedUser = users.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => {
     const sameUsername = normalizedUsername && String(user.username || '').trim().toLowerCase() === normalizedUsername
     const sameId = normalizedId && String(user.id || '').trim() === normalizedId
     return sameUsername || sameId
@@ -184,21 +222,38 @@ const findMockUser = ({ role, username, id } = {}) => {
   if (MOCK_ACCOUNT_USERS[normalizedUsername]) return MOCK_ACCOUNT_USERS[normalizedUsername]
 
   const roleCode = role || inferMockRoleByUsername(username)
-  return users.find((user) => resolveRoleCode(user, DEFAULT_AUTH_ROLE) === roleCode) || MOCK_ROLE_USERS[roleCode] || MOCK_ROLE_USERS[DEFAULT_AUTH_ROLE]
+  return users.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => resolveRoleCode(user, DEFAULT_AUTH_ROLE) === roleCode) || MOCK_ROLE_USERS[roleCode] || MOCK_ROLE_USERS[DEFAULT_AUTH_ROLE]
 }
 
+/**
+ * 获取本地Storage。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLocalStorage = () => {
   if (typeof window === 'undefined') return null
   return window.localStorage
 }
 
+/**
+ * 获取会话Storage。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getSessionStorage = () => {
   if (typeof window === 'undefined') return null
   return window.sessionStorage
 }
 
+/**
+ * 获取认证Storage。
+ * 入参：remember（remember）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getAuthStorage = (remember = true) => (remember ? getLocalStorage() : getSessionStorage())
 
+/**
+ * 获取认证RememberMode。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getAuthRememberMode = () => {
   const localStorage = getLocalStorage()
   const sessionStorage = getSessionStorage()
@@ -207,12 +262,21 @@ const getAuthRememberMode = () => {
   return true
 }
 
+/**
+ * 读取Storage。
+ * 入参：storageKey（storage键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readStorage = (storageKey) => {
   const localStorage = getLocalStorage()
   const sessionStorage = getSessionStorage()
   return localStorage?.getItem(storageKey) || sessionStorage?.getItem(storageKey) || ''
 }
 
+/**
+ * 写入Storage。
+ * 入参：storageKey（storage键）；value（值）；remember（remember）。
+ */
 const writeStorage = (storageKey, value, remember = true) => {
   const targetStorage = getAuthStorage(remember)
   const mirrorStorage = remember ? getSessionStorage() : getLocalStorage()
@@ -221,15 +285,27 @@ const writeStorage = (storageKey, value, remember = true) => {
   targetStorage?.setItem(storageKey, value)
 }
 
+/**
+ * 移除Storage。
+ * 入参：storageKey（storage键）。
+ */
 const removeStorage = (storageKey) => {
   getLocalStorage()?.removeItem(storageKey)
   getSessionStorage()?.removeItem(storageKey)
 }
 
+/**
+ * 获取Stored角色。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getStoredRole() {
   return readStorage(AUTH_ROLE_STORAGE_KEY) || DEFAULT_AUTH_ROLE
 }
 
+/**
+ * 获取Stored用户。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getStoredUser() {
   const rawValue = readStorage(AUTH_USER_STORAGE_KEY)
 
@@ -242,14 +318,26 @@ export function getStoredUser() {
   }
 }
 
+/**
+ * 获取认证令牌。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getAuthToken() {
   return readStorage(AUTH_TOKEN_STORAGE_KEY)
 }
 
+/**
+ * 判断是否为已认证状态。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function isAuthenticated() {
   return readStorage(AUTH_STORAGE_KEY) === 'true'
 }
 
+/**
+ * 获取Remembered登录。
+ * @returns 组装的键值对象。
+ */
 export function getRememberedLogin() {
   const storage = getLocalStorage()
   const rememberedValue = storage?.getItem(AUTH_REMEMBER_ENABLED_STORAGE_KEY)
@@ -285,6 +373,11 @@ export function persistAuthSession({ role, token, user, remember = true }) {
   writeStorage(AUTH_USER_STORAGE_KEY, JSON.stringify(user || null), remember)
 }
 
+/**
+ * 更新Stored用户。
+ * 入参：user（用户）；role（角色）。
+ * @returns nextUser 的当前值。
+ */
 export function updateStoredUser(user, role) {
   const remember = getAuthRememberMode()
   const previousUser = getStoredUser()
@@ -298,6 +391,9 @@ export function updateStoredUser(user, role) {
   return nextUser
 }
 
+/**
+ * 清理认证会话。
+ */
 export function clearAuthSession() {
   removeStorage(AUTH_STORAGE_KEY)
   removeStorage(AUTH_ROLE_STORAGE_KEY)
@@ -305,6 +401,11 @@ export function clearAuthSession() {
   removeStorage(AUTH_USER_STORAGE_KEY)
 }
 
+/**
+ * 获取当前用户。
+ * 入参：username（username）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function getCurrentUser(username) {
   if (API_USE_MOCK) {
     const storedUser = getStoredUser()
@@ -329,6 +430,11 @@ export async function getCurrentUser(username) {
   return data?.data || data || null
 }
 
+/**
+ * 更新当前用户Profile。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function updateCurrentUserProfile(payload = {}) {
   if (API_USE_MOCK) {
     const storedUser = getStoredUser()
@@ -382,6 +488,11 @@ export async function refreshCurrentUserSession({ force = false } = {}) {
   }
 }
 
+/**
+ * 登录By密码的处理逻辑。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function loginByPassword(payload) {
   const shouldRemember = payload.remember !== false
 
@@ -437,6 +548,9 @@ export async function loginByPassword(payload) {
   return session
 }
 
+/**
+ * 退出登录的处理逻辑。
+ */
 export async function logout() {
   if (!API_USE_MOCK) {
     try {

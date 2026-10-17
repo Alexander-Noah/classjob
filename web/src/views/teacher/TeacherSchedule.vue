@@ -19,15 +19,24 @@ defineOptions({
 })
 
 const router = useRouter()
-const currentUser = computed(() => getStoredUser() || {})
-const roleHomePath = computed(() => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
+const currentUser = computed(/** 计算派生状态。 */ () => getStoredUser() || {})
+const roleHomePath = computed(/** 计算派生状态。 */ () => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
 const teachingCalendar = ref(null)
 
-const bindingStorageKey = computed(() => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
+const bindingStorageKey = computed(/** 计算派生状态。 */ () => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
 
+/**
+ * 解析默认教师名称。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveDefaultTeacherName = () =>
   currentUser.value.realName || currentUser.value.name || currentUser.value.username || ''
 
+/**
+ * 格式化MonthDay。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatMonthDay = (date) =>
   `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 
@@ -67,7 +76,7 @@ const periods = [
   { label: '第6节', time: '20:20-21:50', start: 11 },
 ]
 
-const weekOptions = Array.from({ length: 25 }, (_, index) => {
+const weekOptions = Array.from({ length: 25 }, /** 处理 from 调用中的回调逻辑。 入参：_、index。 */ (_, index) => {
   const week = index + 1
   return { label: `第 ${week} 周`, value: week }
 })
@@ -92,12 +101,12 @@ const semesters = ref([])
 const latestLoadedAt = ref('')
 const isLoading = ref(false)
 
-const weekStartDate = computed(() => {
+const weekStartDate = computed(/** 计算派生状态。 */ () => {
   return getTeachingWeekStartDate(teachingCalendar.value, filters.week) || new Date()
 })
 
-const weekDays = computed(() =>
-  dayLabels.map((day, index) => {
+const weekDays = computed(/** 计算派生状态。 */ () =>
+  dayLabels.map(/** 将当前条目转换为目标结果。 入参：day、index。 */ (day, index) => {
     const date = new Date(weekStartDate.value)
     date.setDate(date.getDate() + index)
     return {
@@ -108,17 +117,17 @@ const weekDays = computed(() =>
   }),
 )
 
-const weekMonthLabel = computed(() => `${weekStartDate.value.getMonth() + 1}月`)
+const weekMonthLabel = computed(/** 计算派生状态。 */ () => `${weekStartDate.value.getMonth() + 1}月`)
 
-const pagedRows = computed(() => {
+const pagedRows = computed(/** 计算派生状态。 */ () => {
   const start = (pagination.page - 1) * pagination.pageSize
   return rows.value.slice(start, start + pagination.pageSize)
 })
 
-const metrics = computed(() => {
-  const classCount = new Set(rows.value.map((item) => item.className || item.rowClassName).filter(Boolean)).size
-  const classroomCount = new Set(rows.value.map((item) => item.classroom).filter(Boolean)).size
-  const courseCount = new Set(rows.value.map((item) => item.courseName).filter(Boolean)).size
+const metrics = computed(/** 计算派生状态。 */ () => {
+  const classCount = new Set(rows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.className || item.rowClassName).filter(Boolean)).size
+  const classroomCount = new Set(rows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.classroom).filter(Boolean)).size
+  const courseCount = new Set(rows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.courseName).filter(Boolean)).size
 
   return [
     { label: '本周课表', value: String(rows.value.length), trend: `第 ${filters.week} 周` },
@@ -128,6 +137,11 @@ const metrics = computed(() => {
   ]
 })
 
+/**
+ * 解析Period开始。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolvePeriodStart = (record = {}) => {
   const start = Number(record.startSection || 0)
   if (start > 0) return start % 2 === 0 ? start - 1 : start
@@ -137,6 +151,11 @@ const resolvePeriodStart = (record = {}) => {
   return parsed % 2 === 0 ? parsed - 1 : parsed
 }
 
+/**
+ * 归一化课程。
+ * 入参：record（记录）；index（索引）。
+ * @returns 组装的键值对象。
+ */
 const normalizeCourse = (record = {}, index = 0) => {
   const weekday = record.weekday || ''
   const classroom = record.classroom || '未标注教室'
@@ -157,16 +176,29 @@ const normalizeCourse = (record = {}, index = 0) => {
   }
 }
 
-const normalizedCourses = computed(() => rows.value.map((record, index) => normalizeCourse(record, index)))
+const normalizedCourses = computed(/** 计算派生状态。 */ () => rows.value.map(/** 将当前条目转换为目标结果。 入参：record、index。 */ (record, index) => normalizeCourse(record, index)))
 
+/**
+ * 获取Cell课程。
+ * 入参：dayValue（day值）；periodStart（period开始）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCellCourses = (dayValue, periodStart) =>
-  normalizedCourses.value.filter((course) => course.day === dayValue && course.periodStart === periodStart)
+  normalizedCourses.value.filter(/** 判断当前条目是否符合筛选条件。 入参：course。 */ (course) => course.day === dayValue && course.periodStart === periodStart)
 
+/**
+ * 课程ColorClass的处理逻辑。
+ * 入参：course（课程）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const courseColorClass = (course) => {
   const seed = String(course.title || '').charCodeAt(0) || 0
   return `course-color-${(seed % 5) + 1}`
 }
 
+/**
+ * 加载学期。
+ */
 const loadSemesters = async () => {
   try {
     semesters.value = await getClassTimetableSemesters()
@@ -178,6 +210,10 @@ const loadSemesters = async () => {
   }
 }
 
+/**
+ * 加载教师课表。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const loadTeacherSchedule = async () => {
   if (!filters.teacherName.trim()) {
     ElMessage.warning('请先绑定教师姓名')
@@ -210,11 +246,18 @@ const loadTeacherSchedule = async () => {
   }
 }
 
+/**
+ * change周次的处理逻辑。
+ * 入参：offset（偏移）。
+ */
 const changeWeek = async (offset) => {
   filters.week = Math.min(25, Math.max(1, filters.week + offset))
   await loadTeacherSchedule()
 }
 
+/**
+ * 保存教师Binding。
+ */
 const saveTeacherBinding = async () => {
   if (!filters.teacherName.trim()) {
     ElMessage.warning('请填写教师姓名')
@@ -225,6 +268,9 @@ const saveTeacherBinding = async () => {
   await loadTeacherSchedule()
 }
 
+/**
+ * 重置筛选条件。
+ */
 const resetFilters = () => {
   filters.className = ''
   filters.classroom = ''
@@ -233,6 +279,9 @@ const resetFilters = () => {
   loadTeacherSchedule()
 }
 
+/**
+ * 导出教师课表。
+ */
 const exportTeacherSchedule = () => {
   if (!rows.value.length) {
     ElMessage.warning('暂无可导出的教师课表')
@@ -257,16 +306,23 @@ const exportTeacherSchedule = () => {
   ElMessage.success(`已导出 ${exportedCount} 条教师课表`)
 }
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = async (action) => {
   if (action.command === 'sync') await loadTeacherSchedule()
   if (action.command === 'export') exportTeacherSchedule()
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(roleHomePath.value)
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   const storedBinding = window.localStorage?.getItem(bindingStorageKey.value)
   filters.teacherName = storedBinding || resolveDefaultTeacherName()
   try {

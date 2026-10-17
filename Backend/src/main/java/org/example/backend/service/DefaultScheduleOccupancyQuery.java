@@ -19,10 +19,19 @@ import java.util.regex.Pattern;
 public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQuery {
     private final TeachingScheduleReadService readService;
 
+    /**
+     * 构造 DefaultScheduleOccupancyQuery，初始化当前实例。
+     * @param readService read服务参数。
+     */
     public DefaultScheduleOccupancyQuery(TeachingScheduleReadService readService) {
         this.readService = readService;
     }
 
+    /**
+     * 检查当前操作。
+     * @param request 请求参数。
+     * @return CapabilityResult<ScheduleOccupancyView> 类型的处理结果。
+     */
     @Override
     public CapabilityResult<ScheduleOccupancyView> check(ScheduleOccupancyRequest request) {
         if (!valid(request)) {
@@ -46,7 +55,7 @@ public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQue
                 return unavailable("teaching schedule candidates are unavailable");
             }
             Set<String> aliases = request.laboratoryAliases().stream()
-                    .filter(alias -> !blank(alias)).map(String::trim).collect(java.util.stream.Collectors.toUnmodifiableSet());
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：alias。 */ alias -> !blank(alias)).map(String::trim).collect(java.util.stream.Collectors.toUnmodifiableSet());
             if (aliases.isEmpty()) {
                 return unavailable("laboratory aliases are required");
             }
@@ -66,17 +75,33 @@ public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQue
         }
     }
 
+    /**
+     * 有效的处理逻辑。
+     * @param request 请求参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean valid(ScheduleOccupancyRequest request) {
         return request != null && request.reservationDate() != null && request.startsAt() != null
                 && request.endsAt() != null && request.startsAt().isBefore(request.endsAt())
                 && request.laboratoryAliases() != null && !request.laboratoryAliases().isEmpty();
     }
 
+    /**
+     * 有效的处理逻辑。
+     * @param row 行参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean valid(ScheduleOccupancyRow row) {
         return row != null && !blank(row.classroom()) && row.startSection() != null && row.endSection() != null
                 && row.startSection() >= 1 && row.endSection() <= 12 && row.startSection() <= row.endSection();
     }
 
+    /**
+     * 判断是否匹配当前操作。
+     * @param classroom classroom参数。
+     * @param aliases aliases参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean matches(String classroom, Set<String> aliases) {
         String candidate = classroom.trim();
         for (String alias : aliases) {
@@ -91,12 +116,23 @@ public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQue
         return false;
     }
 
+    /**
+     * overlaps的处理逻辑。
+     * @param request 请求参数。
+     * @param row 行参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean overlaps(ScheduleOccupancyRequest request, ScheduleOccupancyRow row) {
         LocalTime classStart = TeachingSectionTimes.start(row.startSection());
         LocalTime classEnd = TeachingSectionTimes.end(row.endSection());
         return request.startsAt().isBefore(classEnd) && classStart.isBefore(request.endsAt());
     }
 
+    /**
+     * weekday的处理逻辑。
+     * @param day day参数。
+     * @return String 类型的处理结果。
+     */
     private String weekday(DayOfWeek day) {
         return switch (day) {
             case MONDAY -> "星期一";
@@ -109,10 +145,20 @@ public final class DefaultScheduleOccupancyQuery implements ScheduleOccupancyQue
         };
     }
 
+    /**
+     * 空白的处理逻辑。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean blank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * unavailable的处理逻辑。
+     * @param message 消息参数。
+     * @return CapabilityResult<ScheduleOccupancyView> 类型的处理结果。
+     */
     private CapabilityResult<ScheduleOccupancyView> unavailable(String message) {
         return CapabilityResult.unavailable(message);
     }

@@ -50,6 +50,14 @@ public class BusinessLoopServiceImpl implements BusinessLoopService {
     private final ModuleRecordMapper moduleRecordMapper;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 构造 BusinessLoopServiceImpl，初始化当前实例。
+     * @param usageRecordMapper usage记录数据映射器参数。
+     * @param repairMapper repair数据映射器参数。
+     * @param devicesMapper 设备数据映射器参数。
+     * @param moduleRecordMapper module记录数据映射器参数。
+     * @param objectMapper object数据映射器参数。
+     */
     public BusinessLoopServiceImpl(
             UsageRecordMapper usageRecordMapper,
             RepairMapper repairMapper,

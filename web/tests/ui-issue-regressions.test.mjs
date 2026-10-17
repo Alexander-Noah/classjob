@@ -6,9 +6,14 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('room control background iot reads do not surface generic server error toasts', () => {
+test('room control background iot reads do not surface generic server error toasts', /** 验证当前测试用例的预期行为。 */ () => {
   const iotService = readSource('../src/api/services/iot.js')
   const roomControl = readSource('../src/composables/useRoomControl.js')
 
@@ -19,7 +24,7 @@ test('room control background iot reads do not surface generic server error toas
   assert.doesNotMatch(roomControl, /ElMessage\.warning\(error\?\.message \|\| '物联网设备数据加载失败/)
 })
 
-test('custom api assistant mode does not raise websocket connection error on page load', () => {
+test('custom api assistant mode does not raise websocket connection error on page load', /** 验证当前测试用例的预期行为。 */ () => {
   const assistant = readSource('../src/views/ai-assistant/AiAssistant.vue')
   const aiService = readSource('../src/api/services/aiAssistantConfig.js')
   const endpoints = readSource('../src/api/endpoints.js')
@@ -36,7 +41,7 @@ test('custom api assistant mode does not raise websocket connection error on pag
   assert.doesNotMatch(assistant, /onMounted[\s\S]*testBackendAiConfig\(\)/)
 })
 
-test('reservation conflict detection does not trigger contact validation or hide conflict column', () => {
+test('reservation conflict detection does not trigger contact validation or hide conflict column', /** 验证当前测试用例的预期行为。 */ () => {
   const reservationLogic = readSource('../src/composables/useReservationManagement.js')
   const table = readSource('../src/views/reservations/components/ReservationListTable.vue')
   const detectConflictBlock = reservationLogic.match(/const detectConflicts = \(showMessage = true\) => \{[\s\S]*?\n  \}/)?.[0] || ''

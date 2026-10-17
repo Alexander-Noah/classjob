@@ -12,11 +12,15 @@ defineOptions({
 const props = defineProps({
   metrics: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
 
-const metricColumnCount = computed(() => Math.min(Math.max(props.metrics.length, 1), 4))
+const metricColumnCount = computed(/** 计算派生状态。 */ () => Math.min(Math.max(props.metrics.length, 1), 4))
 </script>
 
 <template>

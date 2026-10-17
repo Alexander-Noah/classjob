@@ -40,10 +40,19 @@ public class AliyunOssServiceImpl implements AliyunOssService {
 
     private final AliyunOssProperties properties;
 
+    /**
+     * 构造 AliyunOssServiceImpl，初始化当前实例。
+     * @param properties 属性参数。
+     */
     public AliyunOssServiceImpl(AliyunOssProperties properties) {
         this.properties = properties;
     }
 
+    /**
+     * 上传头像。
+     * @param file 文件参数。
+     * @return 包含 url、avatarUrl、objectKey 等字段的结果对象。
+     */
     @Override
     public Map<String, String> uploadAvatar(MultipartFile file) {
         validateConfig();
@@ -76,6 +85,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         );
     }
 
+    /**
+     * 下载头像。
+     * @param objectKey object键参数。
+     * @return AvatarObject 类型的处理结果。
+     */
     @Override
     public AvatarObject downloadAvatar(String objectKey) {
         validateConfig();
@@ -101,6 +115,9 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         }
     }
 
+    /**
+     * 校验配置。
+     */
     private void validateConfig() {
         if (!properties.isEnabled()) {
             throw new IllegalStateException("阿里云 OSS 未启用，请配置 SMART_LAB_OSS_ENABLED=true");
@@ -110,6 +127,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         }
     }
 
+    /**
+     * 校验文件。
+     * @param file 文件参数。
+     * @return String 类型的处理结果。
+     */
     private String validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("请选择头像文件");
@@ -127,6 +149,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return contentType;
     }
 
+    /**
+     * 校验Extension。
+     * @param originalFilename originalFilename参数。
+     * @param contentType 内容类型参数。
+     */
     private void validateExtension(String originalFilename, String contentType) {
         String ext = getRawFileExtension(originalFilename);
         if (!ext.isEmpty() && !ALLOWED_EXTENSIONS_BY_CONTENT_TYPE.getOrDefault(contentType, Set.of()).contains(ext)) {
@@ -134,6 +161,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         }
     }
 
+    /**
+     * 校验ImageSignature。
+     * @param file 文件参数。
+     * @param contentType 内容类型参数。
+     */
     private void validateImageSignature(MultipartFile file, String contentType) {
         byte[] signature = readSignature(file);
         boolean matches = switch (contentType) {
@@ -148,6 +180,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         }
     }
 
+    /**
+     * 读取Signature。
+     * @param file 文件参数。
+     * @return byte[] 类型的处理结果。
+     */
     private byte[] readSignature(MultipartFile file) {
         try (InputStream inputStream = file.getInputStream()) {
             byte[] signature = new byte[12];
@@ -158,6 +195,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         }
     }
 
+    /**
+     * 判断是否具有Bytes。
+     * @param signature signature参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasBytes(byte[] signature, int... bytes) {
         if (signature.length < bytes.length) {
             return false;
@@ -170,10 +212,23 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return true;
     }
 
+    /**
+     * 判断是否具有Ascii。
+     * @param signature signature参数。
+     * @param text 文本参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasAscii(byte[] signature, String text) {
         return hasAscii(signature, 0, text);
     }
 
+    /**
+     * 判断是否具有Ascii。
+     * @param signature signature参数。
+     * @param offset 偏移参数。
+     * @param text 文本参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasAscii(byte[] signature, int offset, String text) {
         if (signature.length < offset + text.length()) {
             return false;
@@ -186,6 +241,12 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return true;
     }
 
+    /**
+     * 构建头像Object键。
+     * @param originalFilename originalFilename参数。
+     * @param contentType 内容类型参数。
+     * @return String 类型的处理结果。
+     */
     private String buildAvatarObjectKey(String originalFilename, String contentType) {
         String ext = getFileExtension(originalFilename, contentType);
         String datePath = LocalDate.now().toString().replace("-", "/");
@@ -193,6 +254,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return avatarDir + "/" + datePath + "/" + UUID.randomUUID() + ext;
     }
 
+    /**
+     * 归一化头像Object键。
+     * @param objectKey object键参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeAvatarObjectKey(String objectKey) {
         if (isBlank(objectKey)) {
             throw new IllegalArgumentException("头像文件地址无效");
@@ -208,6 +274,12 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return normalizedObjectKey;
     }
 
+    /**
+     * 获取文件Extension。
+     * @param filename filename参数。
+     * @param contentType 内容类型参数。
+     * @return String 类型的处理结果。
+     */
     private String getFileExtension(String filename, String contentType) {
         String ext = getRawFileExtension(filename);
         if (!ext.isEmpty()) {
@@ -216,6 +288,11 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return DEFAULT_EXTENSION_BY_CONTENT_TYPE.getOrDefault(contentType, ".png");
     }
 
+    /**
+     * 获取原始输入文件Extension。
+     * @param filename filename参数。
+     * @return String 类型的处理结果。
+     */
     private String getRawFileExtension(String filename) {
         if (filename == null) {
             return "";
@@ -227,10 +304,20 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return filename.substring(dotIndex).toLowerCase();
     }
 
+    /**
+     * 归一化内容类型。
+     * @param contentType 内容类型参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeContentType(String contentType) {
         return contentType == null ? "" : contentType.trim().toLowerCase();
     }
 
+    /**
+     * 构建公开URL。
+     * @param objectKey object键参数。
+     * @return String 类型的处理结果。
+     */
     private String buildPublicUrl(String objectKey) {
         if (!isBlank(properties.getPublicBaseUrl())) {
             return trimRightSlash(properties.getPublicBaseUrl()) + "/" + objectKey;
@@ -239,15 +326,30 @@ public class AliyunOssServiceImpl implements AliyunOssService {
         return "https://" + properties.getBucket() + "." + endpoint + "/" + objectKey;
     }
 
+    /**
+     * 裁剪Slashes。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimSlashes(String value) {
         String text = isBlank(value) ? "avatars" : value.trim();
         return text.replaceAll("^/+", "").replaceAll("/+$", "");
     }
 
+    /**
+     * 裁剪RightSlash。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimRightSlash(String value) {
         return value == null ? "" : value.replaceAll("/+$", "");
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

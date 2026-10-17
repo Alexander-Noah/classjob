@@ -21,10 +21,13 @@ class ReservationScheduleServiceTest {
             Instant.parse("2026-10-12T03:00:00Z")
     );
 
+    /**
+     * passesTrimmedLaboratory编码And名称Aliases目标Teaching课表的处理逻辑。
+     */
     @Test
     void passesTrimmedLaboratoryCodeAndNameAliasesToTeachingSchedule() {
         AtomicReference<ScheduleOccupancyRequest> captured = new AtomicReference<>();
-        ScheduleOccupancyQuery schedules = request -> {
+        ScheduleOccupancyQuery schedules = /** 处理当前调用传入的回调逻辑。 入参：request。 */ request -> {
             captured.set(request);
             return CapabilityResult.available(new ScheduleOccupancyView(true));
         };
@@ -36,9 +39,16 @@ class ReservationScheduleServiceTest {
         assertEquals(CapabilityResult.available(new ScheduleConflictSnapshot(7L, DATE, SAME_DATE_RANGE, true)), result);
     }
 
+    /**
+     * propagatesUnavailableTeaching课表消息的处理逻辑。
+     */
     @Test
     void propagatesUnavailableTeachingScheduleMessage() {
         var service = new ReservationScheduleService(
+                /**
+                 * 处理当前调用传入的回调逻辑。
+                 * 入参：request。
+                 */
                 request -> CapabilityResult.unavailable("teaching schedule provider is unavailable"),
                 catalog(lab(7L, "LAB-7", "Lab Seven"))
         );
@@ -49,9 +59,16 @@ class ReservationScheduleServiceTest {
         assertEquals("teaching schedule provider is unavailable", result.message());
     }
 
+    /**
+     * malformed预约范围UsesExistingUnavailable消息的处理逻辑。
+     */
     @Test
     void malformedReservationRangeUsesExistingUnavailableMessage() {
         var service = new ReservationScheduleService(
+                /**
+                 * 处理当前调用传入的回调逻辑。
+                 * 入参：request。
+                 */
                 request -> CapabilityResult.available(new ScheduleOccupancyView(false)),
                 catalog(lab(7L, "LAB-7", "Lab Seven"))
         );
@@ -63,9 +80,16 @@ class ReservationScheduleServiceTest {
         assertEquals("reservation request is malformed", result.message());
     }
 
+    /**
+     * cross日期预约范围UsesExistingUnavailable消息的处理逻辑。
+     */
     @Test
     void crossDateReservationRangeUsesExistingUnavailableMessage() {
         var service = new ReservationScheduleService(
+                /**
+                 * 处理当前调用传入的回调逻辑。
+                 * 入参：request。
+                 */
                 request -> CapabilityResult.available(new ScheduleOccupancyView(false)),
                 catalog(lab(7L, "LAB-7", "Lab Seven"))
         );
@@ -80,13 +104,29 @@ class ReservationScheduleServiceTest {
         assertEquals("reservation time must be within reservation date", result.message());
     }
 
+    /**
+     * catalog的处理逻辑。
+     * @param lab 实验室参数。
+     * @return LabCatalogQuery 类型的处理结果。
+     */
     private static LabCatalogQuery catalog(LabView lab) {
         return new LabCatalogQuery() {
+            /**
+             * 列出当前操作。
+             * @param scope scope参数。
+             * @return 当前操作得到的记录集合。
+             */
             @Override
             public List<LabView> list(LabAccessScope scope) {
                 return List.of(lab);
             }
 
+            /**
+             * 查找By标识。
+             * @param id 标识参数。
+             * @param scope scope参数。
+             * @return LabView 类型的处理结果。
+             */
             @Override
             public LabView findById(long id, LabAccessScope scope) {
                 return lab;
@@ -94,6 +134,13 @@ class ReservationScheduleServiceTest {
         };
     }
 
+    /**
+     * 实验室的处理逻辑。
+     * @param id 标识参数。
+     * @param code 编码参数。
+     * @param name 名称参数。
+     * @return LabView 类型的处理结果。
+     */
     private static LabView lab(Long id, String code, String name) {
         return new LabView(id, code, name, null, null, null, null, 50, null, null, null, 0, null, null, null);
     }

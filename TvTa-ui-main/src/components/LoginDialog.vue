@@ -18,10 +18,17 @@ const emit = defineEmits<{
 const username = ref('')
 const password = ref('')
 
-const canSubmit = computed(() => Boolean(username.value.trim() && password.value.trim()))
+const canSubmit = computed(/** 计算派生状态。 */ () => Boolean(username.value.trim() && password.value.trim()))
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => props.visible,
+  /**
+   * 响应被监听状态的变化。
+   * 入参：visible。
+   */
   (visible) => {
     if (!visible) {
       password.value = ''
@@ -33,6 +40,9 @@ watch(
   { immediate: true }
 )
 
+/**
+ * 处理Submit。
+ */
 function handleSubmit() {
   if (!canSubmit.value) return
   emit('submit', {
@@ -41,6 +51,9 @@ function handleSubmit() {
   })
 }
 
+/**
+ * 处理Cancel。
+ */
 function handleCancel() {
   emit('cancel')
 }

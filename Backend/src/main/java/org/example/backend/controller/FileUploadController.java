@@ -25,15 +25,29 @@ import java.time.Duration;
 public class FileUploadController {
     private final AliyunOssService aliyunOssService;
 
+    /**
+     * 构造 FileUploadController，初始化当前实例。
+     * @param aliyunOssService aliyunOss服务参数。
+     */
     public FileUploadController(AliyunOssService aliyunOssService) {
         this.aliyunOssService = aliyunOssService;
     }
 
+    /**
+     * 上传头像。
+     * @param file 文件参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/files/avatars")
     public Result uploadAvatar(@RequestParam("file") MultipartFile file) {
         return Result.success("上传头像成功", aliyunOssService.uploadAvatar(file));
     }
 
+    /**
+     * 获取头像。
+     * @param objectKey object键参数。
+     * @return ResponseEntity<byte[]> 类型的处理结果。
+     */
     @GetMapping("/files/avatar-proxy")
     public ResponseEntity<byte[]> getAvatar(@RequestParam("objectKey") String objectKey) {
         AvatarObject avatarObject = aliyunOssService.downloadAvatar(objectKey);
@@ -43,6 +57,11 @@ public class FileUploadController {
                 .body(avatarObject.content());
     }
 
+    /**
+     * 解析媒体类型。
+     * @param contentType 内容类型参数。
+     * @return MediaType 类型的处理结果。
+     */
     private MediaType parseMediaType(String contentType) {
         try {
             return MediaType.parseMediaType(contentType);

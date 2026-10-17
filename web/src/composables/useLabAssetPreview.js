@@ -234,6 +234,11 @@ const INITIAL_ASSET_RECORDS = [
   },
 ]
 
+/**
+ * 读取Storage记录集合。
+ * 入参：storageKey（storage键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function readStorageRecords(storageKey) {
   if (typeof window === 'undefined') return null
 
@@ -246,16 +251,25 @@ function readStorageRecords(storageKey) {
   }
 }
 
+/**
+ * 持久化Preview记录集合。
+ * 入参：records（记录集合）。
+ */
 function persistPreviewRecords(records) {
   if (typeof window === 'undefined') return
 
   window.localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(records))
 }
 
+/**
+ * 合并记录集合。
+ * 入参：records（记录集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function mergeRecords(records) {
   const recordMap = new Map()
 
-  records.forEach((record) => {
+  records.forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     const key = record.id || record.code
 
     if (!key) return
@@ -266,14 +280,29 @@ function mergeRecords(records) {
   return Array.from(recordMap.values())
 }
 
+/**
+ * 获取资产状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getAssetStatusType(status) {
   return STATUS_TYPE_MAP[status] || 'info'
 }
 
+/**
+ * 获取资产Health类型。
+ * 入参：health（health）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getAssetHealthType(health) {
   return HEALTH_TYPE_MAP[health] || 'info'
 }
 
+/**
+ * 归一化资产记录。
+ * 入参：record（记录）。
+ * @returns 组装的键值对象。
+ */
 export function normalizeAssetRecord(record) {
   return {
     ...record,
@@ -285,6 +314,10 @@ export function normalizeAssetRecord(record) {
   }
 }
 
+/**
+ * 加载实验室资产记录集合。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function loadLabAssetRecords() {
   const seededRecords = INITIAL_ASSET_RECORDS.map(normalizeAssetRecord)
   const previewRecords = readStorageRecords(PREVIEW_STORAGE_KEY)
@@ -301,8 +334,13 @@ export function loadLabAssetRecords() {
   ])
 }
 
+/**
+ * 获取实验室资产记录集合By实验室名称。
+ * 入参：labName（实验室名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function getLabAssetRecordsByLabName(labName) {
   if (!labName) return []
 
-  return loadLabAssetRecords().filter((record) => record.lab === labName)
+  return loadLabAssetRecords().filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => record.lab === labName)
 }

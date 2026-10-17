@@ -16,6 +16,9 @@ public record ReservationReviewUpdate(
         String reviewRemark,
         Set<ReservationStatus> allowedCurrentStatuses
 ) {
+    /**
+     * 构造 ReservationReviewUpdate，初始化当前实例。
+     */
     public ReservationReviewUpdate {
         Objects.requireNonNull(status, "Review status is required");
         allowedCurrentStatuses = Set.copyOf(Objects.requireNonNull(allowedCurrentStatuses, "Allowed statuses are required"));

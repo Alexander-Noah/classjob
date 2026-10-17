@@ -11,11 +11,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# 验证空白。
 function Test-Blank {
     param([string]$Value)
     return [string]::IsNullOrWhiteSpace($Value)
 }
 
+# New本地秘密配置的处理逻辑。
 function New-LocalSecret {
     $bytes = New-Object byte[] 48
     $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
@@ -29,6 +31,7 @@ function New-LocalSecret {
     return [Convert]::ToBase64String($bytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
 }
 
+# 读取本地秘密配置。
 function Read-LocalSecrets {
     param([string]$Path)
 
@@ -56,6 +59,7 @@ function Read-LocalSecrets {
     return $values
 }
 
+# 写入本地秘密配置。
 function Write-LocalSecrets {
     param(
         [string]$Path,

@@ -4,6 +4,11 @@
  */
 import { API_BASE_URL } from '../api/config'
 
+/**
+ * 归一化头像URL。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function normalizeAvatarUrl(value = '') {
   const avatarUrl = String(value || '').trim()
   if (!avatarUrl) return ''

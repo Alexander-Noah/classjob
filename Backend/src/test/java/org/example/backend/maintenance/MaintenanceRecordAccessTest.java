@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MaintenanceRecordAccessTest {
+    /**
+     * legacyWrite权限WorkButReadOnly权限DoNot的处理逻辑。
+     */
     @Test
     void legacyWritePermissionsWorkButReadOnlyPermissionsDoNot() {
         assertTrue(MaintenanceRecordAccess.canWrite("labAdmin", "[{\"items\":[\"维护记录填写\",\"维护记录查看\"]}]"));

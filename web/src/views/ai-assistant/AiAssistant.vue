@@ -27,10 +27,14 @@ defineOptions({
 const HISTORY_STORAGE_KEY = 'smart-lab:ai-assistant:conversations'
 const TTS_STORAGE_KEY = 'smart-lab:ai-tts-enabled'
 const MAX_HISTORY_COUNT = 30
-const currentUser = inject('sessionUserProfile', computed(() => getStoredUser() || {}))
-const currentUserName = computed(() => currentUser.value.realName || currentUser.value.name || currentUser.value.username || '我')
-const currentUserAvatar = computed(() => normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
+const currentUser = inject('sessionUserProfile', computed(/** 计算派生状态。 */ () => getStoredUser() || {}))
+const currentUserName = computed(/** 计算派生状态。 */ () => currentUser.value.realName || currentUser.value.name || currentUser.value.username || '我')
+const currentUserAvatar = computed(/** 计算派生状态。 */ () => normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
 
+/**
+ * 创建默认DirectAI配置。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createDefaultDirectAiConfig = () => ({
   enabled: false,
   baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
@@ -63,19 +67,26 @@ const isTestingDirectAi = ref(false)
 const directAiConfig = reactive(createDefaultDirectAiConfig())
 const testedAiConfigFingerprint = ref('')
 const isSavingDirectAi = ref(false)
-const draftAiConfigFingerprint = computed(() => JSON.stringify([aiConfigFingerprint(directAiConfig), directAiConfig.apiKey?.trim() || '']))
-const hasPassedAiTest = computed(() => testedAiConfigFingerprint.value === draftAiConfigFingerprint.value)
-watch(draftAiConfigFingerprint, () => { testedAiConfigFingerprint.value = '' }, { flush: 'sync' })
+const draftAiConfigFingerprint = computed(/** 计算派生状态。 */ () => JSON.stringify([aiConfigFingerprint(directAiConfig), directAiConfig.apiKey?.trim() || '']))
+const hasPassedAiTest = computed(/** 计算派生状态。 */ () => testedAiConfigFingerprint.value === draftAiConfigFingerprint.value)
+watch(draftAiConfigFingerprint, /** 响应被监听状态的变化。 */ () => { testedAiConfigFingerprint.value = '' }, { flush: 'sync' })
 const providerId = ref('qwen')
 const savedDirectAiConfig = ref(null)
 const lastApiEndpoint = ref(normalizedApiEndpoint(directAiConfig.baseUrl))
-const currentProvider = computed(() => AI_PROVIDERS.find(provider => provider.id === providerId.value) || AI_PROVIDERS.at(-1))
-const modelOptions = computed(() => [...new Set([...currentProvider.value.models, directAiConfig.model].filter(Boolean))])
-const savedApiKeyAvailable = computed(() => canReuseSavedAiKey(directAiConfig, savedDirectAiConfig.value))
+const currentProvider = computed(/** 计算派生状态。 */ () => AI_PROVIDERS.find(/** 判断当前条目是否为查找目标。 入参：provider。 */ provider => provider.id === providerId.value) || AI_PROVIDERS.at(-1))
+const modelOptions = computed(/** 计算派生状态。 */ () => [...new Set([...currentProvider.value.models, directAiConfig.model].filter(Boolean))])
+const savedApiKeyAvailable = computed(/** 计算派生状态。 */ () => canReuseSavedAiKey(directAiConfig, savedDirectAiConfig.value))
+/**
+ * change服务商的处理逻辑。
+ * 入参：value（值）。
+ */
 const changeProvider = value => {
   Object.assign(directAiConfig, selectAiProvider(directAiConfig, value))
   lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
 }
+/**
+ * address变化的处理逻辑。
+ */
 const addressChanged = () => {
   const endpoint = normalizedApiEndpoint(directAiConfig.baseUrl)
   if (endpoint !== lastApiEndpoint.value) { directAiConfig.apiKey = ''; directAiConfig.apiKeyConfigured = false }
@@ -88,6 +99,10 @@ let remoteSaveChain = Promise.resolve()
 let pendingRemoteConversations = []
 let hasShownSocketError = false
 
+/**
+ * 创建Welcome消息。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createWelcomeMessage = () => ({
   id: `welcome-${Date.now()}-${Math.random()}`,
   role: 'assistant',
@@ -95,28 +110,32 @@ const createWelcomeMessage = () => ({
   time: '',
 })
 
+/**
+ * 创建默认消息。
+ * @returns 生成的数组。
+ */
 const createDefaultMessages = () => [createWelcomeMessage()]
 const messages = ref(createDefaultMessages())
 
-const sortedConversations = computed(() =>
-  [...conversationHistories.value].sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0)),
+const sortedConversations = computed(/** 计算派生状态。 */ () =>
+  [...conversationHistories.value].sort(/** 比较当前两项的排序先后。 入参：left、right。 */ (left, right) => (right.updatedAt || 0) - (left.updatedAt || 0)),
 )
-const filteredConversations = computed(() => {
+const filteredConversations = computed(/** 计算派生状态。 */ () => {
   const keyword = historyKeyword.value.trim().toLowerCase()
 
   if (!keyword) return sortedConversations.value
 
-  return sortedConversations.value.filter((conversation) =>
+  return sortedConversations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：conversation。 */ (conversation) =>
     [conversation.title, conversation.preview]
       .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(keyword)),
+      .some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => String(value).toLowerCase().includes(keyword)),
   )
 })
-const activeConversation = computed(() =>
-  sortedConversations.value.find((conversation) => conversation.id === activeConversationId.value),
+const activeConversation = computed(/** 计算派生状态。 */ () =>
+  sortedConversations.value.find(/** 判断当前条目是否为查找目标。 入参：conversation。 */ (conversation) => conversation.id === activeConversationId.value),
 )
-const activeConversationTitle = computed(() => activeConversation.value?.title || 'AI 智能助手')
-const isDirectAiConfigured = computed(() =>
+const activeConversationTitle = computed(/** 计算派生状态。 */ () => activeConversation.value?.title || 'AI 智能助手')
+const isDirectAiConfigured = computed(/** 计算派生状态。 */ () =>
   Boolean(
     directAiConfig.enabled &&
       directAiConfig.baseUrl?.trim() &&
@@ -124,24 +143,33 @@ const isDirectAiConfigured = computed(() =>
       directAiConfig.model?.trim(),
   ),
 )
-const canSend = computed(() => !deletingConversationId.value && !isDirectAiLoading.value && Boolean(inputValue.value.trim()))
-const connectionStatusText = computed(() => {
+const canSend = computed(/** 计算派生状态。 */ () => !deletingConversationId.value && !isDirectAiLoading.value && Boolean(inputValue.value.trim()))
+const connectionStatusText = computed(/** 计算派生状态。 */ () => {
   if (connectionStatus.value === 'connected') return '服务在线'
   if (connectionStatus.value === 'connecting') return '正在连接'
   return '服务离线'
 })
-const currentServiceStatusText = computed(() => {
+const currentServiceStatusText = computed(/** 计算派生状态。 */ () => {
   if (isDirectAiLoading.value) return '正在查询平台数据'
   if (!directAiConfig.enabled) return connectionStatusText.value
   if (!isDirectAiConfigured.value) return '自定义 API 未完成配置'
   return isDirectAiLoading.value ? '自定义 API 调用中' : '自定义 API 已启用'
 })
 
+/**
+ * 格式化时间。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatTime = () => {
   const now = new Date()
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
+/**
+ * 格式化会话时间。
+ * 入参：timestamp（timestamp）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatConversationTime = (timestamp) => {
   const date = new Date(timestamp || Date.now())
   const now = new Date()
@@ -154,24 +182,42 @@ const formatConversationTime = (timestamp) => {
   return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${timeText}`
 }
 
+/**
+ * 获取消息Preview。
+ * 入参：messageList（消息列表）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getMessagePreview = (messageList = []) => {
   const lastMessage = [...messageList]
     .reverse()
-    .find((message) => message.content?.trim())
+    .find(/** 判断当前条目是否为查找目标。 入参：message。 */ (message) => message.content?.trim())
 
   if (!lastMessage) return '暂无对话内容'
 
   return lastMessage.content?.trim() || '暂无对话内容'
 }
 
+/**
+ * 获取会话Title。
+ * 入参：messageList（消息列表）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getConversationTitle = (messageList = []) => {
   const firstUserMessage = messageList.find(
+    /**
+     * 判断当前条目是否为查找目标。
+     * 入参：message。
+     */
     (message) => message.role === 'user' && message.content?.trim(),
   )
   const title = firstUserMessage?.content?.trim() || '新的咨询'
   return title.length > 18 ? `${title.slice(0, 18)}...` : title
 }
 
+/**
+ * 复制消息。
+ * 入参：content（内容）。
+ */
 const copyMessage = async (content) => {
   try { await navigator.clipboard.writeText(content); ElMessage.success('已复制回答') }
   catch { ElMessage.warning('复制失败，请选中文字后复制') }
@@ -184,6 +230,11 @@ const handleComposerEnter = (event) => {
   sendMessage()
 }
 
+/**
+ * 归一化会话。
+ * 入参：conversation（会话）。
+ * @returns 组装的键值对象。
+ */
 const normalizeConversation = (conversation = {}) => {
   const messageList = Array.isArray(conversation.messages) && conversation.messages.length
     ? conversation.messages
@@ -194,7 +245,7 @@ const normalizeConversation = (conversation = {}) => {
     title: conversation.title || getConversationTitle(messageList),
     preview: conversation.preview || getMessagePreview(messageList),
     updatedAt: conversation.updatedAt || Date.now(),
-    messages: messageList.map((message) => ({
+    messages: messageList.map(/** 将当前条目转换为目标结果。 入参：message。 */ (message) => ({
       id: message.id || `${Date.now()}-${Math.random()}`,
       role: message.role === 'user' ? 'user' : 'assistant',
       content: message.content || '',
@@ -203,6 +254,10 @@ const normalizeConversation = (conversation = {}) => {
   }
 }
 
+/**
+ * 创建会话。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createConversation = () => ({
   id: `conversation-${Date.now()}-${Math.random()}`,
   title: '新的咨询',
@@ -211,12 +266,20 @@ const createConversation = () => ({
   messages: createDefaultMessages(),
 })
 
+/**
+ * 获取历史Storage键。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getHistoryStorageKey = () => {
   const user = getStoredUser()
   const owner = user?.id || user?.username || 'anonymous'
   return `${HISTORY_STORAGE_KEY}:${owner}`
 }
 
+/**
+ * 写入本地会话。
+ * 入参：conversationList（会话列表）。
+ */
 const writeLocalConversations = (conversationList) => {
   const conversations = conversationList.slice(0, MAX_HISTORY_COUNT)
 
@@ -228,6 +291,10 @@ const writeLocalConversations = (conversationList) => {
   }
 }
 
+/**
+ * 读取本地会话。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readLocalConversations = () => {
   try {
     const rawConversations =
@@ -239,6 +306,10 @@ const readLocalConversations = () => {
   }
 }
 
+/**
+ * 合并会话列表。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const mergeConversationLists = (...conversationLists) => {
   const conversationMap = new Map()
 
@@ -246,7 +317,7 @@ const mergeConversationLists = (...conversationLists) => {
     .flat()
     .filter(Boolean)
     .map(normalizeConversation)
-    .forEach((conversation) => {
+    .forEach(/** 处理遍历到的当前条目。 入参：conversation。 */ (conversation) => {
       const currentConversation = conversationMap.get(conversation.id)
       if (!currentConversation || (conversation.updatedAt || 0) >= (currentConversation.updatedAt || 0)) {
         conversationMap.set(conversation.id, conversation)
@@ -254,21 +325,28 @@ const mergeConversationLists = (...conversationLists) => {
     })
 
   return [...conversationMap.values()]
-    .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
+    .sort(/** 比较当前两项的排序先后。 入参：left、right。 */ (left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
     .slice(0, MAX_HISTORY_COUNT)
 }
 
+/**
+ * 应用会话列表。
+ * 入参：conversationList（会话列表）。
+ */
 const applyConversationList = (conversationList = []) => {
   const nextConversations = mergeConversationLists(conversationList)
   conversationHistories.value = nextConversations.length ? nextConversations : [createConversation()]
 
   const nextActiveConversation =
-    conversationHistories.value.find((conversation) => conversation.id === activeConversationId.value) ||
+    conversationHistories.value.find(/** 判断当前条目是否为查找目标。 入参：conversation。 */ (conversation) => conversation.id === activeConversationId.value) ||
     sortedConversations.value[0]
   activeConversationId.value = nextActiveConversation.id
   messages.value = nextActiveConversation.messages
 }
 
+/**
+ * 刷新远程Save。
+ */
 const flushRemoteSave = async () => {
   if (historySaveTimer) {
     window.clearTimeout(historySaveTimer)
@@ -282,13 +360,17 @@ const flushRemoteSave = async () => {
 
   try {
     pendingRemoteConversations = []
-    remoteSaveChain = remoteSaveChain.catch(() => {}).then(() => saveAiConversationHistories(conversations))
+    remoteSaveChain = remoteSaveChain.catch(/** 处理异步失败结果。 */ () => {}).then(/** 处理异步成功结果。 */ () => saveAiConversationHistories(conversations))
     await remoteSaveChain
   } catch (error) {
     console.warn('[AiAssistant] failed to save conversation history', error)
   }
 }
 
+/**
+ * queue远程Save的处理逻辑。
+ * 入参：conversationList（会话列表）。
+ */
 const queueRemoteSave = (conversationList = conversationHistories.value) => {
   if (isHistoryRestoring.value) return
 
@@ -299,6 +381,10 @@ const queueRemoteSave = (conversationList = conversationHistories.value) => {
   historySaveTimer = window.setTimeout(flushRemoteSave, 500)
 }
 
+/**
+ * 保存会话。
+ * 入参：解构参数（syncRemote、true）。
+ */
 const saveConversations = ({ syncRemote = true } = {}) => {
   const conversations = conversationHistories.value.slice(0, MAX_HISTORY_COUNT)
   writeLocalConversations(conversations)
@@ -307,6 +393,9 @@ const saveConversations = ({ syncRemote = true } = {}) => {
   }
 }
 
+/**
+ * 持久化当前会话。
+ */
 const persistCurrentConversation = () => {
   if (deletingConversationId.value) return
   if (!activeConversationId.value) return
@@ -318,7 +407,7 @@ const persistCurrentConversation = () => {
     updatedAt: Date.now(),
     messages: messages.value,
   })
-  const index = conversationHistories.value.findIndex((conversation) => conversation.id === activeConversationId.value)
+  const index = conversationHistories.value.findIndex(/** 定位符合条件的条目索引。 入参：conversation。 */ (conversation) => conversation.id === activeConversationId.value)
 
   if (index >= 0) {
     conversationHistories.value.splice(index, 1, nextConversation)
@@ -330,6 +419,9 @@ const persistCurrentConversation = () => {
   saveConversations()
 }
 
+/**
+ * 加载会话。
+ */
 const loadConversations = async () => {
   applyConversationList(readLocalConversations())
   saveConversations({ syncRemote: false })
@@ -355,6 +447,9 @@ const loadConversations = async () => {
   }
 }
 
+/**
+ * 滚动目标Bottom的处理逻辑。
+ */
 const scrollToBottom = async () => {
   await nextTick()
   if (messageListRef.value) {
@@ -362,6 +457,9 @@ const scrollToBottom = async () => {
   }
 }
 
+/**
+ * 启动New会话。
+ */
 const startNewConversation = async () => {
   if (deletingConversationId.value) return
   persistCurrentConversation()
@@ -374,12 +472,16 @@ const startNewConversation = async () => {
   await scrollToBottom()
 }
 
+/**
+ * 切换会话。
+ * 入参：conversationId（会话标识）。
+ */
 const switchConversation = async (conversationId) => {
   if (deletingConversationId.value) return
   if (conversationId === activeConversationId.value) return
   persistCurrentConversation()
 
-  const conversation = conversationHistories.value.find((item) => item.id === conversationId)
+  const conversation = conversationHistories.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.id === conversationId)
   if (!conversation) return
 
   activeConversationId.value = conversation.id
@@ -388,6 +490,10 @@ const switchConversation = async (conversationId) => {
   await scrollToBottom()
 }
 
+/**
+ * 删除会话。
+ * 入参：conversation（会话）。
+ */
 const deleteConversation = async (conversation) => {
   if (isHistoryRestoring.value || deletingConversationId.value || isDirectAiLoading.value) return
   try {
@@ -406,7 +512,7 @@ const deleteConversation = async (conversation) => {
     await flushRemoteSave()
     await deleteAiConversationHistory(conversation.id)
     const wasActive = activeConversationId.value === conversation.id
-    const remaining = sortedConversations.value.filter(item => item.id !== conversation.id)
+    const remaining = sortedConversations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item => item.id !== conversation.id)
     conversationHistories.value = remaining.length ? remaining : [createConversation()]
     if (wasActive) {
       const next = conversationHistories.value[0]
@@ -426,6 +532,10 @@ const deleteConversation = async (conversation) => {
   }
 }
 
+/**
+ * 追加消息。
+ * 入参：role（角色）；content（内容）；解构参数（shouldSpeak、false）。
+ */
 const appendMessage = async (role, content, { shouldSpeak = false } = {}) => {
   if (deletingConversationId.value) return
   if (!content?.trim()) return
@@ -445,10 +555,18 @@ const appendMessage = async (role, content, { shouldSpeak = false } = {}) => {
   await scrollToBottom()
 }
 
+/**
+ * 追加Assistant文本。
+ * 入参：content（内容）。
+ */
 const appendAssistantText = async (content) => {
   await appendMessage('assistant', content, { shouldSpeak: true })
 }
 
+/**
+ * 处理Socket文本消息。
+ * 入参：message（消息）。
+ */
 const handleSocketTextMessage = async (message) => {
   if (message.type === 'hello') return
 
@@ -486,9 +604,16 @@ const handleSocketTextMessage = async (message) => {
   }
 }
 
+/**
+ * 确保满足服务。
+ */
 const ensureServices = () => {
   if (!socketRef.value) {
     socketRef.value = new AssistantWebSocket({
+      /**
+       * 响应状态Change。
+       * 入参：status（状态）。
+       */
       onStatusChange: (status) => {
         connectionStatus.value = status
         if (status === 'connected') {
@@ -496,6 +621,9 @@ const ensureServices = () => {
         }
       },
       onTextMessage: handleSocketTextMessage,
+      /**
+       * 响应音频消息。
+       */
       onAudioMessage: () => {},
       onError: handleAssistantSocketError,
     })
@@ -503,9 +631,17 @@ const ensureServices = () => {
 
   if (!audioRef.value) {
     audioRef.value = new AssistantAudio({
+      /**
+       * 响应LevelChange。
+       * 入参：level（level）。
+       */
       onLevelChange: (level) => {
         audioLevel.value = level
       },
+      /**
+       * 响应音频帧。
+       * 入参：frame（帧）。
+       */
       onAudioFrame: (frame) => {
         socketRef.value?.sendBinary(frame)
       },
@@ -514,13 +650,20 @@ const ensureServices = () => {
 
   if (!browserSpeechRef.value) {
     browserSpeechRef.value = new BrowserSpeechRecognition({
+      /**
+       * 响应Transcript。
+       * 入参：text（文本）。
+       */
       onTranscript: (text) => {
         liveTranscript.value = text
       },
+      /**
+       * 响应错误。
+       */
       onError: () => {
         if (voiceMode.value === 'browser' && isCapturingVoice.value) {
           browserSpeechRef.value?.abort()
-          startServerVoiceCapture().catch(() => {
+          startServerVoiceCapture().catch(/** 处理异步失败结果。 */ () => {
             isCapturingVoice.value = false
             voiceMode.value = ''
             liveTranscript.value = ''
@@ -538,6 +681,10 @@ const ensureServices = () => {
   }
 }
 
+/**
+ * 构建Ws协议。
+ * @returns 生成的数组。
+ */
 const buildWsProtocols = () => {
   const token = getAuthToken()
   if (!token) return []
@@ -545,6 +692,9 @@ const buildWsProtocols = () => {
   return ['smart-lab.ai.v1', `smart-lab.jwt.${token}`]
 }
 
+/**
+ * 处理AssistantSocket错误。
+ */
 const handleAssistantSocketError = () => {
   if (directAiConfig.enabled) return
   if (hasShownSocketError) return
@@ -552,6 +702,9 @@ const handleAssistantSocketError = () => {
   ElMessage.error('智能助手连接失败，请点击“重新连接”后重试')
 }
 
+/**
+ * 连接服务。
+ */
 const connectService = () => {
   if (directAiConfig.enabled) return
   if (!wsUrl.value || socketRef.value?.isConnected) return
@@ -559,6 +712,10 @@ const connectService = () => {
   socketRef.value.connect(wsUrl.value, buildWsProtocols())
 }
 
+/**
+ * 获取配置AndConnect。
+ * 涉及：发起 HTTP 请求。
+ */
 const fetchConfigAndConnect = async () => {
   try {
     const token = getAuthToken()
@@ -575,12 +732,19 @@ const fetchConfigAndConnect = async () => {
   }
 }
 
+/**
+ * 重置DirectAI配置。
+ */
 const resetDirectAiConfig = () => {
   Object.assign(directAiConfig, createDefaultDirectAiConfig())
   providerId.value = 'qwen'
   lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
 }
 
+/**
+ * 应用BackendAI配置。
+ * 入参：config（配置）。
+ */
 const applyBackendAiConfig = (config = {}) => {
   Object.assign(directAiConfig, {
     ...createDefaultDirectAiConfig(),
@@ -593,6 +757,9 @@ const applyBackendAiConfig = (config = {}) => {
   lastApiEndpoint.value = normalizedApiEndpoint(directAiConfig.baseUrl)
 }
 
+/**
+ * 加载BackendAI配置。
+ */
 const loadBackendAiConfig = async () => {
   try {
     applyBackendAiConfig(await getAiAssistantUserConfig())
@@ -601,6 +768,9 @@ const loadBackendAiConfig = async () => {
   }
 }
 
+/**
+ * 保存BackendAI配置。
+ */
 const saveBackendAiConfig = async () => {
   if (isSavingDirectAi.value || isTestingDirectAi.value) return
   if (directAiConfig.enabled && !hasPassedAiTest.value) {
@@ -636,6 +806,9 @@ const saveBackendAiConfig = async () => {
   }
 }
 
+/**
+ * 验证BackendAI配置。
+ */
 const testBackendAiConfig = async () => {
   if (isTestingDirectAi.value || isSavingDirectAi.value) return
   if (!directAiConfig.enabled) {
@@ -667,6 +840,11 @@ const testBackendAiConfig = async () => {
   }
 }
 
+/**
+ * 请求BackendAIAnswer的处理逻辑。
+ * 入参：question（question）；history（历史）。
+ * @returns answer 的当前值。
+ */
 const requestBackendAiAnswer = async (question, history) => {
   const payload = await requestAiAssistantAnswer({
     question,
@@ -679,6 +857,11 @@ const requestBackendAiAnswer = async (question, history) => {
   return answer
 }
 
+/**
+ * 提交Question。
+ * 入参：text（文本）；onSubmitted（onSubmitted）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const submitQuestion = async (text, onSubmitted) => {
   if (deletingConversationId.value || isDirectAiLoading.value) return false
   const question = text?.trim()
@@ -698,7 +881,7 @@ const submitQuestion = async (text, onSubmitted) => {
   }
 
   const conversationId = activeConversationId.value
-  const history = messages.value.slice(-12).map(({ role, content }) => ({ role, content }))
+  const history = messages.value.slice(-12).map(/** 将当前条目转换为目标结果。 */ ({ role, content }) => ({ role, content }))
   isDirectAiLoading.value = true
   await appendMessage('user', question)
   onSubmitted?.()
@@ -707,7 +890,7 @@ const submitQuestion = async (text, onSubmitted) => {
     if (activeConversationId.value === conversationId) {
       await appendAssistantText(answer)
     } else {
-      const conversation = conversationHistories.value.find(item => item.id === conversationId)
+      const conversation = conversationHistories.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ item => item.id === conversationId)
       if (conversation) {
         conversation.messages.push({ id: `${Date.now()}-${Math.random()}`, role: 'assistant', content: answer, time: formatTime() })
         conversation.preview = getMessagePreview(conversation.messages)
@@ -728,6 +911,9 @@ const submitQuestion = async (text, onSubmitted) => {
   }
 }
 
+/**
+ * 发送消息。
+ */
 const sendMessage = async () => {
   if (isDirectAiLoading.value) return
   const text = inputValue.value.trim()
@@ -737,11 +923,15 @@ const sendMessage = async () => {
     return
   }
 
-  await submitQuestion(text, () => {
+  await submitQuestion(text, /** 处理 submitQuestion 调用中的回调逻辑。 */ () => {
     if (inputValue.value.trim() === text) inputValue.value = ''
   })
 }
 
+/**
+ * 切换语音。
+ * 入参：value（值）。
+ */
 const toggleSpeech = (value) => {
   speechEnabled.value = value
   localStorage.setItem(TTS_STORAGE_KEY, value ? 'true' : 'false')
@@ -750,6 +940,10 @@ const toggleSpeech = (value) => {
   }
 }
 
+/**
+ * speak文本的处理逻辑。
+ * 入参：text（文本）。
+ */
 const speakText = (text) => {
   if (!speechEnabled.value || !window.speechSynthesis || !text?.trim()) return
   window.speechSynthesis.cancel()
@@ -760,6 +954,9 @@ const speakText = (text) => {
   window.speechSynthesis.speak(utterance)
 }
 
+/**
+ * 启动服务端VoiceCapture。
+ */
 const startServerVoiceCapture = async () => {
   voiceMode.value = 'server'
   socketRef.value.sendAbort()
@@ -768,6 +965,9 @@ const startServerVoiceCapture = async () => {
   isCapturingVoice.value = true
 }
 
+/**
+ * 启动VoiceCapture。
+ */
 const startVoiceCapture = async () => {
   ensureServices()
   if (!socketRef.value?.isConnected) {
@@ -790,6 +990,9 @@ const startVoiceCapture = async () => {
   }
 }
 
+/**
+ * 停止VoiceCapture。
+ */
 const stopVoiceCapture = async () => {
   if (!isCapturingVoice.value) return
 
@@ -818,6 +1021,9 @@ const stopVoiceCapture = async () => {
   liveTranscript.value = ''
 }
 
+/**
+ * 清理消息。
+ */
 const clearMessages = () => {
   if (deletingConversationId.value) return
   messages.value = createDefaultMessages()
@@ -825,7 +1031,7 @@ const clearMessages = () => {
   scrollToBottom()
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   loadConversations().finally(scrollToBottom)
   await loadBackendAiConfig()
   if (!directAiConfig.enabled) {
@@ -833,7 +1039,7 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => {
+onUnmounted(/** 在组件卸载后完成清理。 */ () => {
   persistCurrentConversation()
   flushRemoteSave()
   stopVoiceCapture()

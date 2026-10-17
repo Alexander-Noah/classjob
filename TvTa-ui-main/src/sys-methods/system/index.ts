@@ -8,11 +8,21 @@ import { platform } from '@tauri-apps/plugin-os';
 
 const MAC_PATTERN = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/g;
 
+/**
+ * 归一化MacAddress。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeMacAddress = (value: string) => value.trim().toUpperCase().replace(/-/g, ':');
 
+/**
+ * 查找FirstMacAddress。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findFirstMacAddress = (value: string) => {
   const matches = value.match(MAC_PATTERN) || [];
-  return normalizeMacAddress(matches.find(item => !/^00[:-]00[:-]00[:-]00[:-]00[:-]00$/i.test(item)) || '');
+  return normalizeMacAddress(matches.find(/** 判断当前条目是否为查找目标。 入参：item。 */ item => !/^00[:-]00[:-]00[:-]00[:-]00[:-]00$/i.test(item)) || '');
 };
 
 /**

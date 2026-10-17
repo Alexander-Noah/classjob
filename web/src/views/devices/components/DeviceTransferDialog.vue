@@ -14,6 +14,10 @@ defineOptions({
 const props = defineProps({
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   formModel: {
@@ -22,6 +26,10 @@ const props = defineProps({
   },
   labOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   loading: {
@@ -34,6 +42,10 @@ const props = defineProps({
   },
   ownerOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -41,17 +53,51 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const isBatch = computed(() => props.devices.length > 1)
-const firstDevice = computed(() => props.devices[0] || null)
-const title = computed(() => (isBatch.value ? `批量调拨 ${props.devices.length} 台设备` : '设备调拨'))
+const isBatch = computed(/** 计算派生状态。 */ () => props.devices.length > 1)
+const firstDevice = computed(/** 计算派生状态。 */ () => props.devices[0] || null)
+const title = computed(/** 计算派生状态。 */ () => (isBatch.value ? `批量调拨 ${props.devices.length} 台设备` : '设备调拨'))
+/**
+ * 获取所有者名称。
+ * 入参：user（用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getOwnerName = (user) => user.realName || user.name || user.username
+/**
+ * 获取设备名称。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceName = (device = {}) => device.deviceName || device.name || '未命名设备'
+/**
+ * 获取设备编码。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceCode = (device = {}) => device.assetNo || device.code || device.deviceCode || '-'
+/**
+ * 获取设备实验室。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceLab = (device = {}) => device.labName || device.lab || device.roomNo || '未关联实验室'
+/**
+ * 获取设备所有者。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceOwner = (device = {}) => device.owner || device.ownerName || device.ownerUsername || '未设置责任人'
 </script>
 
@@ -63,7 +109,7 @@ const getDeviceOwner = (device = {}) => device.owner || device.ownerName || devi
       </el-icon>
       <div>
         <h3>{{ isBatch ? `已选择 ${devices.length} 台设备` : getDeviceName(firstDevice) }}</h3>
-        <span v-if="isBatch">{{ devices.map((device) => getDeviceCode(device)).join('、') }}</span>
+        <span v-if="isBatch">{{ devices.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => getDeviceCode(device)).join('、') }}</span>
         <span v-else>{{ getDeviceCode(firstDevice) }} · {{ getDeviceLab(firstDevice) }} · {{ getDeviceOwner(firstDevice) }}</span>
       </div>
     </div>

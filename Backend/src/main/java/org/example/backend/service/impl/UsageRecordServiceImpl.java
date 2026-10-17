@@ -20,17 +20,32 @@ public class UsageRecordServiceImpl implements UsageRecordService {
     private final UsageRecordMapper usageRecordMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 UsageRecordServiceImpl，初始化当前实例。
+     * @param usageRecordMapper usage记录数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public UsageRecordServiceImpl(UsageRecordMapper usageRecordMapper, BusinessLoopService businessLoopService) {
         this.usageRecordMapper = usageRecordMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Usage记录集合。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<UsageRecordEntity> listUsageRecords() {
         List<UsageRecordEntity> records = usageRecordMapper.listUsageRecords();
         return records == null ? List.of() : records;
     }
 
+    /**
+     * replaceUsage记录集合的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param records 记录集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<UsageRecordEntity> replaceUsageRecords(List<UsageRecordEntity> records) {
@@ -49,6 +64,10 @@ public class UsageRecordServiceImpl implements UsageRecordService {
         return listUsageRecords();
     }
 
+    /**
+     * 重置Usage记录集合。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<UsageRecordEntity> resetUsageRecords() {
         List<UsageRecordEntity> records = listUsageRecords();
@@ -56,6 +75,13 @@ public class UsageRecordServiceImpl implements UsageRecordService {
         return records;
     }
 
+    /**
+     * 更新状态。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param status 状态参数。
+     * @return UsageRecordEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public UsageRecordEntity updateStatus(Long id, String status) {
@@ -75,6 +101,10 @@ public class UsageRecordServiceImpl implements UsageRecordService {
         return usageRecord;
     }
 
+    /**
+     * 归一化记录。
+     * @param record 记录参数。
+     */
     private void normalizeRecord(UsageRecordEntity record) {
         if (record.getUseTime() == null) {
             record.setUseTime(LocalDateTime.now());

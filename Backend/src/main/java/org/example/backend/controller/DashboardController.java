@@ -18,15 +18,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardController {
     private final DashboardService dashboardService;
 
+    /**
+     * 构造 DashboardController，初始化当前实例。
+     * @param dashboardService dashboard服务参数。
+     */
     public DashboardController(DashboardService dashboardService) {
         this.dashboardService = dashboardService;
     }
 
+    /**
+     * 获取概况。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/dashboard/overview")
     public Result getOverview(HttpServletRequest request) {
         return Result.success("获取工作台概览成功", dashboardService.getOverview(resolveScopedManagerId(request)));
     }
 
+    /**
+     * 解析ScopedManager标识。
+     * @param request 请求参数。
+     * @return Integer 类型的处理结果。
+     */
     private Integer resolveScopedManagerId(HttpServletRequest request) {
         Object role = request.getAttribute(JwtAuthenticationFilter.AUTH_ROLE_ATTRIBUTE);
         if ("systemAdmin".equals(String.valueOf(role))) {

@@ -71,18 +71,29 @@ const updateLogs = [
   },
 ]
 
+/**
+ * 收集设置。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const collectSettings = () => ({
   basicConfig: { ...basicConfig },
   loginPolicy: { ...loginPolicy },
   aiSettings: { ...aiSettings },
 })
 
+/**
+ * 应用设置。
+ * 入参：settings（设置）。
+ */
 const applySettings = (settings = {}) => {
   Object.assign(basicConfig, settings.basicConfig || {})
   Object.assign(loginPolicy, settings.loginPolicy || {})
   Object.assign(aiSettings, settings.aiSettings || {})
 }
 
+/**
+ * 加载设置。
+ */
 const loadSettings = async () => {
   isLoading.value = true
   try {
@@ -95,6 +106,9 @@ const loadSettings = async () => {
   }
 }
 
+/**
+ * 保存设置。
+ */
 const saveSettings = async () => {
   try {
     const settings = await saveSystemSettings(collectSettings())
@@ -105,10 +119,16 @@ const saveSettings = async () => {
   }
 }
 
+/**
+ * publishChangeLog的处理逻辑。
+ */
 const publishChangeLog = () => {
   ElMessage.success('配置变更说明已生成')
 }
 
+/**
+ * 重置Draft。
+ */
 const resetDraft = async () => {
   try {
     const settings = await resetSystemSettings()
@@ -119,6 +139,9 @@ const resetDraft = async () => {
   }
 }
 
+/**
+ * 导出设置。
+ */
 const exportSettings = () => {
   const groupNameMap = {
     basicConfig: '基础配置',
@@ -126,8 +149,8 @@ const exportSettings = () => {
     aiSettings: 'AI 接口',
   }
   const settings = collectSettings()
-  const rows = Object.entries(settings).flatMap(([group, values]) =>
-    Object.entries(values).map(([key, value]) => ({
+  const rows = Object.entries(settings).flatMap(/** 转换并展开当前条目。 */ ([group, values]) =>
+    Object.entries(values).map(/** 将当前条目转换为目标结果。 */ ([key, value]) => ({
       group: groupNameMap[group] || group,
       key,
       value,
@@ -147,6 +170,9 @@ const exportSettings = () => {
   ElMessage.success(`已导出 ${exportedCount} 项配置`)
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(AUTH_ROLE_DEFAULT_PATH.systemAdmin)
 }

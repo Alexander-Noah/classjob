@@ -27,6 +27,12 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
     private final ObjectMapper objectMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 ModuleRecordServiceImpl，初始化当前实例。
+     * @param moduleRecordMapper module记录数据映射器参数。
+     * @param objectMapper object数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public ModuleRecordServiceImpl(
             ModuleRecordMapper moduleRecordMapper,
             ObjectMapper objectMapper,
@@ -37,6 +43,11 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Module记录集合。
+     * @param moduleName module名称参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<Map<String, Object>> listModuleRecords(String moduleName) {
         List<Map<String, Object>> records = new ArrayList<>();
@@ -48,6 +59,13 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         return records;
     }
 
+    /**
+     * replaceModule记录集合的处理逻辑。
+     * 涉及：写入数据库；通过 Spring 代理入口应用事务配置。
+     * @param moduleName module名称参数。
+     * @param records 记录集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<Map<String, Object>> replaceModuleRecords(String moduleName, List<Map<String, Object>> records) {
@@ -66,6 +84,12 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         return nextRecords;
     }
 
+    /**
+     * 重置Module记录集合。
+     * 涉及：写入数据库；通过 Spring 代理入口应用事务配置。
+     * @param moduleName module名称参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<Map<String, Object>> resetModuleRecords(String moduleName) {
@@ -76,6 +100,11 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         return Collections.emptyList();
     }
 
+    /**
+     * 获取记录键。
+     * @param record 记录参数。
+     * @return String 类型的处理结果。
+     */
     private String getRecordKey(Map<String, Object> record) {
         Object key = record.get("id");
         if (key == null) key = record.get("code");
@@ -84,6 +113,11 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         return key == null ? null : String.valueOf(key);
     }
 
+    /**
+     * 读取记录。
+     * @param recordJson 记录JSON参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> readRecord(String recordJson) {
         try {
             return objectMapper.readValue(recordJson, RECORD_TYPE);
@@ -92,6 +126,11 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
         }
     }
 
+    /**
+     * 写入记录。
+     * @param record 记录参数。
+     * @return String 类型的处理结果。
+     */
     private String writeRecord(Map<String, Object> record) {
         try {
             return objectMapper.writeValueAsString(record);

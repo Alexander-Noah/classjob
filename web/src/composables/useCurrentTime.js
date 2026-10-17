@@ -4,6 +4,11 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+/**
+ * 格式化日期时间。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function formatDateTime(date) {
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
@@ -25,16 +30,19 @@ export function useCurrentTime() {
   const currentTime = ref('')
   let timer = null
 
+  /**
+   * 更新当前时间。
+   */
   const updateCurrentTime = () => {
     currentTime.value = formatDateTime(new Date())
   }
 
-  onMounted(() => {
+  onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
     updateCurrentTime()
     timer = window.setInterval(updateCurrentTime, 1000)
   })
 
-  onBeforeUnmount(() => {
+  onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
     if (timer) {
       window.clearInterval(timer)
     }

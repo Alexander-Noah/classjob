@@ -15,6 +15,9 @@ import java.util.Map;
 import static org.mockito.Mockito.*;
 
 class CrawlerTaskRecoveryTest {
+    /**
+     * reconcilesInterruptedTasksBeforeSchedulingNewWork的处理逻辑。
+     */
     @Test
     void reconcilesInterruptedTasksBeforeSchedulingNewWork() {
         var mapper = mock(ClassTimetableMapper.class);

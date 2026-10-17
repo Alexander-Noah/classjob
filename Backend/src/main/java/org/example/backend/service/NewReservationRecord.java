@@ -24,6 +24,9 @@ public record NewReservationRecord(
         String reviewerName,
         String reviewRemark
 ) {
+    /**
+     * 构造 NewReservationRecord，初始化当前实例。
+     */
     public NewReservationRecord {
         Objects.requireNonNull(status, "Reservation status is required");
     }

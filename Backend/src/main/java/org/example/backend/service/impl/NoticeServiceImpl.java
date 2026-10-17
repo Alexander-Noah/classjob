@@ -24,16 +24,31 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeMapper noticeMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 NoticeServiceImpl，初始化当前实例。
+     * @param noticeMapper 通知数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public NoticeServiceImpl(NoticeMapper noticeMapper, BusinessLoopService businessLoopService) {
         this.noticeMapper = noticeMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出通知。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<NoticeEntity> listNotices() {
         return noticeMapper.listNotices();
     }
 
+    /**
+     * 创建通知。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param notice 通知参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeEntity createNotice(NoticeEntity notice) {
@@ -45,6 +60,13 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.getNotice(savedNotice.getId());
     }
 
+    /**
+     * 更新通知。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param notice 通知参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeEntity updateNotice(Long id, NoticeEntity notice) {
@@ -55,6 +77,12 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.getNotice(id);
     }
 
+    /**
+     * 删除通知。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<NoticeEntity> deleteNotice(Long id) {
@@ -64,6 +92,12 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.listNotices();
     }
 
+    /**
+     * replace通知的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param notices 通知参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<NoticeEntity> replaceNotices(List<NoticeEntity> notices) {
@@ -78,6 +112,11 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.listNotices();
     }
 
+    /**
+     * 重置通知。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<NoticeEntity> resetNotices() {
@@ -91,6 +130,12 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.listNotices();
     }
 
+    /**
+     * publish通知的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeEntity publishNotice(Long id) {
@@ -101,6 +146,12 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.getNotice(id);
     }
 
+    /**
+     * withdraw通知的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeEntity withdrawNotice(Long id) {
@@ -110,6 +161,12 @@ public class NoticeServiceImpl implements NoticeService {
         return notice;
     }
 
+    /**
+     * 归档通知的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeEntity archiveNotice(Long id) {
@@ -119,11 +176,24 @@ public class NoticeServiceImpl implements NoticeService {
         return notice;
     }
 
+    /**
+     * 列出Recipients。
+     * @param noticeId 通知标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<NoticeRecipientEntity> listRecipients(Long noticeId) {
         return noticeMapper.listRecipients(noticeId);
     }
 
+    /**
+     * 列出用户通知。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param roleCode 角色编码参数。
+     * @param readStatus read状态参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<NoticeRecipientEntity> listUserNotices(Integer userId, String roleCode, String readStatus) {
@@ -131,23 +201,43 @@ public class NoticeServiceImpl implements NoticeService {
         return noticeMapper.listUserNotices(userId, readStatus);
     }
 
+    /**
+     * 标记Read。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param noticeId 通知标识参数。
+     * @param userId 用户标识参数。
+     * @param roleCode 角色编码参数。
+     * @return NoticeRecipientEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public NoticeRecipientEntity markRead(Long noticeId, Integer userId, String roleCode) {
         syncUserRecipients(userId, roleCode);
         noticeMapper.markRead(noticeId, userId);
         return noticeMapper.listUserNotices(userId, null).stream()
-                .filter(item -> noticeId != null && noticeId.equals(item.getNoticeId()))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item -> noticeId != null && noticeId.equals(item.getNoticeId()))
                 .findFirst()
                 .orElse(null);
     }
 
+    /**
+     * 获取通知Stats。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param roleCode 角色编码参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getNoticeStats(Integer userId, String roleCode) {
         return noticeMapper.getNoticeStats(userId);
     }
 
+    /**
+     * 同步BusinessReminders。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @return 包含 labAdmin、consumable、reservation、maintenance、repair、notice、count、created 等字段的结果对象。
+     */
     @Override
     @Transactional
     public Map<String, Object> syncBusinessReminders() {
@@ -205,6 +295,11 @@ public class NoticeServiceImpl implements NoticeService {
         return Map.of("created", publishedCount);
     }
 
+    /**
+     * 记录通知事件。
+     * @param action action参数。
+     * @param notice 通知参数。
+     */
     private void recordNoticeEvent(String action, NoticeEntity notice) {
         if (notice == null) {
             return;
@@ -217,6 +312,10 @@ public class NoticeServiceImpl implements NoticeService {
         businessLoopService.recordEvent("notice", action, firstNonBlank(notice.getTitle(), "通知公告"), firstNonBlank(notice.getPublishStatus(), notice.getStatus()), details);
     }
 
+    /**
+     * 刷新RecipientsIfPublished。
+     * @param notice 通知参数。
+     */
     private void refreshRecipientsIfPublished(NoticeEntity notice) {
         if (notice == null || notice.getId() == null || !"已发布".equals(firstNonBlank(notice.getPublishStatus(), notice.getStatus()))) {
             return;
@@ -226,6 +325,11 @@ public class NoticeServiceImpl implements NoticeService {
         noticeMapper.insertRecipientsForRole(notice.getId(), normalizeTargetRole(firstNonBlank(notice.getTargetRole(), notice.getTarget())));
     }
 
+    /**
+     * 同步用户Recipients。
+     * @param userId 用户标识参数。
+     * @param roleCode 角色编码参数。
+     */
     private void syncUserRecipients(Integer userId, String roleCode) {
         if (userId == null) {
             return;
@@ -234,6 +338,11 @@ public class NoticeServiceImpl implements NoticeService {
         noticeMapper.syncUserRecipients(userId, normalizeTargetRole(roleCode));
     }
 
+    /**
+     * 归一化通知。
+     * @param notice 通知参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     private NoticeEntity normalizeNotice(NoticeEntity notice) {
         NoticeEntity normalizedNotice = notice == null ? new NoticeEntity() : notice;
         if (isBlank(normalizedNotice.getTitle())) {
@@ -284,6 +393,16 @@ public class NoticeServiceImpl implements NoticeService {
         return normalizedNotice;
     }
 
+    /**
+     * 构建Business通知。
+     * @param title title参数。
+     * @param type 类型参数。
+     * @param targetRole 目标角色参数。
+     * @param sourceModule 来源Module参数。
+     * @param sourceId 来源标识参数。
+     * @param content 内容参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     private NoticeEntity buildBusinessNotice(String title, String type, String targetRole, String sourceModule, String sourceId, String content) {
         NoticeEntity notice = new NoticeEntity();
         notice.setTitle(title);
@@ -302,6 +421,10 @@ public class NoticeServiceImpl implements NoticeService {
         return notice;
     }
 
+    /**
+     * 获取默认通知。
+     * @return 当前操作得到的记录集合。
+     */
     private List<NoticeEntity> getDefaultNotices() {
         return List.of(
                 buildNotice("课程环境确认提醒", "环境确认", "teacher", "请任课教师确认已配置课程环境。", "已发布"),
@@ -310,6 +433,15 @@ public class NoticeServiceImpl implements NoticeService {
         );
     }
 
+    /**
+     * 构建通知。
+     * @param title title参数。
+     * @param type 类型参数。
+     * @param target 目标参数。
+     * @param content 内容参数。
+     * @param status 状态参数。
+     * @return NoticeEntity 类型的处理结果。
+     */
     private NoticeEntity buildNotice(String title, String type, String target, String content, String status) {
         NoticeEntity notice = new NoticeEntity();
         notice.setTitle(title);
@@ -326,10 +458,19 @@ public class NoticeServiceImpl implements NoticeService {
         return notice;
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank() && !"null".equalsIgnoreCase(value)) {
@@ -339,6 +480,11 @@ public class NoticeServiceImpl implements NoticeService {
         return "";
     }
 
+    /**
+     * 归一化目标角色。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeTargetRole(String value) {
         String text = firstNonBlank(value, "labAdmin");
         if ("all".equalsIgnoreCase(text) || text.contains("全部")) {

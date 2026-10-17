@@ -42,54 +42,74 @@ const route = useRoute()
 const router = useRouter()
 const { currentTime } = useCurrentTime()
 
-const currentRole = computed(() => route.meta?.roleScope || getStoredRole() || DEFAULT_AUTH_ROLE)
-const roleLayout = computed(() => getRoleLayout(currentRole.value))
-const currentUser = computed(() => sessionUser.value || {})
+const currentRole = computed(/** 计算派生状态。 */ () => route.meta?.roleScope || getStoredRole() || DEFAULT_AUTH_ROLE)
+const roleLayout = computed(/** 计算派生状态。 */ () => getRoleLayout(currentRole.value))
+const currentUser = computed(/** 计算派生状态。 */ () => sessionUser.value || {})
 provide('sessionUserProfile', currentUser)
-const currentUserName = computed(() => currentUser.value.realName || currentUser.value.name || currentUser.value.username || roleLayout.value.user.name)
-const currentUserRole = computed(() => currentUser.value.roleName || currentUser.value.role || roleLayout.value.user.role)
+const currentUserName = computed(/** 计算派生状态。 */ () => currentUser.value.realName || currentUser.value.name || currentUser.value.username || roleLayout.value.user.name)
+const currentUserRole = computed(/** 计算派生状态。 */ () => currentUser.value.roleName || currentUser.value.role || roleLayout.value.user.role)
 const API_ROOT = String(API_BASE_URL || '').replace(/\/$/, '')
+/**
+ * 构建头像代理URL。
+ * 入参：objectKey（object键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildAvatarProxyUrl = (objectKey = '') => {
   const normalizedObjectKey = String(objectKey || '').trim().replace(/^\/+/, '')
   if (!normalizedObjectKey) return ''
   return `${API_ROOT}/files/avatar-proxy?objectKey=${encodeURIComponent(normalizedObjectKey)}`
 }
+/**
+ * 解析Uploaded头像URL。
+ * 入参：uploaded（uploaded）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveUploadedAvatarUrl = (uploaded = {}) => {
   const directUrl = normalizeAvatarUrl(uploaded.avatarUrl || uploaded.url || '')
   if (/^(data|blob):/i.test(directUrl)) return directUrl
   return directUrl || buildAvatarProxyUrl(uploaded.objectKey) || normalizeAvatarUrl(uploaded.proxyUrl)
 }
-const currentAvatarUrl = computed(() => avatarPreviewUrl.value || normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
-const displayedProfileAvatarUrl = computed(() => avatarPreviewUrl.value || normalizeAvatarUrl(profileForm.avatarUrl))
+const currentAvatarUrl = computed(/** 计算派生状态。 */ () => avatarPreviewUrl.value || normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
+const displayedProfileAvatarUrl = computed(/** 计算派生状态。 */ () => avatarPreviewUrl.value || normalizeAvatarUrl(profileForm.avatarUrl))
 // 保存本次预览的地址，避免账号信息更新时把正在查看的图片替换掉。
 const openAvatarViewer = (url) => {
   if (url) avatarViewerUrl.value = url
 }
+/**
+ * 关闭头像Viewer。
+ */
 const closeAvatarViewer = () => { avatarViewerUrl.value = '' }
+/**
+ * 处理Profile头像Preview。
+ * 入参：event（事件）。
+ */
 const handleProfileAvatarPreview = (event) => {
   // 上传控件仍接收自己的点击事件；冒泡到姓名区域后不再触发大图预览。
   if (!event.target.closest('.el-upload')) openAvatarViewer(displayedProfileAvatarUrl.value)
 }
-const navMenus = computed(() => getRoleMenus(currentRole.value, currentUser.value))
-const defaultOpenMenus = computed(() => navMenus.value.filter((menu) => menu.children?.length).map((menu) => menu.index))
-const sidebarWidth = computed(() => (isSidebarCollapsed.value ? '72px' : '236px'))
-const activeMenu = computed(() => route.meta?.activeMenu || route.path)
-const breadcrumbItems = computed(() => {
+const navMenus = computed(/** 计算派生状态。 */ () => getRoleMenus(currentRole.value, currentUser.value))
+const defaultOpenMenus = computed(/** 计算派生状态。 */ () => navMenus.value.filter(/** 判断当前条目是否符合筛选条件。 入参：menu。 */ (menu) => menu.children?.length).map(/** 将当前条目转换为目标结果。 入参：menu。 */ (menu) => menu.index))
+const sidebarWidth = computed(/** 计算派生状态。 */ () => (isSidebarCollapsed.value ? '72px' : '236px'))
+const activeMenu = computed(/** 计算派生状态。 */ () => route.meta?.activeMenu || route.path)
+const breadcrumbItems = computed(/** 计算派生状态。 */ () => {
   if (Array.isArray(route.meta?.breadcrumb) && route.meta.breadcrumb.length) {
-    return route.meta.breadcrumb.map((breadcrumb, index) => ({
+    return route.meta.breadcrumb.map(/** 将当前条目转换为目标结果。 入参：breadcrumb、index。 */ (breadcrumb, index) => ({
       title: breadcrumb.title,
       to: index === route.meta.breadcrumb.length - 1 ? undefined : { path: breadcrumb.path },
     }))
   }
 
   return route.matched
-    .filter((matchedRoute) => matchedRoute.meta?.title)
-    .map((matchedRoute) => ({
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：matchedRoute。 */ (matchedRoute) => matchedRoute.meta?.title)
+    .map(/** 将当前条目转换为目标结果。 入参：matchedRoute。 */ (matchedRoute) => ({
       title: matchedRoute.meta.title,
       to: undefined,
     }))
 })
 
+/**
+ * 处理ToggleSidebar。
+ */
 const handleToggleSidebar = () => {
   if (window.innerWidth <= 900) {
     isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -99,6 +119,10 @@ const handleToggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
 }
 
+/**
+ * 处理MenuSelect。
+ * 入参：index（索引）。
+ */
 const handleMenuSelect = (index) => {
   isMobileMenuOpen.value = false
 
@@ -107,6 +131,9 @@ const handleMenuSelect = (index) => {
   }
 }
 
+/**
+ * 清理头像Preview。
+ */
 const clearAvatarPreview = () => {
   // 先关闭大图，再释放待上传文件的 blob URL，避免预览引用已撤销的资源。
   closeAvatarViewer()
@@ -117,6 +144,9 @@ const clearAvatarPreview = () => {
   pendingAvatarFile.value = null
 }
 
+/**
+ * 打开ProfileDialog。
+ */
 const openProfileDialog = () => {
   clearAvatarPreview()
   const user = currentUser.value
@@ -132,6 +162,10 @@ const openProfileDialog = () => {
   profileDialogVisible.value = true
 }
 
+/**
+ * 保存Profile。
+ * 入参：解构参数（closeDialog、true、successMessage）。
+ */
 const saveProfile = async ({ closeDialog = true, successMessage = '个人信息已保存' } = {}) => {
   const realName = profileForm.realName.trim()
   if (!realName) {
@@ -177,6 +211,11 @@ const saveProfile = async ({ closeDialog = true, successMessage = '个人信息�
   }
 }
 
+/**
+ * 校验头像文件。
+ * 入参：file（文件）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const validateAvatarFile = (file) => {
   const isImage = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)
   if (!isImage) {
@@ -190,6 +229,11 @@ const validateAvatarFile = (file) => {
   return true
 }
 
+/**
+ * 处理头像Selection。
+ * 涉及：分配对象 URL，须配套释放。
+ * 入参：uploadFile（upload文件）。
+ */
 const handleAvatarSelection = (uploadFile) => {
   const file = uploadFile?.raw || uploadFile
   if (!validateAvatarFile(file)) return
@@ -199,6 +243,10 @@ const handleAvatarSelection = (uploadFile) => {
   avatarPreviewUrl.value = URL.createObjectURL(file)
 }
 
+/**
+ * 处理用户命令。
+ * 入参：command（命令）。
+ */
 const handleUserCommand = async (command) => {
   if (command === 'profile') {
     openProfileDialog()

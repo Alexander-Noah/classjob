@@ -22,15 +22,29 @@ import java.util.Map;
 public class TeacherHostController {
     private final TeacherHostService teacherHostService;
 
+    /**
+     * 构造 TeacherHostController，初始化当前实例。
+     * @param teacherHostService 教师主机服务参数。
+     */
     public TeacherHostController(TeacherHostService teacherHostService) {
         this.teacherHostService = teacherHostService;
     }
 
+    /**
+     * heartbeat的处理逻辑。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/teacher-hosts/heartbeat", "/api/teacher-hosts/heartbeat"})
     public Result heartbeat(@RequestBody TeacherHostEntity request) {
         return Result.success("teacher host heartbeat registered", teacherHostService.heartbeat(request));
     }
 
+    /**
+     * 当前的处理逻辑。
+     * @param labId 实验室标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping({"/teacher-hosts/current", "/api/teacher-hosts/current"})
     public Result current(@RequestParam Long labId) {
         TeacherHostEntity host = teacherHostService.currentHost(labId);
@@ -40,6 +54,11 @@ public class TeacherHostController {
         );
     }
 
+    /**
+     * 转换为公开主机。
+     * @param host 主机参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> toPublicHost(TeacherHostEntity host) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("id", host.getId());

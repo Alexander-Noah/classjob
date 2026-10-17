@@ -14,6 +14,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MonitoringScrapeAccessTest {
+    /**
+     * permitsScrapingOnlyOnSeparateManagement端口的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void permitsScrapingOnlyOnSeparateManagementPort() throws Exception {
         assertTrue(scrape(8081, 8081));
@@ -22,6 +26,13 @@ class MonitoringScrapeAccessTest {
         assertFalse(scrape(8080, -1));
     }
 
+    /**
+     * scrape的处理逻辑。
+     * @param localPort 本地端口参数。
+     * @param managementPort management端口参数。
+     * @return 当前判断的布尔结果。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private boolean scrape(int localPort, int managementPort) throws Exception {
         var filter = new JwtAuthenticationFilter(null, true);
         ReflectionTestUtils.setField(filter, "managementPort", managementPort);
@@ -30,7 +41,7 @@ class MonitoringScrapeAccessTest {
         request.setLocalPort(localPort);
         var response = new MockHttpServletResponse();
         var passed = new AtomicBoolean();
-        filter.doFilter(request, response, (req, res) -> passed.set(true));
+        filter.doFilter(request, response, /** 处理 doFilter 调用中的回调逻辑。 入参：req、res。 */ (req, res) -> passed.set(true));
         if (!passed.get()) {
             assertEquals(401, response.getStatus());
         }

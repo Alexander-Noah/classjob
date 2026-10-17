@@ -22,6 +22,12 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
     private final ReservationLabService laboratories;
     private final ReservationScheduleService schedules;
 
+    /**
+     * 构造 DefaultReservationAvailabilityEvaluator，初始化当前实例。
+     * @param reservations 预约参数。
+     * @param laboratories laboratories参数。
+     * @param schedules 课表参数。
+     */
     public DefaultReservationAvailabilityEvaluator(ReservationPersistenceService reservations,
                                                    ReservationLabService laboratories,
                                                    ReservationScheduleService schedules) {
@@ -53,6 +59,11 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
                 || schedule.hasConflict() || overlapCount > 0;
     }
 
+    /**
+     * 要求提供Laboratory能力。
+     * @param request 请求参数。
+     * @return LabAvailabilitySnapshot 类型的处理结果。
+     */
     private LabAvailabilitySnapshot requireLaboratoryCapability(ReservationAvailabilityRequest request) {
         CapabilityResult<LabAvailabilitySnapshot> result = laboratories.checkAvailability(
                 request.labId(), request.attendeeCount(), request.timeRange());
@@ -66,6 +77,11 @@ public final class DefaultReservationAvailabilityEvaluator implements Reservatio
         return snapshot;
     }
 
+    /**
+     * 要求提供课表能力。
+     * @param request 请求参数。
+     * @return ScheduleConflictSnapshot 类型的处理结果。
+     */
     private ScheduleConflictSnapshot requireScheduleCapability(ReservationAvailabilityRequest request) {
         CapabilityResult<ScheduleConflictSnapshot> result = schedules.checkConflict(
                 request.labId(), request.reservationDate(), request.timeRange());

@@ -11,6 +11,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 解析归档目录。
 function Resolve-ArchiveDirectory {
     param([string]$Path)
 
@@ -23,6 +24,7 @@ function Resolve-ArchiveDirectory {
     return (Resolve-Path -LiteralPath $Path).Path
 }
 
+# 断言归档Child。
 function Assert-ArchiveChild {
     param(
         [string]$Parent,

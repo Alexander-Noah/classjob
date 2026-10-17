@@ -22,11 +22,22 @@ public class IotDeviceServiceImpl implements IotDeviceService {
     private final JdbcTemplate jdbcTemplate;
     private final IotGatewayCommandService iotGatewayCommandService;
 
+    /**
+     * 构造 IotDeviceServiceImpl，初始化当前实例。
+     * @param jdbcTemplate JDBC模板参数。
+     * @param iotGatewayCommandService 物联网关命令服务参数。
+     */
     public IotDeviceServiceImpl(JdbcTemplate jdbcTemplate, IotGatewayCommandService iotGatewayCommandService) {
         this.jdbcTemplate = jdbcTemplate;
         this.iotGatewayCommandService = iotGatewayCommandService;
     }
 
+    /**
+     * 列出设备。
+     * 涉及：读取数据库。
+     * @param query 查询参数。
+     * @return 包含 total、devices 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> listDevices(Map<String, String> query) {
         List<Object> args = new ArrayList<>();
@@ -37,13 +48,19 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return Map.of("total", rows.size(), "devices", rows);
     }
 
+    /**
+     * 列出实验室设备。
+     * 涉及：读取数据库。
+     * @param labId 实验室标识参数。
+     * @return 包含 labId、total、configuredCount、devices 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> listLabDevices(Long labId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 iotDeviceSelectSql() + " where coalesce(deleted, 0) = 0 and lab_id = ? order by device_type asc, iot_name asc, id desc",
                 labId
         );
-        long configuredCount = rows.stream().filter(row -> booleanValue(row.get("configured"))).count();
+        long configuredCount = rows.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ row -> booleanValue(row.get("configured"))).count();
         return Map.of(
                 "labId", labId,
                 "total", rows.size(),
@@ -52,6 +69,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         );
     }
 
+    /**
+     * 获取实验室概况。
+     * 涉及：读取数据库。
+     * @param labId 实验室标识参数。
+     * @return 包含 labId、types 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> getLabOverview(Long labId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
@@ -70,6 +93,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return Map.of("labId", labId, "types", rows);
     }
 
+    /**
+     * 创建设备。
+     * 涉及：写入数据库。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> createDevice(Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -110,6 +139,13 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return findDeviceByCode(code);
     }
 
+    /**
+     * 更新设备。
+     * 涉及：写入数据库。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> updateDevice(Long id, Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -159,11 +195,21 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return findDeviceById(id);
     }
 
+    /**
+     * 删除设备。
+     * 涉及：写入数据库。
+     * @param id 标识参数。
+     */
     @Override
     public void deleteDevice(Long id) {
         jdbcTemplate.update("update iot_device set deleted = 1, updated_at = current_timestamp where id = ?", id);
     }
 
+    /**
+     * control的处理逻辑。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> control(Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -171,6 +217,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return iotGatewayCommandService.execute(device, request);
     }
 
+    /**
+     * 列出命令Logs。
+     * 涉及：读取数据库。
+     * @param query 查询参数。
+     * @return 包含 lab_id、iot_device_id、result_status、total、records 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> listCommandLogs(Map<String, String> query) {
         List<Object> args = new ArrayList<>();
@@ -184,6 +236,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return Map.of("total", rows.size(), "records", rows);
     }
 
+    /**
+     * 获取环境。
+     * 涉及：读取数据库。
+     * @param labId 实验室标识参数。
+     * @return 包含 labId、total、metrics 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> getEnvironment(Long labId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
@@ -209,6 +267,10 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return Map.of("labId", labId, "total", rows.size(), "metrics", rows);
     }
 
+    /**
+     * 物联设备SelectSQL的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String iotDeviceSelectSql() {
         return """
                 select
@@ -241,6 +303,10 @@ public class IotDeviceServiceImpl implements IotDeviceService {
                 """;
     }
 
+    /**
+     * 命令LogSelectSQL的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String commandLogSelectSql() {
         return """
                 select
@@ -271,6 +337,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
                 """;
     }
 
+    /**
+     * 追加设备筛选条件。
+     * @param sql SQL参数。
+     * @param args 参数参数。
+     * @param query 查询参数。
+     */
     private void appendDeviceFilters(StringBuilder sql, List<Object> args, Map<String, String> query) {
         appendEquals(sql, args, "lab_id", query.get("labId"));
         appendEquals(sql, args, "device_type", query.get("deviceType"));
@@ -285,6 +357,11 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         }
     }
 
+    /**
+     * 查找Control目标。
+     * @param request 请求参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findControlTarget(Map<String, Object> request) {
         Long id = firstLong(longValue(request.get("iotDeviceId")), longValue(request.get("id")));
         if (id != null) {
@@ -297,6 +374,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         throw new IllegalArgumentException("缺少物联设备ID或编码");
     }
 
+    /**
+     * 查找设备By标识。
+     * 涉及：读取数据库。
+     * @param id 标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findDeviceById(Long id) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 iotDeviceSelectSql() + " where id = ? and coalesce(deleted, 0) = 0 limit 1",
@@ -308,6 +391,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return rows.get(0);
     }
 
+    /**
+     * 查找设备By编码。
+     * 涉及：读取数据库。
+     * @param code 编码参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findDeviceByCode(String code) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 iotDeviceSelectSql() + " where iot_code = ? and coalesce(deleted, 0) = 0 limit 1",
@@ -319,6 +408,13 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return rows.get(0);
     }
 
+    /**
+     * 追加Equals。
+     * @param sql SQL参数。
+     * @param args 参数参数。
+     * @param column column参数。
+     * @param value 值参数。
+     */
     private void appendEquals(StringBuilder sql, List<Object> args, String column, String value) {
         if (!StringUtils.hasText(value)) {
             return;
@@ -327,11 +423,20 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         args.add(value.trim());
     }
 
+    /**
+     * 归一化设备类型。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeDeviceType(String value) {
         String type = stringValue(value).replace("-", "_").toLowerCase(Locale.ROOT);
         return StringUtils.hasText(type) ? type : "access_control";
     }
 
+    /**
+     * first长整数的处理逻辑。
+     * @return Long 类型的处理结果。
+     */
     private Long firstLong(Long... values) {
         for (Long value : values) {
             if (value != null) {
@@ -341,6 +446,11 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return null;
     }
 
+    /**
+     * 将输入转换为长整数值。
+     * @param value 值参数。
+     * @return Long 类型的处理结果。
+     */
     private Long longValue(Object value) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -353,6 +463,12 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         }
     }
 
+    /**
+     * 将输入转换为整数值。
+     * @param value 值参数。
+     * @param fallback fallback参数。
+     * @return int 类型的处理结果。
+     */
     private int intValue(Object value, int fallback) {
         if (value instanceof Number number) {
             return number.intValue();
@@ -365,6 +481,11 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         }
     }
 
+    /**
+     * 将输入转换为布尔值。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean booleanValue(Object value) {
         if (value instanceof Boolean bool) {
             return bool;
@@ -376,6 +497,10 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return "true".equalsIgnoreCase(text) || "1".equals(text) || "yes".equalsIgnoreCase(text);
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {
@@ -385,6 +510,11 @@ public class IotDeviceServiceImpl implements IotDeviceService {
         return "";
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }

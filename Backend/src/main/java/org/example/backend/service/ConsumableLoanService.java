@@ -29,19 +29,41 @@ public class ConsumableLoanService {
     private final ConsumableMapper consumables;
     private final ConsumableService stockService;
 
+    /**
+     * 构造 ConsumableLoanService，初始化当前实例。
+     * @param loans 借用参数。
+     * @param consumables consumables参数。
+     * @param stockService 库存服务参数。
+     */
     public ConsumableLoanService(ConsumableLoanMapper loans, ConsumableMapper consumables, ConsumableService stockService) {
         this.loans = loans;
         this.consumables = consumables;
         this.stockService = stockService;
     }
 
+    /**
+     * 列出当前操作。
+     * @return 当前操作得到的记录集合。
+     */
     public List<ConsumableLoanEntity> list() { return loans.list(); }
+    /**
+     * 获取当前操作。
+     * @param id 标识参数。
+     * @return ConsumableLoanEntity 类型的处理结果。
+     */
     public ConsumableLoanEntity get(Long id) {
         ConsumableLoanEntity loan = loans.get(id);
         if (loan == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "借用记录不存在");
         return loan;
     }
 
+    /**
+     * 借出当前操作。
+     * 涉及：写入数据库；通过 Spring 代理入口应用事务配置。
+     * @param request 请求参数。
+     * @param operator operator参数。
+     * @return ConsumableLoanEntity 类型的处理结果。
+     */
     @Transactional
     public ConsumableLoanEntity borrow(BorrowRequest request, String operator) {
         if (request == null || request.consumableId() == null) throw new IllegalArgumentException("请选择耗材");
@@ -78,6 +100,14 @@ public class ConsumableLoanService {
         return get(loan.getId());
     }
 
+    /**
+     * 归还条目集合。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @param operator operator参数。
+     * @return ConsumableLoanEntity 类型的处理结果。
+     */
     @Transactional
     public ConsumableLoanEntity returnItems(Long id, ReturnRequest request, String operator) {
         if (request == null) throw new IllegalArgumentException("请填写归还信息");
@@ -101,26 +131,60 @@ public class ConsumableLoanService {
         return get(id);
     }
 
+    /**
+     * movement的处理逻辑。
+     * @param type 类型参数。
+     * @param quantity quantity参数。
+     * @param operator operator参数。
+     * @param source 来源参数。
+     * @param reason 原因参数。
+     * @param remark remark参数。
+     * @return ConsumableStockRecordEntity 类型的处理结果。
+     */
     private ConsumableStockRecordEntity movement(String type, int quantity, String operator, String source, String reason, String remark) {
         ConsumableStockRecordEntity movement = new ConsumableStockRecordEntity();
         movement.setType(type); movement.setQuantity(quantity); movement.setOperator(operator);
         movement.setSource(source); movement.setReason(reason); movement.setRemark(remark);
         return movement;
     }
+    /**
+     * positiveQuantity的处理逻辑。
+     * @param value 值参数。
+     * @return int 类型的处理结果。
+     */
     private int positiveQuantity(BigDecimal value) {
         try { int quantity = value == null ? 0 : value.intValueExact(); if (quantity > 0) return quantity; }
         catch (ArithmeticException ignored) {}
         throw new IllegalArgumentException("数量必须为大于 0 的整数");
     }
+    /**
+     * 请求键的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String requestKey(String value) {
         try { String key = UUID.fromString(value).toString(); if (!key.equalsIgnoreCase(value)) throw new IllegalArgumentException(); return key; }
         catch (RuntimeException error) { throw new IllegalArgumentException("提交编号无效，请关闭弹窗后重试"); }
     }
+    /**
+     * required的处理逻辑。
+     * @param value 值参数。
+     * @param label 标签参数。
+     * @param max max参数。
+     * @return String 类型的处理结果。
+     */
     private String required(String value, String label, int max) {
         String text = optional(value, label, max);
         if (text.isEmpty()) throw new IllegalArgumentException("请填写" + label);
         return text;
     }
+    /**
+     * optional的处理逻辑。
+     * @param value 值参数。
+     * @param label 标签参数。
+     * @param max max参数。
+     * @return String 类型的处理结果。
+     */
     private String optional(String value, String label, int max) {
         String text = value == null ? "" : value.trim();
         if (text.length() > max) throw new IllegalArgumentException(label + "不能超过" + max + "字");

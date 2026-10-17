@@ -37,8 +37,12 @@ const isSubmitting = ref(false)
 const showPassword = ref(false)
 const router = useRouter()
 
-const passwordInputType = computed(() => (showPassword.value ? 'text' : 'password'))
+const passwordInputType = computed(/** 计算派生状态。 */ () => (showPassword.value ? 'text' : 'password'))
 
+/**
+ * 校验Field。
+ * 入参：field（field）。
+ */
 const validateField = (field) => {
   if (field === 'username') {
     errors.username = form.username.trim() ? '' : '请输入用户名'
@@ -49,16 +53,28 @@ const validateField = (field) => {
   }
 }
 
+/**
+ * 校验Form。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const validateForm = () => {
   validateField('username')
   validateField('password')
   return !errors.username && !errors.password
 }
 
+/**
+ * 获取Redirect路径。
+ * 入参：role（角色）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRedirectPath = (role = DEFAULT_AUTH_ROLE) => {
   return AUTH_ROLE_DEFAULT_PATH[role] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE]
 }
 
+/**
+ * 处理登录。
+ */
 const handleLogin = async () => {
   if (!validateForm()) return
 

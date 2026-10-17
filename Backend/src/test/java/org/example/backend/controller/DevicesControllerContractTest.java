@@ -50,6 +50,10 @@ class DevicesControllerContractTest {
     @MockitoBean
     private DevicesService devicesService;
 
+    /**
+     * 列出页码AndStatsKeepTheirEstablishedGetContracts。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void listPageAndStatsKeepTheirEstablishedGetContracts() throws Exception {
         DevicesEntity listed = device(1L, "DEV-001", "列表设备");
@@ -88,6 +92,10 @@ class DevicesControllerContractTest {
         verify(devicesService).pageDevices(any());
     }
 
+    /**
+     * 创建ReturnsTheAuthoritative服务设备。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void createReturnsTheAuthoritativeServiceDevice() throws Exception {
         DevicesEntity submitted = device(null, "client-code", "客户端名称");
@@ -111,6 +119,10 @@ class DevicesControllerContractTest {
                 .andExpect(jsonPath("$.data.online").value(true));
     }
 
+    /**
+     * 更新AndBatchUpdateReturnTheAuthoritative服务设备。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void updateAndBatchUpdateReturnTheAuthoritativeServiceDevices() throws Exception {
         DevicesEntity submitted = device(9L, "client-code", "客户端名称");
@@ -134,6 +146,10 @@ class DevicesControllerContractTest {
                 .andExpect(jsonPath("$.data[0].deviceName").value("数据库名称"));
     }
 
+    /**
+     * 删除KeepsTheEstablishedDeleteBinding。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void deleteKeepsTheEstablishedDeleteBinding() throws Exception {
         doNothing().when(devicesService).deleteDevices(12L);
@@ -146,6 +162,10 @@ class DevicesControllerContractTest {
         verify(devicesService).deleteDevices(12L);
     }
 
+    /**
+     * 库存RoutesReturnTheAuthoritative服务结果的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void inventoryRoutesReturnTheAuthoritativeServiceResult() throws Exception {
         DevicesEntity authoritative = device(7L, "DB-007", "盘点后的设备");
@@ -169,6 +189,10 @@ class DevicesControllerContractTest {
                 .andExpect(jsonPath("$.data.device.deviceName").value("盘点后的设备"));
     }
 
+    /**
+     * 调拨RoutesReturnTheAuthoritative服务结果。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void transferRoutesReturnTheAuthoritativeServiceResult() throws Exception {
         DevicesEntity authoritative = device(8L, "DB-008", "调拨后的设备");
@@ -192,6 +216,13 @@ class DevicesControllerContractTest {
                 .andExpect(jsonPath("$.data.device.deviceName").value("调拨后的设备"));
     }
 
+    /**
+     * 设备的处理逻辑。
+     * @param id 标识参数。
+     * @param code 编码参数。
+     * @param name 名称参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     private DevicesEntity device(Long id, String code, String name) {
         DevicesEntity device = new DevicesEntity();
         device.setId(id);

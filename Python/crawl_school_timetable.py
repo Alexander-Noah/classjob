@@ -51,6 +51,9 @@ def clean_text(text):
     return text.strip()
 
 
+# 添加utf8meta。
+# 入参：html（HTML）。
+# 返回：由当前表达式或分支生成的处理结果。
 def add_utf8_meta(html):
     if not html:
         return html
@@ -67,6 +70,8 @@ def add_utf8_meta(html):
     )
 
 
+# 保存HTML。
+# 入参：filename（filename）；html（HTML）。
 def save_html(filename, html):
     file_path = OUTPUT_DIR / filename
 
@@ -78,6 +83,8 @@ def save_html(filename, html):
     print("已保存：", file_path)
 
 
+# 保存文本。
+# 入参：filename（filename）；html（HTML）。
 def save_text(filename, html):
     file_path = OUTPUT_DIR / filename
 
@@ -103,18 +110,27 @@ def js_click(driver, element):
     driver.execute_script("arguments[0].click();", element)
 
 
+# 等待elementby标识。
+# 入参：driver（驱动）；element_id（element标识）；timeout（超时）。
+# 返回：由当前表达式或分支生成的处理结果。
 def wait_element_by_id(driver, element_id, timeout=20):
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.ID, element_id))
     )
 
 
+# 等待elementbyxpath。
+# 入参：driver（驱动）；xpath（xpath）；timeout（超时）。
+# 返回：由当前表达式或分支生成的处理结果。
 def wait_element_by_xpath(driver, xpath, timeout=20):
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.XPATH, xpath))
     )
 
 
+# 等待输入by标识。
+# 入参：driver（驱动）；element_id（element标识）；value（值）；timeout（超时）。
+# 返回：element 的当前值。
 def wait_input_by_id(driver, element_id, value, timeout=20):
     element = wait_element_by_id(driver, element_id, timeout)
     element.clear()
@@ -128,6 +144,9 @@ def click_visible_element_by_id(driver, element_id, timeout=20):
     这里找可见元素再点击。
     """
     WebDriverWait(driver, timeout).until(
+        # 处理当前调用传入的回调逻辑。
+        # 入参：d。
+        # 处理当前调用传入的回调逻辑。
         lambda d: len(d.find_elements(By.ID, element_id)) > 0
     )
 
@@ -292,6 +311,9 @@ def build_big_table_payload():
     }
 
 
+# 解码响应正文。
+# 入参：response（响应）。
+# 返回：由当前表达式或分支生成的处理结果。
 def decode_response_body(response):
     content_type = response.headers.get("Content-Type", "")
     charset_match = re.search(r"charset=([\w-]+)", content_type, re.IGNORECASE)
@@ -388,6 +410,9 @@ def fetch_big_table_by_browser(driver):
     return html
 
 
+# 获取bigtable。
+# 入参：driver（驱动）。
+# 返回：由当前表达式或分支生成的处理结果。
 def fetch_big_table(driver):
     try:
         html = fetch_big_table_by_http(driver)
@@ -513,6 +538,7 @@ def create_driver():
     return webdriver.Edge(options=options)
 
 
+# 执行当前模块的主入口流程。
 def main():
     if not USERNAME or not PASSWORD:
         raise RuntimeError("缺少教务系统账号或密码，请先在课表抓取页面保存账号配置")

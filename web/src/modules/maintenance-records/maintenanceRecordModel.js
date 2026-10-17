@@ -4,6 +4,11 @@
  */
 const TEXT_FALLBACK = '未填写'
 
+/**
+ * firstPresent的处理逻辑。
+ * 入参：record（记录）；fields（fields）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const firstPresent = (record, fields, fallback = TEXT_FALLBACK) => {
   for (const field of fields) {
     const value = record?.[field]

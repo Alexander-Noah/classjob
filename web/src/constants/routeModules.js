@@ -319,11 +319,21 @@ export const ROUTE_MODULES = [
 ]
 
 export const ROUTE_MODULE_MAP = Object.fromEntries(
-  ROUTE_MODULES.map((routeModule) => [routeModule.name, routeModule]),
+  ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => [routeModule.name, routeModule]),
 )
 
+/**
+ * 获取RouteModulesBy角色。
+ * 入参：roleScope（角色Scope）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getRouteModulesByRole = (roleScope) =>
-  ROUTE_MODULES.filter((routeModule) => routeModule.roleScope === roleScope && routeModule.showInMenu)
+  ROUTE_MODULES.filter(/** 判断当前条目是否符合筛选条件。 入参：routeModule。 */ (routeModule) => routeModule.roleScope === roleScope && routeModule.showInMenu)
 
+/**
+ * 获取角色HomeModule。
+ * 入参：roleScope（角色Scope）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getRoleHomeModule = (roleScope) =>
-  ROUTE_MODULES.find((routeModule) => routeModule.path === ROLE_DEFAULT_PATHS[roleScope])
+  ROUTE_MODULES.find(/** 判断当前条目是否为查找目标。 入参：routeModule。 */ (routeModule) => routeModule.path === ROLE_DEFAULT_PATHS[roleScope])

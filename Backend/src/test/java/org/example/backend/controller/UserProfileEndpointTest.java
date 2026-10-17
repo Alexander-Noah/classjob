@@ -13,17 +13,24 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UserProfileEndpointTest {
+    /**
+     * exposes当前实例服务ProfileUpdate端点的处理逻辑。
+     */
     @Test
     void exposesSelfServiceProfileUpdateEndpoint() {
         boolean hasProfileUpdateEndpoint = Arrays.stream(controllerClass().getDeclaredMethods())
-                .map(method -> method.getAnnotation(PutMapping.class))
-                .filter(annotation -> annotation != null)
-                .flatMap(annotation -> Arrays.stream(annotation.value()))
+                .map(/** 将当前条目转换为目标结果。 入参：method。 */ method -> method.getAnnotation(PutMapping.class))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：annotation。 */ annotation -> annotation != null)
+                .flatMap(/** 转换并展开当前条目。 入参：annotation。 */ annotation -> Arrays.stream(annotation.value()))
                 .anyMatch("/auth/profile"::equals);
 
         assertTrue(hasProfileUpdateEndpoint, "current user profile edits must use PUT /auth/profile");
     }
 
+    /**
+     * controllerClass的处理逻辑。
+     * @return Class<?> 类型的处理结果。
+     */
     private Class<?> controllerClass() {
         try {
             return Class.forName("org.example.backend.controller.UserController");

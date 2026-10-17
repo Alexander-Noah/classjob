@@ -17,6 +17,10 @@ const props = defineProps({
   },
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   formModel: {
@@ -36,14 +40,23 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const targetDevices = computed(() => (props.devices.length ? props.devices : [props.device].filter(Boolean)))
-const isBatch = computed(() => targetDevices.value.length > 1)
-const firstDevice = computed(() => targetDevices.value[0] || null)
-const title = computed(() => (isBatch.value ? `批量报修 ${targetDevices.value.length} 台设备` : '设备报修登记'))
+const targetDevices = computed(/** 计算派生状态。 */ () => (props.devices.length ? props.devices : [props.device].filter(Boolean)))
+const isBatch = computed(/** 计算派生状态。 */ () => targetDevices.value.length > 1)
+const firstDevice = computed(/** 计算派生状态。 */ () => targetDevices.value[0] || null)
+const title = computed(/** 计算派生状态。 */ () => (isBatch.value ? `批量报修 ${targetDevices.value.length} 台设备` : '设备报修登记'))
 </script>
 
 <template>
@@ -52,7 +65,7 @@ const title = computed(() => (isBatch.value ? `批量报修 ${targetDevices.valu
       <el-icon><Tools /></el-icon>
       <div>
         <h3>{{ isBatch ? `已选择 ${targetDevices.length} 台设备` : firstDevice.name }}</h3>
-        <span v-if="isBatch">{{ targetDevices.map((device) => device.code).join('、') }}</span>
+        <span v-if="isBatch">{{ targetDevices.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => device.code).join('、') }}</span>
         <span v-else>{{ firstDevice.code }} · {{ firstDevice.lab || '未关联实验室' }} · {{ firstDevice.owner || '未设置责任人' }}</span>
       </div>
     </div>

@@ -24,27 +24,44 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration(proxyBeanMethods = false)
 public class FeatureConfiguration {
+    /**
+     * unavailable环境快照查询的处理逻辑。
+     * @return EnvironmentSnapshotQuery 类型的处理结果。
+     */
     @Bean
     @ConditionalOnMissingBean(EnvironmentSnapshotQuery.class)
     public EnvironmentSnapshotQuery unavailableEnvironmentSnapshotQuery() {
-        return teachingTaskId -> CapabilityResult.unavailable("environment data is unavailable");
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> CapabilityResult.unavailable("environment data is unavailable");
     }
 
+    /**
+     * unavailable预约快照查询的处理逻辑。
+     * @return ReservationSnapshotQuery 类型的处理结果。
+     */
     @Bean
     @ConditionalOnMissingBean(ReservationSnapshotQuery.class)
     public ReservationSnapshotQuery unavailableReservationSnapshotQuery() {
-        return teachingTaskId -> CapabilityResult.unavailable("reservation data is unavailable");
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> CapabilityResult.unavailable("reservation data is unavailable");
     }
 
+    /**
+     * unavailable课表快照查询的处理逻辑。
+     * @return ScheduleSnapshotQuery 类型的处理结果。
+     */
     @Bean
     @ConditionalOnMissingBean(ScheduleSnapshotQuery.class)
     public ScheduleSnapshotQuery unavailableScheduleSnapshotQuery() {
-        return teachingTaskId -> CapabilityResult.unavailable("teaching schedule data is unavailable");
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> CapabilityResult.unavailable("teaching schedule data is unavailable");
     }
 
+    /**
+     * 环境快照端口的处理逻辑。
+     * @param query 查询参数。
+     * @return EnvironmentSnapshotPort 类型的处理结果。
+     */
     @Bean
     public EnvironmentSnapshotPort environmentSnapshotPort(EnvironmentSnapshotQuery query) {
-        return teachingTaskId -> {
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> {
             CapabilityResult<EnvironmentSnapshotView> result = query.findByTeachingTaskId(teachingTaskId);
             if (result.status() == CapabilityStatus.UNAVAILABLE) {
                 return CapabilityResult.unavailable(result.message());
@@ -54,9 +71,14 @@ public class FeatureConfiguration {
         };
     }
 
+    /**
+     * 预约快照端口的处理逻辑。
+     * @param query 查询参数。
+     * @return ReservationSnapshotPort 类型的处理结果。
+     */
     @Bean
     public ReservationSnapshotPort reservationSnapshotPort(ReservationSnapshotQuery query) {
-        return teachingTaskId -> {
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> {
             CapabilityResult<ReservationSnapshotView> result = query.findByTeachingTaskId(teachingTaskId);
             if (result.status() == CapabilityStatus.UNAVAILABLE) {
                 return CapabilityResult.unavailable(result.message());
@@ -66,9 +88,14 @@ public class FeatureConfiguration {
         };
     }
 
+    /**
+     * 安排快照端口。
+     * @param query 查询参数。
+     * @return ScheduleSnapshotPort 类型的处理结果。
+     */
     @Bean
     public ScheduleSnapshotPort scheduleSnapshotPort(ScheduleSnapshotQuery query) {
-        return teachingTaskId -> {
+        return /** 处理当前调用传入的回调逻辑。 入参：teachingTaskId。 */ teachingTaskId -> {
             CapabilityResult<ScheduleSnapshotView> result = query.findByTeachingTaskId(teachingTaskId);
             if (result.status() == CapabilityStatus.UNAVAILABLE) {
                 return CapabilityResult.unavailable(result.message());

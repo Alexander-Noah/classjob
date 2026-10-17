@@ -37,30 +37,57 @@ import java.util.List;
 public class DevicesController {
     private final DevicesService devicesService;
 
+    /**
+     * 构造 DevicesController，初始化当前实例。
+     * @param devicesService 设备服务参数。
+     */
     public DevicesController(DevicesService devicesService) {
         this.devicesService = devicesService;
     }
 
+    /**
+     * 获取设备。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices")
     public Result getDevices() {
         return Result.success("获取设备列表成功", devicesService.getDevices());
     }
 
+    /**
+     * 页码设备的处理逻辑。
+     * @param query 查询参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices/page")
     public Result pageDevices(@ModelAttribute DevicesService.DevicePageQuery query) {
         return Result.success("获取设备资产分页成功", devicesService.pageDevices(query));
     }
 
+    /**
+     * 获取设备Stats。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices/stats")
     public Result getDeviceStats() {
         return Result.success("获取设备资产统计成功", devicesService.getDeviceStats());
     }
 
+    /**
+     * 导入设备。
+     * @param file 文件参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/devices/import")
     public Result importDevices(@RequestParam("file") MultipartFile file) {
         return Result.success("导入设备资产成功", devicesService.importDevices(file));
     }
 
+    /**
+     * 导出设备。
+     * @param query 查询参数。
+     * @return ResponseEntity<byte[]> 类型的处理结果。
+     */
     @GetMapping("/devices/export")
     public ResponseEntity<byte[]> exportDevices(@ModelAttribute DevicesService.DevicePageQuery query) {
         byte[] content = devicesService.exportDevices(query);
@@ -71,27 +98,53 @@ public class DevicesController {
                 .body(content);
     }
 
+    /**
+     * 插入设备。
+     * @param devices 设备参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/devices")
     public Result insertDevices(@RequestBody DevicesEntity devices) {
         return Result.success("新增设备成功", devicesService.InserterDevices(devices));
     }
 
+    /**
+     * 获取设备By标识。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices/{id:\\d+}")
     public Result getDevicesById(@PathVariable Long id) {
         return Result.success("获取设备详情成功", devicesService.getDevicesById(id));
     }
 
+    /**
+     * 更新设备。
+     * @param id 标识参数。
+     * @param devices 设备参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/devices/{id:\\d+}")
     public Result updateDevices(@PathVariable Long id, @RequestBody DevicesEntity devices) {
         return Result.success("更新设备成功", devicesService.updateDevices(id, devices));
     }
 
+    /**
+     * 删除设备。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/devices/{id:\\d+}")
     public Result deleteDevices(@PathVariable Long id) {
         devicesService.deleteDevices(id);
         return Result.success("删除设备成功");
     }
 
+    /**
+     * 更新设备。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/devices/batch")
     public Result updateDevices(@RequestBody DeviceBatchRequest request) {
         List<DevicesEntity> devices = request == null || request.getRecords() == null
@@ -100,36 +153,72 @@ public class DevicesController {
         return Result.success("批量更新设备成功", devicesService.updateDevices(devices));
     }
 
+    /**
+     * 重置设备。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/devices/reset")
     public Result resetDevices() {
         return Result.success("重置设备数据成功", devicesService.getDevices());
     }
 
+    /**
+     * 列出库存记录集合。
+     * @param deviceId 设备标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-inventory-records")
     public Result listInventoryRecords(@RequestParam(required = false) Long deviceId) {
         return Result.success("获取设备盘点记录成功", devicesService.listInventoryRecords(deviceId));
     }
 
+    /**
+     * 列出设备库存记录集合。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices/{id:\\d+}/inventory-records")
     public Result listDeviceInventoryRecords(@PathVariable Long id) {
         return Result.success("获取设备盘点记录成功", devicesService.listInventoryRecords(id));
     }
 
+    /**
+     * 记录设备库存。
+     * @param id 标识参数。
+     * @param record 记录参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/devices/{id:\\d+}/inventory")
     public Result recordDeviceInventory(@PathVariable Long id, @RequestBody DeviceInventoryRecordEntity record) {
         return Result.success("保存设备盘点记录成功", devicesService.recordDeviceInventory(id, record));
     }
 
+    /**
+     * 列出Transfer记录集合。
+     * @param deviceId 设备标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/device-transfer-records")
     public Result listTransferRecords(@RequestParam(required = false) Long deviceId) {
         return Result.success("获取设备调拨记录成功", devicesService.listTransferRecords(deviceId));
     }
 
+    /**
+     * 列出设备Transfer记录集合。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/devices/{id:\\d+}/transfer-records")
     public Result listDeviceTransferRecords(@PathVariable Long id) {
         return Result.success("获取设备调拨记录成功", devicesService.listTransferRecords(id));
     }
 
+    /**
+     * 调拨设备。
+     * @param id 标识参数。
+     * @param record 记录参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/devices/{id:\\d+}/transfer")
     public Result transferDevice(@PathVariable Long id, @RequestBody DeviceTransferRecordEntity record) {
         return Result.success("保存设备调拨成功", devicesService.transferDevice(id, record));
@@ -139,18 +228,34 @@ public class DevicesController {
         private String resource;
         private List<DevicesEntity> records;
 
+        /**
+         * 获取资源。
+         * @return String 类型的处理结果。
+         */
         public String getResource() {
             return resource;
         }
 
+        /**
+         * 设置资源。
+         * @param resource 资源参数。
+         */
         public void setResource(String resource) {
             this.resource = resource;
         }
 
+        /**
+         * 获取记录集合。
+         * @return 当前操作得到的记录集合。
+         */
         public List<DevicesEntity> getRecords() {
             return records;
         }
 
+        /**
+         * 设置记录集合。
+         * @param records 记录集合参数。
+         */
         public void setRecords(List<DevicesEntity> records) {
             this.records = records;
         }

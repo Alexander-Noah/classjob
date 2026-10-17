@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LabMetadataServiceTest {
+    /**
+     * convertsUnordered行集合目标标识符映射的处理逻辑。
+     */
     @Test
     void convertsUnorderedRowsToIdentifierMaps() {
         LabResourceMetadataMapper mapper = new StubMapper(
@@ -31,6 +34,9 @@ class LabMetadataServiceTest {
         assertEquals(22, adapter.countByLabIds(Set.of(1L, 2L)).get(2L));
     }
 
+    /**
+     * rejectsDuplicate行集合InsteadOfSilentlyOverwriting数据的处理逻辑。
+     */
     @Test
     void rejectsDuplicateRowsInsteadOfSilentlyOverwritingData() {
         var managerAdapter = new LabMetadataService(new StubMapper(
@@ -42,20 +48,33 @@ class LabMetadataServiceTest {
                 List.of(new DeviceCountRow(1L, 10), new DeviceCountRow(1L, 11))
         ));
 
-        assertThrows(IllegalStateException.class, () -> managerAdapter.findNames(Set.of(101L)));
-        assertThrows(IllegalStateException.class, () -> deviceAdapter.countByLabIds(Set.of(1L)));
+        assertThrows(IllegalStateException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> managerAdapter.findNames(Set.of(101L)));
+        assertThrows(IllegalStateException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> deviceAdapter.countByLabIds(Set.of(1L)));
     }
 
+    /**
+     * avoidsDatabaseCallsFor空值标识符集合的处理逻辑。
+     */
     @Test
     void avoidsDatabaseCallsForEmptyIdentifierSets() {
         AtomicInteger calls = new AtomicInteger();
         LabResourceMetadataMapper mapper = new LabResourceMetadataMapper() {
+            /**
+             * 查找Manager名称集合。
+             * @param managerUserIds manager用户标识集合参数。
+             * @return 当前操作得到的记录集合。
+             */
             @Override
             public List<ManagerNameRow> findManagerNames(Set<Long> managerUserIds) {
                 calls.incrementAndGet();
                 return List.of();
             }
 
+            /**
+             * 统计设备By实验室标识集合。
+             * @param labIds 实验室标识集合参数。
+             * @return 当前操作得到的记录集合。
+             */
             @Override
             public List<DeviceCountRow> countDevicesByLabIds(Set<Long> labIds) {
                 calls.incrementAndGet();
@@ -73,11 +92,21 @@ class LabMetadataServiceTest {
             List<ManagerNameRow> managerRows,
             List<DeviceCountRow> deviceRows
     ) implements LabResourceMetadataMapper {
+        /**
+         * 查找Manager名称集合。
+         * @param managerUserIds manager用户标识集合参数。
+         * @return 当前操作得到的记录集合。
+         */
         @Override
         public List<ManagerNameRow> findManagerNames(Set<Long> managerUserIds) {
             return managerRows;
         }
 
+        /**
+         * 统计设备By实验室标识集合。
+         * @param labIds 实验室标识集合参数。
+         * @return 当前操作得到的记录集合。
+         */
         @Override
         public List<DeviceCountRow> countDevicesByLabIds(Set<Long> labIds) {
             return deviceRows;

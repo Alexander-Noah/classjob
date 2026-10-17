@@ -27,7 +27,7 @@ defineOptions({
 
 const router = useRouter()
 const route = useRoute()
-const roleHomePath = computed(() => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
+const roleHomePath = computed(/** 计算派生状态。 */ () => AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH.teacher)
 
 const DEFAULT_REQUESTS = [
   {
@@ -65,6 +65,11 @@ const DEFAULT_REQUESTS = [
   },
 ]
 
+/**
+ * 解析AdjustmentMeta。
+ * 入参：status（状态）。
+ * @returns 组装的键值对象。
+ */
 const resolveAdjustmentMeta = (status = '审核中') => {
   if (status === '已调整') return { tagType: 'primary', flowStep: 4 }
   if (status === '已通过') return { tagType: 'success', flowStep: 3 }
@@ -72,6 +77,11 @@ const resolveAdjustmentMeta = (status = '审核中') => {
   return { tagType: 'warning', flowStep: 2 }
 }
 
+/**
+ * 归一化Adjustment。
+ * 入参：record（记录）。
+ * @returns 组装的键值对象。
+ */
 const normalizeAdjustment = (record = {}) => {
   const status = record.status || '审核中'
   const meta = resolveAdjustmentMeta(status)
@@ -89,7 +99,7 @@ const normalizeAdjustment = (record = {}) => {
   }
 }
 
-const requestList = ref(DEFAULT_REQUESTS.map((item) => normalizeAdjustment(item)))
+const requestList = ref(DEFAULT_REQUESTS.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeAdjustment(item)))
 const isLoading = ref(false)
 
 const activeStatus = ref('全部')
@@ -100,16 +110,16 @@ const adjustmentPrefill = ref(null)
 const statusOptions = ['全部', '审核中', '已通过', '已调整', '已取消']
 const fallbackCourseOptions = ['数据库原理', 'Java Web 程序设计', '人工智能基础', '软件测试']
 
-const courseOptions = computed(() => {
-  const courseNames = requestList.value.map((item) => item.course)
+const courseOptions = computed(/** 计算派生状态。 */ () => {
+  const courseNames = requestList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.course)
   const queryCourse = route.query.course ? [String(route.query.course)] : []
   return [...new Set([...queryCourse, ...courseNames, ...fallbackCourseOptions].filter(Boolean))]
 })
 
-const metrics = computed(() => {
-  const processing = requestList.value.filter((item) => item.status === '审核中').length
-  const approved = requestList.value.filter((item) => item.status === '已通过').length
-  const adjusted = requestList.value.filter((item) => item.status === '已调整').length
+const metrics = computed(/** 计算派生状态。 */ () => {
+  const processing = requestList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '审核中').length
+  const approved = requestList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '已通过').length
+  const adjusted = requestList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '已调整').length
 
   return [
     { label: '本月申请', value: String(requestList.value.length), trend: '教师自主提交调课需求' },
@@ -119,8 +129,8 @@ const metrics = computed(() => {
   ]
 })
 
-const filteredRequests = computed(() =>
-  requestList.value.filter((item) => activeStatus.value === '全部' || item.status === activeStatus.value),
+const filteredRequests = computed(/** 计算派生状态。 */ () =>
+  requestList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => activeStatus.value === '全部' || item.status === activeStatus.value),
 )
 
 const {
@@ -131,12 +141,16 @@ const {
   pagedRecords: pagedRequests,
 } = useTablePagination(filteredRequests)
 
+/**
+ * 加载Adjustments。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const loadAdjustments = async () => {
   isLoading.value = true
   try {
     const records = await listScheduleAdjustments()
     if (records.length) {
-      requestList.value = records.map((item) => normalizeAdjustment(item))
+      requestList.value = records.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => normalizeAdjustment(item))
       selectedRequest.value = requestList.value[0] || null
     }
     return true
@@ -148,6 +162,9 @@ const loadAdjustments = async () => {
   }
 }
 
+/**
+ * 同步Adjustments。
+ */
 const syncAdjustments = async () => {
   const synced = await loadAdjustments()
   if (synced) {
@@ -155,16 +172,29 @@ const syncAdjustments = async () => {
   }
 }
 
+/**
+ * replaceAdjustment的处理逻辑。
+ * 入参：record（记录）。
+ */
 const replaceAdjustment = (record) => {
   const normalized = normalizeAdjustment(record)
-  requestList.value = requestList.value.map((item) => (item.id === normalized.id ? normalized : item))
+  requestList.value = requestList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (item.id === normalized.id ? normalized : item))
   if (selectedRequest.value?.id === normalized.id) {
     selectedRequest.value = normalized
   }
 }
 
+/**
+ * 判断是否允许Withdraw。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const canWithdraw = (row) => row?.status === '审核中'
 
+/**
+ * withdrawAdjustment的处理逻辑。
+ * 入参：row（行）。
+ */
 const withdrawAdjustment = async (row = selectedRequest.value) => {
   if (!row) return
 
@@ -196,6 +226,9 @@ const withdrawAdjustment = async (row = selectedRequest.value) => {
   }
 }
 
+/**
+ * 导出Adjustment请求。
+ */
 const exportAdjustmentRequests = () => {
   const exportRows = filteredRequests.value
 
@@ -222,6 +255,10 @@ const exportAdjustmentRequests = () => {
   ElMessage.success(`已导出 ${exportedCount} 条调课申请`)
 }
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = async (action) => {
   if (action.command === 'create') {
     adjustmentPrefill.value = null
@@ -239,10 +276,16 @@ const handleHeroAction = async (action) => {
   }
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(roleHomePath.value)
 }
 
+/**
+ * 应用RouteAdjustment上下文。
+ */
 const applyRouteAdjustmentContext = () => {
   if (route.query.action !== 'create') return
 
@@ -258,6 +301,10 @@ const applyRouteAdjustmentContext = () => {
   dialogVisible.value = true
 }
 
+/**
+ * 处理Save。
+ * 入参：payload（载荷）。
+ */
 const handleSave = async (payload) => {
   try {
     const savedAdjustment = await createScheduleAdjustment({
@@ -276,7 +323,7 @@ const handleSave = async (payload) => {
   }
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   await loadAdjustments()
   applyRouteAdjustmentContext()
 })

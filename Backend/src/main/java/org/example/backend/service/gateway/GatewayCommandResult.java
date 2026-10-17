@@ -18,12 +18,21 @@ public record GatewayCommandResult(
         LocalDateTime executedAt,
         LocalDateTime finishedAt
 ) {
+    /**
+     * 构造 GatewayCommandResult，初始化当前实例。
+     */
     public GatewayCommandResult {
         requestParams = requestParams == null ? Map.of() : Map.copyOf(requestParams);
         responseResult = responseResult == null ? Map.of() : Map.copyOf(responseResult);
         executedAt = executedAt == null ? LocalDateTime.now() : executedAt;
     }
 
+    /**
+     * mock成功的处理逻辑。
+     * @param request 请求参数。
+     * @param responseResult 响应结果参数。
+     * @return GatewayCommandResult 类型的处理结果。
+     */
     public static GatewayCommandResult mockSuccess(GatewayCommandRequest request, Map<String, Object> responseResult) {
         LocalDateTime now = LocalDateTime.now();
         return new GatewayCommandResult(
@@ -40,6 +49,12 @@ public record GatewayCommandResult(
         );
     }
 
+    /**
+     * real网关NotConfigured的处理逻辑。
+     * @param mode mode参数。
+     * @param request 请求参数。
+     * @return GatewayCommandResult 类型的处理结果。
+     */
     public static GatewayCommandResult realGatewayNotConfigured(String mode, GatewayCommandRequest request) {
         LocalDateTime now = LocalDateTime.now();
         return new GatewayCommandResult(

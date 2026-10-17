@@ -25,15 +25,30 @@ import java.util.Map;
 public class ModuleRecordController {
     private final ModuleRecordService moduleRecordService;
 
+    /**
+     * 构造 ModuleRecordController，初始化当前实例。
+     * @param moduleRecordService module记录服务参数。
+     */
     public ModuleRecordController(ModuleRecordService moduleRecordService) {
         this.moduleRecordService = moduleRecordService;
     }
 
+    /**
+     * 列出Module记录集合。
+     * @param moduleName module名称参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping
     public Result listModuleRecords(@PathVariable String moduleName) {
         return Result.success("获取模块数据成功", moduleRecordService.listModuleRecords(moduleName));
     }
 
+    /**
+     * replaceModule记录集合的处理逻辑。
+     * @param moduleName module名称参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/batch")
     public Result replaceModuleRecords(@PathVariable String moduleName, @RequestBody ModuleRecordBatchRequest request) {
         List<Map<String, Object>> records = request == null || request.getRecords() == null
@@ -43,6 +58,11 @@ public class ModuleRecordController {
         return Result.success("保存模块数据成功", moduleRecordService.replaceModuleRecords(moduleName, records));
     }
 
+    /**
+     * 重置Module记录集合。
+     * @param moduleName module名称参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/reset")
     public Result resetModuleRecords(@PathVariable String moduleName) {
         return Result.success("重置模块数据成功", moduleRecordService.resetModuleRecords(moduleName));

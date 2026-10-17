@@ -29,6 +29,10 @@ const props = defineProps({
   },
   filteredRecords: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   getRowTagType: {
@@ -57,10 +61,18 @@ const props = defineProps({
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   tableColumns: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   tableTitle: {
@@ -89,15 +101,37 @@ const emit = defineEmits([
 ])
 
 const keywordModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.keyword 的当前值。
+   */
   get: () => props.keyword,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:keyword', value),
 })
 
 const statusFilterModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.statusFilter 的当前值。
+   */
   get: () => props.statusFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:statusFilter', value),
 })
 
+/**
+ * 获取行Class名称。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRowClassName = ({ row }) => (row._recordId === props.activeRecordId ? 'is-active-row' : '')
 </script>
 

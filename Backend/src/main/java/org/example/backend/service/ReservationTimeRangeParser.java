@@ -15,6 +15,9 @@ public final class ReservationTimeRangeParser {
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Pattern TIME_RANGE = Pattern.compile("^(\\d{2}):(\\d{2})-(\\d{2}):(\\d{2})$");
 
+    /**
+     * 构造 ReservationTimeRangeParser，初始化当前实例。
+     */
     private ReservationTimeRangeParser() { }
 
     /**
@@ -45,6 +48,12 @@ public final class ReservationTimeRangeParser {
         );
     }
 
+    /**
+     * 本地时间的处理逻辑。
+     * @param hour hour参数。
+     * @param minute minute参数。
+     * @return LocalTime 类型的处理结果。
+     */
     private static LocalTime localTime(String hour, String minute) {
         try {
             return LocalTime.of(Integer.parseInt(hour), Integer.parseInt(minute));

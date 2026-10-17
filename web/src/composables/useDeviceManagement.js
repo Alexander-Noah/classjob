@@ -22,7 +22,16 @@ import {
 import { listLabs } from '../api/services/lab'
 import { listUserOptions } from '../api/services/users'
 
+/**
+ * 裁剪文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const trimText = (value) => String(value ?? '').trim()
+/**
+ * now日期时间的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const nowDateTime = () => new Date().toISOString().slice(0, 19).replace('T', ' ')
 
 const inventoryResultOptions = [
@@ -32,6 +41,10 @@ const inventoryResultOptions = [
   { label: '设备损坏', type: 'danger' },
 ]
 
+/**
+ * 创建库存Form。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createInventoryForm = () => ({
   inspectorName: '',
   inspectedAt: nowDateTime(),
@@ -42,6 +55,10 @@ const createInventoryForm = () => ({
   remark: '',
 })
 
+/**
+ * 创建TransferForm。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createTransferForm = () => ({
   toLabId: '',
   toOwnerUserId: '',
@@ -51,6 +68,10 @@ const createTransferForm = () => ({
   reason: '',
 })
 
+/**
+ * 提供设备Management。
+ * @returns 组装的键值对象。
+ */
 export function useDeviceManagement() {
   const keyword = ref('')
   const labFilter = ref('')
@@ -87,17 +108,17 @@ export function useDeviceManagement() {
   const categoryOptions = deviceAssetService.categoryOptions
   const statusOptions = deviceAssetService.statusOptions
 
-  const queryParams = computed(() => ({
+  const queryParams = computed(/** 计算派生状态。 */ () => ({
     pageNum: currentPage.value,
     pageSize: pageSize.value,
     keyword: trimText(keyword.value) || undefined,
     labId: trimText(labFilter.value) || undefined,
-    labName: getLabName(labOptions.value.find((lab) => String(getLabId(lab)) === String(labFilter.value))) || undefined,
+    labName: getLabName(labOptions.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => String(getLabId(lab)) === String(labFilter.value))) || undefined,
     category: trimText(categoryFilter.value) || undefined,
     status: trimText(statusFilter.value) || undefined,
   }))
 
-  const metrics = computed(() => [
+  const metrics = computed(/** 计算派生状态。 */ () => [
     { label: '设备总数', value: stats.value.total ?? 0, trend: '设备资产条目' },
     { label: '正常设备', value: stats.value.normal ?? 0, trend: '状态为正常' },
     { label: '维修中', value: stats.value.repairing ?? 0, trend: '状态为维修中' },
@@ -105,15 +126,29 @@ export function useDeviceManagement() {
     { label: '已报废', value: stats.value.scrapped ?? 0, trend: '状态为已报废' },
   ])
 
-  const dialogTitle = computed(() => (dialogMode.value === 'edit' ? '编辑设备资产' : '新增设备资产'))
+  const dialogTitle = computed(/** 计算派生状态。 */ () => (dialogMode.value === 'edit' ? '编辑设备资产' : '新增设备资产'))
 
+  /**
+   * 重置Form。
+   * 入参：device（设备）。
+   */
   const resetForm = (device = createEmptyDeviceAsset()) => {
     Object.assign(formModel, createEmptyDeviceAsset(), normalizeDeviceAsset(device))
   }
 
+  /**
+   * 判断是否具有实验室Signal。
+   * 入参：device（设备）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const hasLabSignal = (device = {}) =>
     trimText(getDeviceLabName(device)) || trimText(getDeviceLocation(device)) || trimText(device.deviceName) || trimText(device.remark)
 
+  /**
+   * bindForm目标Matched实验室的处理逻辑。
+   * 入参：showUnmatchedHint（showUnmatchedHint）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const bindFormToMatchedLab = (showUnmatchedHint = false) => {
     const matchedLab = matchDeviceLab(formModel, labOptions.value)
     if (matchedLab) {
@@ -127,6 +162,11 @@ export function useDeviceManagement() {
     return false
   }
 
+  /**
+   * 加载实验室选项。
+   * 入参：force（force）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const loadLabOptions = async (force = false) => {
     if (labOptionsLoaded.value && !force) return labOptions.value
     try {
@@ -143,6 +183,11 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 加载所有者选项。
+   * 入参：force（force）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const loadOwnerOptions = async (force = false) => {
     if (ownerOptionsLoaded.value && !force) return ownerOptions.value
     try {
@@ -156,6 +201,9 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 加载设备。
+   */
   const loadDevices = async () => {
     loading.value = true
     try {
@@ -171,34 +219,50 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 加载Stats。
+   */
   const loadStats = async () => {
     try {
       stats.value = await deviceAssetService.stats()
     } catch {
       stats.value = {
         total: total.value || devices.value.length,
-        normal: devices.value.filter((device) => device.status === '正常').length,
-        repairing: devices.value.filter((device) => device.status === '维修中').length,
-        idle: devices.value.filter((device) => device.status === '闲置').length,
-        scrapped: devices.value.filter((device) => device.status === '已报废').length,
+        normal: devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '正常').length,
+        repairing: devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '维修中').length,
+        idle: devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '闲置').length,
+        scrapped: devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.status === '已报废').length,
       }
     }
   }
 
+  /**
+   * 重新加载当前操作。
+   */
   const reload = async () => {
     await loadDevices()
     await loadStats()
   }
 
+  /**
+   * 处理SelectionChange。
+   * 入参：selection（selection）。
+   */
   const handleSelectionChange = (selection = []) => {
     selectedDevices.value = selection.map(normalizeDeviceAsset)
   }
 
+  /**
+   * 搜索当前操作。
+   */
   const search = async () => {
     currentPage.value = 1
     await reload()
   }
 
+  /**
+   * 重置筛选条件。
+   */
   const resetFilters = async () => {
     keyword.value = ''
     labFilter.value = ''
@@ -208,6 +272,9 @@ export function useDeviceManagement() {
     await reload()
   }
 
+  /**
+   * 打开CreateDialog。
+   */
   const openCreateDialog = async () => {
     await loadLabOptions()
     dialogMode.value = 'create'
@@ -215,6 +282,10 @@ export function useDeviceManagement() {
     dialogVisible.value = true
   }
 
+  /**
+   * 打开EditDialog。
+   * 入参：device（设备）。
+   */
   const openEditDialog = async (device) => {
     if (!device) return
     await loadLabOptions()
@@ -224,6 +295,10 @@ export function useDeviceManagement() {
     dialogVisible.value = true
   }
 
+  /**
+   * 打开详情Dialog。
+   * 入参：device（设备）。
+   */
   const openDetailDialog = async (device) => {
     if (!device) return
     selectedDevice.value = device
@@ -236,6 +311,10 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 打开库存Dialog。
+   * 入参：device（设备）。
+   */
   const openInventoryDialog = (device) => {
     if (!device) return
     inventoryDevice.value = normalizeDeviceAsset(device)
@@ -244,6 +323,9 @@ export function useDeviceManagement() {
     inventoryDialogVisible.value = true
   }
 
+  /**
+   * 打开Batch库存Dialog。
+   */
   const openBatchInventoryDialog = () => {
     if (!selectedDevices.value.length) {
       ElMessage.warning('请先选择需要盘点的设备资产')
@@ -255,6 +337,10 @@ export function useDeviceManagement() {
     inventoryDialogVisible.value = true
   }
 
+  /**
+   * 打开TransferDialog。
+   * 入参：device（设备）。
+   */
   const openTransferDialog = async (device) => {
     if (!device) return
     await Promise.all([loadLabOptions(), loadOwnerOptions()])
@@ -263,6 +349,9 @@ export function useDeviceManagement() {
     transferDialogVisible.value = true
   }
 
+  /**
+   * 打开BatchTransferDialog。
+   */
   const openBatchTransferDialog = async () => {
     if (!selectedDevices.value.length) {
       ElMessage.warning('请先选择需要调拨的设备资产')
@@ -274,6 +363,9 @@ export function useDeviceManagement() {
     transferDialogVisible.value = true
   }
 
+  /**
+   * 提交设备。
+   */
   const submitDevice = async () => {
     if (!trimText(formModel.deviceName)) {
       ElMessage.warning('请填写设备名称')
@@ -325,6 +417,10 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 删除设备。
+   * 入参：device（设备）。
+   */
   const deleteDevice = async (device) => {
     if (!device) return
 
@@ -344,6 +440,9 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * batchDelete设备的处理逻辑。
+   */
   const batchDeleteDevices = async () => {
     if (!selectedDevices.value.length) {
       ElMessage.warning('请先选择需要删除的设备资产')
@@ -356,7 +455,7 @@ export function useDeviceManagement() {
         confirmButtonText: '批量删除',
         cancelButtonText: '取消',
       })
-      await Promise.all(selectedDevices.value.map((device) => deviceAssetService.remove(device.id)))
+      await Promise.all(selectedDevices.value.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => deviceAssetService.remove(device.id)))
       ElMessage.success(`已删除 ${selectedDevices.value.length} 条设备资产`)
       selectedDevices.value = []
       await reload()
@@ -367,6 +466,9 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 提交库存。
+   */
   const submitInventory = async () => {
     const targetDevices = inventoryDevices.value.length ? inventoryDevices.value : [inventoryDevice.value].filter(Boolean)
     if (!targetDevices.length) return
@@ -386,7 +488,7 @@ export function useDeviceManagement() {
     inventorySubmitting.value = true
     try {
       await Promise.all(
-        targetDevices.map((device) =>
+        targetDevices.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) =>
           deviceAssetService.createInventoryRecord(device.id, {
             ...inventoryFormModel,
             deviceCode: device.assetNo,
@@ -408,6 +510,9 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 提交Transfer。
+   */
   const submitTransfer = async () => {
     if (!transferDevices.value.length) return
     if (!trimText(transferFormModel.operatorName)) {
@@ -415,8 +520,8 @@ export function useDeviceManagement() {
       return
     }
 
-    const selectedLab = labOptions.value.find((lab) => String(getLabId(lab)) === String(transferFormModel.toLabId || ''))
-    const selectedOwner = ownerOptions.value.find((user) => String(user.id) === String(transferFormModel.toOwnerUserId || ''))
+    const selectedLab = labOptions.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => String(getLabId(lab)) === String(transferFormModel.toLabId || ''))
+    const selectedOwner = ownerOptions.value.find(/** 判断当前条目是否为查找目标。 入参：user。 */ (user) => String(user.id) === String(transferFormModel.toOwnerUserId || ''))
     const ownerName = selectedOwner?.realName || selectedOwner?.name || selectedOwner?.username || ''
     const payload = {
       ...transferFormModel,
@@ -427,7 +532,7 @@ export function useDeviceManagement() {
     transferSubmitting.value = true
     try {
       await Promise.all(
-        transferDevices.value.map((device) =>
+        transferDevices.value.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) =>
           deviceAssetService.transfer(device.id, {
             ...payload,
             currentDevice: device,
@@ -449,6 +554,10 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 导入设备来源文件。
+   * 入参：file（文件）。
+   */
   const importDevicesFromFile = async (file) => {
     if (!file) return
 
@@ -467,6 +576,9 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 导出设备。
+   */
   const exportDevices = async () => {
     try {
       await deviceAssetService.export(queryParams.value)
@@ -478,16 +590,27 @@ export function useDeviceManagement() {
     }
   }
 
+  /**
+   * 下载设备Import模板。
+   */
   const downloadDeviceImportTemplate = () => {
     deviceAssetService.downloadTemplate()
     ElMessage.success('设备资产导入模板已下载')
   }
 
+  /**
+   * 处理页码Change。
+   * 入参：page（页码）。
+   */
   const handlePageChange = async (page) => {
     currentPage.value = page
     await reload()
   }
 
+  /**
+   * 处理页码大小Change。
+   * 入参：size（大小）。
+   */
   const handlePageSizeChange = async (size) => {
     pageSize.value = size
     currentPage.value = 1

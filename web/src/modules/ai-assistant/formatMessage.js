@@ -1,5 +1,19 @@
-const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
+/**
+ * 转义HTML。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const escapeHtml = value => String(value).replace(/[&<>"']/g, /** 处理 replace 调用中的回调逻辑。 入参：char。 */ char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
+/**
+ * 转义并排版行内文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const inline = value => escapeHtml(value).replace(/`([^`]+)`|\*\*(.+?)\*\*/g,
+  /**
+   * 处理 replace 调用中的回调逻辑。
+   * 入参：_、code、strong。
+   */
   (_, code, strong) => code !== undefined ? `<code>${code}</code>` : `<strong>${strong}</strong>`)
 
 /** 只输出受控的文本排版标签；模型输出先转义，不接收原始 HTML 或可执行链接。 */
@@ -7,10 +21,13 @@ export function formatMessageContent(content = '') {
   const blocks = []
   let paragraph = [], items = [], listType = '', code = null
   let listStart = 1
+  /**
+   * 刷新当前操作。
+   */
   const flush = () => {
     if (paragraph.length) { blocks.push(`<p>${paragraph.map(inline).join('<br>')}</p>`); paragraph = [] }
     if (items.length) {
-      blocks.push(`<${listType}${listType === 'ol' ? ` start="${listStart}"` : ''}>${items.map(item => `<li>${inline(item)}</li>`).join('')}</${listType}>`)
+      blocks.push(`<${listType}${listType === 'ol' ? ` start="${listStart}"` : ''}>${items.map(/** 将当前条目转换为目标结果。 入参：item。 */ item => `<li>${inline(item)}</li>`).join('')}</${listType}>`)
       items = []; listType = ''
     }
   }

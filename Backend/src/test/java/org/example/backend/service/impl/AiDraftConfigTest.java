@@ -18,12 +18,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AiDraftConfigTest {
+    /**
+     * testsUnsavedDraftWithoutPersistingIt的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void testsUnsavedDraftWithoutPersistingIt() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         AtomicReference<String> authorization = new AtomicReference<>();
         AtomicReference<String> body = new AtomicReference<>();
-        server.createContext("/chat/completions", exchange -> {
+        server.createContext("/chat/completions", /** 处理 createContext 调用中的回调逻辑。 入参：exchange。 */ exchange -> {
             authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
             body.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             byte[] response = "{\"choices\":[{\"message\":{\"content\":\"OK\"}}]}".getBytes(StandardCharsets.UTF_8);
@@ -49,6 +53,9 @@ class AiDraftConfigTest {
         }
     }
 
+    /**
+     * draftCannotBorrowA键来源Another服务商的处理逻辑。
+     */
     @Test
     void draftCannotBorrowAKeyFromAnotherProvider() {
         AiAssistantUserConfigMapper mapper = mock(AiAssistantUserConfigMapper.class);
@@ -57,7 +64,7 @@ class AiDraftConfigTest {
         saved.setApiKey("fixture-saved-key");
         when(mapper.getByUserId(1)).thenReturn(saved);
         AiAssistantUserConfigServiceImpl service = new AiAssistantUserConfigServiceImpl(mapper);
-        assertThrows(IllegalArgumentException.class, () -> service.testConnection(1, Map.of(
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.testConnection(1, Map.of(
                 "enabled", true, "baseUrl", "https://api.siliconflow.cn/v1", "model", "draft-model")));
         verify(mapper, never()).upsertConfig(any());
     }

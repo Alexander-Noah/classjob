@@ -21,6 +21,10 @@ const props = defineProps({
   },
   buildingOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   keyword: {
@@ -37,6 +41,10 @@ const props = defineProps({
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   typeFilter: {
@@ -45,6 +53,10 @@ const props = defineProps({
   },
   typeOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -58,27 +70,72 @@ const emit = defineEmits([
 ])
 
 const keywordModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.keyword 的当前值。
+   */
   get: () => props.keyword,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:keyword', value),
 })
 
 const buildingModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.buildingFilter 的当前值。
+   */
   get: () => props.buildingFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:buildingFilter', value),
 })
 
 const statusModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.statusFilter 的当前值。
+   */
   get: () => props.statusFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:statusFilter', value),
 })
 
 const typeModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.typeFilter 的当前值。
+   */
   get: () => props.typeFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:typeFilter', value),
 })
 
 const availableModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.availableOnly 的当前值。
+   */
   get: () => props.availableOnly,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:availableOnly', value),
 })
 </script>

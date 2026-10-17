@@ -11,10 +11,25 @@ import java.util.List;
 
 @Mapper
 public interface ModuleRecordMapper {
+    /**
+     * 列出记录JSON。
+     * @param moduleName module名称参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<String> listRecordJson(@Param("moduleName") String moduleName);
 
+    /**
+     * 删除ByModule名称。
+     * @param moduleName module名称参数。
+     */
     void deleteByModuleName(@Param("moduleName") String moduleName);
 
+    /**
+     * 插入记录。
+     * @param moduleName module名称参数。
+     * @param recordKey 记录键参数。
+     * @param recordJson 记录JSON参数。
+     */
     void insertRecord(
             @Param("moduleName") String moduleName,
             @Param("recordKey") String recordKey,

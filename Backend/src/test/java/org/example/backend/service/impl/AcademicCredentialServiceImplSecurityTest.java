@@ -14,19 +14,32 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 class AcademicCredentialServiceImplSecurityTest {
+    /**
+     * rejects空白教务凭据秘密配置的处理逻辑。
+     */
     @Test
     void rejectsBlankAcademicCredentialSecret() {
-        assertThrows(IllegalStateException.class, () -> newAcademicCredentialService("data/test-academic-credentials.properties", ""));
+        assertThrows(IllegalStateException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> newAcademicCredentialService("data/test-academic-credentials.properties", ""));
     }
 
+    /**
+     * acceptsStrong教务凭据秘密配置的处理逻辑。
+     */
     @Test
     void acceptsStrongAcademicCredentialSecret() {
-        assertDoesNotThrow(() -> newAcademicCredentialService(
+        assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> newAcademicCredentialService(
                 "data/test-academic-credentials.properties",
                 "test-only-strong-academic-secret-with-40-plus-chars"
         ));
     }
 
+    /**
+     * new教务凭据服务的处理逻辑。
+     * @param storePath store路径参数。
+     * @param secret 秘密配置参数。
+     * @return Object 类型的处理结果。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private Object newAcademicCredentialService(String storePath, String secret) throws Exception {
         try {
             return Class.forName("org.example.backend.service.impl.AcademicCredentialServiceImpl")

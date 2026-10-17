@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TimetableRecoveryTest(unittest.TestCase):
+    # 运行main。
+    # 入参：headless（headless）。
+    # 返回：由当前表达式或分支生成的处理结果。
     def run_main(self, headless):
         spec = importlib.util.spec_from_file_location("profile", ROOT / "timetable_browser_profile.py")
         profile = importlib.util.module_from_spec(spec)
@@ -39,6 +42,7 @@ class TimetableRecoveryTest(unittest.TestCase):
             namespace["main"]()
         return create, login, marker, driver, recovered_driver
 
+    # 验证portal超时进入headlessmode尝试visiblerecoveryonce。
     def test_portal_timeout_in_headless_mode_attempts_visible_recovery_once(self):
         create, login, marker, first, second = self.run_main(True)
         self.assertEqual(2, create.call_count)
@@ -48,6 +52,7 @@ class TimetableRecoveryTest(unittest.TestCase):
         first.quit.assert_called_once()
         second.quit.assert_called_once()
 
+    # 验证visible超时isterminalwithoutanother浏览器。
     def test_visible_timeout_is_terminal_without_another_browser(self):
         create, login, marker, first, _ = self.run_main(False)
         create.assert_called_once_with()

@@ -17,7 +17,7 @@ const http = axios.create({
   timeout: API_TIMEOUT,
 })
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(/** 处理 use 调用中的回调逻辑。 入参：config。 */ (config) => {
   // “记住我”使用 localStorage，临时登录使用 sessionStorage，两种会话均可携带令牌。
   const token =
     typeof window !== 'undefined'
@@ -35,6 +35,10 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
+  /**
+   * 处理 use 调用中的回调逻辑。
+   * 入参：response。
+   */
   (response) => {
     const body = response?.data
     // HTTP 200 不等于业务成功；只有响应显式包含 code 时才按统一业务协议判定。
@@ -49,6 +53,10 @@ http.interceptors.response.use(
 
     return response
   },
+  /**
+   * 处理 use 调用中的回调逻辑。
+   * 入参：error。
+   */
   (error) => {
     if (error?.response?.status === 401 && typeof window !== 'undefined') {
       // 同时清空两种存储，防止旧令牌被另一种存储恢复；回跳地址保留当前查询参数。

@@ -22,9 +22,19 @@ export const reservationStatusOptions = [
   { label: RESERVATION_STATUS.completed, type: 'success' },
 ]
 
+/**
+ * 获取预约状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getReservationStatusType = (status) =>
-  reservationStatusOptions.find((item) => item.label === status)?.type || 'info'
+  reservationStatusOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.label === status)?.type || 'info'
 
+/**
+ * 获取预约开始At。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getReservationStartAt = (reservation = {}) => {
   const dateText = reservation.date || reservation.reservationDate
   const startTime = String(reservation.timeRange || '')
@@ -37,11 +47,21 @@ export const getReservationStartAt = (reservation = {}) => {
   return Number.isNaN(startAt.getTime()) ? null : startAt
 }
 
+/**
+ * 判断是否为预约Expired。
+ * 入参：reservation（预约）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const isReservationExpired = (reservation = {}, now = new Date()) => {
   const startAt = getReservationStartAt(reservation)
   return Boolean(startAt && now.getTime() >= startAt.getTime())
 }
 
+/**
+ * 归一化预约状态。
+ * 入参：reservation（预约）；now（now）。
+ * @returns status 的当前值。
+ */
 export const normalizeReservationStatus = (reservation = {}, now = new Date()) => {
   let status = reservation.status === '加签中' ? RESERVATION_STATUS.pending : reservation.status || RESERVATION_STATUS.pending
 
@@ -54,6 +74,11 @@ export const normalizeReservationStatus = (reservation = {}, now = new Date()) =
   return status
 }
 
+/**
+ * 归一化预约ForDisplay。
+ * 入参：reservation（预约）；now（now）。
+ * @returns 组装的键值对象。
+ */
 export const normalizeReservationForDisplay = (reservation = {}, now = new Date()) => {
   const status = normalizeReservationStatus(reservation, now)
   const conflict = status === RESERVATION_STATUS.conflict || Boolean(reservation.conflict || reservation.conflictFlag === 1)
@@ -66,6 +91,11 @@ export const normalizeReservationForDisplay = (reservation = {}, now = new Date(
   }
 }
 
+/**
+ * 获取预约Actions。
+ * 入参：reservation（预约）；now（now）。
+ * @returns 组装的键值对象。
+ */
 export const getReservationActions = (reservation = {}, now = new Date()) => {
   const status = normalizeReservationStatus(reservation, now)
 
@@ -80,8 +110,18 @@ export const getReservationActions = (reservation = {}, now = new Date()) => {
   }
 }
 
+/**
+ * 获取Action已禁用。
+ * 入参：reservation（预约）；action（action）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getActionDisabled = (reservation = {}, action, now = new Date()) => !getReservationActions(reservation, now)[action]
 
+/**
+ * 获取Action已禁用原因。
+ * 入参：reservation（预约）；action（action）；now（now）。
+ * @returns 文本结果。
+ */
 export const getActionDisabledReason = (reservation = {}, action, now = new Date()) => {
   if (!getActionDisabled(reservation, action, now)) return ''
   if (action === 'delete') return ''

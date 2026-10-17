@@ -68,6 +68,14 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     private final Object schedulerMonitor = new Object();
     private ScheduledFuture<?> scheduledCrawler;
 
+    /**
+     * 构造 ClassTimetableServiceImpl，初始化当前实例。
+     * @param classTimetableMapper class课表数据映射器参数。
+     * @param teachingScheduleQuery teaching课表查询参数。
+     * @param environment 环境参数。
+     * @param classTimetableTaskScheduler class课表TaskScheduler参数。
+     * @param secret 秘密配置参数。
+     */
     public ClassTimetableServiceImpl(
             ClassTimetableMapper classTimetableMapper,
             TeachingScheduleQuery teachingScheduleQuery,
@@ -82,6 +90,12 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         this.secretKey = buildSecretKey(requireStrongSecret(secret, "timetable.crawler.credential-secret"));
     }
 
+    /**
+     * 要求提供Strong秘密配置。
+     * @param value 值参数。
+     * @param name 名称参数。
+     * @return String 类型的处理结果。
+     */
     private String requireStrongSecret(String value, String name) {
         String secret = value == null ? "" : value.trim();
         if (secret.isBlank()) {
@@ -96,6 +110,9 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return secret;
     }
 
+    /**
+     * 初始化CrawlerScheduler。
+     */
     @PostConstruct
     public void initializeCrawlerScheduler() {
         try {
@@ -108,6 +125,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 获取Crawler配置。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getCrawlerConfig() {
         ensureDefaultCrawlerConfig();
@@ -117,6 +138,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return config;
     }
 
+    /**
+     * 保存Crawler配置。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> saveCrawlerConfig(Map<String, Object> payload) {
         boolean scheduleEnabled = toBoolean(payload == null ? null : payload.get("scheduleEnabled"), true);
@@ -132,6 +158,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return getCrawlerConfig();
     }
 
+    /**
+     * 列出CrawlerTasks。
+     * @param limit 上限参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<Map<String, Object>> listCrawlerTasks(Integer limit) {
         List<Map<String, Object>> tasks = classTimetableMapper.listCrawlerTasks(normalizeTaskLimit(limit));
@@ -143,16 +174,28 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return tasks;
     }
 
+    /**
+     * 清理CrawlerTasks。
+     */
     @Override
     public void clearCrawlerTasks() {
         classTimetableMapper.clearCrawlerTasks();
     }
 
+    /**
+     * triggerCrawler的处理逻辑。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> triggerCrawler() {
         return runCrawlerTask("manual");
     }
 
+    /**
+     * 运行CrawlerTask。
+     * @param triggerType trigger类型参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> runCrawlerTask(String triggerType) {
         // 手动和定时共用同一把锁，避免同时使用浏览器用户目录及导出文件。
         if (!crawlerRunning.compareAndSet(false, true)) {
@@ -165,6 +208,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 执行CrawlerTask。
+     * @param triggerType trigger类型参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> executeCrawlerTask(String triggerType) {
         StoredCrawlerCredential credential = readStoredCrawlerCredential();
         if (credential == null) {
@@ -264,6 +312,9 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 运行ScheduledCrawlerSafely。
+     */
     private void runScheduledCrawlerSafely() {
         try {
             runCrawlerTask("scheduled");
@@ -280,6 +331,9 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * rescheduleCrawler的处理逻辑。
+     */
     private void rescheduleCrawler() {
         // 保存配置后替换旧计划；cancel(false) 不打断已经开始的采集。
         synchronized (schedulerMonitor) {
@@ -298,6 +352,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 插入StartedCrawlerTask。
+     * @param triggerType trigger类型参数。
+     * @param credential 凭据参数。
+     * @param logPath log路径参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> insertStartedCrawlerTask(
             String triggerType,
             StoredCrawlerCredential credential,
@@ -321,6 +382,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return task;
     }
 
+    /**
+     * 更新FinishedCrawlerTask。
+     * @param task task参数。
+     * @param result 结果参数。
+     * @param credential 凭据参数。
+     * @param logPath log路径参数。
+     */
     private void updateFinishedCrawlerTask(
             Map<String, Object> task,
             Map<String, Object> result,
@@ -345,6 +413,13 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 更新FailedCrawlerTask。
+     * @param task task参数。
+     * @param credential 凭据参数。
+     * @param logPath log路径参数。
+     * @param error 错误参数。
+     */
     private void updateFailedCrawlerTask(
             Map<String, Object> task,
             StoredCrawlerCredential credential,
@@ -368,6 +443,12 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 插入SimpleCrawlerTask。
+     * @param triggerType trigger类型参数。
+     * @param status 状态参数。
+     * @param error 错误参数。
+     */
     private void insertSimpleCrawlerTask(String triggerType, String status, String error) {
         try {
             StoredCrawlerCredential credential = null;
@@ -395,6 +476,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 提取Updated数量。
+     * @param result 结果参数。
+     * @return int 类型的处理结果。
+     */
     private int extractUpdatedCount(Map<String, Object> result) {
         Object javaImportCount = result.get("javaImportCount");
         if (javaImportCount instanceof Number number) {
@@ -415,6 +501,9 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return 0;
     }
 
+    /**
+     * 确保满足默认Crawler配置。
+     */
     private void ensureDefaultCrawlerConfig() {
         if (classTimetableMapper.getCrawlerConfig(CRAWLER_CONFIG_KEY) == null) {
             classTimetableMapper.upsertCrawlerConfig(
@@ -427,6 +516,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 归一化Crawler配置。
+     * @param row 行参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> normalizeCrawlerConfig(Map<String, Object> row) {
         Map<String, Object> config = new LinkedHashMap<>();
         config.put("configKey", CRAWLER_CONFIG_KEY);
@@ -450,6 +544,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return config;
     }
 
+    /**
+     * latest学期的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String latestSemester() {
         try {
             List<String> semesters = teachingScheduleQuery.listSemesters();
@@ -459,6 +557,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 计算NextRunAt。
+     * @param config 配置参数。
+     * @return String 类型的处理结果。
+     */
     private String computeNextRunAt(Map<String, Object> config) {
         if (!toBoolean(config.get("scheduleEnabled"), true)) {
             return "";
@@ -471,6 +574,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 归一化Cron。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeCron(String value) {
         String cron = trimToNull(value);
         if (cron == null) {
@@ -484,6 +592,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 归一化学期开始日期。
+     * @param value 值参数。
+     * @return LocalDate 类型的处理结果。
+     */
     private LocalDate normalizeSemesterStartDate(String value) {
         String semesterStartDate = trimToNull(value);
         if (semesterStartDate == null) {
@@ -496,6 +609,12 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 转换为布尔值。
+     * @param value 值参数。
+     * @param defaultValue 默认值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean toBoolean(Object value, boolean defaultValue) {
         if (value == null) {
             return defaultValue;
@@ -516,6 +635,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return defaultValue;
     }
 
+    /**
+     * 归一化Task上限。
+     * @param limit 上限参数。
+     * @return int 类型的处理结果。
+     */
     private int normalizeTaskLimit(Integer limit) {
         if (limit == null || limit <= 0) {
             return DEFAULT_TASK_LIMIT;
@@ -585,6 +709,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 转换为课表Entity。
+     * @param row 行参数。
+     * @return ClassTimetableEntity 类型的处理结果。
+     */
     private ClassTimetableEntity toTimetableEntity(Map<String, String> row) {
         ClassTimetableEntity entity = new ClassTimetableEntity();
         entity.setSemester(row.getOrDefault("学年学期", ""));
@@ -604,6 +733,12 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return entity;
     }
 
+    /**
+     * 转换为CSV行。
+     * @param headers 请求头参数。
+     * @param values 值集合参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, String> toCsvRow(List<String> headers, List<String> values) {
         Map<String, String> row = new LinkedHashMap<>();
         for (int index = 0; index < headers.size(); index++) {
@@ -612,6 +747,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return row;
     }
 
+    /**
+     * 解析CSVLine。
+     * @param line line参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> parseCsvLine(String line) {
         List<String> values = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -636,6 +776,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return values;
     }
 
+    /**
+     * 解析Integer。
+     * @param value 值参数。
+     * @return Integer 类型的处理结果。
+     */
     private Integer parseInteger(String value) {
         if (isBlank(value)) {
             return null;
@@ -647,6 +792,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * stripBom的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stripBom(String value) {
         if (value != null && !value.isEmpty() && value.charAt(0) == '\uFEFF') {
             return value.substring(1);
@@ -654,6 +804,12 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return value;
     }
 
+    /**
+     * 追加Log。
+     * 涉及：写入文件。
+     * @param logPath log路径参数。
+     * @param message 消息参数。
+     */
     private void appendLog(Path logPath, String message) {
         try {
             Files.writeString(
@@ -668,12 +824,21 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 获取Crawler凭据。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     @Override
     public AcademicCredentialView getCrawlerCredential() {
         Map<String, Object> row = classTimetableMapper.getCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
         return toCredentialView(row);
     }
 
+    /**
+     * 保存Crawler凭据。
+     * @param payload 载荷参数。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     @Override
     public AcademicCredentialView saveCrawlerCredential(Map<String, String> payload) {
         String username = trimToNull(payload == null ? null : payload.get("username"));
@@ -690,11 +855,18 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return getCrawlerCredential();
     }
 
+    /**
+     * 删除Crawler凭据。
+     */
     @Override
     public void deleteCrawlerCredential() {
         classTimetableMapper.deleteCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
     }
 
+    /**
+     * 读取StoredCrawler凭据。
+     * @return StoredCrawlerCredential 类型的处理结果。
+     */
     private StoredCrawlerCredential readStoredCrawlerCredential() {
         Map<String, Object> row = classTimetableMapper.getCrawlerCredential(CRAWLER_CREDENTIAL_KEY);
         if (row == null || row.isEmpty()) {
@@ -708,6 +880,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return new StoredCrawlerCredential(decrypt(usernameCipher), decrypt(passwordCipher));
     }
 
+    /**
+     * 转换为凭据视图。
+     * @param row 行参数。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     private AcademicCredentialView toCredentialView(Map<String, Object> row) {
         AcademicCredentialView view = new AcademicCredentialView();
         view.setCredentialKey(CRAWLER_CREDENTIAL_KEY);
@@ -791,6 +968,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return process.exitValue();
     }
 
+    /**
+     * 解析PythonExecutable。
+     * @return String 类型的处理结果。
+     */
     private String resolvePythonExecutable() {
         String configuredPython = environment.getProperty("timetable.crawler.python", "").trim();
         if (!configuredPython.isEmpty()) {
@@ -812,6 +993,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return "python";
     }
 
+    /**
+     * 解析ConfiguredScript路径。
+     * @param scriptPathText script路径文本参数。
+     * @return Path 类型的处理结果。
+     */
     private Path resolveConfiguredScriptPath(String scriptPathText) {
         Path rawPath = Path.of(scriptPathText);
         Path configuredPath = rawPath.toAbsolutePath().normalize();
@@ -837,6 +1023,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return configuredPath;
     }
 
+    /**
+     * 构建CrawlerLog路径。
+     * @return Path 类型的处理结果。
+     */
     private Path buildCrawlerLogPath() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         Path logDir = Path.of("logs").toAbsolutePath().normalize();
@@ -848,6 +1038,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return logDir.resolve("class-timetable-crawler-" + timestamp + ".log");
     }
 
+    /**
+     * 读取LogTail。
+     * @param logPath log路径参数。
+     * @return String 类型的处理结果。
+     */
     private String readLogTail(Path logPath) {
         try {
             return tailText(Files.readString(logPath, StandardCharsets.UTF_8));
@@ -860,6 +1055,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * tail文本的处理逻辑。
+     * @param content 内容参数。
+     * @return String 类型的处理结果。
+     */
     private String tailText(String content) {
         if (content == null) {
             return "";
@@ -870,6 +1070,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return content.substring(content.length() - 3000);
     }
 
+    /**
+     * 加密当前操作。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String encrypt(String value) {
         try {
             byte[] iv = new byte[IV_LENGTH];
@@ -886,6 +1091,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 解密当前操作。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String decrypt(String value) {
         try {
             byte[] payload = Base64.getDecoder().decode(value);
@@ -901,6 +1111,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * 构建秘密配置键。
+     * @param secret 秘密配置参数。
+     * @return SecretKeySpec 类型的处理结果。
+     */
     private SecretKeySpec buildSecretKey(String secret) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -911,6 +1126,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
     }
 
+    /**
+     * maskUsername的处理逻辑。
+     * @param username username参数。
+     * @return String 类型的处理结果。
+     */
     private String maskUsername(String username) {
         if (isBlank(username)) {
             return "";
@@ -921,6 +1141,11 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return username.substring(0, 2) + "****" + username.substring(username.length() - 2);
     }
 
+    /**
+     * 裁剪目标Null。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimToNull(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -928,10 +1153,20 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return value.trim();
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
     }

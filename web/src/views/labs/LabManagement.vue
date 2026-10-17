@@ -53,21 +53,34 @@ const sectionTimeRanges = [
   { value: 6, start: 20 * 60 + 20, end: 21 * 60 + 50 },
 ]
 
+/**
+ * 获取当前教务周次。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCurrentAcademicWeek = (date = now.value) => {
   return calculateAcademicWeek(date, semesterStartDate.value)
 }
 
+/**
+ * 当前Weekday的处理逻辑。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const currentWeekday = (date = now.value) => date.getDay() || 7
-const todayText = computed(() => {
+const todayText = computed(/** 计算派生状态。 */ () => {
   const date = now.value
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 })
-const currentMinute = computed(() => now.value.getHours() * 60 + now.value.getMinutes())
-const activeTimeUnit = computed(() => {
+const currentMinute = computed(/** 计算派生状态。 */ () => now.value.getHours() * 60 + now.value.getMinutes())
+const activeTimeUnit = computed(/** 计算派生状态。 */ () => {
   const minute = currentMinute.value
-  return sectionTimeRanges.find((item) => minute >= item.start && minute < item.end)?.value || 0
+  return sectionTimeRanges.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => minute >= item.start && minute < item.end)?.value || 0
 })
 const isCurrentScheduleDay = computed(
+  /**
+   * 计算派生状态。
+   */
   () => Number(scheduleFilters.week) === getCurrentAcademicWeek() && Number(scheduleFilters.weekday) === currentWeekday(),
 )
 
@@ -107,8 +120,8 @@ const {
   typeOptions,
 } = useLabManagement()
 
-const publicAppOrigin = computed(() => configuredPublicAppUrl || window.location.origin)
-const reservationQrLink = computed(() => {
+const publicAppOrigin = computed(/** 计算派生状态。 */ () => configuredPublicAppUrl || window.location.origin)
+const reservationQrLink = computed(/** 计算派生状态。 */ () => {
   if (!qrLab.value?.id) return ''
   const href = router.resolve({
     path: '/scan/reserve',
@@ -119,7 +132,7 @@ const reservationQrLink = computed(() => {
   }).href
   return `${publicAppOrigin.value}${href}`
 })
-const scheduleContext = computed(() => ({
+const scheduleContext = computed(/** 计算派生状态。 */ () => ({
   activeTimeUnit: activeTimeUnit.value,
   currentMinute: currentMinute.value,
   isToday: isCurrentScheduleDay.value,
@@ -193,12 +206,19 @@ const handleViewLabAssets = async (lab) => {
   await loadLabAssets(lab)
 }
 
+/**
+ * 处理Open预约Qr。
+ * 入参：lab（实验室）。
+ */
 const handleOpenReservationQr = (lab) => {
   if (!lab) return
   qrLab.value = lab
   qrDialogVisible.value = true
 }
 
+/**
+ * 加载学期。
+ */
 const loadSemesters = async () => {
   try {
     semesters.value = await getClassTimetableSemesters()
@@ -210,12 +230,18 @@ const loadSemesters = async () => {
   }
 }
 
+/**
+ * 加载课表配置。
+ */
 const loadScheduleConfiguration = async () => {
   const config = (await getClassTimetableCrawlerConfig()) || {}
   semesterStartDate.value = String(config.semesterStartDate || '').trim()
   scheduleFilters.week = getCurrentAcademicWeek()
 }
 
+/**
+ * 加载课表行集合。
+ */
 const loadScheduleRows = async () => {
   scheduleLoading.value = true
   try {
@@ -236,6 +262,9 @@ const loadScheduleRows = async () => {
 }
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => [
     scheduleFilters.week,
     scheduleFilters.weekday,
@@ -244,11 +273,14 @@ watch(
     activeTimeUnit.value,
     currentMinute.value,
   ],
+  /**
+   * 响应被监听状态的变化。
+   */
   () => bindLabSchedules(scheduleRows.value, scheduleContext.value, reservationRows.value),
 )
 
-onMounted(async () => {
-  clockTimer = window.setInterval(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
+  clockTimer = window.setInterval(/** 执行周期安排的任务。 */ () => {
     now.value = new Date()
   }, 60000)
   await loadScheduleConfiguration()
@@ -256,7 +288,7 @@ onMounted(async () => {
   await loadScheduleRows()
 })
 
-onUnmounted(() => {
+onUnmounted(/** 在组件卸载后完成清理。 */ () => {
   if (clockTimer) {
     window.clearInterval(clockTimer)
   }

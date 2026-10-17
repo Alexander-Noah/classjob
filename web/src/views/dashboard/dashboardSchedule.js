@@ -19,6 +19,11 @@ const SCHEDULE_GROUP_ORDER = {
   ended: 4,
 }
 
+/**
+ * 解析时间Part。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimePart = (value = '') => {
   const match = String(value).match(/(\d{1,2})[:：](\d{2})/)
   if (!match) return null
@@ -30,6 +35,11 @@ const parseTimePart = (value = '') => {
   return { hours, minutes }
 }
 
+/**
+ * 转换为日期On基础Day。
+ * 入参：timePart（时间Part）；baseDate（基础日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toDateOnBaseDay = (timePart, baseDate) => {
   if (!timePart) return null
   const date = new Date(baseDate)
@@ -37,6 +47,11 @@ const toDateOnBaseDay = (timePart, baseDate) => {
   return date
 }
 
+/**
+ * 格式化日期键。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDateKey = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -44,6 +59,11 @@ const formatDateKey = (date) => {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * 解析日期文本。
+ * 入参：dateText（日期文本）；fallbackDate（fallback日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseDateText = (dateText, fallbackDate) => {
   const match = String(dateText || '').match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
   if (!match) return new Date(fallbackDate)
@@ -57,17 +77,32 @@ const parseDateText = (dateText, fallbackDate) => {
   return date
 }
 
+/**
+ * 获取条目日期文本。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getItemDateText = (item = {}) => {
   if (typeof item === 'string') return ''
   return item.date || item.reservationDate || item.reservation_date || item.scheduleDate || item.day || ''
 }
 
+/**
+ * 判断是否为Today条目。
+ * 入参：item（条目）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isTodayItem = (item = {}, now = new Date()) => {
   const dateText = getItemDateText(item)
   if (!dateText) return true
   return String(dateText).slice(0, 10).replaceAll('/', '-') === formatDateKey(now)
 }
 
+/**
+ * 获取范围文本。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRangeText = (item = {}) => {
   if (typeof item === 'string') return item
   if (item.startTime && item.endTime) return `${item.startTime}-${item.endTime}`
@@ -83,6 +118,11 @@ const getRangeText = (item = {}) => {
   return directRange || ''
 }
 
+/**
+ * 解析课表时间。
+ * 入参：item（条目）；now（now）。
+ * @returns 组装的键值对象。
+ */
 export const parseScheduleTime = (item = {}, now = new Date()) => {
   const [startText, endText] = String(getRangeText(item)).split(/\s*[-~—至]\s*/)
   const baseDate = parseDateText(getItemDateText(item), now)
@@ -96,22 +136,47 @@ export const parseScheduleTime = (item = {}, now = new Date()) => {
   return { start, end }
 }
 
+/**
+ * 解析课表时间范围。
+ * 入参：timeText（时间文本）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const parseScheduleTimeRange = (timeText, now = new Date()) => parseScheduleTime(timeText, now)
 
+/**
+ * 格式化时间Part。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatTimePart = (date) =>
   date ? `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '待确认'
 
+/**
+ * 格式化课表时间。
+ * 入参：item（条目）；start（开始）；end（结束）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatScheduleTime = (item, start, end) => {
   if (start && end) return `${formatTimePart(start)}-${formatTimePart(end)}`
   return getRangeText(item) || '待确认'
 }
 
+/**
+ * 获取MinutesUntil开始。
+ * 入参：item（条目）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getMinutesUntilStart = (item = {}, now = new Date()) => {
   const { start } = parseScheduleTime(item, now)
   if (!start) return Number.POSITIVE_INFINITY
   return Math.floor((start.getTime() - now.getTime()) / 60000)
 }
 
+/**
+ * 获取课表状态。
+ * 入参：item（条目）；now（now）。
+ * @returns 组装的键值对象。
+ */
 export const getScheduleStatus = (item = {}, now = new Date()) => {
   const { start, end } = parseScheduleTime(item, now)
   if (!start || !end) {
@@ -134,8 +199,18 @@ export const getScheduleStatus = (item = {}, now = new Date()) => {
   return { status: '未开始', statusType: 'info', group: 'later' }
 }
 
+/**
+ * 判断是否为UsingNow。
+ * 入参：item（条目）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const isUsingNow = (item = {}, now = new Date()) => getScheduleStatus(item, now).group === 'ongoing'
 
+/**
+ * 判断是否为NeedOpenDoor。
+ * 入参：item（条目）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const isNeedOpenDoor = (item = {}, now = new Date()) => {
   if (!isTodayItem(item, now)) return false
   const { start, end } = parseScheduleTime(item, now)
@@ -144,12 +219,22 @@ export const isNeedOpenDoor = (item = {}, now = new Date()) => {
   return minutesUntilStart > 0 && minutesUntilStart <= SOON_MINUTES
 }
 
+/**
+ * 提取实验室编码。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const extractLabCode = (value = '') => {
   const text = String(value || '').trim()
   const match = text.match(/([A-Za-z]?\d+[A-Za-z]?(?:-\d+)?|\d+-\d+)/)
   return match?.[1] || text || '-'
 }
 
+/**
+ * 提取Applicant。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const extractApplicant = (item = {}) => {
   const directApplicant = item.applicant || item.applicantName || item.userName || item.contactName || item.person
   if (directApplicant) return directApplicant
@@ -158,6 +243,11 @@ const extractApplicant = (item = {}) => {
   return match?.[1] || ''
 }
 
+/**
+ * 提取ReminderTitle。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const extractReminderTitle = (item = {}) => {
   const directTitle = item.course || item.courseName || item.reason || item.purpose || item.scene
   if (directTitle) return directTitle
@@ -169,6 +259,11 @@ const extractReminderTitle = (item = {}) => {
   return item.title || item.name || '未命名安排'
 }
 
+/**
+ * 归一化课表条目。
+ * 入参：item（条目）；index（索引）；now（now）。
+ * @returns 组装的键值对象。
+ */
 const normalizeScheduleItem = (item, index, now) => {
   const { start, end } = parseScheduleTime(item, now)
   const statusMeta = getScheduleStatus(item, now)
@@ -186,22 +281,27 @@ const normalizeScheduleItem = (item, index, now) => {
   }
 }
 
+/**
+ * 构建Dashboard课表视图。
+ * 入参：schedules（课表）；now（now）；options（选项）。
+ * @returns 组装的键值对象。
+ */
 export const buildDashboardScheduleView = (schedules = [], now = new Date(), options = {}) => {
   const limit = Number(options.limit || DEFAULT_LIMIT)
-  const todayItems = (Array.isArray(schedules) ? schedules : []).filter((item) => isTodayItem(item, now))
+  const todayItems = (Array.isArray(schedules) ? schedules : []).filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => isTodayItem(item, now))
   const activeItems = todayItems
-    .map((item, index) => normalizeScheduleItem(item, index, now))
-    .filter((item) => item.group !== 'ended')
-    .sort((first, second) => {
+    .map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizeScheduleItem(item, index, now))
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.group !== 'ended')
+    .sort(/** 比较当前两项的排序先后。 入参：first、second。 */ (first, second) => {
       const groupDiff = (SCHEDULE_GROUP_ORDER[first.group] || 99) - (SCHEDULE_GROUP_ORDER[second.group] || 99)
       return groupDiff || first.startAt - second.startAt
     })
 
   const visibleItems = activeItems.slice(0, limit)
-  const sections = SECTION_DEFS.map((section) => ({
+  const sections = SECTION_DEFS.map(/** 将当前条目转换为目标结果。 入参：section。 */ (section) => ({
     ...section,
-    items: visibleItems.filter((item) => item.group === section.key),
-  })).filter((section) => section.items.length > 0)
+    items: visibleItems.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.group === section.key),
+  })).filter(/** 判断当前条目是否符合筛选条件。 入参：section。 */ (section) => section.items.length > 0)
 
   return {
     sections,
@@ -212,6 +312,11 @@ export const buildDashboardScheduleView = (schedules = [], now = new Date(), opt
   }
 }
 
+/**
+ * 获取DoorReminder状态。
+ * 入参：item（条目）；now（now）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const getDoorReminderStatus = (item = {}, now = new Date()) => {
   if (!isTodayItem(item, now)) return null
 
@@ -229,6 +334,11 @@ export const getDoorReminderStatus = (item = {}, now = new Date()) => {
   return null
 }
 
+/**
+ * 归一化DoorReminder条目。
+ * 入参：item（条目）；index（索引）；now（now）；source（来源）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeDoorReminderItem = (item, index, now, source) => {
   const statusMeta = getDoorReminderStatus(item, now)
   if (!statusMeta) return null
@@ -251,17 +361,22 @@ const normalizeDoorReminderItem = (item, index, now, source) => {
   }
 }
 
+/**
+ * 构建DoorReminder列表。
+ * 入参：schedules（课表）；reservations（预约）；now（now）；options（选项）。
+ * @returns 组装的键值对象。
+ */
 export const buildDoorReminderList = (schedules = [], reservations = [], now = new Date(), options = {}) => {
   const limit = Number(options.limit || DOOR_REMINDER_LIMIT)
   const scheduleItems = Array.isArray(schedules) ? schedules : []
   const reservationItems = Array.isArray(reservations) ? reservations : []
 
   const activeItems = [
-    ...scheduleItems.map((item, index) => normalizeDoorReminderItem(item, index, now, 'schedule')),
-    ...reservationItems.map((item, index) => normalizeDoorReminderItem(item, index, now, 'reservation')),
+    ...scheduleItems.map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizeDoorReminderItem(item, index, now, 'schedule')),
+    ...reservationItems.map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizeDoorReminderItem(item, index, now, 'reservation')),
   ]
     .filter(Boolean)
-    .sort((first, second) => first.startAt - second.startAt)
+    .sort(/** 比较当前两项的排序先后。 入参：first、second。 */ (first, second) => first.startAt - second.startAt)
 
   return {
     visibleItems: activeItems.slice(0, limit),

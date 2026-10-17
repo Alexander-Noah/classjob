@@ -34,6 +34,10 @@ const selectedLabCode = ref('')
 const selectedHotspot = ref('2F 实训区')
 const operationLog = ref([])
 
+/**
+ * 获取Today文本。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTodayText = () => {
   const date = new Date()
   const year = date.getFullYear()
@@ -42,12 +46,22 @@ const getTodayText = () => {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) =>
   String(value || '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '')
 
+/**
+ * 判断是否具有实验室令牌。
+ * 入参：text（文本）；code（编码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasLabToken = (text, code) => {
   const normalizedCode = String(code || '').trim()
   if (!normalizedCode) return false
@@ -56,18 +70,68 @@ const hasLabToken = (text, code) => {
   )
 }
 
+/**
+ * 获取实验室编码。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabCode = (lab = {}) => lab.code || lab.labCode || lab.room || lab.roomNo || ''
+/**
+ * 获取实验室名称。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabName = (lab = {}) => lab.name || lab.labName || lab.roomName || getLabCode(lab)
+/**
+ * 获取实验室状态。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabStatus = (lab = {}) => lab.status || lab.openStatus || '开放'
+/**
+ * 获取实验室Floor。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabFloor = (lab = {}) => lab.floor || ''
+/**
+ * 获取实验室Capacity。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabCapacity = (lab = {}) => Number(lab.capacity) || 0
+/**
+ * 获取设备实验室文本。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceLabText = (device = {}) => device.labName || device.lab || device.roomName || device.location || ''
+/**
+ * 获取预约实验室文本。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationLabText = (reservation = {}) =>
   reservation.lab || reservation.labName || reservation.labDisplayName || reservation.roomName || reservation.classroom || ''
+/**
+ * 获取预约日期。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getReservationDate = (reservation = {}) =>
   reservation.date || reservation.reservationDate || reservation.useDate || reservation.startDate || ''
+/**
+ * 获取实验室标识。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabId = (lab = {}) => lab.id || lab.labId || getLabCode(lab)
 
+/**
+ * 判断是否为实验室Matched。
+ * 入参：text（文本）；lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isLabMatched = (text, lab) => {
   const normalizedSource = normalizeText(text)
   if (!normalizedSource) return false
@@ -76,15 +140,30 @@ const isLabMatched = (text, lab) => {
   return hasLabToken(text, getLabCode(lab))
 }
 
+/**
+ * 判断是否为设备Online。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isDeviceOnline = (device = {}) => {
   const status = String(device.status || device.onlineStatus || device.assetStatus || '').toLowerCase()
   if (status.includes('离线') || status.includes('停用') || status.includes('报废') || status.includes('offline')) return false
   return true
 }
 
+/**
+ * 判断是否为预约Approved。
+ * 入参：reservation（预约）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReservationApproved = (reservation = {}) =>
   ['已通过', 'approved', 'APPROVED', '通过'].includes(reservation.status || reservation.reviewStatus)
 
+/**
+ * 获取状态Color。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getStatusColor = (status) => {
   if (status === '开放') return '#22c55e'
   if (status === '使用中' || status === '预约中') return '#f59e0b'
@@ -92,6 +171,11 @@ const getStatusColor = (status) => {
   return '#3b82f6'
 }
 
+/**
+ * 获取UsageBy状态。
+ * 入参：status（状态）；capacity（capacity）；deviceCount（设备数量）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getUsageByStatus = (status, capacity, deviceCount) => {
   if (status === '使用中') return 88
   if (status === '预约中') return 64
@@ -100,12 +184,16 @@ const getUsageByStatus = (status, capacity, deviceCount) => {
   return 30
 }
 
+/**
+ * 构建实验室Nodes。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLabNodes = () => {
   const sourceLabs = liveLabs.value.length ? liveLabs.value : props.config.digitalTwin?.labs || []
-  return sourceLabs.slice(0, 6).map((lab) => {
+  return sourceLabs.slice(0, 6).map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => {
     const code = getLabCode(lab)
     const status = getLabStatus(lab)
-    const matchedDevices = liveDevices.value.filter((device) => isLabMatched(getDeviceLabText(device), lab))
+    const matchedDevices = liveDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => isLabMatched(getDeviceLabText(device), lab))
     const deviceCount = matchedDevices.length || Number(lab.devices ?? lab.deviceCount) || 0
     const capacity = getLabCapacity(lab)
 
@@ -124,30 +212,30 @@ const buildLabNodes = () => {
 
 const liveLabNodes = computed(buildLabNodes)
 
-const selectedLab = computed(() => {
+const selectedLab = computed(/** 计算派生状态。 */ () => {
   if (!liveLabNodes.value.length) return null
-  return liveLabNodes.value.find((lab) => lab.code === selectedLabCode.value) || liveLabNodes.value[0]
+  return liveLabNodes.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.code === selectedLabCode.value) || liveLabNodes.value[0]
 })
 
-const selectedLabDevices = computed(() =>
-  selectedLab.value ? liveDevices.value.filter((device) => isLabMatched(getDeviceLabText(device), selectedLab.value)) : [],
+const selectedLabDevices = computed(/** 计算派生状态。 */ () =>
+  selectedLab.value ? liveDevices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => isLabMatched(getDeviceLabText(device), selectedLab.value)) : [],
 )
 
-const selectedLabReservations = computed(() =>
+const selectedLabReservations = computed(/** 计算派生状态。 */ () =>
   selectedLab.value
-    ? liveReservations.value.filter((reservation) => isLabMatched(getReservationLabText(reservation), selectedLab.value))
+    ? liveReservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：reservation。 */ (reservation) => isLabMatched(getReservationLabText(reservation), selectedLab.value))
     : [],
 )
 
-const selectedLabMaintenanceRecords = computed(() =>
+const selectedLabMaintenanceRecords = computed(/** 计算派生状态。 */ () =>
   selectedLab.value
-    ? liveMaintenanceRecords.value.filter((record) =>
+    ? liveMaintenanceRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) =>
         isLabMatched(record.labName || record.lab || record.roomName || record.location, selectedLab.value),
       )
     : [],
 )
 
-const selectedLabPanel = computed(() => {
+const selectedLabPanel = computed(/** 计算派生状态。 */ () => {
   const lab = selectedLab.value
   if (!lab) {
     return {
@@ -169,6 +257,10 @@ const selectedLabPanel = computed(() => {
   }
 })
 
+/**
+ * 选择实验室。
+ * 入参：lab（实验室）。
+ */
 const selectLab = (lab) => {
   selectedLabCode.value = lab.code
   selectedHotspot.value = `${lab.code} 空间`
@@ -176,18 +268,30 @@ const selectLab = (lab) => {
   operationLog.value = operationLog.value.slice(0, 4)
 }
 
+/**
+ * 选择Module。
+ * 入参：moduleName（module名称）。
+ */
 const selectModule = (moduleName) => {
   activeModule.value = moduleName
   operationLog.value.unshift(`切换至 ${moduleName}`)
   operationLog.value = operationLog.value.slice(0, 4)
 }
 
+/**
+ * 选择Hotspot。
+ * 入参：hotspot（hotspot）。
+ */
 const selectHotspot = (hotspot) => {
   selectedHotspot.value = hotspot
   operationLog.value.unshift(`定位到 ${hotspot}`)
   operationLog.value = operationLog.value.slice(0, 4)
 }
 
+/**
+ * 更新已选择实验室状态。
+ * 入参：status（状态）。
+ */
 const updateSelectedLabStatus = async (status) => {
   const lab = selectedLab.value
   if (!lab?.id) return
@@ -200,7 +304,7 @@ const updateSelectedLabStatus = async (status) => {
     openStatus: status,
   }
 
-  liveLabs.value = liveLabs.value.map((item) => (String(getLabId(item)) === String(lab.id) ? nextRawLab : item))
+  liveLabs.value = liveLabs.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(getLabId(item)) === String(lab.id) ? nextRawLab : item))
 
   try {
     await labResourceService.update(lab.id, nextRawLab)
@@ -213,15 +317,19 @@ const updateSelectedLabStatus = async (status) => {
   }
 }
 
-const liveSummary = computed(() => {
+const liveSummary = computed(/** 计算派生状态。 */ () => {
   if (!liveLabs.value.length && !liveDevices.value.length) return props.config.digitalTwin.summary
 
   const today = getTodayText()
   const labCount = liveLabs.value.length
-  const totalCapacity = liveLabs.value.reduce((sum, lab) => sum + getLabCapacity(lab), 0)
+  const totalCapacity = liveLabs.value.reduce(/** 合并当前条目与累计结果。 入参：sum、lab。 */ (sum, lab) => sum + getLabCapacity(lab), 0)
   const onlineCount = liveDevices.value.filter(isDeviceOnline).length
   const deviceCount = liveDevices.value.length
   const todayReservations = liveReservations.value.filter(
+    /**
+     * 判断当前条目是否符合筛选条件。
+     * 入参：reservation。
+     */
     (reservation) => isReservationApproved(reservation) && String(getReservationDate(reservation)) === today,
   )
   const todayCourses = liveTimetables.value.length
@@ -234,9 +342,9 @@ const liveSummary = computed(() => {
   ]
 })
 
-const liveEvents = computed(() => {
+const liveEvents = computed(/** 计算派生状态。 */ () => {
   const events = []
-  liveMaintenanceRecords.value.slice(0, 2).forEach((record) => {
+  liveMaintenanceRecords.value.slice(0, 2).forEach(/** 处理遍历到的当前条目。 入参：record。 */ (record) => {
     events.push({
       level: '记录',
       title: record.device || record.deviceName || record.content || '设备维护记录',
@@ -244,7 +352,7 @@ const liveEvents = computed(() => {
     })
   })
 
-  const usingLab = liveLabNodes.value.find((lab) => lab.status === '使用中')
+  const usingLab = liveLabNodes.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => lab.status === '使用中')
   if (usingLab) {
     events.push({
       level: '关注',
@@ -265,6 +373,9 @@ const liveEvents = computed(() => {
   return events.length ? events.slice(0, 4) : props.config.digitalTwin.events
 })
 
+/**
+ * 加载Twin数据。
+ */
 const loadTwinData = async () => {
   if (!props.config.digitalTwinOnly) return
 
@@ -274,8 +385,8 @@ const loadTwinData = async () => {
       labResourceService.list({ fallbackRecords: [] }),
       deviceAssetService.list({ fallbackRecords: [] }),
       reservationResourceService.list({ fallbackRecords: [] }),
-      listMaintenanceRecords().catch(() => []),
-      listClassTimetables({ limit: 5000 }).catch(() => []),
+      listMaintenanceRecords().catch(/** 处理异步失败结果。 */ () => []),
+      listClassTimetables({ limit: 5000 }).catch(/** 处理异步失败结果。 */ () => []),
     ])
 
     liveLabs.value = Array.isArray(labs) ? labs : []

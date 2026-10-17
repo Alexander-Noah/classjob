@@ -32,22 +32,41 @@ for (let index = 255; index < EXP_TABLE.length; index += 1) {
   EXP_TABLE[index] = EXP_TABLE[index - 255]
 }
 
+/**
+ * multiply进入Field的处理逻辑。
+ * 入参：left（left）；right（right）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const multiplyInField = (left, right) => {
   if (!left || !right) return 0
   return EXP_TABLE[LOG_TABLE[left] + LOG_TABLE[right]]
 }
 
+/**
+ * 追加Bits。
+ * 入参：target（目标）；value（值）；length（长度）。
+ */
 const appendBits = (target, value, length) => {
   for (let bit = length - 1; bit >= 0; bit -= 1) {
     target.push(((value >>> bit) & 1) === 1)
   }
 }
 
+/**
+ * 获取载荷Bytes。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getPayloadBytes = (value) => Array.from(new TextEncoder().encode(String(value)))
 
+/**
+ * 获取Qr配置。
+ * 入参：bytes（bytes）。
+ * @returns config 的当前值。
+ */
 const getQrConfig = (bytes) => {
   const dataBitLength = 4 + 8 + bytes.length * 8
-  const config = VERSION_CONFIGS.find((item) => dataBitLength <= item.dataCodewords * 8)
+  const config = VERSION_CONFIGS.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => dataBitLength <= item.dataCodewords * 8)
 
   if (!config) {
     throw new Error('二维码内容过长，请缩短资产码链接')
@@ -56,13 +75,18 @@ const getQrConfig = (bytes) => {
   return config
 }
 
+/**
+ * 创建数据Codewords。
+ * 入参：bytes（bytes）；config（配置）。
+ * @returns dataCodewords 的当前值。
+ */
 const createDataCodewords = (bytes, config) => {
   const bits = []
   const capacity = config.dataCodewords * 8
 
   appendBits(bits, MODE_BYTE, 4)
   appendBits(bits, bytes.length, 8)
-  bytes.forEach((byte) => appendBits(bits, byte, 8))
+  bytes.forEach(/** 处理遍历到的当前条目。 入参：byte。 */ (byte) => appendBits(bits, byte, 8))
   appendBits(bits, 0, Math.min(4, capacity - bits.length))
 
   while (bits.length % 8 !== 0) {
@@ -87,6 +111,11 @@ const createDataCodewords = (bytes, config) => {
   return dataCodewords
 }
 
+/**
+ * 创建错误CorrectionDivisor。
+ * 入参：degree（degree）。
+ * @returns result 的当前值。
+ */
 const createErrorCorrectionDivisor = (degree) => {
   const result = new Array(degree).fill(0)
   result[degree - 1] = 1
@@ -105,15 +134,20 @@ const createErrorCorrectionDivisor = (degree) => {
   return result
 }
 
+/**
+ * 创建错误CorrectionCodewords。
+ * 入参：dataCodewords（数据Codewords）；ecCodewordCount（ecCodeword数量）。
+ * @returns result 的当前值。
+ */
 const createErrorCorrectionCodewords = (dataCodewords, ecCodewordCount) => {
   const divisor = createErrorCorrectionDivisor(ecCodewordCount)
   const result = new Array(ecCodewordCount).fill(0)
 
-  dataCodewords.forEach((codeword) => {
+  dataCodewords.forEach(/** 处理遍历到的当前条目。 入参：codeword。 */ (codeword) => {
     const factor = codeword ^ result.shift()
     result.push(0)
 
-    divisor.forEach((coefficient, index) => {
+    divisor.forEach(/** 处理遍历到的当前条目。 入参：coefficient、index。 */ (coefficient, index) => {
       result[index] ^= multiplyInField(coefficient, factor)
     })
   })
@@ -121,6 +155,10 @@ const createErrorCorrectionCodewords = (dataCodewords, ecCodewordCount) => {
   return result
 }
 
+/**
+ * 获取格式Bits。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getFormatBits = () => {
   const data = (FORMAT_ERROR_CORRECTION_LOW << 3) | FORMAT_MASK_PATTERN
   let remainder = data
@@ -132,19 +170,37 @@ const getFormatBits = () => {
   return ((data << 10) | (remainder & 0x3ff)) ^ 0x5412
 }
 
+/**
+ * 获取格式Bit。
+ * 入参：bits（bits）；index（索引）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getFormatBit = (bits, index) => ((bits >>> index) & 1) === 1
 
+/**
+ * 创建Matrix。
+ * 入参：config（配置）；codewords（codewords）。
+ * @returns modules 的当前值。
+ */
 const createMatrix = (config, codewords) => {
   const { size } = config
-  const modules = Array.from({ length: size }, () => new Array(size).fill(false))
-  const functionModules = Array.from({ length: size }, () => new Array(size).fill(false))
+  const modules = Array.from({ length: size }, /** 处理 from 调用中的回调逻辑。 */ () => new Array(size).fill(false))
+  const functionModules = Array.from({ length: size }, /** 处理 from 调用中的回调逻辑。 */ () => new Array(size).fill(false))
 
+  /**
+   * 设置FunctionModule。
+   * 入参：x（x）；y（y）；isDark（isDark）。
+   */
   const setFunctionModule = (x, y, isDark) => {
     if (x < 0 || y < 0 || x >= size || y >= size) return
     modules[y][x] = isDark
     functionModules[y][x] = true
   }
 
+  /**
+   * drawFinderPattern的处理逻辑。
+   * 入参：centerX（centerX）；centerY（centerY）。
+   */
   const drawFinderPattern = (centerX, centerY) => {
     for (let y = -4; y <= 4; y += 1) {
       for (let x = -4; x <= 4; x += 1) {
@@ -154,6 +210,10 @@ const createMatrix = (config, codewords) => {
     }
   }
 
+  /**
+   * drawAlignmentPattern的处理逻辑。
+   * 入参：centerX（centerX）；centerY（centerY）。
+   */
   const drawAlignmentPattern = (centerX, centerY) => {
     for (let y = -2; y <= 2; y += 1) {
       for (let x = -2; x <= 2; x += 1) {
@@ -162,6 +222,9 @@ const createMatrix = (config, codewords) => {
     }
   }
 
+  /**
+   * drawFunctionPatterns的处理逻辑。
+   */
   const drawFunctionPatterns = () => {
     drawFinderPattern(3, 3)
     drawFinderPattern(size - 4, 3)
@@ -180,6 +243,9 @@ const createMatrix = (config, codewords) => {
     drawFormatBits()
   }
 
+  /**
+   * draw格式Bits的处理逻辑。
+   */
   const drawFormatBits = () => {
     const bits = getFormatBits()
 
@@ -194,8 +260,16 @@ const createMatrix = (config, codewords) => {
     setFunctionModule(8, size - 8, true)
   }
 
+  /**
+   * 判断是否为MaskDark。
+   * 入参：x（x）；y（y）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const isMaskDark = (x, y) => (x + y) % 2 === 0
 
+  /**
+   * drawCodewords的处理逻辑。
+   */
   const drawCodewords = () => {
     let bitIndex = 0
     let upward = true
@@ -229,6 +303,11 @@ const createMatrix = (config, codewords) => {
   return modules
 }
 
+/**
+ * generateQrSvg的处理逻辑。
+ * 入参：value（值）；options（选项）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function generateQrSvg(value, options = {}) {
   const bytes = getPayloadBytes(value)
   const config = getQrConfig(bytes)
@@ -241,8 +320,8 @@ export function generateQrSvg(value, options = {}) {
   const size = matrix.length + border * 2
   const paths = []
 
-  matrix.forEach((row, y) => {
-    row.forEach((isDark, x) => {
+  matrix.forEach(/** 处理遍历到的当前条目。 入参：row、y。 */ (row, y) => {
+    row.forEach(/** 处理遍历到的当前条目。 入参：isDark、x。 */ (isDark, x) => {
       if (isDark) {
         paths.push(`M${x + border} ${y + border}h1v1h-1z`)
       }
@@ -257,6 +336,11 @@ export function generateQrSvg(value, options = {}) {
   ].join('')
 }
 
+/**
+ * generateQrSvg数据URL的处理逻辑。
+ * 入参：value（值）；options（选项）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export function generateQrSvgDataUrl(value, options = {}) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateQrSvg(value, options))}`
 }

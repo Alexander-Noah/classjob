@@ -54,11 +54,20 @@ interface ActivationVerifyResponse {
 const ACTIVATION_CODE_PATTERN = /^(?:[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{8}|zylab-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4})$/i
 const INVALID_REMOTE_STATUSES = new Set(['remote_unbound', 'disabled', 'expired'])
 
+/**
+ * 归一化实验室标识。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function normalizeLabId(value: unknown) {
   const numeric = Number(value || 0)
   return Number.isFinite(numeric) && numeric > 0 ? numeric : null
 }
 
+/**
+ * 读取Activation。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function readActivation(): ActivationPayload | null {
   if (typeof window === 'undefined') return null
 
@@ -85,6 +94,10 @@ function readActivation(): ActivationPayload | null {
   }
 }
 
+/**
+ * 读取TrialLock。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function readTrialLock(): TrialLockPayload | null {
   if (typeof window === 'undefined') return null
 
@@ -105,28 +118,44 @@ function readTrialLock(): TrialLockPayload | null {
   }
 }
 
+/**
+ * 写入Activation。
+ * 入参：payload（载荷）。
+ */
 function writeActivation(payload: ActivationPayload) {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(ACTIVATION_KEY, JSON.stringify(payload))
 }
 
+/**
+ * 写入TrialLock。
+ * 入参：payload（载荷）。
+ */
 function writeTrialLock(payload: TrialLockPayload) {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(TRIAL_LOCK_KEY, JSON.stringify(payload))
 }
 
+/**
+ * 清理Activation。
+ */
 function clearActivation() {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(ACTIVATION_KEY)
 }
 
+/**
+ * 添加Days。
+ * 入参：date（日期）；days（days）。
+ * @returns next 的当前值。
+ */
 function addDays(date: Date, days: number) {
   const next = new Date(date)
   next.setDate(next.getDate() + days)
   return next
 }
 
-export const useActivationStore = defineStore('activation', () => {
+export const useActivationStore = defineStore('activation', /** 处理 defineStore 调用中的回调逻辑。 */ () => {
   const token = ref('')
   const labName = ref('')
   const labId = ref<number | null>(null)
@@ -140,41 +169,48 @@ export const useActivationStore = defineStore('activation', () => {
   const hydrated = ref(false)
   const now = ref(Date.now())
 
-  const isLicensed = computed(() => Boolean(token.value && labName.value && quota.value > 0 && mode.value === 'licensed'))
-  const isTrial = computed(() => mode.value === 'trial')
-  const isTrialActive = computed(() => {
+  const isLicensed = computed(/** 计算派生状态。 */ () => Boolean(token.value && labName.value && quota.value > 0 && mode.value === 'licensed'))
+  const isTrial = computed(/** 计算派生状态。 */ () => mode.value === 'trial')
+  const isTrialActive = computed(/** 计算派生状态。 */ () => {
     if (!isTrial.value || !trialExpiresAt.value) return false
     return now.value <= new Date(trialExpiresAt.value).getTime()
   })
-  const isTrialExpired = computed(() => {
+  const isTrialExpired = computed(/** 计算派生状态。 */ () => {
     if (!trialUsed.value || !trialExpiresAt.value) return false
     return now.value > new Date(trialExpiresAt.value).getTime()
   })
-  const isUsable = computed(() => isLicensed.value || isTrialActive.value)
-  const isActivated = computed(() => isLicensed.value)
-  const canStartTrial = computed(() => LOCAL_TRIAL_ENABLED && !isLicensed.value && !trialUsed.value)
-  const trialRemainingDays = computed(() => {
+  const isUsable = computed(/** 计算派生状态。 */ () => isLicensed.value || isTrialActive.value)
+  const isActivated = computed(/** 计算派生状态。 */ () => isLicensed.value)
+  const canStartTrial = computed(/** 计算派生状态。 */ () => LOCAL_TRIAL_ENABLED && !isLicensed.value && !trialUsed.value)
+  const trialRemainingDays = computed(/** 计算派生状态。 */ () => {
     if (!isTrialActive.value || !trialExpiresAt.value) return 0
     const diff = new Date(trialExpiresAt.value).getTime() - now.value
     return Math.max(1, Math.ceil(diff / 86400000))
   })
-  const maskedToken = computed(() => {
+  const maskedToken = computed(/** 计算派生状态。 */ () => {
     if (!token.value) return ''
     if (isTrial.value) return 'TRIAL-****'
     if (token.value.length <= 10) return `${token.value.slice(0, 2)}****${token.value.slice(-2)}`
     return `${token.value.slice(0, 4)}****${token.value.slice(-4)}`
   })
-  const statusText = computed(() => {
+  const statusText = computed(/** 计算派生状态。 */ () => {
     if (isLicensed.value) return `Activated: ${labName.value}`
     if (isTrialActive.value) return `Trial active: ${trialRemainingDays.value} days left`
     if (trialUsed.value) return 'Trial ended. Enter an activation code.'
     return 'Not activated. Activate or start a 30-day trial.'
   })
 
+  /**
+   * 刷新License状态。
+   */
   function refreshLicenseState() {
     now.value = Date.now()
   }
 
+  /**
+   * 清理InvalidActivation。
+   * 入参：message（消息）。
+   */
   function clearInvalidActivation(message?: string) {
     resetActivation()
     if (message && typeof window !== 'undefined') {
@@ -182,6 +218,10 @@ export const useActivationStore = defineStore('activation', () => {
     }
   }
 
+  /**
+   * 应用载荷。
+   * 入参：payload（载荷）。
+   */
   function applyPayload(payload: ActivationPayload) {
     token.value = payload.token
     labName.value = payload.labName
@@ -194,6 +234,9 @@ export const useActivationStore = defineStore('activation', () => {
     trialExpiresAt.value = payload.trialExpiresAt || ''
   }
 
+  /**
+   * hydrate的处理逻辑。
+   */
   function hydrate() {
     if (hydrated.value) {
       refreshLicenseState()
@@ -220,6 +263,11 @@ export const useActivationStore = defineStore('activation', () => {
     }
   }
 
+  /**
+   * 激活当前操作。
+   * 入参：inputCode（输入编码）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async function activate(inputCode: string) {
     const normalizedCode = inputCode.trim().toLowerCase()
     if (!ACTIVATION_CODE_PATTERN.test(normalizedCode)) return false
@@ -258,6 +306,10 @@ export const useActivationStore = defineStore('activation', () => {
     return true
   }
 
+  /**
+   * 验证StoredActivation。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async function verifyStoredActivation() {
     hydrate()
     if (!isLicensed.value || !token.value) return true
@@ -300,6 +352,10 @@ export const useActivationStore = defineStore('activation', () => {
     }
   }
 
+  /**
+   * 启动Trial。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   function startTrial() {
     refreshLicenseState()
     if (!LOCAL_TRIAL_ENABLED || !canStartTrial.value) return false
@@ -329,6 +385,9 @@ export const useActivationStore = defineStore('activation', () => {
     return true
   }
 
+  /**
+   * 重置Activation。
+   */
   function resetActivation() {
     token.value = ''
     labName.value = ''

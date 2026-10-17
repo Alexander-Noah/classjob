@@ -6,8 +6,18 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { applyAuthoritativeReservationRecord, requireAuthoritativeRecord } from '../src/api/services/authoritativeRecord.js'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
+/**
+ * 获取Function来源。
+ * 入参：source（来源）；name（名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getFunctionSource = (source, name) => {
   const start = source.indexOf(`const ${name} = async`)
   assert.notEqual(start, -1, `${name} should exist`)
@@ -15,7 +25,7 @@ const getFunctionSource = (source, name) => {
   return source.slice(start, nextFunction === -1 ? source.length : nextFunction)
 }
 
-test('reservation service explicitly opts into server-authoritative mutation responses', () => {
+test('reservation service explicitly opts into server-authoritative mutation responses', /** 验证当前测试用例的预期行为。 */ () => {
   const resources = readSource('../src/api/services/basicResources.js')
 
   assert.match(
@@ -24,7 +34,7 @@ test('reservation service explicitly opts into server-authoritative mutation res
   )
 })
 
-test('authoritative real-mode record operations require an HTTP record instead of the submitted payload', () => {
+test('authoritative real-mode record operations require an HTTP record instead of the submitted payload', /** 验证当前测试用例的预期行为。 */ () => {
   const collectionService = readSource('../src/api/services/collectionService.js')
 
   assert.match(collectionService, /import \{ requireAuthoritativeRecord \} from '\.\/authoritativeRecord'/)
@@ -34,33 +44,33 @@ test('authoritative real-mode record operations require an HTTP record instead o
   }
 })
 
-test('authoritative record parser accepts only direct or enveloped records with valid ids', () => {
+test('authoritative record parser accepts only direct or enveloped records with valid ids', /** 验证当前测试用例的预期行为。 */ () => {
   assert.deepEqual(requireAuthoritativeRecord({ code: 0, message: 'ok', data: { id: 2 } }, 'reservations', 'create'), { id: 2 })
   for (const response of [[], null, {}, { status: 200 }, { requestId: 'x' }, { data: [] }, { data: null }, { data: {} }, { data: { id: '' } }, { data: { id: Number.NaN } }]) {
-    assert.throws(() => requireAuthoritativeRecord(response, 'reservations', 'approve'), /reservations approve/)
+    assert.throws(/** 处理 throws 调用中的回调逻辑。 */ () => requireAuthoritativeRecord(response, 'reservations', 'approve'), /reservations approve/)
   }
 })
 
-test('authoritative real-mode records require positive safe integer identifiers', () => {
+test('authoritative real-mode records require positive safe integer identifiers', /** 验证当前测试用例的预期行为。 */ () => {
   assert.deepEqual(requireAuthoritativeRecord({ id: 42 }, 'reservations', 'create'), { id: 42 })
   assert.deepEqual(requireAuthoritativeRecord({ data: { id: '42' } }, 'reservations', 'create'), { id: '42' })
 
   for (const id of [0, -1, 1.5, 'error', '007', String(Number.MAX_SAFE_INTEGER) + '0', Number.MAX_SAFE_INTEGER + 1]) {
-    assert.throws(() => requireAuthoritativeRecord({ id }, 'reservations', 'create'), /reservations create/)
+    assert.throws(/** 处理 throws 调用中的回调逻辑。 */ () => requireAuthoritativeRecord({ id }, 'reservations', 'create'), /reservations create/)
   }
 })
 
-test('authoritative record application replaces or inserts without mutating input', () => {
+test('authoritative record application replaces or inserts without mutating input', /** 验证当前测试用例的预期行为。 */ () => {
   const records = [{ id: 'RSV-1', status: '待审核' }]
   assert.deepEqual(applyAuthoritativeReservationRecord(records, { id: 'RSV-1', status: '已通过' }), [{ id: 'RSV-1', status: '已通过' }])
   assert.deepEqual(records, [{ id: 'RSV-1', status: '待审核' }])
   assert.deepEqual(applyAuthoritativeReservationRecord(records, { id: 'RSV-2' }, { insertIfMissing: true }), [{ id: 'RSV-2' }, records[0]])
   assert.deepEqual(applyAuthoritativeReservationRecord(records, { id: 'RSV-1' }, { insertIfMissing: true }), [{ id: 'RSV-1' }])
-  assert.throws(() => applyAuthoritativeReservationRecord(records, { id: 'RSV-2' }, { expectedId: 'RSV-1' }), /错误的目标记录/)
-  assert.throws(() => applyAuthoritativeReservationRecord(records, { id: 'RSV-2' }), /未返回目标记录/)
+  assert.throws(/** 处理 throws 调用中的回调逻辑。 */ () => applyAuthoritativeReservationRecord(records, { id: 'RSV-2' }, { expectedId: 'RSV-1' }), /错误的目标记录/)
+  assert.throws(/** 处理 throws 调用中的回调逻辑。 */ () => applyAuthoritativeReservationRecord(records, { id: 'RSV-2' }), /未返回目标记录/)
 })
 
-test('collection service keeps mock mutations available for opted-in resources', () => {
+test('collection service keeps mock mutations available for opted-in resources', /** 验证当前测试用例的预期行为。 */ () => {
   const collectionService = readSource('../src/api/services/collectionService.js')
 
   for (const operation of ['create', 'update', 'approve', 'reject', 'action']) {
@@ -69,7 +79,7 @@ test('collection service keeps mock mutations available for opted-in resources',
   }
 })
 
-test('reservation mutations replace display state with returned server records without reloading', () => {
+test('reservation mutations replace display state with returned server records without reloading', /** 验证当前测试用例的预期行为。 */ () => {
   const reservationManagement = readSource('../src/composables/useReservationManagement.js')
 
   assert.match(reservationManagement, /const applyAuthoritativeReservation = \(reservation, \{ insertIfMissing = false, expectedId \} = \{\}\) =>/)
@@ -88,7 +98,7 @@ test('reservation mutations replace display state with returned server records w
   assert.match(reservationManagement, /applyAuthoritativeReservationRecord\(reservations\.value, normalizedReservation, \{ insertIfMissing, expectedId \}\)/)
 })
 
-test('approval has no browser-side usage-record write or import', () => {
+test('approval has no browser-side usage-record write or import', /** 验证当前测试用例的预期行为。 */ () => {
   const reservationManagement = readSource('../src/composables/useReservationManagement.js')
   const approveSource = getFunctionSource(reservationManagement, 'approveReservation')
 
@@ -97,7 +107,7 @@ test('approval has no browser-side usage-record write or import', () => {
   assert.doesNotMatch(approveSource, /usage record|使用记录/i)
 })
 
-test('failed reservation mutations restore both the previous array and selection', () => {
+test('failed reservation mutations restore both the previous array and selection', /** 验证当前测试用例的预期行为。 */ () => {
   const reservationManagement = readSource('../src/composables/useReservationManagement.js')
 
   for (const operation of ['submitReservation', 'approveReservation', 'rejectReservation']) {

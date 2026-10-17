@@ -8,6 +8,9 @@ public final class AuthenticationAttributes {
     public static final String ROLE = "authRole";
     public static final String USER_ID = "authUserId";
 
+    /**
+     * 构造 AuthenticationAttributes，初始化当前实例。
+     */
     private AuthenticationAttributes() {
     }
 }

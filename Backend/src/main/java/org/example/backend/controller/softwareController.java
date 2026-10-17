@@ -18,24 +18,44 @@ public class softwareController {
     @Autowired
     private softwareService softwareService;
 
+    /**
+     * 获取实验室Software。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/lab-software")
     public Result getLabSoftware(){
         log.info("获取软件环境列表");
         return softwareService.getLabSoftware();
     }
 
+    /**
+     * Inserter实验室Software的处理逻辑。
+     * @param software 软件环境参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/lab-software")
     public Result InserterLabSoftware(@RequestBody softwareEntity software){
         log.info("添加软件环境");
         return softwareService.InserterLabSoftware(software);
     }
 
+    /**
+     * 更新实验室Software。
+     * @param id 标识参数。
+     * @param software 软件环境参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/lab-software/{id}")
     public Result updateLabSoftware(@PathVariable Long id, @RequestBody softwareEntity software){
         log.info("修改软件环境: {}", id);
         return softwareService.updateLabSoftware(id, software);
     }
 
+    /**
+     * 删除实验室Software。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/lab-software/{id}")
     public Result deleteLabSoftware(@PathVariable Long id){
         log.info("删除软件环境: {}", id);

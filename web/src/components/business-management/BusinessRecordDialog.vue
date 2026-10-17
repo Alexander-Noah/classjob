@@ -16,6 +16,10 @@ const props = defineProps({
   },
   editableColumns: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   formModel: {
@@ -24,6 +28,10 @@ const props = defineProps({
   },
   fieldOptions: {
     type: Object,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     default: () => ({}),
   },
   formSubmitting: {
@@ -36,6 +44,10 @@ const props = defineProps({
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   statusProp: {
@@ -48,18 +60,37 @@ const emit = defineEmits(['submit', 'update:modelValue'])
 const formRef = ref(null)
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const normalizedColumns = computed(() => props.editableColumns.filter((column) => column?.prop))
+const normalizedColumns = computed(/** 计算派生状态。 */ () => props.editableColumns.filter(/** 判断当前条目是否符合筛选条件。 入参：column。 */ (column) => column?.prop))
 
 // 表格展示字段和表单提交字段可以分开：
 // 例如表格展示 labName，表单提交 labId。
 const getFormProp = (column) => column.formProp || column.modelProp || column.prop
 
+/**
+ * 判断是否为FieldRequired。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isFieldRequired = (column) => column.required !== false && !column.optional
 
+/**
+ * 归一化选项。
+ * 入参：option（选项）；column（column）。
+ * @returns 组装的键值对象。
+ */
 const normalizeOption = (option, column = {}) => {
   if (option && typeof option === 'object') {
     const labelKey = column.optionLabel || column.labelKey
@@ -107,11 +138,16 @@ const normalizeOption = (option, column = {}) => {
   }
 }
 
+/**
+ * 获取Column选项。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getColumnOptions = (column) => {
   const formProp = getFormProp(column)
 
   if ((column.prop === props.statusProp || formProp === props.statusProp) && props.statusOptions.length) {
-    return props.statusOptions.map((option) => normalizeOption(option, column))
+    return props.statusOptions.map(/** 将当前条目转换为目标结果。 入参：option。 */ (option) => normalizeOption(option, column))
   }
 
   const fieldOptions = props.fieldOptions[formProp] || props.fieldOptions[column.prop]
@@ -131,12 +167,22 @@ const getColumnOptions = (column) => {
   }
 
   return options
-    .map((option) => normalizeOption(option, column))
-    .filter((option) => option.label !== '' && option.value !== '' && option.value !== undefined && option.value !== null)
+    .map(/** 将当前条目转换为目标结果。 入参：option。 */ (option) => normalizeOption(option, column))
+    .filter(/** 判断当前条目是否符合筛选条件。 入参：option。 */ (option) => option.label !== '' && option.value !== '' && option.value !== undefined && option.value !== null)
 }
 
+/**
+ * 判断是否具有选项。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasOptions = (column) => getColumnOptions(column).length > 0
 
+/**
+ * 判断是否允许Create选项。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const canCreateOption = (column) => {
   const formProp = getFormProp(column)
 
@@ -147,6 +193,11 @@ const canCreateOption = (column) => {
   return column.allowCreate === true || ['name', 'version', 'software', 'softwareList', 'course'].includes(formProp)
 }
 
+/**
+ * 获取FieldKind。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getFieldKind = (column) => {
   const manualType = column.formType || column.fieldType
   if (manualType) return manualType
@@ -165,6 +216,11 @@ const getFieldKind = (column) => {
   return 'input'
 }
 
+/**
+ * 获取Placeholder。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getPlaceholder = (column) => {
   const fieldKind = getFieldKind(column)
   if (fieldKind === 'select') return `请选择${column.label}`
@@ -172,6 +228,11 @@ const getPlaceholder = (column) => {
   return `请输入${column.label}`
 }
 
+/**
+ * 判断是否需要Full行。
+ * 入参：column（column）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const shouldFullRow = (column) => {
   const fieldKind = getFieldKind(column)
   const text = `${column.prop || ''} ${column.label || ''}`.toLowerCase()
@@ -179,9 +240,13 @@ const shouldFullRow = (column) => {
 }
 
 
+/**
+ * 处理SelectChange。
+ * 入参：column（column）；value（值）。
+ */
 const handleSelectChange = (column, value) => {
   const formProp = getFormProp(column)
-  const option = getColumnOptions(column).find((item) => item.value === value)
+  const option = getColumnOptions(column).find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.value === value)
 
   // formProp 和 prop 不一致时，同步显示字段。
   // 例如 formProp=labId 用于提交，prop=labName 用于表格/详情展示。
@@ -190,14 +255,18 @@ const handleSelectChange = (column, value) => {
   }
 }
 
+/**
+ * form模型集合的处理逻辑。
+ * 入参：prop（prop）；value（值）。
+ */
 const formModelSet = (prop, value) => {
   props.formModel[prop] = value
 }
 
-const formRules = computed(() => {
+const formRules = computed(/** 计算派生状态。 */ () => {
   const rules = {}
 
-  normalizedColumns.value.forEach((column) => {
+  normalizedColumns.value.forEach(/** 处理遍历到的当前条目。 入参：column。 */ (column) => {
     if (!isFieldRequired(column)) return
 
     const fieldKind = getFieldKind(column)
@@ -216,10 +285,16 @@ const formRules = computed(() => {
   return rules
 })
 
+/**
+ * 处理Cancel。
+ */
 const handleCancel = () => {
   visible.value = false
 }
 
+/**
+ * 处理Submit。
+ */
 const handleSubmit = async () => {
   if (!formRef.value) {
     emit('submit')

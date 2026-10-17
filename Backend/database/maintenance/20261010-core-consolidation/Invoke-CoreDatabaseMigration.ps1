@@ -13,6 +13,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 解析归档目录。
 function Resolve-ArchiveDirectory {
     param([string]$Path)
 
@@ -25,6 +26,7 @@ function Resolve-ArchiveDirectory {
     return (Resolve-Path -LiteralPath $Path).Path
 }
 
+# 断言归档Child。
 function Assert-ArchiveChild {
     param(
         [string]$Parent,
@@ -40,6 +42,7 @@ function Assert-ArchiveChild {
     return $childPath
 }
 
+# 获取预期Hash。
 function Get-ExpectedHash {
     param([string]$HashFile)
 
@@ -50,6 +53,7 @@ function Get-ExpectedHash {
     return $Matches[1].ToUpperInvariant()
 }
 
+# 断言DumpHashes匹配。
 function Assert-DumpHashesMatch {
     param([string]$ArchivePath)
 

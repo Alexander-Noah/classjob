@@ -29,17 +29,32 @@ public class RepairServiceImpl implements RepairService {
     private final RepairMapper repairMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 RepairServiceImpl，初始化当前实例。
+     * @param repairMapper repair数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public RepairServiceImpl(RepairMapper repairMapper, BusinessLoopService businessLoopService) {
         this.repairMapper = repairMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Repairs。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<RepairEntity> listRepairs() {
         List<RepairEntity> repairs = repairMapper.listRepairs();
         return repairs == null ? List.of() : repairs;
     }
 
+    /**
+     * 创建报修。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param repair 报修参数。
+     * @return RepairEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public RepairEntity createRepair(RepairEntity repair) {
@@ -51,6 +66,13 @@ public class RepairServiceImpl implements RepairService {
         return savedRepair;
     }
 
+    /**
+     * 更新报修。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param repair 报修参数。
+     * @return RepairEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public RepairEntity updateRepair(String id, RepairEntity repair) {
@@ -65,6 +87,11 @@ public class RepairServiceImpl implements RepairService {
         return savedRepair;
     }
 
+    /**
+     * 删除报修。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     */
     @Override
     @Transactional
     public void deleteRepair(String id) {
@@ -73,6 +100,12 @@ public class RepairServiceImpl implements RepairService {
         businessLoopService.recordEvent("repair", "delete", repair == null ? id : firstNonBlank(repair.getTicket(), repair.getId()), STATUS_DELETED, Map.of("id", id));
     }
 
+    /**
+     * replaceRepairs的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param repairs repairs参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<RepairEntity> replaceRepairs(List<RepairEntity> repairs) {
@@ -91,12 +124,26 @@ public class RepairServiceImpl implements RepairService {
         return listRepairs();
     }
 
+    /**
+     * 重置Repairs。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<RepairEntity> resetRepairs() {
         businessLoopService.recordEvent("repair", "reset", "报修工单", "已恢复当前台账", Map.of("count", listRepairs().size()));
         return listRepairs();
     }
 
+    /**
+     * patchRepair的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param repair 报修参数。
+     * @param defaultStatus 默认状态参数。
+     * @param defaultProgress 默认Progress参数。
+     * @param defaultResult 默认结果参数。
+     * @return RepairEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public RepairEntity patchRepair(String id, RepairEntity repair, String defaultStatus, Integer defaultProgress, String defaultResult) {
@@ -120,6 +167,10 @@ public class RepairServiceImpl implements RepairService {
         return savedRepair;
     }
 
+    /**
+     * 归一化报修。
+     * @param repair 报修参数。
+     */
     private void normalizeRepair(RepairEntity repair) {
         if (repair.getTicket() == null || repair.getTicket().isBlank()) {
             String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 4).toUpperCase();
@@ -139,6 +190,11 @@ public class RepairServiceImpl implements RepairService {
         }
     }
 
+    /**
+     * 记录Repair事件。
+     * @param action action参数。
+     * @param repair 报修参数。
+     */
     private void recordRepairEvent(String action, RepairEntity repair) {
         if (repair == null) {
             return;
@@ -150,6 +206,10 @@ public class RepairServiceImpl implements RepairService {
         ));
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {

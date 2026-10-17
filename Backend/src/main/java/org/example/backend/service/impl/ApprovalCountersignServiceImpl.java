@@ -28,6 +28,12 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
     private final ReservationsMapper reservationsMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 ApprovalCountersignServiceImpl，初始化当前实例。
+     * @param countersignMapper countersign数据映射器参数。
+     * @param reservationsMapper 预约数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public ApprovalCountersignServiceImpl(
             ApprovalCountersignMapper countersignMapper,
             ReservationsMapper reservationsMapper,
@@ -38,6 +44,14 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Countersigns。
+     * @param businessType business类型参数。
+     * @param businessId business标识参数。
+     * @param assigneeName assignee名称参数。
+     * @param status 状态参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<ApprovalCountersignEntity> listCountersigns(
             String businessType,
@@ -48,6 +62,12 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return countersignMapper.listCountersigns(trimToNull(businessType), trimToNull(businessId), trimToNull(assigneeName), trimToNull(status));
     }
 
+    /**
+     * 创建Countersign。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param countersign countersign参数。
+     * @return ApprovalCountersignEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ApprovalCountersignEntity createCountersign(ApprovalCountersignEntity countersign) {
@@ -68,6 +88,13 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return countersignMapper.getCountersign(countersign.getId());
     }
 
+    /**
+     * 完成Countersign。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return ApprovalCountersignEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ApprovalCountersignEntity completeCountersign(Long id, ApprovalCountersignEntity payload) {
@@ -97,6 +124,13 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return updated;
     }
 
+    /**
+     * 取消Countersign。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return ApprovalCountersignEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ApprovalCountersignEntity cancelCountersign(Long id, ApprovalCountersignEntity payload) {
@@ -120,6 +154,11 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return updated;
     }
 
+    /**
+     * 获取ExistingCountersign。
+     * @param id 标识参数。
+     * @return ApprovalCountersignEntity 类型的处理结果。
+     */
     private ApprovalCountersignEntity getExistingCountersign(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("加签记录ID不能为空");
@@ -131,6 +170,10 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return countersign;
     }
 
+    /**
+     * 归一化Create载荷。
+     * @param countersign countersign参数。
+     */
     private void normalizeCreatePayload(ApprovalCountersignEntity countersign) {
         if (countersign == null) {
             throw new IllegalArgumentException("请填写加签信息");
@@ -156,6 +199,10 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         validateMeaningfulText("加签原因", countersign.getReason(), 4, 500);
     }
 
+    /**
+     * enrichBusinessInfo的处理逻辑。
+     * @param countersign countersign参数。
+     */
     private void enrichBusinessInfo(ApprovalCountersignEntity countersign) {
         if (!BUSINESS_RESERVATION.equals(countersign.getBusinessType())) {
             if (countersign.getBusinessTitle() == null) {
@@ -180,6 +227,10 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         ));
     }
 
+    /**
+     * 同步BusinessWhenCreated。
+     * @param countersign countersign参数。
+     */
     private void syncBusinessWhenCreated(ApprovalCountersignEntity countersign) {
         syncBusinessReviewStatus(
                 countersign,
@@ -189,6 +240,10 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         );
     }
 
+    /**
+     * 同步BusinessWhenCompleted。
+     * @param countersign countersign参数。
+     */
     private void syncBusinessWhenCompleted(ApprovalCountersignEntity countersign) {
         if (STATUS_APPROVED.equals(countersign.getResult())) {
             syncBusinessReviewStatus(countersign, "待审核", countersign.getAssigneeName(), countersign.getResultRemark());
@@ -199,6 +254,13 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         }
     }
 
+    /**
+     * 同步BusinessReview状态。
+     * @param countersign countersign参数。
+     * @param status 状态参数。
+     * @param reviewerName reviewer名称参数。
+     * @param reviewRemark reviewRemark参数。
+     */
     private void syncBusinessReviewStatus(
             ApprovalCountersignEntity countersign,
             String status,
@@ -216,6 +278,11 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         reservationsMapper.updateReviewStatus(reservationId, status, reviewerName, reviewRemark);
     }
 
+    /**
+     * 归一化结果。
+     * @param result 结果参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeResult(String result) {
         String value = trimToNull(result);
         if (value == null || "同意".equals(value) || STATUS_APPROVED.equals(value)) {
@@ -227,6 +294,13 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         throw new IllegalArgumentException("加签结果只能是已同意或已退回");
     }
 
+    /**
+     * 校验Meaningful文本。
+     * @param label 标签参数。
+     * @param value 值参数。
+     * @param minLength min长度参数。
+     * @param maxLength max长度参数。
+     */
     private void validateMeaningfulText(String label, String value, int minLength, int maxLength) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(label + "不能为空");
@@ -242,6 +316,11 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         }
     }
 
+    /**
+     * 解析Integer。
+     * @param value 值参数。
+     * @return Integer 类型的处理结果。
+     */
     private Integer parseInteger(String value) {
         try {
             return Integer.parseInt(String.valueOf(value));
@@ -250,6 +329,11 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         }
     }
 
+    /**
+     * 裁剪目标Null。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimToNull(String value) {
         if (value == null) {
             return null;
@@ -258,6 +342,10 @@ public class ApprovalCountersignServiceImpl implements ApprovalCountersignServic
         return trimmed.isBlank() ? null : trimmed;
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {

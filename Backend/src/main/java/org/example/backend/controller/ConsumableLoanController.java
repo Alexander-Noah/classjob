@@ -14,16 +14,42 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/consumables/loans")
 public class ConsumableLoanController {
     private final ConsumableLoanService service;
+    /**
+     * 构造 ConsumableLoanController，初始化当前实例。
+     * @param service 服务参数。
+     */
     public ConsumableLoanController(ConsumableLoanService service) { this.service = service; }
+    /**
+     * 列出当前操作。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping
     public Result list() { return Result.success("获取借用记录成功", service.list()); }
+    /**
+     * 获取当前操作。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/{id}")
     public Result get(@PathVariable Long id) { return Result.success("获取借用详情成功", service.get(id)); }
+    /**
+     * 借出当前操作。
+     * @param request 请求参数。
+     * @param username username参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping
     public Result borrow(@RequestBody ConsumableLoanService.BorrowRequest request,
                          @RequestAttribute(JwtAuthenticationFilter.AUTH_USERNAME_ATTRIBUTE) String username) {
         return Result.success("借用登记成功", service.borrow(request, username));
     }
+    /**
+     * 归还条目集合。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @param username username参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/{id}/return")
     public Result returnItems(@PathVariable Long id, @RequestBody ConsumableLoanService.ReturnRequest request,
                               @RequestAttribute(JwtAuthenticationFilter.AUTH_USERNAME_ATTRIBUTE) String username) {

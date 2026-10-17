@@ -12,6 +12,9 @@ import org.springframework.util.unit.DataSize;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AvatarUploadLimitTest {
+    /**
+     * multipartParserAllowsTheFull头像上限And请求Overhead的处理逻辑。
+     */
     @Test
     void multipartParserAllowsTheFullAvatarLimitAndRequestOverhead() {
         var yaml = new YamlPropertiesFactoryBean();

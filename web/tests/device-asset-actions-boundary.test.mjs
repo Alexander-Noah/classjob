@@ -5,9 +5,14 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('device asset page wires inventory and transfer dialogs to asset service', () => {
+test('device asset page wires inventory and transfer dialogs to asset service', /** 验证当前测试用例的预期行为。 */ () => {
   const page = readSource('../src/views/devices/DeviceManagement.vue')
   const composable = readSource('../src/composables/useDeviceManagement.js')
   const table = readSource('../src/views/devices/components/DeviceListTable.vue')
@@ -27,7 +32,7 @@ test('device asset page wires inventory and transfer dialogs to asset service', 
   assert.match(composable, /submitTransfer/)
 })
 
-test('device asset page supports batch delete, inventory and transfer actions', () => {
+test('device asset page supports batch delete, inventory and transfer actions', /** 验证当前测试用例的预期行为。 */ () => {
   const page = readSource('../src/views/devices/DeviceManagement.vue')
   const composable = readSource('../src/composables/useDeviceManagement.js')
   const table = readSource('../src/views/devices/components/DeviceListTable.vue')
@@ -50,7 +55,7 @@ test('device asset page supports batch delete, inventory and transfer actions', 
   assert.match(composable, /openBatchTransferDialog/)
 })
 
-test('device asset lifecycle statuses include idle assets in options and metrics', () => {
+test('device asset lifecycle statuses include idle assets in options and metrics', /** 验证当前测试用例的预期行为。 */ () => {
   const service = readSource('../src/api/services/deviceAssets.js')
   const stats = readSource('../src/api/services/deviceAssetStats.js')
   const composable = readSource('../src/composables/useDeviceManagement.js')
@@ -61,7 +66,7 @@ test('device asset lifecycle statuses include idle assets in options and metrics
   assert.match(composable, /stats\.value\.idle/)
 })
 
-test('device asset code dialog stays focused on asset ledger data', () => {
+test('device asset code dialog stays focused on asset ledger data', /** 验证当前测试用例的预期行为。 */ () => {
   const dialog = readSource('../src/views/devices/components/DeviceAssetCodeDialog.vue')
 
   assert.doesNotMatch(dialog, /activeDevice\.online/)

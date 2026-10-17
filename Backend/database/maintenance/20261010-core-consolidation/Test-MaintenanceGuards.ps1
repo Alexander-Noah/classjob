@@ -8,6 +8,7 @@ $testRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('smart-lab-guards-' + [
 $previousPassword = $env:MYSQL_PWD
 $global:smartLabGuardBadComparison = $false
 $global:smartLabGuardMysqlCalls = 0
+# mysql的处理逻辑。
 function mysql {
     $global:smartLabGuardMysqlCalls++
     $global:LASTEXITCODE = 0
@@ -16,9 +17,11 @@ function mysql {
         '[{"name":"module_record","rowCount":' + $count + ',"minId":1,"maxId":2}]'
     }
 }
+# 断言That。
 function Assert-That([bool]$Condition, [string]$Message) {
     if (-not $Condition) { throw $Message }
 }
+# Expect失败的处理逻辑。
 function Expect-Failure([scriptblock]$Action, [string]$Expected) {
     $caught = $false
     try { & $Action } catch {

@@ -21,6 +21,10 @@ public record ReservationCreateRequest(
         @JsonAlias("attendees") Integer attendeeCount,
         String reason
 ) {
+    /**
+     * 转换为命令。
+     * @return CreateReservationCommand 类型的处理结果。
+     */
     CreateReservationCommand toCommand() {
         return new CreateReservationCommand(
                 applicantName, department, contact, labId, reservationDate, timeRange, scene, attendeeCount, reason

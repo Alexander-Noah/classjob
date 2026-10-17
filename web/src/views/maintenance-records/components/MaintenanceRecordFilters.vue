@@ -14,6 +14,10 @@ defineProps({
   },
   options: {
     type: Object,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     default: () => ({}),
   },
 })

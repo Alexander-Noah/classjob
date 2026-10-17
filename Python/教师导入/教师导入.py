@@ -81,6 +81,9 @@ def split_teacher_names(raw_name):
     return [name.strip() for name in names if name.strip()]
 
 
+# usernameexists的处理逻辑。
+# 入参：cursor（cursor）；username（username）。
+# 返回：由当前表达式或分支生成的处理结果。
 def username_exists(cursor, username: str) -> bool:
     cursor.execute(
         """
@@ -102,6 +105,9 @@ def generate_unique_username(cursor) -> str:
             return username
 
 
+# 获取existing用户byreal名称。
+# 入参：cursor（cursor）；real_name（real名称）。
+# 返回：由当前表达式或分支生成的处理结果。
 def get_existing_user_by_real_name(cursor, real_name: str):
     cursor.execute(
         """
@@ -276,6 +282,7 @@ def save_created_accounts_to_csv(accounts):
     print(f"\n新建账号已导出到：{filename}")
 
 
+# 执行当前模块的主入口流程。
 def main():
     connection = pymysql.connect(**DB_CONFIG)
 

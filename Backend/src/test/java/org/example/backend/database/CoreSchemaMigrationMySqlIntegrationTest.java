@@ -22,6 +22,10 @@ class CoreSchemaMigrationMySqlIntegrationTest {
     private static final String USERNAME = System.getProperty("core.schema.mysql.username", "root");
     private static final String PASSWORD = System.getProperty("core.schema.mysql.password", "root");
 
+    /**
+     * 创建SchemaAndFixtures。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     @BeforeAll
     static void createSchemaAndFixtures() throws SQLException {
         try (Connection connection = DriverManager.getConnection(ROOT_URL, USERNAME, PASSWORD);
@@ -32,6 +36,10 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         }
     }
 
+    /**
+     * dropSchema的处理逻辑。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     @AfterAll
     static void dropSchema() throws SQLException {
         if (!SCHEMA.startsWith("smart_lab_core_schema_it_")) throw new IllegalStateException("unsafe schema name");
@@ -41,6 +49,10 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         }
     }
 
+    /**
+     * expandAnd数据MigrationsPreserveCore行集合的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void expandAndDataMigrationsPreserveCoreRows() throws Exception {
         Flyway.configure()
@@ -77,10 +89,22 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         assertEquals(3, count("usage_record"), "source rows lost from usage_record");
     }
 
+    /**
+     * 统计当前操作。
+     * @param table table参数。
+     * @return long 类型的处理结果。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static long count(String table) throws SQLException {
         return scalarLong("select count(*) from " + table);
     }
 
+    /**
+     * scalar的处理逻辑。
+     * @param sql SQL参数。
+     * @return String 类型的处理结果。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static String scalar(String sql) throws SQLException {
         try (Connection connection = connection(); Statement statement = connection.createStatement(); ResultSet result = statement.executeQuery(sql)) {
             result.next();
@@ -88,6 +112,12 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         }
     }
 
+    /**
+     * scalar长整数的处理逻辑。
+     * @param sql SQL参数。
+     * @return long 类型的处理结果。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static long scalarLong(String sql) throws SQLException {
         try (Connection connection = connection(); Statement statement = connection.createStatement(); ResultSet result = statement.executeQuery(sql)) {
             result.next();
@@ -95,10 +125,20 @@ class CoreSchemaMigrationMySqlIntegrationTest {
         }
     }
 
+    /**
+     * 连接的处理逻辑。
+     * @return Connection 类型的处理结果。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static Connection connection() throws SQLException {
         return DriverManager.getConnection(ROOT_URL + SCHEMA + "?useSSL=false&allowPublicKeyRetrieval=true", USERNAME, PASSWORD);
     }
 
+    /**
+     * 创建FixtureTables。
+     * @param statement statement参数。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static void createFixtureTables(Statement statement) throws SQLException {
         statement.execute("""
                 create table `%s`.sys_user (
@@ -239,6 +279,11 @@ class CoreSchemaMigrationMySqlIntegrationTest {
                 """.formatted(SCHEMA));
     }
 
+    /**
+     * 插入Fixtures。
+     * @param statement statement参数。
+     * @throws SQLException 当前调用无法继续完成时抛出。
+     */
     private static void insertFixtures(Statement statement) throws SQLException {
         statement.execute("insert into `" + SCHEMA + "`.sys_user (id, real_name) values (1, 'Alice'), (2, 'Duplicate'), (3, 'Duplicate')");
         statement.execute("insert into `" + SCHEMA + "`.lab (id, lab_code, lab_name) values (1, 'LAB-1', 'Main Lab'), (2, 'LAB-2', 'Shared Lab'), (3, 'LAB-3', 'Shared Lab')");

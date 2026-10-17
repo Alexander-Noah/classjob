@@ -19,6 +19,10 @@ const props = defineProps({
   },
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   modelValue: {
@@ -30,17 +34,31 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const selectedDevices = computed(() => {
+const selectedDevices = computed(/** 计算派生状态。 */ () => {
   if (props.devices?.length) return props.devices.filter(Boolean)
   return props.device ? [props.device] : []
 })
 
-const activeDevice = computed(() => selectedDevices.value[0] || null)
+const activeDevice = computed(/** 计算派生状态。 */ () => selectedDevices.value[0] || null)
 
+/**
+ * 转义HTML。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const escapeHtml = (value) =>
   String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -49,6 +67,11 @@ const escapeHtml = (value) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
+/**
+ * 获取资产URL。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getAssetUrl = (device) => {
   if (!device || typeof window === 'undefined') return ''
 
@@ -57,16 +80,24 @@ const getAssetUrl = (device) => {
   return url.toString()
 }
 
+/**
+ * 获取Qr编码URL。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getQrCodeUrl = (device) => {
   const url = getAssetUrl(device)
   return url ? generateQrSvgDataUrl(url) : ''
 }
 
-const assetUrl = computed(() => getAssetUrl(activeDevice.value))
-const qrCodeUrl = computed(() => getQrCodeUrl(activeDevice.value))
-const inventoryRecords = computed(() => activeDevice.value?.inventoryRecords || [])
-const batchCount = computed(() => selectedDevices.value.length)
+const assetUrl = computed(/** 计算派生状态。 */ () => getAssetUrl(activeDevice.value))
+const qrCodeUrl = computed(/** 计算派生状态。 */ () => getQrCodeUrl(activeDevice.value))
+const inventoryRecords = computed(/** 计算派生状态。 */ () => activeDevice.value?.inventoryRecords || [])
+const batchCount = computed(/** 计算派生状态。 */ () => selectedDevices.value.length)
 
+/**
+ * 下载Qr编码。
+ */
 const downloadQrCode = () => {
   if (!activeDevice.value || !qrCodeUrl.value) return
 
@@ -76,6 +107,9 @@ const downloadQrCode = () => {
   link.click()
 }
 
+/**
+ * 输出标签。
+ */
 const printLabel = () => {
   if (!selectedDevices.value.length) return
 
@@ -86,14 +120,18 @@ const printLabel = () => {
   }
 
   const labelsHtml = selectedDevices.value
-    .map((device) => {
+    .map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => {
       const maintenanceHtml = (device.maintenance || [])
         .slice(0, 4)
-        .map((record) => `<li>${escapeHtml(record)}</li>`)
+        .map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => `<li>${escapeHtml(record)}</li>`)
         .join('')
       const inventoryHtml = (device.inventoryRecords || [])
         .slice(0, 4)
         .map(
+          /**
+           * 将当前条目转换为目标结果。
+           * 入参：record。
+           */
           (record) =>
             `<li>${escapeHtml(record.inspectedAt || '-')} ${escapeHtml(record.inspectorName || '-')} ${escapeHtml(record.resultStatus || '-')}</li>`,
         )

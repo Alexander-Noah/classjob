@@ -12,6 +12,8 @@ class AcademicSystemConfig:
     class_timetable_result_url: str
     timetable_mode_id: str
 
+    # 教务origin的处理逻辑。
+    # 返回：文本结果。
     @property
     def academic_origin(self) -> str:
         parsed = urlparse(self.class_timetable_url)
@@ -45,6 +47,9 @@ class AcademicSystemConfig:
         return self
 
 
+# 加载教务system配置。
+# 入参：environ（environ）。
+# 返回：由当前表达式或分支生成的处理结果。
 def load_academic_system_config(environ=None) -> AcademicSystemConfig:
     values = os.environ if environ is None else environ
     return AcademicSystemConfig(

@@ -13,6 +13,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
+    /**
+     * customOpenAPI的处理逻辑。
+     * @return OpenAPI 类型的处理结果。
+     */
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()

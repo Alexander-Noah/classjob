@@ -24,6 +24,11 @@ import java.util.List;
 public class StrictCorsFilter extends OncePerRequestFilter {
     private final CorsConfiguration corsConfiguration;
 
+    /**
+     * 构造 StrictCorsFilter，初始化当前实例。
+     * @param allowedOrigins allowedOrigins参数。
+     * @param allowedOriginPatterns allowedOriginPatterns参数。
+     */
     public StrictCorsFilter(
             @Value("${smart-lab.security.cors.allowed-origins:}") String allowedOrigins,
             @Value("${smart-lab.security.cors.allowed-origin-patterns:http://localhost:*,http://127.0.0.1:*,tauri://localhost,http://tauri.localhost}") String allowedOriginPatterns
@@ -45,6 +50,14 @@ public class StrictCorsFilter extends OncePerRequestFilter {
         this.corsConfiguration.setMaxAge(1800L);
     }
 
+    /**
+     * 执行筛选条件Internal。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param filterChain 筛选条件Chain参数。
+     * @throws ServletException 当前调用无法继续完成时抛出。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -74,6 +87,12 @@ public class StrictCorsFilter extends OncePerRequestFilter {
         writeCorsHeaders(request, response, allowedOrigin);
     }
 
+    /**
+     * 写入Cors请求头。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param allowedOrigin allowedOrigin参数。
+     */
     private void writeCorsHeaders(HttpServletRequest request, HttpServletResponse response, String allowedOrigin) {
         response.setHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, allowedOrigin);
         response.setHeader(HttpHeaders.VARY, "Origin, Access-Control-Request-Method, Access-Control-Request-Headers");
@@ -87,6 +106,11 @@ public class StrictCorsFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * 写入Forbidden。
+     * @param response 响应参数。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private void writeForbidden(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -94,13 +118,18 @@ public class StrictCorsFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"code\":403,\"message\":\"CORS origin is not allowed\",\"data\":{}}");
     }
 
+    /**
+     * 拆分CSV。
+     * @param value 值参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> splitCsv(String value) {
         if (value == null || value.isBlank()) {
             return List.of();
         }
         return Arrays.stream(value.split(","))
                 .map(String::trim)
-                .filter(item -> !item.isBlank())
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item -> !item.isBlank())
                 .toList();
     }
 }

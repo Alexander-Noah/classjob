@@ -8,7 +8,7 @@ import { test } from 'node:test'
 const scanReservationUrl = new URL('../src/views/reservations/ScanReservation.vue', import.meta.url)
 const routerUrl = new URL('../src/router/index.js', import.meta.url)
 
-test('anonymous scan reservation visits skip the protected teaching calendar request', () => {
+test('anonymous scan reservation visits skip the protected teaching calendar request', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readFileSync(scanReservationUrl, 'utf8')
 
   assert.match(source, /import\s*\{[^}]*isAuthenticated[^}]*\}\s*from\s*['"]\.\.\/\.\.\/api\/services\/auth['"]/s)
@@ -17,7 +17,7 @@ test('anonymous scan reservation visits skip the protected teaching calendar req
   assert.doesNotMatch(source, /catch\s*\([^)]*\)\s*\{[^}]*return[^}]*\}\s*await loadLabProfile\(\)/s)
 })
 
-test('scan reservation route remains public', () => {
+test('scan reservation route remains public', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readFileSync(routerUrl, 'utf8')
   const route = source.match(/\{\s*path:\s*['"]\/scan\/reserve['"][\s\S]*?\n\s*\},/)?.[0] || ''
 

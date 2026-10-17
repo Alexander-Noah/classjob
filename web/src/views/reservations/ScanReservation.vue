@@ -58,29 +58,47 @@ const queryModel = reactive({
 })
 
 const timeRangeModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   get() {
     const [startTime, endTime] = String(formModel.timeRange || '').split('-')
     return startTime && endTime ? [startTime, endTime] : []
   },
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   */
   set(value) {
     formModel.timeRange = Array.isArray(value) && value[0] && value[1] ? `${value[0]}-${value[1]}` : ''
   },
 })
 
-const storedUser = computed(() => getStoredUser() || {})
-const attendeeMax = computed(() => Number(lab.value?.capacity) || 120)
+const storedUser = computed(/** 计算派生状态。 */ () => getStoredUser() || {})
+const attendeeMax = computed(/** 计算派生状态。 */ () => Number(lab.value?.capacity) || 120)
 
-const today = computed(() => {
+const today = computed(/** 计算派生状态。 */ () => {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 })
 
+/**
+ * 解析时间目标Minutes。
+ * 入参：timeText（时间文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeToMinutes = (timeText) => {
   const match = String(timeText || '').match(/^(\d{1,2}):(\d{2})$/)
   if (!match) return null
   return Number(match[1]) * 60 + Number(match[2])
 }
 
+/**
+ * 解析时间范围。
+ * 入参：timeRange（时间区间）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeRange = (timeRange) => {
   const [startTime, endTime] = String(timeRange || '').split('-')
   const start = parseTimeToMinutes(startTime)
@@ -89,26 +107,31 @@ const parseTimeRange = (timeRange) => {
   return { start, end, startTime, endTime }
 }
 
+/**
+ * 解析日期。
+ * 入参：dateText（日期文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseDate = (dateText) => {
   if (!dateText) return null
   const date = new Date(`${dateText}T00:00:00`)
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-const openRange = computed(() => {
+const openRange = computed(/** 计算派生状态。 */ () => {
   const text = lab.value?.openTime || '08:00-22:00'
   return parseTimeRange(text) || { start: 8 * 60, end: 22 * 60, startTime: '08:00', endTime: '22:00' }
 })
 
-const openRangeLabel = computed(() => `${openRange.value.startTime}-${openRange.value.endTime}`)
+const openRangeLabel = computed(/** 计算派生状态。 */ () => `${openRange.value.startTime}-${openRange.value.endTime}`)
 
-const labLocation = computed(() =>
+const labLocation = computed(/** 计算派生状态。 */ () =>
   [lab.value?.building, lab.value?.floor, lab.value?.room]
     .filter(Boolean)
     .join(' · ') || '位置待完善',
 )
 
-const labStatusType = computed(() => {
+const labStatusType = computed(/** 计算派生状态。 */ () => {
   const status = String(lab.value?.status || '')
   if (status.includes('开放')) return 'success'
   if (status.includes('使用') || status.includes('预约')) return 'warning'
@@ -116,7 +139,7 @@ const labStatusType = computed(() => {
   return 'info'
 })
 
-const labFacts = computed(() => [
+const labFacts = computed(/** 计算派生状态。 */ () => [
   { label: '实验室编号', value: lab.value?.code || '-' },
   { label: '空间容量', value: `${attendeeMax.value} 人` },
   { label: '实验室类型', value: lab.value?.type || '基础机房' },
@@ -125,8 +148,8 @@ const labFacts = computed(() => [
   { label: '所在位置', value: labLocation.value },
 ])
 
-const selectedRange = computed(() => parseTimeRange(formModel.timeRange))
-const selectedDateMeta = computed(() => {
+const selectedRange = computed(/** 计算派生状态。 */ () => parseTimeRange(formModel.timeRange))
+const selectedDateMeta = computed(/** 计算派生状态。 */ () => {
   const date = parseDate(formModel.date)
   if (!date || !teachingCalendar.value) return null
 
@@ -136,9 +159,9 @@ const selectedDateMeta = computed(() => {
     weekday: weekdayNames[date.getDay()],
   }
 })
-const selectedSlot = computed(() => quickSlots.find((slot) => slot.value === formModel.timeRange) || null)
+const selectedSlot = computed(/** 计算派生状态。 */ () => quickSlots.find(/** 判断当前条目是否为查找目标。 入参：slot。 */ (slot) => slot.value === formModel.timeRange) || null)
 
-const durationLabel = computed(() => {
+const durationLabel = computed(/** 计算派生状态。 */ () => {
   const range = selectedRange.value
   if (!range) return ''
   const minutes = range.end - range.start
@@ -146,7 +169,7 @@ const durationLabel = computed(() => {
   return minutes > 60 ? `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分钟` : `${minutes} 分钟`
 })
 
-const timeRangeMessage = computed(() => {
+const timeRangeMessage = computed(/** 计算派生状态。 */ () => {
   if (!formModel.timeRange) return ''
 
   const range = selectedRange.value
@@ -167,7 +190,7 @@ const timeRangeMessage = computed(() => {
   return ''
 })
 
-const availabilityAlert = computed(() => {
+const availabilityAlert = computed(/** 计算派生状态。 */ () => {
   if (!formModel.date || !formModel.timeRange) return null
 
   if (timeRangeMessage.value) {
@@ -183,7 +206,7 @@ const availabilityAlert = computed(() => {
   }
 })
 
-const submittedSummary = computed(() => {
+const submittedSummary = computed(/** 计算派生状态。 */ () => {
   if (!submittedReservation.value) return []
   return [
     { label: '预约编号', value: submittedReservation.value.id || '-' },
@@ -194,15 +217,15 @@ const submittedSummary = computed(() => {
   ]
 })
 
-const reservationIdText = computed(() => String(submittedReservation.value?.id || '').trim())
-const submittedStatus = computed(() => submittedReservation.value?.status || '待审核')
-const submittedStatusType = computed(() => submittedReservation.value?.tagType || labStatusType.value || 'warning')
-const statusStepActive = computed(() => {
+const reservationIdText = computed(/** 计算派生状态。 */ () => String(submittedReservation.value?.id || '').trim())
+const submittedStatus = computed(/** 计算派生状态。 */ () => submittedReservation.value?.status || '待审核')
+const submittedStatusType = computed(/** 计算派生状态。 */ () => submittedReservation.value?.tagType || labStatusType.value || 'warning')
+const statusStepActive = computed(/** 计算派生状态。 */ () => {
   if (submittedStatus.value === '已通过') return 3
   if (['已驳回', '已取消'].includes(submittedStatus.value)) return 2
   return 1
 })
-const statusAlert = computed(() => {
+const statusAlert = computed(/** 计算派生状态。 */ () => {
   if (submittedStatus.value === '已通过') {
     return {
       type: 'success',
@@ -234,8 +257,16 @@ const statusAlert = computed(() => {
   }
 })
 
+/**
+ * 判断是否为WaitingForReview。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isWaitingForReview = () => ['待审核', '冲突'].includes(submittedReservation.value?.status || '待审核')
 
+/**
+ * 读取Stored状态查询。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readStoredStatusQuery = () => {
   if (typeof window === 'undefined') return null
 
@@ -247,6 +278,10 @@ const readStoredStatusQuery = () => {
   }
 }
 
+/**
+ * remember状态查询的处理逻辑。
+ * 入参：reservation（预约）。
+ */
 const rememberStatusQuery = (reservation = submittedReservation.value) => {
   if (typeof window === 'undefined' || !reservation?.id) return
 
@@ -260,12 +295,19 @@ const rememberStatusQuery = (reservation = submittedReservation.value) => {
   )
 }
 
+/**
+ * 停止状态Polling。
+ */
 const stopStatusPolling = () => {
   if (!statusPollingTimer) return
   window.clearInterval(statusPollingTimer)
   statusPollingTimer = null
 }
 
+/**
+ * 刷新Submitted状态。
+ * 入参：解构参数（silent、false）。
+ */
 const refreshSubmittedStatus = async ({ silent = false } = {}) => {
   const reservationId = submittedReservation.value?.id
   const contact = statusContact.value || formModel.contact.trim() || submittedReservation.value?.contact
@@ -294,15 +336,21 @@ const refreshSubmittedStatus = async ({ silent = false } = {}) => {
   }
 }
 
+/**
+ * 启动状态Polling。
+ */
 const startStatusPolling = () => {
   stopStatusPolling()
   if (!submittedReservation.value?.id || !isWaitingForReview()) return
 
-  statusPollingTimer = window.setInterval(() => {
+  statusPollingTimer = window.setInterval(/** 执行周期安排的任务。 */ () => {
     void refreshSubmittedStatus({ silent: true })
   }, 15000)
 }
 
+/**
+ * 恢复Submitted预约。
+ */
 const restoreSubmittedReservation = () => {
   const storedStatus = readStoredStatusQuery()
   const currentLabId = String(lab.value?.id || route.query.labId || '')
@@ -322,6 +370,9 @@ const restoreSubmittedReservation = () => {
   void refreshSubmittedStatus({ silent: true }).then(startStatusPolling)
 }
 
+/**
+ * 应用Stored用户默认。
+ */
 const applyStoredUserDefaults = () => {
   const user = storedUser.value
   if (!formModel.applicant) {
@@ -335,6 +386,10 @@ const applyStoredUserDefaults = () => {
   }
 }
 
+/**
+ * 校验时间范围。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateTimeRange = (_rule, value, callback) => {
   if (!value) {
     callback(new Error('请选择预约时段'))
@@ -350,6 +405,10 @@ const validateTimeRange = (_rule, value, callback) => {
   callback()
 }
 
+/**
+ * 校验Scene。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateScene = (_rule, value, callback) => {
   if (!sceneOptions.includes(value)) {
     callback(new Error('请选择预约类型'))
@@ -359,6 +418,10 @@ const validateScene = (_rule, value, callback) => {
   callback()
 }
 
+/**
+ * 校验Attendees。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateAttendees = (_rule, value, callback) => {
   const count = Number(value)
 
@@ -375,6 +438,10 @@ const validateAttendees = (_rule, value, callback) => {
   callback()
 }
 
+/**
+ * 校验Confirmed。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateConfirmed = (_rule, value, callback) => {
   if (!value) {
     callback(new Error('请确认预约信息真实有效'))
@@ -397,6 +464,9 @@ const rules = {
   confirmed: [{ validator: validateConfirmed, trigger: 'change' }],
 }
 
+/**
+ * 加载实验室Profile。
+ */
 const loadLabProfile = async () => {
   const labId = route.query.labId
   const code = route.query.code
@@ -421,11 +491,18 @@ const loadLabProfile = async () => {
   }
 }
 
+/**
+ * 设置QuickSlot。
+ * 入参：slot（slot）。
+ */
 const setQuickSlot = (slot) => {
   formModel.timeRange = slot.value
   formRef.value?.validateField('timeRange')
 }
 
+/**
+ * 重置预约Fields。
+ */
 const resetReservationFields = () => {
   formModel.date = ''
   formModel.timeRange = ''
@@ -436,12 +513,18 @@ const resetReservationFields = () => {
   formRef.value?.clearValidate()
 }
 
+/**
+ * 处理Continue。
+ */
 const handleContinue = () => {
   stopStatusPolling()
   submittedReservation.value = null
   resetReservationFields()
 }
 
+/**
+ * 处理状态Lookup。
+ */
 const handleStatusLookup = async () => {
   const reservationId = String(queryModel.reservationId || '').trim().replace(/^#/, '')
   const contact = normalizeInputText(queryModel.contact)
@@ -478,6 +561,9 @@ const handleStatusLookup = async () => {
   }
 }
 
+/**
+ * 复制预约标识。
+ */
 const copyReservationId = async () => {
   if (!reservationIdText.value) {
     ElMessage.warning('暂无预约编号')
@@ -504,6 +590,9 @@ const copyReservationId = async () => {
   }
 }
 
+/**
+ * 提交Form。
+ */
 const submitForm = async () => {
   if (!lab.value || !formRef.value) return
 
@@ -543,7 +632,7 @@ const submitForm = async () => {
   }
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   await loadLabProfile()
 
   if (isAuthenticated()) {
@@ -734,7 +823,11 @@ onBeforeUnmount(stopStatusPolling)
                   class="full-field"
                   clearable
                   format="YYYY-MM-DD"
-                  :disabled-date="(date) => date.getTime() < new Date(`${today}T00:00:00`).getTime()"
+                  :disabled-date="/**
+ * 处理当前调用传入的回调逻辑。
+ * 入参：date。
+ */
+(date) => date.getTime() < new Date(`${today}T00:00:00`).getTime()"
                   placeholder="请选择日期"
                   type="date"
                   value-format="YYYY-MM-DD"

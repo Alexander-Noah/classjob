@@ -5,6 +5,10 @@ import { observeGlassScrolling } from './glassScrollActivity'
 let nextId = 0
 const attached = new WeakMap()
 const properties = ['--glass-backdrop', '--liquid-radius', '--liquid-transform', '--liquid-light-x', '--liquid-light-y', '--liquid-light-alpha']
+/**
+ * 生成动画的静止状态。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resting = () => ({ x: 0, y: 0, scaleX: 1, scaleY: 1, lens: 1 })
 const unavailable = ':disabled, .is-disabled, .is-loading, [aria-disabled="true"], [aria-busy="true"]'
 
@@ -43,6 +47,9 @@ export function attachLiquidGlass(element, {
   element.style.setProperty('--liquid-light-alpha', '.1')
   element.style.setProperty('--glass-backdrop', scrolling ? 'none' : idleBackdrop)
 
+  /**
+   * 激活当前操作。
+   */
   function activate() {
     if (active || disposed || scrolling || element.matches(unavailable)) return
     active = true
@@ -53,11 +60,14 @@ export function attachLiquidGlass(element, {
       document.body.append(host)
       // standard 无 Worker 或外部图片请求；离开按钮时连同滤镜一起释放。
       render(h(GlassFilter, { id, mode, displacementScale: strength, aberrationIntensity: aberration, width: 512, height: 512 }), host)
-      channels = [...host.querySelectorAll('feDisplacementMap')].map(node => ({ node, scale: Number(node.getAttribute('scale')) }))
+      channels = [...host.querySelectorAll('feDisplacementMap')].map(/** 将当前条目转换为目标结果。 入参：node。 */ node => ({ node, scale: Number(node.getAttribute('scale')) }))
       host.querySelector('feImage')?.removeAttribute('id')
     }
     element.style.setProperty('--glass-backdrop', `${fallbackOnly ? '' : `url("#${id}") `}blur(${blur}px) saturate(1.12)`)
   }
+  /**
+   * 停用当前操作。
+   */
   function deactivate() {
     cancelAnimationFrame(frame)
     frame = 0
@@ -71,6 +81,9 @@ export function attachLiquidGlass(element, {
     element.style.removeProperty('--liquid-transform')
     element.style.setProperty('--liquid-light-alpha', '.1')
   }
+  /**
+   * 更新动画当前操作。
+   */
   function animate() {
     frame = 0
     if (disposed || scrolling || !active) return
@@ -98,9 +111,16 @@ export function attachLiquidGlass(element, {
     for (const { node, scale } of channels) node.setAttribute('scale', String(scale * current.lens))
     if (distance > .005) schedule()
   }
+  /**
+   * 安排当前操作。
+   */
   function schedule() {
     if (!frame && !disposed && !scrolling && active) frame = requestAnimationFrame(animate)
   }
+  /**
+   * 响应指针移动，更新当前交互状态。
+   * 入参：event（事件）。
+   */
   function pointerMove(event) {
     if (scrolling || event.pointerType !== 'mouse' || reduced.matches || coarse.matches || element.matches(unavailable)) return
     // 子按钮自行折射，父卡片不叠加第二套动态分色滤镜。
@@ -110,6 +130,9 @@ export function attachLiquidGlass(element, {
     activate()
     schedule()
   }
+  /**
+   * 响应指针移出，清理或恢复当前交互状态。
+   */
   function pointerLeave() {
     if (document.activeElement === element && !scrolling) {
       // 已聚焦时保留同一个滤镜实例，避免 leave 后立刻销毁、重建造成闪帧。
@@ -120,6 +143,10 @@ export function attachLiquidGlass(element, {
       schedule()
     } else deactivate()
   }
+  /**
+   * 响应指针按下，更新按压状态。
+   * 入参：event（事件）。
+   */
   function pointerDown(event) {
     if (!interactive && event.target.closest('[data-liquid-kind="button"]')) return
     if (reduced.matches || coarse.matches || scrolling || element.matches(unavailable)) return
@@ -128,11 +155,25 @@ export function attachLiquidGlass(element, {
     target.lens = 1.32
     schedule()
   }
+  /**
+   * 响应指针抬起，恢复未按压状态。
+   */
   function pointerUp() { pressed = false; target.lens = hovered ? 1.22 : 1; schedule() }
+  /**
+   * 响应焦点进入当前元素。
+   * 入参：event（事件）。
+   */
   function focusIn(event) { if (event.target === element) activate() }
+  /**
+   * 响应焦点离开当前元素。
+   * 入参：event（事件）。
+   */
   function focusOut(event) { if (event.target === element && !hovered) deactivate() }
+  /**
+   * 偏好变化的处理逻辑。
+   */
   function preferenceChanged() { deactivate() }
-  const stopScrolling = observeGlassScrolling(value => {
+  const stopScrolling = observeGlassScrolling(/** 处理 observeGlassScrolling 调用中的回调逻辑。 入参：value。 */ value => {
     scrolling = value
     if (value) { if (active) deactivate() }
     else {
@@ -145,6 +186,9 @@ export function attachLiquidGlass(element, {
   for (const [event, handler] of Object.entries(listeners)) element.addEventListener(event, handler, { passive: true })
   reduced.addEventListener('change', preferenceChanged)
   coarse.addEventListener('change', preferenceChanged)
+  /**
+   * 清理当前操作。
+   */
   const cleanup = () => {
     if (disposed) return
     disposed = true
@@ -165,10 +209,13 @@ export function attachLiquidGlass(element, {
 /** 登录卡片拥有独立背景材质；按钮交由全局管理器接管。 */
 export function useLiquidGlass() {
   const glassElement = ref(null)
+  /**
+   * 清理当前操作。
+   */
   let cleanup = () => {}
-  onMounted(() => {
+  onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
     if (glassElement.value) cleanup = attachLiquidGlass(glassElement.value, { strength: 48, blur: .5, radius: 24 })
   })
-  onBeforeUnmount(() => cleanup())
+  onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => cleanup())
   return { glassElement }
 }

@@ -9,6 +9,9 @@ from pathlib import Path
 MODULE_PATH = Path(__file__).resolve().parents[1] / "timetable_semester.py"
 
 
+# 加载module。
+# 入参：test_case（testcase）。
+# 返回：module 的当前值。
 def load_module(test_case):
     test_case.assertTrue(MODULE_PATH.exists(), "timetable_semester.py must exist")
     spec = importlib.util.spec_from_file_location("timetable_semester", MODULE_PATH)
@@ -18,6 +21,7 @@ def load_module(test_case):
 
 
 class TimetableSemesterTest(unittest.TestCase):
+    # 验证preferssaved学期。
     def test_prefers_saved_semester(self):
         module = load_module(self)
 
@@ -25,6 +29,7 @@ class TimetableSemesterTest(unittest.TestCase):
 
         self.assertEqual("2025-2026-2", semester)
 
+    # 验证reads已选择学期来源课表页码。
     def test_reads_selected_semester_from_timetable_page(self):
         module = load_module(self)
         html = """
@@ -38,6 +43,7 @@ class TimetableSemesterTest(unittest.TestCase):
 
         self.assertEqual("2026-2027-1", semester)
 
+    # 验证rejectsmissing学期when页码hasnoselector。
     def test_rejects_missing_semester_when_page_has_no_selector(self):
         module = load_module(self)
 

@@ -23,12 +23,24 @@ public class UserServiceImpl implements UserService {
     private final BusinessLoopService businessLoopService;
     private final PasswordService passwordService;
 
+    /**
+     * 构造 UserServiceImpl，初始化当前实例。
+     * @param userMapper 用户数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     * @param passwordService 密码服务参数。
+     */
     public UserServiceImpl(UserMapper userMapper, BusinessLoopService businessLoopService, PasswordService passwordService) {
         this.userMapper = userMapper;
         this.businessLoopService = businessLoopService;
         this.passwordService = passwordService;
     }
 
+    /**
+     * 登录的处理逻辑。
+     * @param username username参数。
+     * @param password 密码参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     public UserEntity login(String username, String password) {
         UserEntity user = userMapper.login(username);
@@ -44,6 +56,11 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    /**
+     * profile的处理逻辑。
+     * @param username username参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     public UserEntity profile(String username) {
         UserEntity user = userMapper.profile(username);
@@ -53,6 +70,13 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    /**
+     * 更新Profile。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param username username参数。
+     * @param profile profile参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public UserEntity updateProfile(String username, UserEntity profile) {
@@ -81,12 +105,22 @@ public class UserServiceImpl implements UserService {
         return updateUser(existingUser.getId(), nextUser);
     }
 
+    /**
+     * 列出用户。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<UserEntity> listUsers() {
         List<UserEntity> users = userMapper.listUsers();
         return users == null ? List.of() : users;
     }
 
+    /**
+     * 创建用户。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param user 用户参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public UserEntity createUser(UserEntity user) {
@@ -99,6 +133,13 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * 更新用户。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param user 用户参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public UserEntity updateUser(Integer id, UserEntity user) {
@@ -136,6 +177,12 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * 更新用户状态。
+     * @param id 标识参数。
+     * @param status 状态参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     public UserEntity updateUserStatus(Integer id, Integer status) {
         int updatedCount = userMapper.updateUserStatus(id, status == null ? 1 : status);
@@ -147,6 +194,11 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * 重置用户密码。
+     * @param id 标识参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     public UserEntity resetUserPassword(Integer id) {
         UserEntity existingUser = requireUser(id);
@@ -156,6 +208,12 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * 删除用户。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return UserEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public UserEntity deleteUser(Integer id) {
@@ -164,6 +222,11 @@ public class UserServiceImpl implements UserService {
         return deleteExistingUser(existingUser);
     }
 
+    /**
+     * 删除Existing用户。
+     * @param existingUser existing用户参数。
+     * @return UserEntity 类型的处理结果。
+     */
     private UserEntity deleteExistingUser(UserEntity existingUser) {
         assertCanDelete(existingUser);
         userMapper.deleteUserRoles(existingUser.getId());
@@ -175,15 +238,28 @@ public class UserServiceImpl implements UserService {
         return existingUser;
     }
 
+    /**
+     * batchUpdate状态的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param ids 标识集合参数。
+     * @param status 状态参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<UserEntity> batchUpdateStatus(List<Integer> ids, Integer status) {
         return normalizeIds(ids).stream()
-                .map(id -> updateUserStatus(id, status))
+                .map(/** 将当前条目转换为目标结果。 入参：id。 */ id -> updateUserStatus(id, status))
                 .filter(Objects::nonNull)
                 .toList();
     }
 
+    /**
+     * batchDelete用户的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param ids 标识集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<UserEntity> batchDeleteUsers(List<Integer> ids) {
@@ -198,6 +274,14 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    /**
+     * batchUpdate角色的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param ids 标识集合参数。
+     * @param roleName 角色名称参数。
+     * @param roleCode 角色编码参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<UserEntity> batchUpdateRole(List<Integer> ids, String roleName, String roleCode) {
@@ -209,7 +293,7 @@ public class UserServiceImpl implements UserService {
         String permissions = defaultPermissions(nextRoleCode);
         String finalRoleCode = nextRoleCode;
         return normalizeIds(ids).stream()
-                .map(id -> {
+                .map(/** 将当前条目转换为目标结果。 入参：id。 */ id -> {
                     UserEntity existingUser = requireUser(id);
                     if ("systemAdmin".equals(existingUser.getRoleCode()) && !"systemAdmin".equals(finalRoleCode) && userMapper.countSystemAdmins() <= 1) {
                         throw new IllegalArgumentException("最后一个系统管理员不能降级");
@@ -224,12 +308,19 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    /**
+     * batchUpdate部门的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param ids 标识集合参数。
+     * @param department 部门参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<UserEntity> batchUpdateDepartment(List<Integer> ids, String department) {
         String nextDepartment = department == null || department.isBlank() ? "未设置" : department;
         return normalizeIds(ids).stream()
-                .map(id -> {
+                .map(/** 将当前条目转换为目标结果。 入参：id。 */ id -> {
                     int updatedCount = userMapper.updateUserDepartment(id, nextDepartment);
                     if (updatedCount == 0) {
                         throw new IllegalArgumentException("未知用户");
@@ -242,6 +333,11 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    /**
+     * 要求提供用户。
+     * @param id 标识参数。
+     * @return UserEntity 类型的处理结果。
+     */
     private UserEntity requireUser(Integer id) {
         UserEntity existingUser = userMapper.getUser(id);
         if (existingUser == null) {
@@ -250,6 +346,11 @@ public class UserServiceImpl implements UserService {
         return existingUser;
     }
 
+    /**
+     * 归一化标识集合。
+     * @param ids 标识集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Integer> normalizeIds(List<Integer> ids) {
         if (ids == null || ids.isEmpty()) {
             throw new IllegalArgumentException("请选择用户");
@@ -257,6 +358,10 @@ public class UserServiceImpl implements UserService {
         return ids.stream().filter(Objects::nonNull).distinct().toList();
     }
 
+    /**
+     * 断言CanDelete。
+     * @param user 用户参数。
+     */
     private void assertCanDelete(UserEntity user) {
         if ("sysadmin".equalsIgnoreCase(user.getUsername())) {
             throw new IllegalArgumentException("系统内置管理员账号不能删除");
@@ -266,9 +371,13 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * 断言NoBusiness引用。
+     * @param users 用户参数。
+     */
     private void assertNoBusinessReferences(List<UserEntity> users) {
         List<String> referencedNames = users.stream()
-                .filter(user -> userMapper.countUserBusinessReferences(user.getId()) > 0)
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：user。 */ user -> userMapper.countUserBusinessReferences(user.getId()) > 0)
                 .map(this::displayName)
                 .toList();
         if (!referencedNames.isEmpty()) {
@@ -278,6 +387,11 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * display名称的处理逻辑。
+     * @param user 用户参数。
+     * @return String 类型的处理结果。
+     */
     private String displayName(UserEntity user) {
         if (user.getRealName() != null && !user.getRealName().isBlank()) {
             return user.getRealName();
@@ -288,10 +402,20 @@ public class UserServiceImpl implements UserService {
         return String.valueOf(user.getId());
     }
 
+    /**
+     * editable值的处理逻辑。
+     * @param nextValue next值参数。
+     * @param currentValue 当前值参数。
+     * @return String 类型的处理结果。
+     */
     private String editableValue(String nextValue, String currentValue) {
         return nextValue == null ? currentValue : nextValue.trim();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {
@@ -301,6 +425,12 @@ public class UserServiceImpl implements UserService {
         return "";
     }
 
+    /**
+     * 归一化用户。
+     * @param user 用户参数。
+     * @param creating creating参数。
+     * @param hasNewPassword hasNew密码参数。
+     */
     private void normalizeUser(UserEntity user, boolean creating, boolean hasNewPassword) {
         if (user == null) {
             throw new IllegalArgumentException("请填写账号信息");
@@ -329,6 +459,10 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * 校验密码。
+     * @param password 密码参数。
+     */
     private void validatePassword(String password) {
         if (password == null || password.length() < 8) {
             throw new IllegalArgumentException("密码至少 8 位，并包含字母和数字");
@@ -341,12 +475,22 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * 保存角色。
+     * @param userId 用户标识参数。
+     * @param roleCode 角色编码参数。
+     */
     private void saveRole(Integer userId, String roleCode) {
         assertRoleActive(roleCode, null);
         userMapper.deleteUserRoles(userId);
         userMapper.insertUserRole(userId, roleCode == null || roleCode.isBlank() ? "teacher" : roleCode);
     }
 
+    /**
+     * 解析角色编码。
+     * @param roleName 角色名称参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveRoleCode(String roleName) {
         if (roleName == null || roleName.isBlank()) {
             return "";
@@ -361,6 +505,11 @@ public class UserServiceImpl implements UserService {
         };
     }
 
+    /**
+     * 提供默认权限。
+     * @param roleCode 角色编码参数。
+     * @return String 类型的处理结果。
+     */
     private String defaultPermissions(String roleCode) {
         return switch (roleCode) {
             case "systemAdmin" -> "[{\"group\":\"平台治理\",\"items\":[\"用户管理\",\"系统设置\",\"激活管理\",\"平台统计\",\"通知公告\"]}]";
@@ -370,12 +519,22 @@ public class UserServiceImpl implements UserService {
         };
     }
 
+    /**
+     * 断言角色活动。
+     * @param roleCode 角色编码参数。
+     * @param roleName 角色名称参数。
+     */
     private void assertRoleActive(String roleCode, String roleName) {
         if ("maintenance".equals(roleCode) || "维修人员".equals(roleName)) {
             throw new IllegalArgumentException(RETIRED_ROLE_MESSAGE);
         }
     }
 
+    /**
+     * 记录用户事件。
+     * @param action action参数。
+     * @param user 用户参数。
+     */
     private void recordUserEvent(String action, UserEntity user) {
         if (user == null) {
             return;

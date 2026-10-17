@@ -27,6 +27,13 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
     private final NoticeMapper noticeMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 CourseEnvironmentServiceImpl，初始化当前实例。
+     * @param courseEnvironmentMapper 课程环境数据映射器参数。
+     * @param environmentTemplateMapper 环境模板数据映射器参数。
+     * @param noticeMapper 通知数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public CourseEnvironmentServiceImpl(
             CourseEnvironmentMapper courseEnvironmentMapper,
             EnvironmentTemplateMapper environmentTemplateMapper,
@@ -39,11 +46,21 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取环境。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<CourseEnvironmentEntity> getEnvironment() {
         return courseEnvironmentMapper.getEnvironment();
     }
 
+    /**
+     * Inserter课程环境的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param courseEnvironment 课程环境参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     @Transactional
     public Object InserterCourseEnvironment(CourseEnvironmentEntity courseEnvironment) {
@@ -54,11 +71,23 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return savedCourseEnvironment;
     }
 
+    /**
+     * 获取课程环境。
+     * @param id 标识参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     public Object getCourseEnvironment(Integer id) {
         return courseEnvironmentMapper.getCourseEnvironment(id);
     }
 
+    /**
+     * 更新课程环境。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param courseEnvironment 课程环境参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     @Transactional
     public Object updateCourseEnvironment(Integer id, CourseEnvironmentEntity courseEnvironment) {
@@ -71,6 +100,12 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return savedCourseEnvironment;
     }
 
+    /**
+     * 删除课程环境。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     @Transactional
     public Object deleteCourseEnvironment(Integer id) {
@@ -80,6 +115,12 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return courseEnvironmentMapper.getEnvironment();
     }
 
+    /**
+     * confirm课程环境的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return Object 类型的处理结果。
+     */
     @Override
     @Transactional
     public Object confirmCourseEnvironment(Integer id) {
@@ -89,6 +130,11 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return savedCourseEnvironment;
     }
 
+    /**
+     * 归一化课程环境。
+     * @param courseEnvironment 课程环境参数。
+     * @return CourseEnvironmentEntity 类型的处理结果。
+     */
     private CourseEnvironmentEntity normalizeCourseEnvironment(CourseEnvironmentEntity courseEnvironment) {
         CourseEnvironmentEntity normalizedCourseEnvironment = courseEnvironment == null ? new CourseEnvironmentEntity() : courseEnvironment;
         if (isBlank(normalizedCourseEnvironment.getCourseName())) {
@@ -134,6 +180,10 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return normalizedCourseEnvironment;
     }
 
+    /**
+     * 关闭LoopAfterConfirmed。
+     * @param courseEnvironment 课程环境参数。
+     */
     private void closeLoopAfterConfirmed(CourseEnvironmentEntity courseEnvironment) {
         if (courseEnvironment == null) {
             return;
@@ -166,6 +216,11 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         businessLoopService.recordEvent("course-environment", "confirm", courseEnvironment.getCourseName(), "已沉淀模板并发布通知", details);
     }
 
+    /**
+     * 构建模板。
+     * @param courseEnvironment 课程环境参数。
+     * @return EnvironmentTemplateEntity 类型的处理结果。
+     */
     private EnvironmentTemplateEntity buildTemplate(CourseEnvironmentEntity courseEnvironment) {
         EnvironmentTemplateEntity template = new EnvironmentTemplateEntity();
         template.setName(courseEnvironment.getCourseName() + "环境模板");
@@ -178,6 +233,12 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return template;
     }
 
+    /**
+     * 记录课程环境事件。
+     * @param courseEnvironment 课程环境参数。
+     * @param action action参数。
+     * @param status 状态参数。
+     */
     private void recordCourseEnvironmentEvent(CourseEnvironmentEntity courseEnvironment, String action, String status) {
         if (courseEnvironment == null) {
             return;
@@ -190,11 +251,20 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         businessLoopService.recordEvent("course-environment", action, courseEnvironment.getCourseName(), status, details);
     }
 
+    /**
+     * 判断是否为Confirmed。
+     * @param courseEnvironment 课程环境参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isConfirmed(CourseEnvironmentEntity courseEnvironment) {
         String status = firstNonBlank(courseEnvironment.getConfirmStatus(), courseEnvironment.getProcessStatus(), courseEnvironment.getStatus());
         return status.contains("确认") && !status.contains("待");
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {
@@ -204,6 +274,11 @@ public class CourseEnvironmentServiceImpl implements CourseEnvironmentService {
         return "";
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

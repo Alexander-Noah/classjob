@@ -7,6 +7,9 @@ statements = []
 for file in sorted((root / 'src/main/resources/mapper').glob('*.xml')):
     mapper = ET.parse(file).getroot()
     fragments = {e.get('id'): e for e in mapper.findall('sql')}
+    # 渲染当前操作。
+    # 入参：e（e）。
+    # 返回：由当前表达式或分支生成的处理结果。
     def render(e):
         if e.tag == 'include':
             return render(fragments[e.get('refid')])

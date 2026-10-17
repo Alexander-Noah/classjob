@@ -30,11 +30,21 @@ public final class ReservationController {
     private final ReservationCatalogQuery catalog;
     private final ReservationCommandHandler commands;
 
+    /**
+     * 构造 ReservationController，初始化当前实例。
+     * @param catalog catalog参数。
+     * @param commands 命令参数。
+     */
     public ReservationController(ReservationCatalogQuery catalog, ReservationCommandHandler commands) {
         this.catalog = Objects.requireNonNull(catalog, "catalog");
         this.commands = Objects.requireNonNull(commands, "commands");
     }
 
+    /**
+     * 列出当前操作。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/reservations")
     public Result list(HttpServletRequest request) {
         ReservationActor actor = actor(request, false);
@@ -42,6 +52,12 @@ public final class ReservationController {
                 .map(ReservationResponse::from).toList());
     }
 
+    /**
+     * 详情的处理逻辑。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/reservations/{id:\\d+}")
     public Result detail(@PathVariable long id, HttpServletRequest request) {
         ReservationActor actor = actor(request, false);
@@ -49,12 +65,25 @@ public final class ReservationController {
                 catalog.findById(id, ReservationAccessScope.forActor(actor))));
     }
 
+    /**
+     * 创建当前操作。
+     * @param request 请求参数。
+     * @param servletRequest servlet请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/reservations")
     public Result create(@RequestBody ReservationCreateRequest request, HttpServletRequest servletRequest) {
         ReservationActor actor = actor(servletRequest, false);
         return Result.success("新增预约成功", ReservationResponse.from(commands.create(request.toCommand(), actor)));
     }
 
+    /**
+     * 批准当前操作。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @param servletRequest servlet请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/reservations/{id:\\d+}/approve")
     public Result approve(@PathVariable long id, @RequestBody(required = false) ReservationReviewRequest request,
                           HttpServletRequest servletRequest) {
@@ -62,6 +91,13 @@ public final class ReservationController {
                 new ReviewReservationCommand(id, request == null ? null : request.reviewRemark()), actor(servletRequest, true))));
     }
 
+    /**
+     * 拒绝当前操作。
+     * @param id 标识参数。
+     * @param request 请求参数。
+     * @param servletRequest servlet请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/reservations/{id:\\d+}/reject")
     public Result reject(@PathVariable long id, @RequestBody(required = false) ReservationReviewRequest request,
                          HttpServletRequest servletRequest) {
@@ -69,6 +105,12 @@ public final class ReservationController {
                 new ReviewReservationCommand(id, request == null ? null : request.reviewRemark()), actor(servletRequest, true))));
     }
 
+    /**
+     * 操作者的处理逻辑。
+     * @param request 请求参数。
+     * @param reviewerRequired reviewerRequired参数。
+     * @return ReservationActor 类型的处理结果。
+     */
     private ReservationActor actor(HttpServletRequest request, boolean reviewerRequired) {
         Object rawUserId = request.getAttribute(AuthenticationAttributes.USER_ID);
         Object rawRole = request.getAttribute(AuthenticationAttributes.ROLE);
@@ -90,6 +132,11 @@ public final class ReservationController {
         throw forbidden();
     }
 
+    /**
+     * positive用户标识的处理逻辑。
+     * @param rawUserId 原始输入用户标识参数。
+     * @return long 类型的处理结果。
+     */
     private long positiveUserId(Object rawUserId) {
         if (rawUserId == null) {
             throw forbidden();
@@ -105,11 +152,21 @@ public final class ReservationController {
         }
     }
 
+    /**
+     * 字符串Attribute的处理逻辑。
+     * @param request 请求参数。
+     * @param name 名称参数。
+     * @return String 类型的处理结果。
+     */
     private String stringAttribute(HttpServletRequest request, String name) {
         Object value = request.getAttribute(name);
         return value == null ? null : String.valueOf(value);
     }
 
+    /**
+     * forbidden的处理逻辑。
+     * @return ResponseStatusException 类型的处理结果。
+     */
     private ResponseStatusException forbidden() {
         return new ResponseStatusException(HttpStatus.FORBIDDEN, "Authenticated reservation identity is required");
     }

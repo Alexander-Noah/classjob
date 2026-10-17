@@ -36,6 +36,10 @@ class MaintenanceRecordContractTest {
             "maintainer", "content", "result", "remark", "updatedAt"
     );
 
+    /**
+     * 维护记录InterfaceExposesOnlyCrud端点AndFields的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void maintenanceRecordInterfaceExposesOnlyCrudEndpointsAndFields() throws Exception {
         Class<?> controller = Class.forName("org.example.backend.controller.MaintenanceRecordController");
@@ -63,6 +67,9 @@ class MaintenanceRecordContractTest {
         }
     }
 
+    /**
+     * 服务RejectsEveryRequired空白FieldBeforeWriting的处理逻辑。
+     */
     @Test
     void serviceRejectsEveryRequiredBlankFieldBeforeWriting() {
         for (String field : List.of(
@@ -82,12 +89,18 @@ class MaintenanceRecordContractTest {
 
             IllegalArgumentException error = assertThrows(
                     IllegalArgumentException.class,
+                    /**
+                     * 处理 assertThrows 调用中的回调逻辑。
+                     */
                     () -> new MaintenanceRecordServiceImpl(new RecordingMapper()).createMaintenanceRecord(record)
             );
             assertTrue(error.getMessage().startsWith("请填写"));
         }
     }
 
+    /**
+     * 服务Generates记录数值AndRequiresResolved引用的处理逻辑。
+     */
     @Test
     void serviceGeneratesRecordNumberAndRequiresResolvedReferences() {
         RecordingMapper mapper = new RecordingMapper();
@@ -103,11 +116,17 @@ class MaintenanceRecordContractTest {
         mapper.labId = null;
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
+                /**
+                 * 处理 assertThrows 调用中的回调逻辑。
+                 */
                 () -> new MaintenanceRecordServiceImpl(mapper).createMaintenanceRecord(validRecord())
         );
         assertTrue(error.getMessage().contains("实验室不存在"));
     }
 
+    /**
+     * 服务AllowsNo设备AndClearingAnExisting设备的处理逻辑。
+     */
     @Test
     void serviceAllowsNoDeviceAndClearingAnExistingDevice() {
         RecordingMapper mapper = new RecordingMapper();
@@ -125,6 +144,9 @@ class MaintenanceRecordContractTest {
         assertEquals(null, mapper.insertedDeviceId);
     }
 
+    /**
+     * deletionRemovesThe记录来源NormalReads的处理逻辑。
+     */
     @Test
     void deletionRemovesTheRecordFromNormalReads() {
         RecordingMapper mapper = new RecordingMapper();
@@ -134,10 +156,17 @@ class MaintenanceRecordContractTest {
         assertTrue(mapper.deleteCalled);
         assertTrue(service.listMaintenanceRecords().isEmpty());
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                /**
+                 * 处理 assertThrows 调用中的回调逻辑。
+                 */
                 () -> service.getMaintenanceRecord(saved.getRecordNo()));
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
     }
 
+    /**
+     * 设备ResolutionIsScoped目标Its实验室AndExcludesSoftDeleted设备的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void deviceResolutionIsScopedToItsLabAndExcludesSoftDeletedDevices() throws Exception {
         String mapperXml = mapperXml();
@@ -152,12 +181,22 @@ class MaintenanceRecordContractTest {
         );
     }
 
+    /**
+     * mapped端点的处理逻辑。
+     * @param controller controller参数。
+     * @return 当前操作得到的记录集合。
+     */
     private Set<String> mappedEndpoints(Class<?> controller) {
         return Arrays.stream(controller.getDeclaredMethods())
-                .flatMap(method -> mappings(method).stream())
+                .flatMap(/** 转换并展开当前条目。 入参：method。 */ method -> mappings(method).stream())
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * mappings的处理逻辑。
+     * @param method 方法参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> mappings(Method method) {
         if (method.isAnnotationPresent(GetMapping.class)) {
             return paths("GET", method.getAnnotation(GetMapping.class).value());
@@ -174,10 +213,21 @@ class MaintenanceRecordContractTest {
         return List.of();
     }
 
+    /**
+     * 路径的处理逻辑。
+     * @param method 方法参数。
+     * @param values 值集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> paths(String method, String[] values) {
-        return Arrays.stream(values).map(value -> method + " " + value).toList();
+        return Arrays.stream(values).map(/** 将当前条目转换为目标结果。 入参：value。 */ value -> method + " " + value).toList();
     }
 
+    /**
+     * 数据映射器Xml的处理逻辑。
+     * @return String 类型的处理结果。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private String mapperXml() throws IOException {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("mapper/MaintenanceRecordMapper.xml")) {
             assertTrue(input != null, "MaintenanceRecordMapper.xml should be on the test classpath");
@@ -185,6 +235,10 @@ class MaintenanceRecordContractTest {
         }
     }
 
+    /**
+     * 有效记录的处理逻辑。
+     * @return MaintenanceRecord 类型的处理结果。
+     */
     private MaintenanceRecord validRecord() {
         MaintenanceRecord record = new MaintenanceRecord();
         record.setLab("LAB-01");
@@ -207,27 +261,54 @@ class MaintenanceRecordContractTest {
         private MaintenanceRecord saved;
         private boolean deleteCalled;
 
+        /**
+         * 列出维护记录集合。
+         * @return 当前操作得到的记录集合。
+         */
         @Override
         public List<MaintenanceRecord> listMaintenanceRecords() {
             return saved == null ? List.of() : List.of(saved);
         }
 
+        /**
+         * 获取维护记录。
+         * @param id 标识参数。
+         * @return MaintenanceRecord 类型的处理结果。
+         */
         @Override
         public MaintenanceRecord getMaintenanceRecord(String id) {
             return saved != null && (id.equals(saved.getRecordNo()) || id.equals(saved.getId())) ? saved : null;
         }
 
+        /**
+         * 查找实验室标识。
+         * @param reference 引用参数。
+         * @return Long 类型的处理结果。
+         */
         @Override
         public Long findLabId(String reference) {
             return labId;
         }
 
+        /**
+         * 查找设备标识。
+         * @param reference 引用参数。
+         * @param labId 实验室标识参数。
+         * @return Long 类型的处理结果。
+         */
         @Override
         public Long findDeviceId(String reference, Long labId) {
             requestedDeviceLabId = labId;
             return deviceId;
         }
 
+        /**
+         * 插入维护记录。
+         * @param record 记录参数。
+         * @param labId 实验室标识参数。
+         * @param deviceId 设备标识参数。
+         * @return int 类型的处理结果。
+         */
         @Override
         public int insertMaintenanceRecord(MaintenanceRecord record, Long labId, Long deviceId) {
             insertedLabId = labId;
@@ -237,6 +318,14 @@ class MaintenanceRecordContractTest {
             return 1;
         }
 
+        /**
+         * 更新维护记录。
+         * @param id 标识参数。
+         * @param record 记录参数。
+         * @param labId 实验室标识参数。
+         * @param deviceId 设备标识参数。
+         * @return int 类型的处理结果。
+         */
         @Override
         public int updateMaintenanceRecord(String id, MaintenanceRecord record, Long labId, Long deviceId) {
             insertedLabId = labId;
@@ -246,6 +335,11 @@ class MaintenanceRecordContractTest {
             return 1;
         }
 
+        /**
+         * 删除维护记录。
+         * @param id 标识参数。
+         * @return int 类型的处理结果。
+         */
         @Override
         public int deleteMaintenanceRecord(String id) {
             deleteCalled = true;

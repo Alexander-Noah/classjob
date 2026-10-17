@@ -20,10 +20,22 @@ public final class DefaultLabAvailabilityQuery implements LabAvailabilityQuery {
 
     private final LabRecordReadService records;
 
+    /**
+     * 构造 DefaultLabAvailabilityQuery，初始化当前实例。
+     * @param records 记录集合参数。
+     */
     public DefaultLabAvailabilityQuery(LabRecordReadService records) {
         this.records = Objects.requireNonNull(records, "records");
     }
 
+    /**
+     * 检查当前操作。
+     * @param labId 实验室标识参数。
+     * @param expectedCapacity 预期Capacity参数。
+     * @param startsAt 开始At参数。
+     * @param endsAt 结束At参数。
+     * @return CapabilityResult<LabAvailabilityView> 类型的处理结果。
+     */
     @Override
     public CapabilityResult<LabAvailabilityView> check(
             Long labId,
@@ -50,6 +62,13 @@ public final class DefaultLabAvailabilityQuery implements LabAvailabilityQuery {
         ));
     }
 
+    /**
+     * 校验当前操作。
+     * @param labId 实验室标识参数。
+     * @param expectedCapacity 预期Capacity参数。
+     * @param startsAt 开始At参数。
+     * @param endsAt 结束At参数。
+     */
     private void validate(Long labId, int expectedCapacity, Instant startsAt, Instant endsAt) {
         if (labId == null || labId <= 0) {
             throw new IllegalArgumentException("labId must be positive");

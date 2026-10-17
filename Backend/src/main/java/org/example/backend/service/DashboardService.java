@@ -6,5 +6,10 @@ package org.example.backend.service;
 import java.util.Map;
 
 public interface DashboardService {
+    /**
+     * 获取概况。
+     * @param managerUserId manager用户标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     Map<String, Object> getOverview(Integer managerUserId);
 }

@@ -20,15 +20,28 @@ public enum ReservationStatus {
     /** 工作流终态标记；不等同于“无需参与占用查询”，已通过预约仍可能占用时间。 */
     private final boolean finalStatus;
 
+    /**
+     * 构造 ReservationStatus，初始化当前实例。
+     * @param storageValue storage值参数。
+     * @param finalStatus final状态参数。
+     */
     ReservationStatus(String storageValue, boolean finalStatus) {
         this.storageValue = storageValue;
         this.finalStatus = finalStatus;
     }
 
+    /**
+     * storage值的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     public String storageValue() {
         return storageValue;
     }
 
+    /**
+     * 判断是否为Final。
+     * @return 当前判断的布尔结果。
+     */
     public boolean isFinal() {
         return finalStatus;
     }
@@ -44,8 +57,8 @@ public enum ReservationStatus {
             throw new IllegalArgumentException("Reservation status is required");
         }
         return Arrays.stream(values())
-                .filter(status -> status.storageValue.equals(value))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：status。 */ status -> status.storageValue.equals(value))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported reservation status: " + value));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("Unsupported reservation status: " + value));
     }
 }

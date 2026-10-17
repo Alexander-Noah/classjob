@@ -25,16 +25,29 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
 
     private final MaintenanceRecordMapper maintenanceRecordMapper;
 
+    /**
+     * 构造 MaintenanceRecordServiceImpl，初始化当前实例。
+     * @param maintenanceRecordMapper 维护记录数据映射器参数。
+     */
     public MaintenanceRecordServiceImpl(MaintenanceRecordMapper maintenanceRecordMapper) {
         this.maintenanceRecordMapper = maintenanceRecordMapper;
     }
 
+    /**
+     * 列出维护记录集合。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<MaintenanceRecord> listMaintenanceRecords() {
         List<MaintenanceRecord> records = maintenanceRecordMapper.listMaintenanceRecords();
         return records == null ? List.of() : records;
     }
 
+    /**
+     * 获取维护记录。
+     * @param id 标识参数。
+     * @return MaintenanceRecord 类型的处理结果。
+     */
     @Override
     public MaintenanceRecord getMaintenanceRecord(String id) {
         MaintenanceRecord record = maintenanceRecordMapper.getMaintenanceRecord(id);
@@ -44,6 +57,12 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         return record;
     }
 
+    /**
+     * 创建维护记录。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param record 记录参数。
+     * @return MaintenanceRecord 类型的处理结果。
+     */
     @Override
     @Transactional
     public MaintenanceRecord createMaintenanceRecord(MaintenanceRecord record) {
@@ -53,6 +72,13 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         return getMaintenanceRecord(record.getRecordNo());
     }
 
+    /**
+     * 更新维护记录。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param record 记录参数。
+     * @return MaintenanceRecord 类型的处理结果。
+     */
     @Override
     @Transactional
     public MaintenanceRecord updateMaintenanceRecord(String id, MaintenanceRecord record) {
@@ -65,6 +91,11 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         return getMaintenanceRecord(existing.getId());
     }
 
+    /**
+     * 删除维护记录。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     */
     @Override
     @Transactional
     public void deleteMaintenanceRecord(String id) {
@@ -74,6 +105,11 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         }
     }
 
+    /**
+     * 校验AndResolve。
+     * @param record 记录参数。
+     * @return ResolvedReferences 类型的处理结果。
+     */
     private ResolvedReferences validateAndResolve(MaintenanceRecord record) {
         if (record == null) {
             throw new IllegalArgumentException("请填写维护记录");
@@ -112,6 +148,11 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         return new ResolvedReferences(labId, deviceId);
     }
 
+    /**
+     * 要求提供值。
+     * @param field field参数。
+     * @param value 值参数。
+     */
     private void requireValue(String field, String value) {
         if (isBlank(value)) {
             String label = switch (field) {
@@ -124,14 +165,29 @@ public class MaintenanceRecordServiceImpl implements MaintenanceRecordService {
         }
     }
 
+    /**
+     * 上限的处理逻辑。
+     * @param field field参数。
+     * @param value 值参数。
+     * @param max max参数。
+     */
     private void limit(String field, String value, int max) {
         if (value != null && value.length() > max) throw new IllegalArgumentException(field + "不能超过" + max + "字");
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * new记录No的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String newRecordNo() {
         return "MR-" + LocalDateTime.now().format(RECORD_NO_TIME)
                 + "-" + ThreadLocalRandom.current().nextInt(1000, 10000);

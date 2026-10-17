@@ -13,6 +13,10 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CorsConfigurationContractTest {
+    /**
+     * 提供默认DevelopmentOriginsAllow私有LanQr客户端。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Test
     void defaultDevelopmentOriginsAllowPrivateLanQrClients() throws IOException {
         String applicationYaml = Files.readString(Path.of("src/main/resources/application.yaml"));

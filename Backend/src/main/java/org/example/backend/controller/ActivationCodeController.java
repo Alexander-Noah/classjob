@@ -55,6 +55,12 @@ public class ActivationCodeController {
     private final BusinessLoopService businessLoopService;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 构造 ActivationCodeController，初始化当前实例。
+     * @param moduleRecordService module记录服务参数。
+     * @param businessLoopService businessLoop服务参数。
+     * @param jdbcTemplate JDBC模板参数。
+     */
     public ActivationCodeController(
             ModuleRecordService moduleRecordService,
             BusinessLoopService businessLoopService,
@@ -65,14 +71,19 @@ public class ActivationCodeController {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * 列出Activation编码集合。
+     * @param params 参数参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping({"/activation-codes", "/admin/activation-codes"})
     public Result listActivationCodes(@RequestParam(required = false) Map<String, String> params) {
         Map<String, String> query = params == null ? Map.of() : params;
         List<Map<String, Object>> records = sortedRecords().stream()
-                .filter((record) -> !booleanValue(record.get("deleted")))
-                .filter((record) -> matchesKeyword(record, query.get("keyword")))
-                .filter((record) -> matchesStatus(record, query.get("status")))
-                .filter((record) -> matchesExpireStatus(record, query.get("expireStatus")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> !booleanValue(record.get("deleted")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> matchesKeyword(record, query.get("keyword")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> matchesStatus(record, query.get("status")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> matchesExpireStatus(record, query.get("expireStatus")))
                 .toList();
 
         int total = records.size();
@@ -88,16 +99,25 @@ public class ActivationCodeController {
         return Result.success("获取激活码列表成功", payload);
     }
 
+    /**
+     * 列出实验室ActivationBindings。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/activation-codes/lab-bindings")
     public Result listLabActivationBindings() {
         List<Map<String, Object>> records = sortedRecords().stream()
-                .filter((record) -> !booleanValue(record.get("deleted")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> !booleanValue(record.get("deleted")))
                 .filter(this::hasLabBinding)
                 .map(this::toLabActivationBinding)
                 .toList();
         return Result.success("获取实验室激活码绑定成功", records);
     }
 
+    /**
+     * 创建Activation编码集合。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes", "/admin/activation-codes"})
     public Result createActivationCodes(@RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -119,7 +139,7 @@ public class ActivationCodeController {
 
         List<Map<String, Object>> records = new ArrayList<>(rawRecords());
         Set<String> existingCodes = records.stream()
-                .map((record) -> normalizeActivationCode(stringValue(record.get("code"))))
+                .map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) -> normalizeActivationCode(stringValue(record.get("code"))))
                 .collect(Collectors.toSet());
         List<Map<String, Object>> createdRecords = new ArrayList<>();
         List<Map<String, Object>> createdCodes = new ArrayList<>();
@@ -177,11 +197,21 @@ public class ActivationCodeController {
         return Result.success("生成激活码成功", result);
     }
 
+    /**
+     * generateActivation编码的处理逻辑。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/generate", "/admin/activation-codes/generate"})
     public Result generateActivationCode(@RequestBody(required = false) Map<String, Object> payload) {
         return createActivationCodes(payload);
     }
 
+    /**
+     * bindActivation编码目标实验室的处理逻辑。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/activation-codes/bind-lab")
     public Result bindActivationCodeToLab(@RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -238,6 +268,11 @@ public class ActivationCodeController {
         return Result.success("实验室激活码绑定成功", toLabActivationBinding(normalizeRecordForResponse(target)));
     }
 
+    /**
+     * unbindActivation编码来源实验室的处理逻辑。
+     * @param code 编码参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/activation-codes/{code}/unbind-lab")
     public Result unbindActivationCodeFromLab(@PathVariable String code) {
         List<Map<String, Object>> records = new ArrayList<>(rawRecords());
@@ -261,6 +296,12 @@ public class ActivationCodeController {
         return Result.success("实验室激活码绑定已取消", toLabActivationBinding(normalizeRecordForResponse(target)));
     }
 
+    /**
+     * 更新Activation编码状态。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping({"/activation-codes/{id}/status", "/admin/activation-codes/{id}/status"})
     public Result updateActivationCodeStatus(@PathVariable String id, @RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -282,11 +323,22 @@ public class ActivationCodeController {
         return Result.success(enabled ? "启用激活码成功" : "停用激活码成功", normalizeRecordForResponse(target));
     }
 
+    /**
+     * 禁用Activation编码。
+     * @param code 编码参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/{code}/disable", "/admin/activation-codes/{code}/disable"})
     public Result disableActivationCode(@PathVariable String code) {
         return updateActivationCodeStatus(code, Map.of("enabled", false, "reason", "手动停用"));
     }
 
+    /**
+     * 更新Activation编码Remark。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping({"/activation-codes/{id}/remark", "/admin/activation-codes/{id}/remark"})
     public Result updateActivationCodeRemark(@PathVariable String id, @RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -317,6 +369,11 @@ public class ActivationCodeController {
         return Result.success("激活码信息已更新", normalizeRecordForResponse(target));
     }
 
+    /**
+     * 列出Activation编码Bindings。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping({"/activation-codes/{id}/bindings", "/admin/activation-codes/{id}/bindings"})
     public Result listActivationCodeBindings(@PathVariable String id) {
         Map<String, Object> target = findRecord(rawRecords(), id);
@@ -326,6 +383,12 @@ public class ActivationCodeController {
         return Result.success("获取绑定设备成功", boundDevices(target));
     }
 
+    /**
+     * 远程BindActivation设备的处理逻辑。
+     * @param id 标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/{id}/bindings/remote-bind", "/admin/activation-codes/{id}/bindings/remote-bind"})
     public Result remoteBindActivationDevice(@PathVariable String id, @RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -418,6 +481,13 @@ public class ActivationCodeController {
         return Result.success("远程绑定成功", Map.of("record", normalizeRecordForResponse(target), "binding", binding));
     }
 
+    /**
+     * 远程UnbindActivation设备的处理逻辑。
+     * @param id 标识参数。
+     * @param bindingId binding标识参数。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/{id}/bindings/{bindingId}/remote-unbind", "/admin/activation-codes/{id}/bindings/{bindingId}/remote-unbind"})
     public Result remoteUnbindActivationDevice(
             @PathVariable String id,
@@ -453,6 +523,11 @@ public class ActivationCodeController {
         return Result.success("远程解绑成功，客户端下次校验将失效", Map.of("record", normalizeRecordForResponse(target), "binding", binding));
     }
 
+    /**
+     * batchOperateActivation编码集合的处理逻辑。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/batch", "/admin/activation-codes/batch"})
     public Result batchOperateActivationCodes(@RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -507,13 +582,22 @@ public class ActivationCodeController {
         return Result.success("批量操作成功", Map.of("affected", affected, "records", sortedRecords()));
     }
 
+    /**
+     * 列出ActivationAuditLogs。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping({"/activation-codes/audit-logs", "/admin/activation-codes/audit-logs"})
     public Result listActivationAuditLogs() {
         List<Map<String, Object>> logs = new ArrayList<>(moduleRecordService.listModuleRecords(AUDIT_MODULE_NAME));
-        logs.sort(Comparator.comparing((Map<String, Object> log) -> stringValue(log.get("createdAt"))).reversed());
+        logs.sort(Comparator.comparing(/** 处理 comparing 调用中的回调逻辑。 入参：log。 */ (Map<String, Object> log) -> stringValue(log.get("createdAt"))).reversed());
         return Result.success("获取审计日志成功", logs);
     }
 
+    /**
+     * 验证Activation编码。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping({"/activation-codes/verify", "/admin/activation-codes/verify"})
     public Result verifyActivationCode(@RequestBody(required = false) Map<String, Object> payload) {
         Map<String, Object> request = payload == null ? Map.of() : payload;
@@ -598,16 +682,29 @@ public class ActivationCodeController {
         return Result.success("校验激活码完成", result);
     }
 
+    /**
+     * 原始输入记录集合的处理逻辑。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> rawRecords() {
         return new ArrayList<>(moduleRecordService.listModuleRecords(MODULE_NAME));
     }
 
+    /**
+     * sorted记录集合的处理逻辑。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> sortedRecords() {
         List<Map<String, Object>> records = rawRecords().stream().map(this::normalizeRecordForResponse).collect(Collectors.toCollection(ArrayList::new));
-        records.sort(Comparator.comparing((Map<String, Object> record) -> stringValue(record.get("createdAt"))).reversed());
+        records.sort(Comparator.comparing(/** 处理 comparing 调用中的回调逻辑。 入参：record。 */ (Map<String, Object> record) -> stringValue(record.get("createdAt"))).reversed());
         return records;
     }
 
+    /**
+     * 归一化记录For响应。
+     * @param source 来源参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> normalizeRecordForResponse(Map<String, Object> source) {
         Map<String, Object> record = new LinkedHashMap<>(source);
         String code = stringValue(record.get("code"));
@@ -637,6 +734,11 @@ public class ActivationCodeController {
         return record;
     }
 
+    /**
+     * 转换为实验室ActivationBinding。
+     * @param source 来源参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> toLabActivationBinding(Map<String, Object> source) {
         Map<String, Object> record = normalizeRecordForResponse(source);
         Map<String, Object> binding = new LinkedHashMap<>();
@@ -661,12 +763,25 @@ public class ActivationCodeController {
         return binding;
     }
 
+    /**
+     * 判断是否具有实验室Binding。
+     * @param record 记录参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean hasLabBinding(Map<String, Object> record) {
         return !stringValue(record.get("labId")).isBlank()
                 || !stringValue(record.get("labCode")).isBlank()
                 || !stringValue(record.get("labName")).isBlank();
     }
 
+    /**
+     * 判断是否为Same实验室Binding。
+     * @param record 记录参数。
+     * @param labId 实验室标识参数。
+     * @param labCode 实验室编码参数。
+     * @param labName 实验室名称参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isSameLabBinding(Map<String, Object> record, String labId, String labCode, String labName) {
         String currentLabId = stringValue(record.get("labId"));
         if (!labId.isBlank() && !currentLabId.isBlank() && currentLabId.equals(labId)) {
@@ -680,6 +795,11 @@ public class ActivationCodeController {
         return !labName.isBlank() && !currentLabName.isBlank() && currentLabName.equals(normalizeActivationCode(labName));
     }
 
+    /**
+     * bound设备的处理逻辑。
+     * @param record 记录参数。
+     * @return 当前操作得到的记录集合。
+     */
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> boundDevices(Map<String, Object> record) {
         Object rawDevices = record.get("boundDevices");
@@ -688,7 +808,7 @@ public class ActivationCodeController {
             for (Object item : items) {
                 if (item instanceof Map<?, ?> rawItem) {
                     Map<String, Object> device = new LinkedHashMap<>();
-                    rawItem.forEach((key, value) -> device.put(String.valueOf(key), value));
+                    rawItem.forEach(/** 处理遍历到的当前条目。 入参：key、value。 */ (key, value) -> device.put(String.valueOf(key), value));
                     normalizeBinding(device);
                     if (!stringValue(device.get("machineCode")).isBlank() || !stringValue(device.get("macAddress")).isBlank()) {
                         devices.add(device);
@@ -718,6 +838,10 @@ public class ActivationCodeController {
         return devices;
     }
 
+    /**
+     * 归一化Binding。
+     * @param device 设备参数。
+     */
     private void normalizeBinding(Map<String, Object> device) {
         String machineCode = normalizeMachineCode(firstNonBlank(
                 stringValue(device.get("machineCode")),
@@ -750,6 +874,11 @@ public class ActivationCodeController {
         device.put("remark", stringValue(device.get("remark")));
     }
 
+    /**
+     * putTerminal凭据的处理逻辑。
+     * @param binding binding参数。
+     * @param machineCode machine编码参数。
+     */
     private void putTerminalCredentials(Map<String, Object> binding, String machineCode) {
         String terminalId = firstNonBlank(
                 stringValue(binding.get("terminalId")),
@@ -763,6 +892,12 @@ public class ActivationCodeController {
         binding.put("terminalToken", terminalToken);
     }
 
+    /**
+     * upsert实验室Activation编码的处理逻辑。
+     * 涉及：读取数据库；写入数据库。
+     * @param record 记录参数。
+     * @return Long 类型的处理结果。
+     */
     private Long upsertLabActivationCode(Map<String, Object> record) {
         Long labId = longValue(record.get("labId"));
         String code = stringValue(record.get("code"));
@@ -821,6 +956,13 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * upsert实验室TerminalBinding的处理逻辑。
+     * 涉及：写入数据库。
+     * @param record 记录参数。
+     * @param binding binding参数。
+     * @param now now参数。
+     */
     private void upsertLabTerminalBinding(Map<String, Object> record, Map<String, Object> binding, String now) {
         Long labId = longValue(record.get("labId"));
         String terminalId = stringValue(binding.get("terminalId"));
@@ -885,6 +1027,11 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * terminal类型来源来源的处理逻辑。
+     * @param source 来源参数。
+     * @return String 类型的处理结果。
+     */
     private String terminalTypeFromSource(String source) {
         String value = normalizeActivationCode(source);
         if (value.contains("teacher")) return "teacher_client";
@@ -892,25 +1039,35 @@ public class ActivationCodeController {
         return "lab_client";
     }
 
+    /**
+     * generateTerminal令牌的处理逻辑。
+     * @param machineCode machine编码参数。
+     * @return String 类型的处理结果。
+     */
     private String generateTerminalToken(String machineCode) {
         return "tt-" + normalizeMachineCode(machineCode) + "-" + UUID.randomUUID();
     }
 
+    /**
+     * 构建Statistics。
+     * @param allRecords all记录集合参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> buildStatistics(List<Map<String, Object>> allRecords) {
-        List<Map<String, Object>> records = allRecords.stream().filter((record) -> !booleanValue(record.get("deleted"))).toList();
+        List<Map<String, Object>> records = allRecords.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> !booleanValue(record.get("deleted"))).toList();
         int total = records.size();
-        int enabled = (int) records.stream().filter((record) -> "enabled".equals(resolveStatusKey(record))).count();
-        int disabled = (int) records.stream().filter((record) -> "disabled".equals(resolveStatusKey(record))).count();
-        int totalLimit = records.stream().mapToInt((record) -> intValue(record.get("deviceLimit"), 0)).sum();
-        int bound = records.stream().mapToInt((record) -> intValue(record.get("boundCount"), activeBindingCount(boundDevices(record)))).sum();
+        int enabled = (int) records.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> "enabled".equals(resolveStatusKey(record))).count();
+        int disabled = (int) records.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) -> "disabled".equals(resolveStatusKey(record))).count();
+        int totalLimit = records.stream().mapToInt(/** 处理 mapToInt 调用中的回调逻辑。 入参：record。 */ (record) -> intValue(record.get("deviceLimit"), 0)).sum();
+        int bound = records.stream().mapToInt(/** 处理 mapToInt 调用中的回调逻辑。 入参：record。 */ (record) -> intValue(record.get("boundCount"), activeBindingCount(boundDevices(record)))).sum();
         LocalDate today = LocalDate.now();
         int todayBind = records.stream()
-                .flatMap((record) -> boundDevices(record).stream())
-                .mapToInt((device) -> isSameDay(stringValue(firstPresent(device, "boundAt", "activatedAt")), today) ? 1 : 0)
+                .flatMap(/** 转换并展开当前条目。 入参：record。 */ (record) -> boundDevices(record).stream())
+                .mapToInt(/** 处理 mapToInt 调用中的回调逻辑。 入参：device。 */ (device) -> isSameDay(stringValue(firstPresent(device, "boundAt", "activatedAt")), today) ? 1 : 0)
                 .sum();
         int todayRemoteUnbind = records.stream()
-                .flatMap((record) -> boundDevices(record).stream())
-                .mapToInt((device) -> BINDING_REMOTE_UNBOUND.equals(stringValue(device.get("status"))) && isSameDay(stringValue(device.get("unboundAt")), today) ? 1 : 0)
+                .flatMap(/** 转换并展开当前条目。 入参：record。 */ (record) -> boundDevices(record).stream())
+                .mapToInt(/** 处理 mapToInt 调用中的回调逻辑。 入参：device。 */ (device) -> BINDING_REMOTE_UNBOUND.equals(stringValue(device.get("status"))) && isSameDay(stringValue(device.get("unboundAt")), today) ? 1 : 0)
                 .sum();
 
         Map<String, Object> statistics = new LinkedHashMap<>();
@@ -925,6 +1082,13 @@ public class ActivationCodeController {
         return statistics;
     }
 
+    /**
+     * verification结果的处理逻辑。
+     * @param valid 有效参数。
+     * @param status 状态参数。
+     * @param message 消息参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> verificationResult(boolean valid, String status, String message) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("valid", valid);
@@ -933,6 +1097,10 @@ public class ActivationCodeController {
         return result;
     }
 
+    /**
+     * 刷新记录数量。
+     * @param record 记录参数。
+     */
     private void refreshRecordCounts(Map<String, Object> record) {
         List<Map<String, Object>> devices = boundDevices(record);
         int boundCount = activeBindingCount(devices);
@@ -943,6 +1111,13 @@ public class ActivationCodeController {
         record.put("availableCount", Math.max(deviceLimit - boundCount, 0));
     }
 
+    /**
+     * 标记BindingUnbound。
+     * @param binding binding参数。
+     * @param status 状态参数。
+     * @param reason 原因参数。
+     * @param now now参数。
+     */
     private void markBindingUnbound(Map<String, Object> binding, String status, String reason, String now) {
         binding.put("status", status);
         binding.put("unboundAt", now);
@@ -953,6 +1128,15 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * 记录Audit。
+     * @param action action参数。
+     * @param code 编码参数。
+     * @param machineCode machine编码参数。
+     * @param reason 原因参数。
+     * @param result 结果参数。
+     * @param details 详情参数。
+     */
     private void recordAudit(String action, String code, String machineCode, String reason, String result, Map<String, Object> details) {
         List<Map<String, Object>> logs = new ArrayList<>(moduleRecordService.listModuleRecords(AUDIT_MODULE_NAME));
         Map<String, Object> log = new LinkedHashMap<>();
@@ -972,6 +1156,12 @@ public class ActivationCodeController {
         moduleRecordService.replaceModuleRecords(AUDIT_MODULE_NAME, logs.stream().limit(500).toList());
     }
 
+    /**
+     * 判断是否匹配Keyword。
+     * @param record 记录参数。
+     * @param keyword keyword参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean matchesKeyword(Map<String, Object> record, String keyword) {
         String searchText = normalizeActivationCode(keyword);
         if (searchText.isBlank()) return true;
@@ -988,21 +1178,38 @@ public class ActivationCodeController {
             haystacks.add(stringValue(device.get("hostname")));
             haystacks.add(stringValue(device.get("hostName")));
         }
-        return haystacks.stream().map(this::normalizeActivationCode).anyMatch((value) -> value.contains(searchText));
+        return haystacks.stream().map(this::normalizeActivationCode).anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：value。 */ (value) -> value.contains(searchText));
     }
 
+    /**
+     * 判断是否匹配状态。
+     * @param record 记录参数。
+     * @param status 状态参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean matchesStatus(Map<String, Object> record, String status) {
         String expected = normalizeStatus(status);
         if (expected.isBlank() || "all".equals(expected)) return true;
         return expected.equals(resolveStatusKey(record));
     }
 
+    /**
+     * 判断是否匹配Expire状态。
+     * @param record 记录参数。
+     * @param expireStatus expire状态参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean matchesExpireStatus(Map<String, Object> record, String expireStatus) {
         String expected = normalizeActivationCode(expireStatus).replace("_", "-");
         if (expected.isBlank() || "all".equals(expected)) return true;
         return expected.equals(resolveExpireStatus(expireAt(record)).replace("_", "-"));
     }
 
+    /**
+     * 解析状态键。
+     * @param record 记录参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveStatusKey(Map<String, Object> record) {
         if (!isRecordEnabled(record)) return "disabled";
         if (isExpired(expireAt(record))) return "expired";
@@ -1011,6 +1218,11 @@ public class ActivationCodeController {
         return "enabled";
     }
 
+    /**
+     * 解析状态文本。
+     * @param record 记录参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveStatusText(Map<String, Object> record) {
         return switch (resolveStatusKey(record)) {
             case "disabled" -> "停用";
@@ -1020,6 +1232,11 @@ public class ActivationCodeController {
         };
     }
 
+    /**
+     * 解析Expire状态。
+     * @param expireAt expireAt参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveExpireStatus(String expireAt) {
         if (expireAt == null || expireAt.isBlank()) return "long_term";
         LocalDateTime expires = parseDateTime(expireAt);
@@ -1030,6 +1247,11 @@ public class ActivationCodeController {
         return "normal";
     }
 
+    /**
+     * 归一化状态。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeStatus(String value) {
         String status = normalizeActivationCode(value);
         return switch (status) {
@@ -1041,6 +1263,12 @@ public class ActivationCodeController {
         };
     }
 
+    /**
+     * 查找记录。
+     * @param records 记录集合参数。
+     * @param idOrCode 标识Or编码参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findRecord(List<Map<String, Object>> records, String idOrCode) {
         String target = normalizeActivationCode(idOrCode);
         if (target.isBlank()) return null;
@@ -1052,11 +1280,25 @@ public class ActivationCodeController {
         return null;
     }
 
+    /**
+     * 查找活动Binding。
+     * @param bindings bindings参数。
+     * @param machineCode machine编码参数。
+     * @param macAddress macAddress参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findActiveBinding(List<Map<String, Object>> bindings, String machineCode, String macAddress) {
         Map<String, Object> binding = findBinding(bindings, machineCode, macAddress);
         return binding != null && BINDING_ACTIVE.equals(stringValue(binding.get("status"))) ? binding : null;
     }
 
+    /**
+     * 查找Binding。
+     * @param bindings bindings参数。
+     * @param machineCode machine编码参数。
+     * @param macAddress macAddress参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findBinding(List<Map<String, Object>> bindings, String machineCode, String macAddress) {
         String machine = normalizeMachineCode(machineCode);
         String mac = normalizeMacAddress(macAddress);
@@ -1070,6 +1312,12 @@ public class ActivationCodeController {
         return null;
     }
 
+    /**
+     * 查找BindingBy标识。
+     * @param bindings bindings参数。
+     * @param bindingId binding标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findBindingById(List<Map<String, Object>> bindings, String bindingId) {
         String target = normalizeMachineCode(bindingId);
         for (Map<String, Object> binding : bindings) {
@@ -1081,29 +1329,60 @@ public class ActivationCodeController {
         return null;
     }
 
+    /**
+     * 活动Binding数量的处理逻辑。
+     * @param devices 设备参数。
+     * @return int 类型的处理结果。
+     */
     private int activeBindingCount(List<Map<String, Object>> devices) {
-        return (int) devices.stream().filter((device) -> BINDING_ACTIVE.equals(stringValue(device.get("status")))).count();
+        return (int) devices.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) -> BINDING_ACTIVE.equals(stringValue(device.get("status")))).count();
     }
 
+    /**
+     * legacy设备上限的处理逻辑。
+     * @param record 记录参数。
+     * @return int 类型的处理结果。
+     */
     private int legacyDeviceLimit(Map<String, Object> record) {
         return stringValue(record.get("macAddress")).isBlank() ? 1 : Math.max(1, activeBindingCount(boundDevices(record)));
     }
 
+    /**
+     * 判断是否为记录已启用。
+     * @param record 记录参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isRecordEnabled(Map<String, Object> record) {
         if (booleanValue(record.get("deleted"))) return false;
         if (record.containsKey("enabled")) return booleanValue(record.get("enabled"));
         return !STATUS_DISABLED.equals(stringValue(record.get("status"))) && !STATUS_DELETED.equals(stringValue(record.get("status")));
     }
 
+    /**
+     * same记录的处理逻辑。
+     * @param left left参数。
+     * @param right right参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean sameRecord(Map<String, Object> left, Map<String, Object> right) {
         return normalizeActivationCode(stringValue(left.get("id"))).equals(normalizeActivationCode(stringValue(right.get("id"))))
                 || normalizeActivationCode(stringValue(left.get("code"))).equals(normalizeActivationCode(stringValue(right.get("code"))));
     }
 
+    /**
+     * expireAt的处理逻辑。
+     * @param record 记录参数。
+     * @return String 类型的处理结果。
+     */
     private String expireAt(Map<String, Object> record) {
         return normalizeDateTime(firstNonBlank(stringValue(record.get("expireAt")), stringValue(record.get("expiresAt"))));
     }
 
+    /**
+     * generateUnique编码的处理逻辑。
+     * @param existingCodes existing编码集合参数。
+     * @return String 类型的处理结果。
+     */
     private String generateUniqueCode(Set<String> existingCodes) {
         String code;
         do {
@@ -1112,6 +1391,10 @@ public class ActivationCodeController {
         return code;
     }
 
+    /**
+     * random分组的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String randomGroup() {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 8; i++) {
@@ -1120,14 +1403,29 @@ public class ActivationCodeController {
         return builder.toString();
     }
 
+    /**
+     * 归一化Activation编码。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeActivationCode(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * 归一化Machine编码。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeMachineCode(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * 归一化MacAddress。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeMacAddress(String value) {
         String cleaned = value == null ? "" : value.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
         if (!MAC_PATTERN.matcher(cleaned).matches()) {
@@ -1136,12 +1434,22 @@ public class ActivationCodeController {
         return cleaned.replaceAll("(.{2})(?!$)", "$1:");
     }
 
+    /**
+     * 归一化日期时间。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeDateTime(String value) {
         if (value == null || value.isBlank()) return "";
         LocalDateTime dateTime = parseDateTime(value);
         return dateTime == null ? value.trim() : dateTime.format(ISO_FORMATTER);
     }
 
+    /**
+     * 解析日期时间。
+     * @param value 值参数。
+     * @return LocalDateTime 类型的处理结果。
+     */
     private LocalDateTime parseDateTime(String value) {
         if (value == null || value.isBlank()) return null;
         List<String> candidates = List.of(value.trim(), value.trim().replace(" ", "T"));
@@ -1158,16 +1466,32 @@ public class ActivationCodeController {
         return null;
     }
 
+    /**
+     * 判断是否为Expired。
+     * @param expiresAt expiresAt参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isExpired(String expiresAt) {
         LocalDateTime dateTime = parseDateTime(expiresAt);
         return dateTime != null && dateTime.isBefore(LocalDateTime.now());
     }
 
+    /**
+     * 判断是否为SameDay。
+     * @param value 值参数。
+     * @param date 日期参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isSameDay(String value, LocalDate date) {
         LocalDateTime dateTime = parseDateTime(value);
         return dateTime != null && dateTime.toLocalDate().equals(date);
     }
 
+    /**
+     * maskActivation编码的处理逻辑。
+     * @param code 编码参数。
+     * @return String 类型的处理结果。
+     */
     private String maskActivationCode(String code) {
         String value = stringValue(code);
         if (value.isBlank()) return "";
@@ -1175,6 +1499,11 @@ public class ActivationCodeController {
         return value.substring(0, 4) + "****" + value.substring(value.length() - 4);
     }
 
+    /**
+     * 计算当前对象的哈希值。
+     * @param code 编码参数。
+     * @return String 类型的处理结果。
+     */
     private String hashCode(String code) {
         if (code == null || code.isBlank()) return "";
         try {
@@ -1190,6 +1519,11 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * hashTerminal令牌的处理逻辑。
+     * @param terminalToken terminal令牌参数。
+     * @return String 类型的处理结果。
+     */
     private String hashTerminalToken(String terminalToken) {
         if (terminalToken == null || terminalToken.isBlank()) return "";
         try {
@@ -1205,10 +1539,19 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * now文本的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String nowText() {
         return LocalDateTime.now().format(ISO_FORMATTER);
     }
 
+    /**
+     * firstPresent的处理逻辑。
+     * @param source 来源参数。
+     * @return Object 类型的处理结果。
+     */
     private Object firstPresent(Map<String, Object> source, String... keys) {
         for (String key : keys) {
             if (source.containsKey(key)) return source.get(key);
@@ -1216,6 +1559,10 @@ public class ActivationCodeController {
         return "";
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) return value;
@@ -1223,10 +1570,21 @@ public class ActivationCodeController {
         return "";
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    /**
+     * 将输入转换为整数值。
+     * @param value 值参数。
+     * @param fallback fallback参数。
+     * @return int 类型的处理结果。
+     */
     private int intValue(Object value, int fallback) {
         if (value instanceof Number number) {
             return number.intValue();
@@ -1238,6 +1596,11 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * 将输入转换为长整数值。
+     * @param value 值参数。
+     * @return Long 类型的处理结果。
+     */
     private Long longValue(Object value) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -1250,6 +1613,11 @@ public class ActivationCodeController {
         }
     }
 
+    /**
+     * 将输入转换为布尔值。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean booleanValue(Object value) {
         if (value instanceof Boolean bool) return bool;
         String text = stringValue(value);
@@ -1257,6 +1625,11 @@ public class ActivationCodeController {
         return "true".equalsIgnoreCase(text) || "1".equals(text) || "yes".equalsIgnoreCase(text) || "enabled".equalsIgnoreCase(text);
     }
 
+    /**
+     * 列出值。
+     * @param value 值参数。
+     * @return 当前操作得到的记录集合。
+     */
     @SuppressWarnings("unchecked")
     private List<Object> listValue(Object value) {
         if (value instanceof List<?> list) return new ArrayList<>(list);

@@ -9,6 +9,7 @@ PROJECT_BACKEND = BASE_DIR.parent
 
 
 class TimetableImportBoundaryTest(unittest.TestCase):
+    # 验证python适配器onlynormalizes文件集合。
     def test_python_adapter_only_normalizes_files(self):
         source = (BASE_DIR / "parse_and_import_timetable.py").read_text(encoding="utf-8")
 
@@ -18,10 +19,12 @@ class TimetableImportBoundaryTest(unittest.TestCase):
         self.assertNotIn("import_dataframe_to_mysql", source)
         self.assertIn("标准 CSV 已导出", source)
 
+    # 验证database驱动isnotacrawlerdependency。
     def test_database_driver_is_not_a_crawler_dependency(self):
         requirements = (BASE_DIR / "requirements.txt").read_text(encoding="utf-8")
         self.assertNotIn("pymysql", requirements.lower())
 
+    # 验证java服务ownstheatomicdatabaseimport。
     def test_java_service_owns_the_atomic_database_import(self):
         source = (
             PROJECT_BACKEND

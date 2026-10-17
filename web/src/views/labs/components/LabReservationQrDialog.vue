@@ -25,7 +25,7 @@ const props = defineProps({
 
 const visible = defineModel({ type: Boolean, default: false })
 
-const qrDataUrl = computed(() =>
+const qrDataUrl = computed(/** 计算派生状态。 */ () =>
   props.reservationLink
     ? generateQrSvgDataUrl(props.reservationLink, {
         foreground: '#0f172a',
@@ -34,24 +34,27 @@ const qrDataUrl = computed(() =>
     : '',
 )
 
-const labTitle = computed(() => props.lab?.name || '实验室预约二维码')
-const reservationUrl = computed(() => {
+const labTitle = computed(/** 计算派生状态。 */ () => props.lab?.name || '实验室预约二维码')
+const reservationUrl = computed(/** 计算派生状态。 */ () => {
   try {
     return props.reservationLink ? new URL(props.reservationLink) : null
   } catch {
     return null
   }
 })
-const isLoopbackLink = computed(() => {
+const isLoopbackLink = computed(/** 计算派生状态。 */ () => {
   const hostname = reservationUrl.value?.hostname || ''
   return hostname === 'localhost' || hostname === '0.0.0.0' || hostname === '::1' || hostname.startsWith('127.')
 })
-const linkHint = computed(() =>
+const linkHint = computed(/** 计算派生状态。 */ () =>
   isLoopbackLink.value
     ? '当前二维码是本机地址，手机扫码会打不开。请设置 VITE_PUBLIC_APP_URL 为电脑局域网地址，或用局域网地址打开后台后重新生成。'
     : '该链接可用于手机扫码访问，请确认手机与服务地址网络可达。',
 )
 
+/**
+ * 复制Link。
+ */
 const copyLink = async () => {
   if (!props.reservationLink) return
 
@@ -63,6 +66,9 @@ const copyLink = async () => {
   }
 }
 
+/**
+ * 输出Qr。
+ */
 const printQr = () => {
   window.print()
 }

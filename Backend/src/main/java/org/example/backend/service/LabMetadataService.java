@@ -19,10 +19,19 @@ import java.util.Set;
 public final class LabMetadataService implements ManagerNamePort, DeviceCountPort {
     private final LabResourceMetadataMapper mapper;
 
+    /**
+     * 构造 LabMetadataService，初始化当前实例。
+     * @param mapper 数据映射器参数。
+     */
     public LabMetadataService(LabResourceMetadataMapper mapper) {
         this.mapper = Objects.requireNonNull(mapper, "mapper");
     }
 
+    /**
+     * 查找名称集合。
+     * @param managerUserIds manager用户标识集合参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<Long, String> findNames(Set<Long> managerUserIds) {
         if (managerUserIds.isEmpty()) {
@@ -44,6 +53,11 @@ public final class LabMetadataService implements ManagerNamePort, DeviceCountPor
         return Map.copyOf(names);
     }
 
+    /**
+     * 统计By实验室标识集合。
+     * @param labIds 实验室标识集合参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<Long, Integer> countByLabIds(Set<Long> labIds) {
         if (labIds.isEmpty()) {

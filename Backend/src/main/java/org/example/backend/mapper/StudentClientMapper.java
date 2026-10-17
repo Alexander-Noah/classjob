@@ -12,9 +12,25 @@ import java.util.List;
 
 @Mapper
 public interface StudentClientMapper {
+    /**
+     * upsertOnline的处理逻辑。
+     * @param client 客户端参数。
+     * @return int 类型的处理结果。
+     */
     int upsertOnline(StudentClientEntity client);
 
+    /**
+     * 标记Offline。
+     * @param studentDeviceId 学生设备标识参数。
+     * @param labId 实验室标识参数。
+     * @return int 类型的处理结果。
+     */
     int markOffline(@Param("studentDeviceId") String studentDeviceId, @Param("labId") Long labId);
 
+    /**
+     * 选择By实验室标识。
+     * @param labId 实验室标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<StudentClientEntity> selectByLabId(@Param("labId") Long labId);
 }

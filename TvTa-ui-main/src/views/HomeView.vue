@@ -21,16 +21,16 @@ const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 const activeDevice = ref<PanelDevice | null>(null)
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   monitorStore.startPolling()
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   monitorStore.stopPolling()
 })
 
-const devices = computed<PanelDevice[]>(() =>
-  monitorStore.devices.map((device) => {
+const devices = computed<PanelDevice[]>(/** 计算派生状态。 */ () =>
+  monitorStore.devices.map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => {
     const cpu = Math.round(device.metrics.cpuUsage)
     const memory = Math.round(device.metrics.memoryUsage)
     const disk = Math.round(device.metrics.diskUsage)
@@ -45,19 +45,19 @@ const devices = computed<PanelDevice[]>(() =>
   })
 )
 
-const totalCount = computed(() => devices.value.length)
-const onlineCount = computed(() => devices.value.filter(device => device.online).length)
-const offlineCount = computed(() => totalCount.value - onlineCount.value)
-const warningCount = computed(() => devices.value.filter(device => device.warning).length)
+const totalCount = computed(/** 计算派生状态。 */ () => devices.value.length)
+const onlineCount = computed(/** 计算派生状态。 */ () => devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device => device.online).length)
+const offlineCount = computed(/** 计算派生状态。 */ () => totalCount.value - onlineCount.value)
+const warningCount = computed(/** 计算派生状态。 */ () => devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device => device.warning).length)
 
-const summaryItems = computed(() => [
+const summaryItems = computed(/** 计算派生状态。 */ () => [
   { label: '总设备数', value: totalCount.value, icon: 'i-carbon-devices' },
   { label: '在线', value: onlineCount.value, icon: 'i-carbon-checkmark-outline' },
   { label: '离线', value: offlineCount.value, icon: 'i-carbon-warning-alt' },
   { label: '高负载警报', value: warningCount.value, icon: 'i-carbon-warning-hex' }
 ])
 
-const contextOptions = computed(() => {
+const contextOptions = computed(/** 计算派生状态。 */ () => {
   const disabled = !activeDevice.value
   const offline = activeDevice.value?.status === 'offline'
   return [
@@ -74,10 +74,19 @@ const contextOptions = computed(() => {
   ]
 })
 
+/**
+ * 渲染上下文Icon。
+ * 入参：className（class名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function renderContextIcon(className: string) {
-  return () => h('span', { class: `${className} text-15px` })
+  return /** 处理当前调用传入的回调逻辑。 */ () => h('span', { class: `${className} text-15px` })
 }
 
+/**
+ * 打开上下文Menu。
+ * 入参：event（事件）；device（设备）。
+ */
 function openContextMenu(event: MouseEvent, device: PanelDevice) {
   event.preventDefault()
   activeDevice.value = device
@@ -86,10 +95,17 @@ function openContextMenu(event: MouseEvent, device: PanelDevice) {
   contextMenuVisible.value = true
 }
 
+/**
+ * 关闭上下文Menu。
+ */
 function closeContextMenu() {
   contextMenuVisible.value = false
 }
 
+/**
+ * 处理上下文Select。
+ * 入参：key（键）。
+ */
 async function handleContextSelect(key: string | number) {
   const action = String(key) as DeviceAction
   const device = activeDevice.value
@@ -114,12 +130,22 @@ async function handleContextSelect(key: string | number) {
   message.success(`${device.location} 操作已记录`)
 }
 
+/**
+ * 状态文本的处理逻辑。
+ * 入参：device（设备）。
+ * @returns 文本结果。
+ */
 function statusText(device: PanelDevice) {
   if (device.status === 'offline') return '离线'
   if (device.warning) return '高负载'
   return '在线'
 }
 
+/**
+ * metricWidth的处理逻辑。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function metricWidth(value: number) {
   return `${Math.min(100, Math.max(0, value))}%`
 }

@@ -18,13 +18,16 @@ const activating = ref(false)
 
 activationStore.hydrate()
 
-const canActivate = computed(() => Boolean(activationCode.value.trim()) && !activating.value)
-const activationDescription = computed(() => {
+const canActivate = computed(/** 计算派生状态。 */ () => Boolean(activationCode.value.trim()) && !activating.value)
+const activationDescription = computed(/** 计算派生状态。 */ () => {
   if (activationStore.isTrialExpired) return '30 天试用已结束，请输入正式激活码后继续使用。'
   if (activationStore.trialUsed) return '本机已经使用过试用，请输入正式激活码完成授权。'
   return '请输入激活码完成授权，也可以先试用 30 天。'
 })
 
+/**
+ * 处理Activate。
+ */
 async function handleActivate() {
   if (!canActivate.value) return
 
@@ -44,6 +47,9 @@ async function handleActivate() {
   }
 }
 
+/**
+ * 处理开始Trial。
+ */
 function handleStartTrial() {
   const ok = activationStore.startTrial()
   if (!ok) {

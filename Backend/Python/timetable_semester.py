@@ -4,6 +4,9 @@
 from bs4 import BeautifulSoup
 
 
+# 解析学期。
+# 入参：configured_semester（configured学期）；timetable_page_html（课表页码HTML）。
+# 返回：由当前表达式或分支生成的处理结果。
 def resolve_semester(configured_semester, timetable_page_html):
     # 用户显式配置优先；缺省时读取学校页面选中项，不根据当前月份猜测学期。
     configured = str(configured_semester or "").strip()

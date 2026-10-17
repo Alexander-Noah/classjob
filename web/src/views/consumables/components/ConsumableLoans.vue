@@ -10,7 +10,7 @@ import http from '../../../api/http'
 import TablePagination from '../../../components/common/TablePagination.vue'
 import { useTablePagination } from '../../../composables/useTablePagination'
 
-const props = defineProps({ consumables: { type: Array, default: () => [] } })
+const props = defineProps({ consumables: { type: Array, /** 构造当前类型的默认状态。 @returns 生成的数组。 */ default: () => [] } })
 const emit = defineEmits(['changed'])
 const rows = ref([])
 const loading = ref(false)
@@ -26,26 +26,38 @@ const returnRef = ref()
 const filters = reactive({ keyword: '', status: '' })
 const borrowForm = reactive({ consumableId: '', borrower: '', contact: '', quantity: 1, purpose: '', dueDate: '', remark: '', requestId: '' })
 const returnForm = reactive({ quantity: 1, remark: '', requestId: '' })
-const selectedItem = computed(() => props.consumables.find(item => String(item.id) === String(borrowForm.consumableId)))
-const filtered = computed(() => rows.value.filter(row =>
+const selectedItem = computed(/** 计算派生状态。 */ () => props.consumables.find(/** 判断当前条目是否为查找目标。 入参：item。 */ item => String(item.id) === String(borrowForm.consumableId)))
+const filtered = computed(/** 计算派生状态。 */ () => rows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ row =>
   (!filters.status || row.status === filters.status) &&
   [row.consumableName, row.borrower, row.contact, row.purpose, row.operator, String(row.id)].join(' ').toLowerCase().includes(filters.keyword.trim().toLowerCase()),
 ))
-const outstanding = computed(() => rows.value.filter(row => row.remainingQuantity > 0).length)
-const overdue = computed(() => rows.value.filter(row => row.status === '已逾期').length)
+const outstanding = computed(/** 计算派生状态。 */ () => rows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ row => row.remainingQuantity > 0).length)
+const overdue = computed(/** 计算派生状态。 */ () => rows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ row => row.status === '已逾期').length)
 const { currentPage, pageSize, total, pagedRecords, handleCurrentPageChange, handlePageSizeChange } = useTablePagination(filtered)
 const borrowRules = {
   consumableId: [{ required: true, message: '请选择耗材', trigger: 'change' }],
   borrower: [{ required: true, whitespace: true, message: '请填写借用人', trigger: 'blur' }],
-  quantity: [{ validator: (_rule, value, callback) => callback(Number.isSafeInteger(value) && value > 0 && value <= (selectedItem.value?.stock || 0) ? undefined : new Error('借用数量须为正整数，且不能超过可用库存')), trigger: 'change' }],
+  quantity: [{ /** 校验器的处理逻辑。 入参：_rule（规则）；value（值）；callback（回调）。 @returns 由当前表达式或分支生成的处理结果。 */ validator: (_rule, value, callback) => callback(Number.isSafeInteger(value) && value > 0 && value <= (selectedItem.value?.stock || 0) ? undefined : new Error('借用数量须为正整数，且不能超过可用库存')), trigger: 'change' }],
   purpose: [{ required: true, whitespace: true, message: '请填写借用用途', trigger: 'blur' }],
   dueDate: [{ required: true, message: '请选择应还日期', trigger: 'change' }],
 }
 const returnRules = {
-  quantity: [{ validator: (_rule, value, callback) => callback(Number.isSafeInteger(value) && value > 0 && value <= (selectedLoan.value?.remainingQuantity || 0) ? undefined : new Error('归还数量须为正整数，且不能超过待还数量')), trigger: 'change' }],
+  quantity: [{ /** 校验器的处理逻辑。 入参：_rule（规则）；value（值）；callback（回调）。 @returns 由当前表达式或分支生成的处理结果。 */ validator: (_rule, value, callback) => callback(Number.isSafeInteger(value) && value > 0 && value <= (selectedLoan.value?.remainingQuantity || 0) ? undefined : new Error('归还数量须为正整数，且不能超过待还数量')), trigger: 'change' }],
 }
+/**
+ * 状态类型的处理逻辑。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const statusType = status => ({ 已归还: 'success', 已逾期: 'danger', 部分归还: 'warning', 借用中: 'primary' }[status] || 'info')
+/**
+ * show错误的处理逻辑。
+ * 入参：error（错误）；fallback（fallback）。
+ */
 const showError = (error, fallback) => { if (!error?.__handled) ElMessage.error(error?.userMessage || error?.message || fallback) }
+/**
+ * 加载当前操作。
+ */
 const load = async () => {
   loading.value = true
   loadError.value = ''
@@ -53,10 +65,18 @@ const load = async () => {
   catch { loadError.value = '借用记录加载失败，请重新加载' }
   finally { loading.value = false }
 }
+/**
+ * 打开Borrow。
+ * 入参：item（条目）。
+ */
 const openBorrow = item => {
   Object.assign(borrowForm, { consumableId: item?.id ? String(item.id) : '', borrower: '', contact: '', quantity: 1, purpose: '', dueDate: '', remark: '', requestId: crypto.randomUUID() })
   borrowVisible.value = true
 }
+/**
+ * 打开Return。
+ * 入参：row（行）。
+ */
 const openReturn = async row => {
   try {
     selectedLoan.value = (await http.get(`/consumables/loans/${row.id}`)).data.data
@@ -65,12 +85,19 @@ const openReturn = async row => {
     returnVisible.value = true
   } catch (error) { showError(error, '借用详情加载失败') }
 }
+/**
+ * 打开详情。
+ * 入参：row（行）。
+ */
 const openDetail = async row => {
   try { detail.value = (await http.get(`/consumables/loans/${row.id}`)).data.data; detailVisible.value = true }
   catch (error) { showError(error, '借用详情加载失败') }
 }
+/**
+ * 保存Borrow。
+ */
 const saveBorrow = async () => {
-  if (saving.value || !(await borrowRef.value?.validate().catch(() => false))) return
+  if (saving.value || !(await borrowRef.value?.validate().catch(/** 处理异步失败结果。 */ () => false))) return
   saving.value = true
   try {
     await http.post('/consumables/loans', { ...borrowForm, consumableId: Number(borrowForm.consumableId) })
@@ -81,8 +108,11 @@ const saveBorrow = async () => {
   } catch (error) { showError(error, '借用登记失败') }
   finally { saving.value = false }
 }
+/**
+ * 保存Return。
+ */
 const saveReturn = async () => {
-  if (saving.value || !(await returnRef.value?.validate().catch(() => false))) return
+  if (saving.value || !(await returnRef.value?.validate().catch(/** 处理异步失败结果。 */ () => false))) return
   saving.value = true
   try {
     await http.post(`/consumables/loans/${selectedLoan.value.id}/return`, { ...returnForm })
@@ -93,6 +123,11 @@ const saveReturn = async () => {
   } catch (error) { showError(error, '归还登记失败') }
   finally { saving.value = false }
 }
+/**
+ * 已禁用Due日期的处理逻辑。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const disabledDueDate = date => { const today = new Date(); today.setHours(0, 0, 0, 0); return date < today }
 defineExpose({ openBorrow })
 onMounted(load)

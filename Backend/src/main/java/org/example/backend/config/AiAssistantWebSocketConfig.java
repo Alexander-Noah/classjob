@@ -30,6 +30,12 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
     private final JwtService jwtService;
     private final String[] allowedOriginPatterns;
 
+    /**
+     * 构造 AiAssistantWebSocketConfig，初始化当前实例。
+     * @param aiAssistantWebSocketHandler AIAssistantWebSocket处理器参数。
+     * @param jwtService JWT服务参数。
+     * @param allowedOriginPatterns allowedOriginPatterns参数。
+     */
     public AiAssistantWebSocketConfig(
             AiAssistantWebSocketHandler aiAssistantWebSocketHandler,
             JwtService jwtService,
@@ -40,6 +46,10 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
         this.allowedOriginPatterns = splitCsv(allowedOriginPatterns);
     }
 
+    /**
+     * 注册WebSocket处理器。
+     * @param registry registry参数。
+     */
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(aiAssistantWebSocketHandler, "/ai-assistant/ws", "/ws/ai-assistant")
@@ -47,6 +57,10 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOriginPatterns(allowedOriginPatterns);
     }
 
+    /**
+     * webSocketContainer的处理逻辑。
+     * @return ServletServerContainerFactoryBean 类型的处理结果。
+     */
     @Bean
     public ServletServerContainerFactoryBean webSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
@@ -58,10 +72,22 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
     private static class JwtHandshakeInterceptor implements HandshakeInterceptor {
         private final JwtService jwtService;
 
+        /**
+         * 构造 JwtHandshakeInterceptor，初始化当前实例。
+         * @param jwtService JWT服务参数。
+         */
         private JwtHandshakeInterceptor(JwtService jwtService) {
             this.jwtService = jwtService;
         }
 
+        /**
+         * 在执行前处理Handshake。
+         * @param request 请求参数。
+         * @param response 响应参数。
+         * @param wsHandler ws处理器参数。
+         * @param attributes attributes参数。
+         * @return 当前判断的布尔结果。
+         */
         @Override
         public boolean beforeHandshake(
                 ServerHttpRequest request,
@@ -85,6 +111,13 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
             }
         }
 
+        /**
+         * 在执行后处理Handshake。
+         * @param request 请求参数。
+         * @param response 响应参数。
+         * @param wsHandler ws处理器参数。
+         * @param exception 异常参数。
+         */
         @Override
         public void afterHandshake(
                 ServerHttpRequest request,
@@ -95,6 +128,11 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
             // No-op.
         }
 
+        /**
+         * 解析令牌。
+         * @param request 请求参数。
+         * @return String 类型的处理结果。
+         */
         private String resolveToken(ServerHttpRequest request) {
             String authorization = request.getHeaders().getFirst("Authorization");
             if (authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
@@ -109,6 +147,11 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
             return "";
         }
 
+        /**
+         * 解析令牌来源Subprotocol。
+         * @param request 请求参数。
+         * @return String 类型的处理结果。
+         */
         private String resolveTokenFromSubprotocol(ServerHttpRequest request) {
             String header = request.getHeaders().getFirst("Sec-WebSocket-Protocol");
             if (header == null || header.isBlank()) {
@@ -116,20 +159,25 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
             }
             return Arrays.stream(header.split(","))
                     .map(String::trim)
-                    .filter(protocol -> protocol.startsWith("smart-lab.jwt."))
-                    .map(protocol -> protocol.substring("smart-lab.jwt.".length()).trim())
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：protocol。 */ protocol -> protocol.startsWith("smart-lab.jwt."))
+                    .map(/** 将当前条目转换为目标结果。 入参：protocol。 */ protocol -> protocol.substring("smart-lab.jwt.".length()).trim())
                     .findFirst()
                     .orElse("");
         }
     }
 
+    /**
+     * 拆分CSV。
+     * @param value 值参数。
+     * @return String[] 类型的处理结果。
+     */
     private static String[] splitCsv(String value) {
         if (value == null || value.isBlank()) {
             return new String[0];
         }
         return Arrays.stream(value.split(","))
                 .map(String::trim)
-                .filter(item -> !item.isBlank())
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item -> !item.isBlank())
                 .toArray(String[]::new);
     }
 }

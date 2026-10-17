@@ -20,16 +20,30 @@ public class softwareServiceImpl implements softwareService {
     private final softwareMapper softwareMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 softwareServiceImpl，初始化当前实例。
+     * @param softwareMapper software数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public softwareServiceImpl(softwareMapper softwareMapper, BusinessLoopService businessLoopService) {
         this.softwareMapper = softwareMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取实验室Software。
+     * @return Result 类型的处理结果。
+     */
     @Override
     public Result getLabSoftware() {
         return Result.success("获取软件环境列表成功", softwareMapper.getLabSoftware());
     }
 
+    /**
+     * Inserter实验室Software的处理逻辑。
+     * @param software 软件环境参数。
+     * @return Result 类型的处理结果。
+     */
     @Override
     public Result InserterLabSoftware(softwareEntity software) {
         normalizeSoftware(software);
@@ -38,6 +52,12 @@ public class softwareServiceImpl implements softwareService {
         return Result.success("添加软件环境成功", software);
     }
 
+    /**
+     * 更新实验室Software。
+     * @param id 标识参数。
+     * @param software 软件环境参数。
+     * @return Result 类型的处理结果。
+     */
     @Override
     public Result updateLabSoftware(Long id, softwareEntity software) {
         software.setId(id);
@@ -47,6 +67,11 @@ public class softwareServiceImpl implements softwareService {
         return Result.success("修改软件环境成功", software);
     }
 
+    /**
+     * 删除实验室Software。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @Override
     public Result deleteLabSoftware(Long id) {
         softwareMapper.deleteLabSoftware(id);
@@ -54,6 +79,10 @@ public class softwareServiceImpl implements softwareService {
         return Result.success("删除软件环境成功");
     }
 
+    /**
+     * 归一化软件环境。
+     * @param software 软件环境参数。
+     */
     private void normalizeSoftware(softwareEntity software) {
         if (software.getSoftwareName() == null || software.getSoftwareName().isBlank()) {
             software.setSoftwareName(software.getName());
@@ -84,6 +113,11 @@ public class softwareServiceImpl implements softwareService {
         }
     }
 
+    /**
+     * 记录Software事件。
+     * @param software 软件环境参数。
+     * @param action action参数。
+     */
     private void recordSoftwareEvent(softwareEntity software, String action) {
         Map<String, Object> details = new LinkedHashMap<>();
         details.put("id", software.getId());
@@ -93,6 +127,10 @@ public class softwareServiceImpl implements softwareService {
         businessLoopService.recordEvent("software", action, software.getSoftwareName(), firstNonBlank(software.getStatus(), "已安装"), details);
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {

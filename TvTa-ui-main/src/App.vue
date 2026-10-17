@@ -17,15 +17,15 @@ const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const monitorStore = useMonitorStore()
 const activationStore = useActivationStore()
-const theme = computed(() => themeStore.isDark ? darkTheme : null)
+const theme = computed(/** 计算派生状态。 */ () => themeStore.isDark ? darkTheme : null)
 const activationPromptDismissed = ref(false)
-const loginVisible = computed(() => !authStore.isAuthenticated)
-const activationVisible = computed(() => {
+const loginVisible = computed(/** 计算派生状态。 */ () => !authStore.isAuthenticated)
+const activationVisible = computed(/** 计算派生状态。 */ () => {
   if (!authStore.isAuthenticated) return false
   if (!activationStore.isLicensed) return !activationPromptDismissed.value || !activationStore.isTrialActive
   return false
 })
-const appVisible = computed(() => {
+const appVisible = computed(/** 计算派生状态。 */ () => {
   if (!authStore.isAuthenticated) return false
   if (activationStore.isLicensed) return true
   return activationStore.isTrialActive && activationPromptDismissed.value
@@ -42,6 +42,10 @@ const ACTIVATION_WINDOW_SIZE = new LogicalSize(560, 620)
 const APP_WINDOW_SIZE = new LogicalSize(1440, 810)
 let licenseTimer: number | undefined
 
+/**
+ * 同步窗口大小。
+ * 入参：view（视图）。
+ */
 async function syncWindowSize(view: 'login' | 'activation' | 'app') {
   if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
 
@@ -64,7 +68,13 @@ async function syncWindowSize(view: 'login' | 'activation' | 'app') {
 }
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => [loginVisible.value, activationVisible.value, appVisible.value] as const,
+  /**
+   * 响应被监听状态的变化。
+   */
   () => {
     const view = appVisible.value ? 'app' : activationVisible.value ? 'activation' : 'login'
     void syncWindowSize(view)
@@ -72,6 +82,10 @@ watch(
   { immediate: true }
 )
 
+/**
+ * 处理登录。
+ * 入参：payload（载荷）。
+ */
 async function handleLogin(payload: { username: string; password: string }) {
   loginError.value = ''
   loginLoading.value = true
@@ -89,24 +103,30 @@ async function handleLogin(payload: { username: string; password: string }) {
   }
 }
 
+/**
+ * 处理退出登录。
+ */
 function handleLogout() {
   activationPromptDismissed.value = false
   void authStore.logout()
 }
 
+/**
+ * 处理ActivationContinue。
+ */
 function handleActivationContinue() {
   if (!activationStore.isTrialActive) return
   activationPromptDismissed.value = true
 }
 
-onMounted(() => {
-  licenseTimer = window.setInterval(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
+  licenseTimer = window.setInterval(/** 执行周期安排的任务。 */ () => {
     activationStore.verifyStoredActivation()
   }, 60000)
   activationStore.verifyStoredActivation()
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   if (licenseTimer) {
     window.clearInterval(licenseTimer)
   }

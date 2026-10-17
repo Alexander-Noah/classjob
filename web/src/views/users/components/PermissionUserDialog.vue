@@ -12,6 +12,10 @@ defineOptions({
 const props = defineProps({
   departmentOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   modelValue: {
@@ -20,6 +24,10 @@ const props = defineProps({
   },
   roleOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   user: {
@@ -33,11 +41,20 @@ const emit = defineEmits(['save', 'update:modelValue'])
 const formRef = ref(null)
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const isCreateMode = computed(() => !props.user?.id)
+const isCreateMode = computed(/** 计算派生状态。 */ () => !props.user?.id)
 
 const formModel = reactive({
   account: '',
@@ -51,6 +68,10 @@ const formModel = reactive({
   role: '',
 })
 
+/**
+ * 校验手机号。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validatePhone = (_rule, value, callback) => {
   if (!value) {
     callback()
@@ -65,7 +86,7 @@ const validatePhone = (_rule, value, callback) => {
   callback()
 }
 
-const rules = computed(() => ({
+const rules = computed(/** 计算派生状态。 */ () => ({
   account: [{ required: true, message: '请输入账号 / 工号', trigger: 'blur' }],
   department: [{ required: true, message: '请选择部门', trigger: 'change' }],
   initialPassword: isCreateMode.value
@@ -79,6 +100,9 @@ const rules = computed(() => ({
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
 }))
 
+/**
+ * 重置Form。
+ */
 const resetForm = () => {
   formModel.account = props.user?.account || props.user?.username || props.user?.employeeNo || ''
   formModel.department = props.user?.department || ''
@@ -90,17 +114,26 @@ const resetForm = () => {
   formModel.remark = props.user?.remark || ''
   formModel.role = props.user?.role || props.user?.roleName || props.roleOptions[0] || ''
 
-  nextTick(() => formRef.value?.clearValidate())
+  nextTick(/** 处理 nextTick 调用中的回调逻辑。 */ () => formRef.value?.clearValidate())
 }
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => [props.modelValue, props.user],
+  /**
+   * 响应被监听状态的变化。
+   */
   () => {
     if (props.modelValue) resetForm()
   },
   { immediate: true, deep: true },
 )
 
+/**
+ * 处理Save。
+ */
 const handleSave = async () => {
   try {
     await formRef.value?.validate()

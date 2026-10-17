@@ -14,6 +14,10 @@ defineOptions({
 const props = defineProps({
   availability: {
     type: Object,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     default: () => ({
       capacity: 0,
       isFree: false,
@@ -29,10 +33,18 @@ const props = defineProps({
   },
   labMetaMap: {
     type: Object,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     default: () => ({}),
   },
   labOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   loading: {
@@ -41,6 +53,10 @@ const props = defineProps({
   },
   sceneOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   title: {
@@ -54,6 +70,10 @@ const emit = defineEmits(['submit'])
 const visible = defineModel({ type: Boolean, default: false })
 const formRef = ref()
 
+/**
+ * 校验时间范围。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateTimeRange = (_rule, value, callback) => {
   const [startTime, endTime] = String(value || '').split('-')
 
@@ -80,6 +100,10 @@ const validateTimeRange = (_rule, value, callback) => {
   callback()
 }
 
+/**
+ * 校验Attendees。
+ * 入参：_rule（规则）；value（值）；callback（回调）。
+ */
 const validateAttendees = (_rule, value, callback) => {
   const count = Number(value)
 
@@ -97,10 +121,18 @@ const validateAttendees = (_rule, value, callback) => {
 }
 
 const timeRangeModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   get() {
     const [startTime, endTime] = String(props.formModel.timeRange || '').split('-')
     return startTime && endTime ? [startTime, endTime] : []
   },
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   */
   set(value) {
     props.formModel.timeRange = Array.isArray(value) && value[0] && value[1] ? `${value[0]}-${value[1]}` : ''
   },
@@ -119,9 +151,9 @@ const rules = {
   note: [{ validator: createMeaningfulTextValidator({ label: '审核备注', min: 4, max: 120, required: false }), trigger: 'blur' }],
 }
 
-const attendeeMax = computed(() => Number(props.availability.capacity) || 120)
+const attendeeMax = computed(/** 计算派生状态。 */ () => Number(props.availability.capacity) || 120)
 
-const availabilityAlert = computed(() => {
+const availabilityAlert = computed(/** 计算派生状态。 */ () => {
   if (!props.formModel.lab || !props.formModel.date || !props.formModel.timeRange) return null
 
   if (!props.availability.isReady) {
@@ -144,6 +176,9 @@ const availabilityAlert = computed(() => {
   }
 })
 
+/**
+ * 处理Submit。
+ */
 const handleSubmit = async () => {
   if (!formRef.value) {
     emit('submit')
@@ -158,6 +193,9 @@ const handleSubmit = async () => {
   }
 }
 
+/**
+ * 处理Closed。
+ */
 const handleClosed = () => {
   formRef.value?.clearValidate()
 }

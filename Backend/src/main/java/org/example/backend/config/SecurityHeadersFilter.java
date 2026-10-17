@@ -20,10 +20,22 @@ import java.io.IOException;
 public class SecurityHeadersFilter extends OncePerRequestFilter {
     private final boolean enabled;
 
+    /**
+     * 构造 SecurityHeadersFilter，初始化当前实例。
+     * @param enabled 已启用参数。
+     */
     public SecurityHeadersFilter(@Value("${smart-lab.security.headers.enabled:true}") boolean enabled) {
         this.enabled = enabled;
     }
 
+    /**
+     * 执行筛选条件Internal。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param filterChain 筛选条件Chain参数。
+     * @throws ServletException 当前调用无法继续完成时抛出。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -40,6 +52,11 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         writeHeaders(request, response);
     }
 
+    /**
+     * 写入请求头。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     */
     private void writeHeaders(HttpServletRequest request, HttpServletResponse response) {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "SAMEORIGIN");

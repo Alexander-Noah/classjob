@@ -11,7 +11,22 @@ import java.util.Map;
 
 @Mapper
 public interface AiScheduleReadMapper {
+    /**
+     * 统计当前操作。
+     * @param filters 筛选条件参数。
+     * @return long 类型的处理结果。
+     */
     long count(Map<String, Object> filters);
+    /**
+     * 搜索当前操作。
+     * @param filters 筛选条件参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<ScheduleEntryView> search(Map<String, Object> filters);
+    /**
+     * 汇总当前操作。
+     * @param filters 筛选条件参数。
+     * @return 当前操作得到的记录集合。
+     */
     List<Map<String, Object>> aggregate(Map<String, Object> filters);
 }

@@ -3,6 +3,10 @@
  * 主要导出：AssistantAudio。
  */
 export class AssistantAudio {
+  /**
+   * 初始化当前实例及其所需状态。
+   * 入参：解构参数（onAudioFrame、onLevelChange）。
+   */
   constructor({ onAudioFrame, onLevelChange } = {}) {
     this.onAudioFrame = onAudioFrame
     this.onLevelChange = onLevelChange
@@ -12,6 +16,9 @@ export class AssistantAudio {
     this.processor = null
   }
 
+  /**
+   * 启动Capture。
+   */
   async startCapture() {
     if (this.mediaStream) return
 
@@ -29,7 +36,7 @@ export class AssistantAudio {
     }
     this.source = this.audioContext.createMediaStreamSource(this.mediaStream)
     this.processor = this.audioContext.createScriptProcessor(4096, 1, 1)
-    this.processor.onaudioprocess = (event) => {
+    this.processor.onaudioprocess = /** 处理当前调用传入的回调逻辑。 入参：event。 */ (event) => {
       const input = event.inputBuffer.getChannelData(0)
       this.onLevelChange?.(this.calculateLevel(input))
       const pcm16 = this.toPcm16(input, this.audioContext.sampleRate, 16000)
@@ -41,6 +48,9 @@ export class AssistantAudio {
     this.processor.connect(this.audioContext.destination)
   }
 
+  /**
+   * 停止Capture。
+   */
   stopCapture() {
     if (this.processor) {
       this.processor.disconnect()
@@ -52,7 +62,7 @@ export class AssistantAudio {
       this.source = null
     }
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach((track) => track.stop())
+      this.mediaStream.getTracks().forEach(/** 处理遍历到的当前条目。 入参：track。 */ (track) => track.stop())
       this.mediaStream = null
     }
     if (this.audioContext) {
@@ -62,10 +72,18 @@ export class AssistantAudio {
     this.onLevelChange?.(0)
   }
 
+  /**
+   * 销毁当前操作。
+   */
   destroy() {
     this.stopCapture()
   }
 
+  /**
+   * 计算Level。
+   * 入参：samples（samples）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   calculateLevel(samples) {
     let sum = 0
     for (let index = 0; index < samples.length; index += 1) {
@@ -74,6 +92,11 @@ export class AssistantAudio {
     return Math.sqrt(sum / samples.length)
   }
 
+  /**
+   * 转换为Pcm16。
+   * 入参：samples（samples）；sourceRate（来源Rate）；targetRate（目标Rate）。
+   * @returns pcm 的当前值。
+   */
   toPcm16(samples, sourceRate, targetRate) {
     const ratio = sourceRate / targetRate
     const length = Math.floor(samples.length / ratio)

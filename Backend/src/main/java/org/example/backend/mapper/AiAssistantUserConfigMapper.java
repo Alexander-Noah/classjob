@@ -10,7 +10,17 @@ import org.example.backend.entity.AiAssistantUserConfigEntity;
 
 @Mapper
 public interface AiAssistantUserConfigMapper {
+    /**
+     * 获取By用户标识。
+     * @param userId 用户标识参数。
+     * @return AiAssistantUserConfigEntity 类型的处理结果。
+     */
     AiAssistantUserConfigEntity getByUserId(@Param("userId") Integer userId);
 
+    /**
+     * upsert配置的处理逻辑。
+     * @param config 配置参数。
+     * @return int 类型的处理结果。
+     */
     int upsertConfig(AiAssistantUserConfigEntity config);
 }

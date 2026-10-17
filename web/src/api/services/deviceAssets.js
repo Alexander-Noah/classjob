@@ -79,10 +79,28 @@ const MOCK_RECORDS = [
   },
 ]
 
+/**
+ * 复制当前操作。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const clone = (value) => JSON.parse(JSON.stringify(value))
+/**
+ * 裁剪文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const trimText = (value) => String(value ?? '').trim()
-const pick = (...values) => values.find((value) => trimText(value)) ?? ''
+/**
+ * pick的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const pick = (...values) => values.find(/** 判断当前条目是否为查找目标。 入参：value。 */ (value) => trimText(value)) ?? ''
 
+/**
+ * 读取本地记录集合。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readLocalRecords = () => {
   if (typeof window === 'undefined') return clone(MOCK_RECORDS)
 
@@ -94,11 +112,20 @@ const readLocalRecords = () => {
   }
 }
 
+/**
+ * 写入本地记录集合。
+ * 入参：records（记录集合）。
+ */
 const writeLocalRecords = (records) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(DEVICE_STORAGE_KEY, JSON.stringify(records))
 }
 
+/**
+ * 读取Stored记录集合。
+ * 入参：storageKey（storage键）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readStoredRecords = (storageKey) => {
   if (typeof window === 'undefined') return []
 
@@ -110,13 +137,27 @@ const readStoredRecords = (storageKey) => {
   }
 }
 
+/**
+ * 写入Stored记录集合。
+ * 入参：storageKey（storage键）；records（记录集合）。
+ */
 const writeStoredRecords = (storageKey, records) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(storageKey, JSON.stringify(records))
 }
 
+/**
+ * unwrap载荷的处理逻辑。
+ * 入参：response（响应）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const unwrapPayload = (response) => response?.data?.data ?? response?.data ?? response
 
+/**
+ * 归一化列表载荷。
+ * 入参：payload（载荷）。
+ * @returns 组装的键值对象。
+ */
 const normalizeListPayload = (payload) => {
   const value = unwrapPayload(payload)
   if (Array.isArray(value?.records)) return { records: value.records, total: Number(value.total ?? value.records.length) }
@@ -125,6 +166,11 @@ const normalizeListPayload = (payload) => {
   return { records: [], total: 0 }
 }
 
+/**
+ * 归一化库存载荷。
+ * 入参：payload（载荷）；fallbackRecord（fallback记录）。
+ * @returns 组装的键值对象。
+ */
 const normalizeInventoryPayload = (payload, fallbackRecord) => {
   const value = unwrapPayload(payload) || {}
   return {
@@ -134,6 +180,11 @@ const normalizeInventoryPayload = (payload, fallbackRecord) => {
   }
 }
 
+/**
+ * 归一化Transfer载荷。
+ * 入参：payload（载荷）；fallbackRecord（fallback记录）。
+ * @returns 组装的键值对象。
+ */
 const normalizeTransferPayload = (payload, fallbackRecord) => {
   const value = unwrapPayload(payload) || {}
   return {
@@ -143,6 +194,11 @@ const normalizeTransferPayload = (payload, fallbackRecord) => {
   }
 }
 
+/**
+ * 归一化设备资产。
+ * 入参：device（设备）。
+ * @returns 组装的键值对象。
+ */
 export function normalizeDeviceAsset(device = {}) {
   const assetNo = pick(device.assetNo, device.asset_no, device.deviceCode, device.code)
   const deviceName = pick(device.deviceName, device.device_name, device.name)
@@ -169,6 +225,11 @@ export function normalizeDeviceAsset(device = {}) {
   }
 }
 
+/**
+ * 解析分类。
+ * 入参：deviceName（设备名称）。
+ * @returns 文本结果。
+ */
 export function resolveCategory(deviceName = '') {
   const text = trimText(deviceName)
   if (/电脑|主机|工作站|计算机|服务器/i.test(text)) return '计算终端'
@@ -178,6 +239,10 @@ export function resolveCategory(deviceName = '') {
   return '其他设备'
 }
 
+/**
+ * 创建空值设备资产。
+ * @returns 组装的键值对象。
+ */
 export function createEmptyDeviceAsset() {
   return {
     id: '',
@@ -196,6 +261,11 @@ export function createEmptyDeviceAsset() {
   }
 }
 
+/**
+ * 转换为设备资产载荷。
+ * 入参：device（设备）。
+ * @returns 组装的键值对象。
+ */
 export function toDeviceAssetPayload(device = {}) {
   const normalized = normalizeDeviceAsset(device)
   return {
@@ -221,13 +291,18 @@ export function toDeviceAssetPayload(device = {}) {
   }
 }
 
+/**
+ * 筛选记录集合。
+ * 入参：records（记录集合）；params（参数）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const filterRecords = (records, params = {}) => {
   const keyword = trimText(params.keyword).toLowerCase()
-  return records.filter((record) => {
+  return records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => {
     const device = normalizeDeviceAsset(record)
     const keywordMatched =
       !keyword ||
-      [device.assetNo, device.deviceName].some((value) => trimText(value).toLowerCase().includes(keyword))
+      [device.assetNo, device.deviceName].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => trimText(value).toLowerCase().includes(keyword))
     const labMatched =
       (!params.labId && !params.labName) ||
       (params.labId && String(device.labId) === String(params.labId)) ||
@@ -243,6 +318,11 @@ export const deviceAssetService = {
   categoryOptions: CATEGORY_OPTIONS,
   tableColumns: TABLE_COLUMNS,
 
+  /**
+   * 列出当前操作。
+   * 入参：params（参数）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async list(params = {}) {
     const { fallbackRecords = [], ...queryParams } = params || {}
 
@@ -259,6 +339,11 @@ export const deviceAssetService = {
     }
   },
 
+  /**
+   * 页码的处理逻辑。
+   * 入参：params（参数）。
+   * @returns 组装的键值对象。
+   */
   async page(params = {}) {
     if (API_USE_MOCK) {
       const pageNum = Number(params.pageNum || 1)
@@ -279,6 +364,10 @@ export const deviceAssetService = {
     }
   },
 
+  /**
+   * stats的处理逻辑。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async stats() {
     if (API_USE_MOCK) {
       return calculateDeviceAssetStats(readLocalRecords().map(normalizeDeviceAsset))
@@ -287,14 +376,24 @@ export const deviceAssetService = {
     return unwrapPayload(await http.get(API_ENDPOINTS.devices.stats))
   },
 
+  /**
+   * 详情的处理逻辑。
+   * 入参：id（标识）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async detail(id) {
     if (API_USE_MOCK) {
-      return normalizeDeviceAsset(readLocalRecords().find((record) => String(record.id) === String(id)))
+      return normalizeDeviceAsset(readLocalRecords().find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => String(record.id) === String(id)))
     }
 
     return normalizeDeviceAsset(unwrapPayload(await http.get(API_ENDPOINTS.devices.detail(id))))
   },
 
+  /**
+   * 创建当前操作。
+   * 入参：payload（载荷）；labOptions（实验室选项）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async create(payload, labOptions = []) {
     const matchedLab = matchDeviceLab(payload, labOptions)
     const nextDevice = toDeviceAssetPayload(applyDeviceLabBinding(payload, matchedLab))
@@ -313,36 +412,50 @@ export const deviceAssetService = {
     return normalizeDeviceAsset(unwrapPayload(await http.post(API_ENDPOINTS.devices.list, nextDevice)))
   },
 
+  /**
+   * 更新当前操作。
+   * 入参：id（标识）；payload（载荷）；labOptions（实验室选项）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async update(id, payload, labOptions = []) {
     const matchedLab = matchDeviceLab(payload, labOptions)
     const nextDevice = toDeviceAssetPayload(applyDeviceLabBinding({ ...payload, id }, matchedLab))
 
     if (API_USE_MOCK) {
-      const records = readLocalRecords().map((record) =>
+      const records = readLocalRecords().map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) =>
         String(record.id) === String(id) ? normalizeDeviceAsset({ ...record, ...nextDevice, id }) : record,
       )
       writeLocalRecords(records)
-      return normalizeDeviceAsset(records.find((record) => String(record.id) === String(id)))
+      return normalizeDeviceAsset(records.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => String(record.id) === String(id)))
     }
 
     return normalizeDeviceAsset(unwrapPayload(await http.put(API_ENDPOINTS.devices.detail(id), nextDevice)))
   },
 
+  /**
+   * 移除当前操作。
+   * 入参：id（标识）。
+   */
   async remove(id) {
     if (API_USE_MOCK) {
-      writeLocalRecords(readLocalRecords().filter((record) => String(record.id) !== String(id)))
+      writeLocalRecords(readLocalRecords().filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.id) !== String(id)))
       return
     }
 
     await http.delete(API_ENDPOINTS.devices.detail(id))
   },
 
+  /**
+   * 导入文件。
+   * 入参：file（文件）；labOptions（实验室选项）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async importFile(file, labOptions = []) {
     if (!file) return { count: 0 }
 
     if (API_USE_MOCK) {
       const rows = await readSpreadsheetRows(file)
-      const imported = rows.map((row) => {
+      const imported = rows.map(/** 将当前条目转换为目标结果。 入参：row。 */ (row) => {
         const device = normalizeDeviceAsset({
           assetNo: row.资产编号 || row.assetNo,
           deviceName: row.设备名称 || row.deviceName || row.主要设备名称,
@@ -369,6 +482,12 @@ export const deviceAssetService = {
     }))
   },
 
+  /**
+   * 导出当前操作。
+   * 涉及：分配对象 URL，须配套释放。
+   * 入参：params（参数）。
+   * @returns 组装的键值对象。
+   */
   async export(params = {}) {
     if (API_USE_MOCK) {
       const rows = filterRecords(readLocalRecords(), params).map(normalizeDeviceAsset)
@@ -394,15 +513,25 @@ export const deviceAssetService = {
     return { count: 0 }
   },
 
+  /**
+   * 列出库存记录集合。
+   * 入参：params（参数）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async listInventoryRecords(params = {}) {
     if (API_USE_MOCK) {
       const records = readStoredRecords(INVENTORY_RECORD_STORAGE_KEY)
-      return params.deviceId ? records.filter((record) => String(record.deviceId) === String(params.deviceId)) : records
+      return params.deviceId ? records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.deviceId) === String(params.deviceId)) : records
     }
 
     return unwrapPayload(await http.get(API_ENDPOINTS.deviceInventoryRecords.list, { params }))
   },
 
+  /**
+   * 创建库存记录。
+   * 入参：deviceId（设备标识）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async createInventoryRecord(deviceId, payload = {}) {
     const nextRecord = clone({ ...payload, deviceId })
 
@@ -416,7 +545,7 @@ export const deviceAssetService = {
       return {
         device: null,
         record: savedRecord,
-        records: records.filter((record) => String(record.deviceId) === String(deviceId)),
+        records: records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.deviceId) === String(deviceId)),
       }
     }
 
@@ -425,15 +554,25 @@ export const deviceAssetService = {
     return normalizeInventoryPayload(await http.post(API_ENDPOINTS.devices.inventory(deviceId), serverRecord), nextRecord)
   },
 
+  /**
+   * 列出Transfer记录集合。
+   * 入参：params（参数）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async listTransferRecords(params = {}) {
     if (API_USE_MOCK) {
       const records = readStoredRecords(DEVICE_TRANSFER_RECORD_STORAGE_KEY)
-      return params.deviceId ? records.filter((record) => String(record.deviceId) === String(params.deviceId)) : records
+      return params.deviceId ? records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.deviceId) === String(params.deviceId)) : records
     }
 
     return unwrapPayload(await http.get(API_ENDPOINTS.deviceTransferRecords.list, { params }))
   },
 
+  /**
+   * 调拨当前操作。
+   * 入参：deviceId（设备标识）；payload（载荷）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async transfer(deviceId, payload = {}) {
     const nextRecord = clone({ ...payload, deviceId })
 
@@ -458,11 +597,11 @@ export const deviceAssetService = {
 
       const records = [savedRecord, ...readStoredRecords(DEVICE_TRANSFER_RECORD_STORAGE_KEY)]
       writeStoredRecords(DEVICE_TRANSFER_RECORD_STORAGE_KEY, records)
-      writeLocalRecords(readLocalRecords().map((device) => (String(device.id) === String(deviceId) ? savedDevice : device)))
+      writeLocalRecords(readLocalRecords().map(/** 将当前条目转换为目标结果。 入参：device。 */ (device) => (String(device.id) === String(deviceId) ? savedDevice : device)))
       return {
         device: savedDevice,
         record: savedRecord,
-        records: records.filter((record) => String(record.deviceId) === String(deviceId)),
+        records: records.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => String(record.deviceId) === String(deviceId)),
       }
     }
 
@@ -472,6 +611,10 @@ export const deviceAssetService = {
     return normalizeTransferPayload(await http.post(API_ENDPOINTS.devices.transfer(deviceId), serverRecord), nextRecord)
   },
 
+  /**
+   * 下载模板。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   downloadTemplate() {
     return exportTableToExcel({
       filename: '设备资产导入模板',

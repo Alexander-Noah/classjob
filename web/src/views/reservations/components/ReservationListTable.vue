@@ -13,6 +13,10 @@ defineOptions({
 defineProps({
   reservations: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   rowOffset: {
@@ -31,6 +35,11 @@ const actionLabels = {
   delete: '删除',
 }
 
+/**
+ * 获取Tooltip内容。
+ * 入参：row（行）；action（action）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTooltipContent = (row, action) => getActionDisabledReason(row, action) || actionLabels[action]
 </script>
 

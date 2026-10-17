@@ -27,6 +27,10 @@ type LoginResponse = {
   }
 }
 
+/**
+ * 读取会话认证。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function readSessionAuth(): AuthSession | null {
   if (typeof window === 'undefined') return null
   try {
@@ -44,24 +48,34 @@ function readSessionAuth(): AuthSession | null {
   }
 }
 
+/**
+ * 写入会话认证。
+ * 入参：session（会话）。
+ */
 function writeSessionAuth(session: AuthSession) {
   if (typeof window === 'undefined') return
   window.sessionStorage.setItem(AUTH_KEY, JSON.stringify(session))
 }
 
+/**
+ * 清理会话认证。
+ */
 function clearSessionAuth() {
   if (typeof window === 'undefined') return
   window.sessionStorage.removeItem(AUTH_KEY)
 }
 
-export const useAuthStore = defineStore('auth', () => {
+export const useAuthStore = defineStore('auth', /** 处理 defineStore 调用中的回调逻辑。 */ () => {
   const isAuthenticated = ref(false)
   const username = ref('')
   const authenticatedDisplayName = ref('')
   const hydrated = ref(false)
 
-  const displayName = computed(() => authenticatedDisplayName.value || username.value || '未登录')
+  const displayName = computed(/** 计算派生状态。 */ () => authenticatedDisplayName.value || username.value || '未登录')
 
+  /**
+   * hydrate的处理逻辑。
+   */
   function hydrate() {
     if (hydrated.value) return
     hydrated.value = true
@@ -75,6 +89,11 @@ export const useAuthStore = defineStore('auth', () => {
     authenticatedDisplayName.value = session.displayName
   }
 
+  /**
+   * 登录的处理逻辑。
+   * 入参：inputUsername（输入Username）；inputPassword（输入密码）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   async function login(inputUsername: string, inputPassword: string) {
     const normalizedUsername = inputUsername.trim()
 
@@ -103,6 +122,9 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
+  /**
+   * 退出登录的处理逻辑。
+   */
   async function logout() {
     try {
       if (isAuthenticated.value) {

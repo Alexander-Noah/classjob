@@ -13,6 +13,9 @@ public record ScheduleOccupancyRequest(
         LocalTime endsAt,
         Set<String> laboratoryAliases
 ) {
+    /**
+     * 构造 ScheduleOccupancyRequest，初始化当前实例。
+     */
     public ScheduleOccupancyRequest {
         laboratoryAliases = laboratoryAliases == null ? Set.of() : Set.copyOf(laboratoryAliases);
     }

@@ -12,6 +12,10 @@ defineOptions({
 defineProps({
   actions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   badge: {

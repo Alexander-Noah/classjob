@@ -24,10 +24,20 @@ public class AiConversationServiceImpl implements AiConversationService {
     private final AiConversationMapper conversationMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * 构造 AiConversationServiceImpl，初始化当前实例。
+     * @param conversationMapper 会话数据映射器参数。
+     */
     public AiConversationServiceImpl(AiConversationMapper conversationMapper) {
         this.conversationMapper = conversationMapper;
     }
 
+    /**
+     * 列出会话。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listConversations(Integer userId) {
@@ -37,6 +47,13 @@ public class AiConversationServiceImpl implements AiConversationService {
                 .toList();
     }
 
+    /**
+     * 保存会话。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param conversations 会话参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<Map<String, Object>> saveConversations(Integer userId, List<Map<String, Object>> conversations) {
@@ -48,12 +65,18 @@ public class AiConversationServiceImpl implements AiConversationService {
 
         conversations.stream()
                 .limit(MAX_HISTORY_COUNT)
-                .map((conversation) -> toEntity(userId, conversation))
+                .map(/** 将当前条目转换为目标结果。 入参：conversation。 */ (conversation) -> toEntity(userId, conversation))
                 .forEach(conversationMapper::upsertConversation);
         conversationMapper.trimUserConversations(userId, MAX_HISTORY_COUNT);
         return listConversations(userId);
     }
 
+    /**
+     * 删除会话。
+     * 涉及：写入数据库；通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param conversationId 会话标识参数。
+     */
     @Override
     @Transactional
     public void deleteConversation(Integer userId, String conversationId) {
@@ -65,12 +88,22 @@ public class AiConversationServiceImpl implements AiConversationService {
         conversationMapper.deleteByUserAndConversationId(userId, conversationId);
     }
 
+    /**
+     * 要求提供用户标识。
+     * @param userId 用户标识参数。
+     */
     private void requireUserId(Integer userId) {
         if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("登录状态无效，请重新登录");
         }
     }
 
+    /**
+     * 转换为Entity。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return AiConversationEntity 类型的处理结果。
+     */
     private AiConversationEntity toEntity(Integer userId, Map<String, Object> payload) {
         Map<String, Object> conversation = payload == null ? Map.of() : payload;
         String conversationId = trimToNull(stringValue(conversation.get("id")));
@@ -91,6 +124,11 @@ public class AiConversationServiceImpl implements AiConversationService {
         return entity;
     }
 
+    /**
+     * 转换为响应。
+     * @param entity entity参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> toResponse(AiConversationEntity entity) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("id", entity.getConversationId());
@@ -101,6 +139,11 @@ public class AiConversationServiceImpl implements AiConversationService {
         return response;
     }
 
+    /**
+     * 写入消息。
+     * @param messages 消息参数。
+     * @return String 类型的处理结果。
+     */
     private String writeMessages(List<?> messages) {
         try {
             return objectMapper.writeValueAsString(messages == null ? List.of() : messages);
@@ -109,6 +152,11 @@ public class AiConversationServiceImpl implements AiConversationService {
         }
     }
 
+    /**
+     * 读取消息。
+     * @param messagesJson 消息JSON参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> readMessages(String messagesJson) {
         if (messagesJson == null || messagesJson.isBlank()) {
             return List.of();
@@ -122,10 +170,20 @@ public class AiConversationServiceImpl implements AiConversationService {
         }
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
     }
 
+    /**
+     * 裁剪目标Null。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String trimToNull(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -133,6 +191,10 @@ public class AiConversationServiceImpl implements AiConversationService {
         return value.trim();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             String trimmed = trimToNull(value);
@@ -143,6 +205,12 @@ public class AiConversationServiceImpl implements AiConversationService {
         return "";
     }
 
+    /**
+     * 数值值的处理逻辑。
+     * @param value 值参数。
+     * @param fallback fallback参数。
+     * @return long 类型的处理结果。
+     */
     private long numberValue(Object value, long fallback) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -154,6 +222,12 @@ public class AiConversationServiceImpl implements AiConversationService {
         }
     }
 
+    /**
+     * 上限的处理逻辑。
+     * @param value 值参数。
+     * @param maxLength max长度参数。
+     * @return String 类型的处理结果。
+     */
     private String limit(String value, int maxLength) {
         String text = firstNonBlank(value);
         if (text.length() <= maxLength) {

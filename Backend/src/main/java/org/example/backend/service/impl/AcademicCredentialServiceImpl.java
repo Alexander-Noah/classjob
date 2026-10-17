@@ -30,6 +30,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
     private final ClassTimetableMapper classTimetableMapper;
     private final SecretKeySpec secretKey;
 
+    /**
+     * 构造 AcademicCredentialServiceImpl，初始化当前实例。
+     * @param classTimetableMapper class课表数据映射器参数。
+     * @param secret 秘密配置参数。
+     */
     public AcademicCredentialServiceImpl(
             ClassTimetableMapper classTimetableMapper,
             @Value("${academic.credentials.secret:${ACADEMIC_CREDENTIAL_SECRET:}}") String secret
@@ -38,6 +43,12 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         this.secretKey = buildSecretKey(requireStrongSecret(secret, "ACADEMIC_CREDENTIAL_SECRET"));
     }
 
+    /**
+     * 要求提供Strong秘密配置。
+     * @param value 值参数。
+     * @param name 名称参数。
+     * @return String 类型的处理结果。
+     */
     private String requireStrongSecret(String value, String name) {
         String secret = value == null ? "" : value.trim();
         if (secret.isBlank()) {
@@ -52,6 +63,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return secret;
     }
 
+    /**
+     * 保存凭据。
+     * @param request 请求参数。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     @Override
     public synchronized AcademicCredentialView saveCredential(AcademicScheduleImportRequest request) {
         String credentialKey = resolveCredentialKey(request);
@@ -67,18 +83,31 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return getCredentialView(credentialKey);
     }
 
+    /**
+     * 获取凭据视图。
+     * @param credentialKey 凭据键参数。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     @Override
     public synchronized AcademicCredentialView getCredentialView(String credentialKey) {
         String resolvedKey = normalizeCredentialKey(credentialKey);
         return toView(resolvedKey, classTimetableMapper.getCrawlerCredential(resolvedKey));
     }
 
+    /**
+     * 删除凭据。
+     * @param credentialKey 凭据键参数。
+     */
     @Override
     public synchronized void deleteCredential(String credentialKey) {
         String resolvedKey = normalizeCredentialKey(credentialKey);
         classTimetableMapper.deleteCrawlerCredential(resolvedKey);
     }
 
+    /**
+     * 应用Saved凭据。
+     * @param request 请求参数。
+     */
     @Override
     /** 仅在服务内部执行导入前还原凭据，不将解密后的密码作为接口响应返回。 */
     public synchronized void applySavedCredential(AcademicScheduleImportRequest request) {
@@ -96,6 +125,12 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         request.setPassword(decrypt(passwordCipher));
     }
 
+    /**
+     * 转换为视图。
+     * @param credentialKey 凭据键参数。
+     * @param credential 凭据参数。
+     * @return AcademicCredentialView 类型的处理结果。
+     */
     private AcademicCredentialView toView(String credentialKey, Map<String, Object> credential) {
         AcademicCredentialView view = new AcademicCredentialView();
         view.setCredentialKey(credentialKey);
@@ -112,6 +147,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return view;
     }
 
+    /**
+     * 加密当前操作。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String encrypt(String value) {
         try {
             // 每次加密生成独立随机 IV，同一账号的多次保存也不会产生相同密文。
@@ -129,6 +169,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         }
     }
 
+    /**
+     * 解密当前操作。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String decrypt(String value) {
         try {
             byte[] payload = Base64.getDecoder().decode(value);
@@ -144,6 +189,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         }
     }
 
+    /**
+     * 构建秘密配置键。
+     * @param secret 秘密配置参数。
+     * @return SecretKeySpec 类型的处理结果。
+     */
     private SecretKeySpec buildSecretKey(String secret) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -154,10 +204,20 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         }
     }
 
+    /**
+     * 解析凭据键。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveCredentialKey(AcademicScheduleImportRequest request) {
         return normalizeCredentialKey(request == null ? null : request.getCredentialKey());
     }
 
+    /**
+     * 归一化凭据键。
+     * @param credentialKey 凭据键参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeCredentialKey(String credentialKey) {
         if (isBlank(credentialKey)) {
             return "default";
@@ -165,6 +225,11 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return credentialKey.replaceAll("[^a-zA-Z0-9_.-]", "_");
     }
 
+    /**
+     * maskUsername的处理逻辑。
+     * @param username username参数。
+     * @return String 类型的处理结果。
+     */
     private String maskUsername(String username) {
         if (isBlank(username)) {
             return "";
@@ -175,10 +240,20 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
         return username.substring(0, 2) + "****" + username.substring(username.length() - 2);
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value);
     }

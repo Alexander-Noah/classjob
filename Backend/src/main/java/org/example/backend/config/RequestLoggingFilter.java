@@ -20,6 +20,14 @@ import java.util.UUID;
 public class RequestLoggingFilter extends OncePerRequestFilter {
     private static final String REQUEST_ID = "requestId";
 
+    /**
+     * 执行筛选条件Internal。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param filterChain 筛选条件Chain参数。
+     * @throws ServletException 当前调用无法继续完成时抛出。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -51,6 +59,11 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * 获取OrCreate请求标识。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String getOrCreateRequestId(HttpServletRequest request) {
         String requestId = request.getHeader("X-Request-Id");
         if (requestId == null || requestId.isBlank()) {
@@ -59,6 +72,11 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return requestId;
     }
 
+    /**
+     * 获取客户端Ip。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String getClientIp(HttpServletRequest request) {
         String forwardedFor = request.getHeader("X-Forwarded-For");
         if (forwardedFor != null && !forwardedFor.isBlank()) {
@@ -73,6 +91,11 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
+    /**
+     * mask查询的处理逻辑。
+     * @param query 查询参数。
+     * @return String 类型的处理结果。
+     */
     private String maskQuery(String query) {
         if (query == null || query.isBlank()) {
             return query;
@@ -96,6 +119,11 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return limitLength(masked.toString(), 500);
     }
 
+    /**
+     * 判断是否为Sensitive键。
+     * @param key 键参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isSensitiveKey(String key) {
         String normalizedKey = key == null ? "" : key.toLowerCase();
         return normalizedKey.contains("token")
@@ -105,6 +133,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                 || normalizedKey.contains("authorization");
     }
 
+    /**
+     * 上限长度的处理逻辑。
+     * @param value 值参数。
+     * @param maxLength max长度参数。
+     * @return String 类型的处理结果。
+     */
     private String limitLength(String value, int maxLength) {
         if (value == null || value.length() <= maxLength) {
             return value;

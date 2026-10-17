@@ -5,9 +5,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useThemeStore = defineStore('theme', () => {
+export const useThemeStore = defineStore('theme', /** 处理 defineStore 调用中的回调逻辑。 */ () => {
   const isDark = ref(false)
 
+  /**
+   * 切换主题。
+   */
   function toggleTheme() {
     isDark.value = !isDark.value
   }

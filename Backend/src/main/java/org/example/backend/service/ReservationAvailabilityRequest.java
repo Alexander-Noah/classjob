@@ -25,6 +25,9 @@ public record ReservationAvailabilityRequest(
         Integer attendeeCount,
         Long excludingReservationId
 ) {
+    /**
+     * 构造 ReservationAvailabilityRequest，初始化当前实例。
+     */
     public ReservationAvailabilityRequest {
         if (labId == null || labId <= 0) {
             throw new IllegalArgumentException("Reservation availability requires a positive laboratory id");

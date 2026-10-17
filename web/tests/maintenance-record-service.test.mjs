@@ -6,9 +6,14 @@ import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('maintenance record endpoints expose only CRUD paths', async () => {
+test('maintenance record endpoints expose only CRUD paths', /** 验证当前测试用例的预期行为。 */ async () => {
   const { API_ENDPOINTS } = await import('../src/api/endpoints.js')
   const maintenanceEndpoints = API_ENDPOINTS.maintenanceRecords
 
@@ -18,7 +23,7 @@ test('maintenance record endpoints expose only CRUD paths', async () => {
   assert.doesNotMatch(JSON.stringify(maintenanceEndpoints), /assign|accept|complete|close|escalate/i)
 })
 
-test('maintenance record model maps legacy repair fields to the Task 1 DTO', async () => {
+test('maintenance record model maps legacy repair fields to the Task 1 DTO', /** 验证当前测试用例的预期行为。 */ async () => {
   const { normalizeMaintenanceRecord } = await import('../src/modules/maintenance-records/maintenanceRecordModel.js')
 
   assert.deepEqual(
@@ -55,7 +60,7 @@ test('maintenance record model maps legacy repair fields to the Task 1 DTO', asy
   )
 })
 
-test('maintenance record service delegates CRUD to the server and normalizes responses', async () => {
+test('maintenance record service delegates CRUD to the server and normalizes responses', /** 验证当前测试用例的预期行为。 */ async () => {
   const serviceSource = readSource('../src/api/services/maintenanceRecords.js')
   assert.doesNotMatch(serviceSource, /useRepairManagement|localStorage|sessionStorage|API_USE_MOCK/)
   assert.doesNotMatch(serviceSource, /assign|accept|complete|close|escalate/i)

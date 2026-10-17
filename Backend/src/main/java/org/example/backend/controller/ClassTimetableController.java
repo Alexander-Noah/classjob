@@ -24,6 +24,10 @@ import java.util.Map;
 public class ClassTimetableController {
     private final ClassTimetableService classTimetableService;
 
+    /**
+     * 构造 ClassTimetableController，初始化当前实例。
+     * @param classTimetableService class课表服务参数。
+     */
     public ClassTimetableController(ClassTimetableService classTimetableService) {
         this.classTimetableService = classTimetableService;
     }
@@ -35,6 +39,10 @@ public class ClassTimetableController {
         return Result.success(classTimetableService.triggerCrawler());
     }
 
+    /**
+     * 获取Crawler配置。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/class-timetables/crawler-config")
     public Result getCrawlerConfig() {
         return Result.success(classTimetableService.getCrawlerConfig());
@@ -47,6 +55,11 @@ public class ClassTimetableController {
         return Result.success(classTimetableService.saveCrawlerConfig(payload));
     }
 
+    /**
+     * 列出CrawlerTasks。
+     * @param limit 上限参数。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/class-timetables/crawler-tasks")
     public Result listCrawlerTasks(@RequestParam(required = false) Integer limit) {
         return Result.success(classTimetableService.listCrawlerTasks(limit));
@@ -59,17 +72,30 @@ public class ClassTimetableController {
         return Result.success(true);
     }
 
+    /**
+     * 获取Crawler凭据。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/class-timetables/credential")
     public Result getCrawlerCredential() {
         return Result.success(classTimetableService.getCrawlerCredential());
     }
 
+    /**
+     * 保存Crawler凭据。
+     * @param payload 载荷参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/class-timetables/credential")
     public Result saveCrawlerCredential(@RequestBody Map<String, String> payload) {
         log.info("保存课表爬虫教务账号");
         return Result.success(classTimetableService.saveCrawlerCredential(payload));
     }
 
+    /**
+     * 删除Crawler凭据。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/class-timetables/credential")
     public Result deleteCrawlerCredential() {
         log.info("删除课表爬虫教务账号");

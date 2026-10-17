@@ -10,9 +10,25 @@ import org.example.backend.entity.TeacherHostEntity;
 
 @Mapper
 public interface TeacherHostMapper {
+    /**
+     * upsertHeartbeat的处理逻辑。
+     * @param host 主机参数。
+     * @return int 类型的处理结果。
+     */
     int upsertHeartbeat(TeacherHostEntity host);
 
+    /**
+     * 选择当前By实验室标识。
+     * @param labId 实验室标识参数。
+     * @return TeacherHostEntity 类型的处理结果。
+     */
     TeacherHostEntity selectCurrentByLabId(@Param("labId") Long labId);
 
+    /**
+     * 标记Offline。
+     * @param teacherDeviceId 教师设备标识参数。
+     * @param labId 实验室标识参数。
+     * @return int 类型的处理结果。
+     */
     int markOffline(@Param("teacherDeviceId") String teacherDeviceId, @Param("labId") Long labId);
 }

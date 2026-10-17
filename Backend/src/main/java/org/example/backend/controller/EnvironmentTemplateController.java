@@ -28,34 +28,63 @@ import java.util.List;
 public class EnvironmentTemplateController {
     private final EnvironmentTemplateService environmentTemplateService;
 
+    /**
+     * 构造 EnvironmentTemplateController，初始化当前实例。
+     * @param environmentTemplateService 环境模板服务参数。
+     */
     public EnvironmentTemplateController(EnvironmentTemplateService environmentTemplateService) {
         this.environmentTemplateService = environmentTemplateService;
     }
 
+    /**
+     * 列出模板。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping
     public Result listTemplates() {
         log.info("获取环境模板列表");
         return Result.success("获取环境模板列表成功", environmentTemplateService.listTemplates());
     }
 
+    /**
+     * 创建模板。
+     * @param template 模板参数。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping
     public Result createTemplate(@RequestBody EnvironmentTemplateEntity template) {
         log.info("新增环境模板");
         return Result.success("新增环境模板成功", environmentTemplateService.createTemplate(template));
     }
 
+    /**
+     * 更新模板。
+     * @param id 标识参数。
+     * @param template 模板参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/{id}")
     public Result updateTemplate(@PathVariable Long id, @RequestBody EnvironmentTemplateEntity template) {
         log.info("更新环境模板: {}", id);
         return Result.success("更新环境模板成功", environmentTemplateService.updateTemplate(id, template));
     }
 
+    /**
+     * 删除模板。
+     * @param id 标识参数。
+     * @return Result 类型的处理结果。
+     */
     @DeleteMapping("/{id}")
     public Result deleteTemplate(@PathVariable Long id) {
         log.info("删除环境模板: {}", id);
         return Result.success("删除环境模板成功", environmentTemplateService.deleteTemplate(id));
     }
 
+    /**
+     * replace模板的处理逻辑。
+     * @param request 请求参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/batch")
     public Result replaceTemplates(@RequestBody EnvironmentTemplateBatchRequest request) {
         List<EnvironmentTemplateEntity> templates = request == null || request.getRecords() == null
@@ -66,6 +95,10 @@ public class EnvironmentTemplateController {
         return Result.success("保存环境模板成功", environmentTemplateService.replaceTemplates(templates));
     }
 
+    /**
+     * 重置模板。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/reset")
     public Result resetTemplates() {
         log.info("重置环境模板");
@@ -77,6 +110,10 @@ public class EnvironmentTemplateController {
         private String resource;
         private List<EnvironmentTemplateEntity> records;
     }
+    /**
+     * 列出教师。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/teachers")
     public Result listTeachers() {
         log.info("获取教师列表");

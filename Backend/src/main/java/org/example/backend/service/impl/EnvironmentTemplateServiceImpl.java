@@ -21,16 +21,31 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
     private final EnvironmentTemplateMapper environmentTemplateMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 EnvironmentTemplateServiceImpl，初始化当前实例。
+     * @param environmentTemplateMapper 环境模板数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public EnvironmentTemplateServiceImpl(EnvironmentTemplateMapper environmentTemplateMapper, BusinessLoopService businessLoopService) {
         this.environmentTemplateMapper = environmentTemplateMapper;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出模板。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<EnvironmentTemplateEntity> listTemplates() {
         return environmentTemplateMapper.listTemplates();
     }
 
+    /**
+     * 创建模板。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param template 模板参数。
+     * @return EnvironmentTemplateEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public EnvironmentTemplateEntity createTemplate(EnvironmentTemplateEntity template) {
@@ -40,6 +55,13 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return environmentTemplateMapper.getTemplate(nextTemplate.getId());
     }
 
+    /**
+     * 更新模板。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param template 模板参数。
+     * @return EnvironmentTemplateEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public EnvironmentTemplateEntity updateTemplate(Long id, EnvironmentTemplateEntity template) {
@@ -51,6 +73,12 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return savedTemplate;
     }
 
+    /**
+     * 删除模板。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<EnvironmentTemplateEntity> deleteTemplate(Long id) {
@@ -59,6 +87,12 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return environmentTemplateMapper.listTemplates();
     }
 
+    /**
+     * replace模板的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param templates 模板参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<EnvironmentTemplateEntity> replaceTemplates(List<EnvironmentTemplateEntity> templates) {
@@ -73,6 +107,11 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return environmentTemplateMapper.listTemplates();
     }
 
+    /**
+     * 重置模板。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     @Transactional
     public List<EnvironmentTemplateEntity> resetTemplates() {
@@ -85,6 +124,11 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return environmentTemplateMapper.listTemplates();
     }
 
+    /**
+     * 归一化模板。
+     * @param template 模板参数。
+     * @return EnvironmentTemplateEntity 类型的处理结果。
+     */
     private EnvironmentTemplateEntity normalizeTemplate(EnvironmentTemplateEntity template) {
         EnvironmentTemplateEntity normalizedTemplate = template == null ? new EnvironmentTemplateEntity() : template;
         if (normalizedTemplate.getName() == null || normalizedTemplate.getName().isBlank()) {
@@ -102,6 +146,11 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return normalizedTemplate;
     }
 
+    /**
+     * 获取Tag类型。
+     * @param status 状态参数。
+     * @return String 类型的处理结果。
+     */
     private String getTagType(String status) {
         if ("可复用".equals(status)) {
             return "success";
@@ -112,6 +161,10 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return "primary";
     }
 
+    /**
+     * 获取默认模板。
+     * @return 当前操作得到的记录集合。
+     */
     private List<EnvironmentTemplateEntity> getDefaultTemplates() {
         return List.of(
                 buildTemplate("Java Web 标准环境", "Java Web 程序设计", "Windows 11", "JDK、IDEA、Tomcat、MySQL", "A101、A102", "可复用", "success"),
@@ -120,6 +173,17 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         );
     }
 
+    /**
+     * 构建模板。
+     * @param name 名称参数。
+     * @param course 课程参数。
+     * @param os os参数。
+     * @param softwareList software列表参数。
+     * @param labs 实验室参数。
+     * @param status 状态参数。
+     * @param tagType tag类型参数。
+     * @return EnvironmentTemplateEntity 类型的处理结果。
+     */
     private EnvironmentTemplateEntity buildTemplate(
             String name,
             String course,
@@ -140,6 +204,10 @@ public class EnvironmentTemplateServiceImpl implements EnvironmentTemplateServic
         return template;
     }
 
+    /**
+     * 列出教师。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<TeacherOptionVO> listTeachers() {
         return environmentTemplateMapper.listTeachers();

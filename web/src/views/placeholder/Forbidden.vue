@@ -13,11 +13,17 @@ defineOptions({
 
 const router = useRouter()
 
+/**
+ * 处理GoHome。
+ */
 const handleGoHome = () => {
   const role = getStoredRole()
   router.replace(AUTH_ROLE_DEFAULT_PATH[role] || '/')
 }
 
+/**
+ * 处理GoBack。
+ */
 const handleGoBack = () => {
   if (window.history.length > 1) {
     router.back()

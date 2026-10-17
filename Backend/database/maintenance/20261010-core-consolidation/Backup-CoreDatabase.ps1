@@ -23,6 +23,7 @@ $retiredTables = @(
     'timetable_crawler_config', 'timetable_academic_credential', 'timetable_crawler_task'
 )
 
+# 解析归档根目录。
 function Resolve-ArchiveRoot {
     param([string]$Path)
 
@@ -35,6 +36,7 @@ function Resolve-ArchiveRoot {
     return (Resolve-Path -LiteralPath $absolutePath).Path
 }
 
+# 断言Child路径。
 function Assert-ChildPath {
     param(
         [string]$Parent,

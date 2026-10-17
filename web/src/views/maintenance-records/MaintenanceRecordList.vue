@@ -24,7 +24,7 @@ const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
 const loadError = ref('')
-const canWrite = computed(() => canWriteMaintenanceRecords(getStoredUser()))
+const canWrite = computed(/** 计算派生状态。 */ () => canWriteMaintenanceRecords(getStoredUser()))
 const editorVisible = ref(false)
 const editorRecord = ref({})
 const editorKey = ref(0)
@@ -44,17 +44,20 @@ const filters = reactive({
   dateRange: [],
 })
 
-const filterOptions = computed(() => ({
-  labs: [...new Set(records.value.map((item) => item.lab).filter(Boolean))],
-  devices: [...new Set(records.value.map((item) => item.device).filter(Boolean))],
-  types: [...new Set(records.value.map((item) => item.maintenanceType).filter(Boolean))],
-  maintainers: [...new Set(records.value.map((item) => item.maintainer).filter(Boolean))],
+const filterOptions = computed(/** 计算派生状态。 */ () => ({
+  labs: [...new Set(records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.lab).filter(Boolean))],
+  devices: [...new Set(records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.device).filter(Boolean))],
+  types: [...new Set(records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.maintenanceType).filter(Boolean))],
+  maintainers: [...new Set(records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.maintainer).filter(Boolean))],
 }))
 
-const filteredRecords = computed(() => filterMaintenanceRecords(records.value, filters))
+const filteredRecords = computed(/** 计算派生状态。 */ () => filterMaintenanceRecords(records.value, filters))
 
 const { currentPage, pageSize, total, pagedRecords, handleCurrentPageChange, handlePageSizeChange } = useTablePagination(filteredRecords)
 
+/**
+ * 加载记录集合。
+ */
 const loadRecords = async () => {
   const token = ++requestToken
   loading.value = true
@@ -69,14 +72,30 @@ const loadRecords = async () => {
   }
 }
 
+/**
+ * 重置筛选条件。
+ */
 const resetFilters = () => {
   Object.assign(filters, { keyword: '', lab: '', device: '', maintenanceType: '', maintainer: '', dateRange: [] })
 }
 
+/**
+ * show错误的处理逻辑。
+ * 入参：error（错误）；fallback（fallback）。
+ */
 const showError = (error, fallback) => {
   if (!error?.__handled) ElMessage.error(error?.userMessage || error?.message || fallback)
 }
+/**
+ * 记录标识。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const recordId = record => String(record.id || record.recordNo)
+/**
+ * 打开详情。
+ * 入参：record（记录）。
+ */
 const openDetail = async record => {
   if (actionId.value) return
   actionId.value = recordId(record)
@@ -86,12 +105,19 @@ const openDetail = async record => {
   } catch (error) { showError(error, '维护记录详情加载失败') }
   finally { actionId.value = '' }
 }
+/**
+ * 打开Create。
+ */
 const openCreate = () => {
   if (!canWrite.value) return
   editorRecord.value = {}
   editorKey.value++
   editorVisible.value = true
 }
+/**
+ * edit记录的处理逻辑。
+ * 入参：record（记录）。
+ */
 const editRecord = async record => {
   if (!canWrite.value || actionId.value) return
   actionId.value = recordId(record)
@@ -103,6 +129,10 @@ const editRecord = async record => {
   } catch (error) { showError(error, '维护记录加载失败') }
   finally { actionId.value = '' }
 }
+/**
+ * 关闭Editor。
+ * 入参：done（done）。
+ */
 const closeEditor = async done => {
   if (formSaving.value) return
   if (editorRef.value?.isDirty()) {
@@ -113,14 +143,22 @@ const closeEditor = async done => {
   if (typeof done === 'function') done()
   else editorVisible.value = false
 }
+/**
+ * 记录Saved。
+ * 入参：saved（saved）。
+ */
 const recordSaved = async saved => {
-  const index = records.value.findIndex(record => recordId(record) === recordId(saved))
+  const index = records.value.findIndex(/** 定位符合条件的条目索引。 入参：record。 */ record => recordId(record) === recordId(saved))
   if (index === -1) records.value.unshift(saved)
   else records.value.splice(index, 1, saved)
   formSaving.value = false
   editorVisible.value = false
   await loadRecords()
 }
+/**
+ * 移除记录。
+ * 入参：record（记录）。
+ */
 const removeRecord = async record => {
   if (!canWrite.value || actionId.value) return
   try {
@@ -129,13 +167,16 @@ const removeRecord = async record => {
   actionId.value = recordId(record)
   try {
     await deleteMaintenanceRecord(actionId.value)
-    records.value = records.value.filter(item => recordId(item) !== actionId.value)
+    records.value = records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ item => recordId(item) !== actionId.value)
     if (selectedRecord.value && recordId(selectedRecord.value) === actionId.value) detailVisible.value = false
     ElMessage.success('维护记录已删除')
     await loadRecords()
   } catch (error) { showError(error, '维护记录删除失败') }
   finally { actionId.value = '' }
 }
+/**
+ * 打开Legacy条目。
+ */
 const openLegacyEntry = async () => {
   const edit = route.query.edit
   const create = route.query.create
@@ -150,6 +191,9 @@ const openLegacyEntry = async () => {
   await router.replace({ path: '/lab-admin/maintenance-records', query })
 }
 
+/**
+ * 导出记录集合。
+ */
 const exportRecords = () => {
   if (!filteredRecords.value.length) {
     ElMessage.warning('暂无可导出的维护记录')
@@ -174,9 +218,9 @@ const exportRecords = () => {
   ElMessage.success(`已导出 ${count} 条维护记录`)
 }
 
-watch(filteredRecords, () => { currentPage.value = 1 })
-watch(() => [route.query.edit, route.query.create], openLegacyEntry)
-onMounted(async () => { await loadRecords(); await openLegacyEntry() })
+watch(filteredRecords, /** 响应被监听状态的变化。 */ () => { currentPage.value = 1 })
+watch(/** 响应被监听状态的变化。 */ () => [route.query.edit, route.query.create], openLegacyEntry)
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => { await loadRecords(); await openLegacyEntry() })
 </script>
 
 <template>

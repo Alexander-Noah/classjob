@@ -18,6 +18,10 @@ defineProps({
 
 const emit = defineEmits(['create', 'download-template', 'export', 'import-file'])
 
+/**
+ * 处理ImportChange。
+ * 入参：uploadFile（upload文件）。
+ */
 const handleImportChange = (uploadFile) => {
   if (uploadFile?.raw) {
     emit('import-file', uploadFile.raw)

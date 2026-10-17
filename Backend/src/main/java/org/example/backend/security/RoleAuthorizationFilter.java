@@ -19,14 +19,29 @@ import java.nio.charset.StandardCharsets;
 public class RoleAuthorizationFilter extends OncePerRequestFilter {
     private final SecurityAccessPolicy accessPolicy;
 
+    /**
+     * 构造 RoleAuthorizationFilter，初始化当前实例。
+     */
     public RoleAuthorizationFilter() {
         this(new SecurityAccessPolicy());
     }
 
+    /**
+     * 构造 RoleAuthorizationFilter，初始化当前实例。
+     * @param accessPolicy accessPolicy参数。
+     */
     RoleAuthorizationFilter(SecurityAccessPolicy accessPolicy) {
         this.accessPolicy = accessPolicy;
     }
 
+    /**
+     * 执行筛选条件Internal。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param filterChain 筛选条件Chain参数。
+     * @throws ServletException 当前调用无法继续完成时抛出。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -52,11 +67,22 @@ public class RoleAuthorizationFilter extends OncePerRequestFilter {
         writeForbidden(response);
     }
 
+    /**
+     * 字符串Attribute的处理逻辑。
+     * @param request 请求参数。
+     * @param name 名称参数。
+     * @return String 类型的处理结果。
+     */
     private String stringAttribute(HttpServletRequest request, String name) {
         Object value = request.getAttribute(name);
         return value == null ? "" : String.valueOf(value);
     }
 
+    /**
+     * 写入Forbidden。
+     * @param response 响应参数。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private void writeForbidden(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

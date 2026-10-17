@@ -9,7 +9,7 @@ export function observeGlassScrolling(listener) {
     document.addEventListener('wheel', onScroll, { passive: true })
   }
   listeners.add(listener)
-  return () => {
+  return /** 处理当前调用传入的回调逻辑。 */ () => {
     listeners.delete(listener)
     if (listeners.size) return
     document.removeEventListener('scroll', onScroll, true)
@@ -20,6 +20,9 @@ export function observeGlassScrolling(listener) {
   }
 }
 
+/**
+ * 响应滚动。
+ */
 function onScroll() {
   if (!scrolling) {
     scrolling = true
@@ -27,7 +30,7 @@ function onScroll() {
     for (const listener of listeners) listener(true)
   }
   clearTimeout(timer)
-  timer = setTimeout(() => {
+  timer = setTimeout(/** 执行延迟安排的任务。 */ () => {
     scrolling = false
     document.documentElement.classList.remove('liquid-scrolling')
     for (const listener of listeners) listener(false)

@@ -19,16 +19,30 @@ public class TeacherHostServiceImpl implements TeacherHostService {
     private final TeacherHostMapper teacherHostMapper;
     private final int offlineSeconds;
 
+    /**
+     * 构造 TeacherHostServiceImpl，初始化当前实例。
+     * @param teacherHostMapper 教师主机数据映射器参数。
+     */
     @Autowired
     public TeacherHostServiceImpl(TeacherHostMapper teacherHostMapper) {
         this(teacherHostMapper, DEFAULT_OFFLINE_SECONDS);
     }
 
+    /**
+     * 构造 TeacherHostServiceImpl，初始化当前实例。
+     * @param teacherHostMapper 教师主机数据映射器参数。
+     * @param offlineSeconds offlineSeconds参数。
+     */
     TeacherHostServiceImpl(TeacherHostMapper teacherHostMapper, int offlineSeconds) {
         this.teacherHostMapper = teacherHostMapper;
         this.offlineSeconds = offlineSeconds;
     }
 
+    /**
+     * heartbeat的处理逻辑。
+     * @param host 主机参数。
+     * @return TeacherHostEntity 类型的处理结果。
+     */
     @Override
     public TeacherHostEntity heartbeat(TeacherHostEntity host) {
         requirePositiveLabId(host == null ? null : host.getLabId());
@@ -48,6 +62,11 @@ public class TeacherHostServiceImpl implements TeacherHostService {
         return host;
     }
 
+    /**
+     * 当前主机的处理逻辑。
+     * @param labId 实验室标识参数。
+     * @return TeacherHostEntity 类型的处理结果。
+     */
     @Override
     public TeacherHostEntity currentHost(Long labId) {
         requirePositiveLabId(labId);
@@ -65,6 +84,11 @@ public class TeacherHostServiceImpl implements TeacherHostService {
         return host;
     }
 
+    /**
+     * 判断是否为HeartbeatExpired。
+     * @param heartbeatTime heartbeat时间参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isHeartbeatExpired(LocalDateTime heartbeatTime) {
         if (heartbeatTime == null) {
             return true;
@@ -72,12 +96,21 @@ public class TeacherHostServiceImpl implements TeacherHostService {
         return Duration.between(heartbeatTime, LocalDateTime.now()).getSeconds() > offlineSeconds;
     }
 
+    /**
+     * 要求提供Positive实验室标识。
+     * @param labId 实验室标识参数。
+     */
     private void requirePositiveLabId(Long labId) {
         if (labId == null || labId <= 0) {
             throw new IllegalArgumentException(LAB_ID_REQUIRED);
         }
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

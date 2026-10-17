@@ -10,13 +10,13 @@ const loginDialog = readFileSync(new URL('../src/components/LoginDialog.vue', im
 const requestClient = readFileSync(new URL('../src/utils/request.ts', import.meta.url), 'utf8')
 const activationStore = readFileSync(new URL('../src/stores/activation.ts', import.meta.url), 'utf8')
 
-test('teacher desktop delegates authentication to the backend', () => {
+test('teacher desktop delegates authentication to the backend', /** 验证当前测试用例的预期行为。 */ () => {
   assert.match(authStore, /request\.post/)
   assert.match(authStore, /\/auth\/login/)
   assert.match(requestClient, /Authorization/)
 })
 
-test('production desktop sources do not publish demo credentials', () => {
+test('production desktop sources do not publish demo credentials', /** 验证当前测试用例的预期行为。 */ () => {
   for (const [name, source] of [
     ['auth store', authStore],
     ['login dialog', loginDialog],
@@ -25,7 +25,7 @@ test('production desktop sources do not publish demo credentials', () => {
   }
 })
 
-test('local trial is isolated to test builds and obsolete local-account adapters are removed', () => {
+test('local trial is isolated to test builds and obsolete local-account adapters are removed', /** 验证当前测试用例的预期行为。 */ () => {
   assert.match(activationStore, /import\.meta\.env\.MODE === 'test'/)
   assert.match(activationStore, /crypto\.randomUUID\(\)/)
   assert.doesNotMatch(activationStore, /TRIAL-LOCAL-30-DAYS|quota:\s*999/)

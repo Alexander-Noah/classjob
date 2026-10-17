@@ -22,11 +22,23 @@ public class IotGatewayCommandService {
     private final JdbcTemplate jdbcTemplate;
     private final GatewayAdapterRegistry gatewayAdapterRegistry;
 
+    /**
+     * 构造 IotGatewayCommandService，初始化当前实例。
+     * @param jdbcTemplate JDBC模板参数。
+     * @param gatewayAdapterRegistry 网关适配器Registry参数。
+     */
     public IotGatewayCommandService(JdbcTemplate jdbcTemplate, GatewayAdapterRegistry gatewayAdapterRegistry) {
         this.jdbcTemplate = jdbcTemplate;
         this.gatewayAdapterRegistry = gatewayAdapterRegistry;
     }
 
+    /**
+     * 执行当前操作。
+     * 涉及：写入数据库。
+     * @param device 设备参数。
+     * @param request 请求参数。
+     * @return 当前操作返回的键值结果。
+     */
     public Map<String, Object> execute(Map<String, Object> device, Map<String, Object> request) {
         Long labId = firstLong(longValue(request.get("labId")), longValue(device.get("labId")));
         if (labId == null) {
@@ -97,6 +109,13 @@ public class IotGatewayCommandService {
         return findCommandLogByNo(commandNo);
     }
 
+    /**
+     * 查找点位。
+     * 涉及：读取数据库。
+     * @param iotDeviceId 物联设备标识参数。
+     * @param action action参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findPoint(Long iotDeviceId, String action) {
         if (iotDeviceId == null) {
             return Map.of();
@@ -126,6 +145,12 @@ public class IotGatewayCommandService {
         return rows.isEmpty() ? Map.of() : rows.get(0);
     }
 
+    /**
+     * 查找命令LogByNo。
+     * 涉及：读取数据库。
+     * @param commandNo 命令No参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> findCommandLogByNo(String commandNo) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 select
@@ -159,20 +184,37 @@ public class IotGatewayCommandService {
         return rows.isEmpty() ? Map.of() : rows.get(0);
     }
 
+    /**
+     * 载荷的处理逻辑。
+     * @param request 请求参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> payload(Map<String, Object> request) {
         Object payload = request.get("payload");
         if (payload instanceof Map<?, ?> map) {
             return map.entrySet().stream()
-                    .filter(entry -> entry.getKey() != null)
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：entry。 */ entry -> entry.getKey() != null)
                     .collect(java.util.stream.Collectors.toMap(
+                            /**
+                             * 处理 toMap 调用中的回调逻辑。
+                             * 入参：entry。
+                             */
                             entry -> String.valueOf(entry.getKey()),
                             Map.Entry::getValue,
+                            /**
+                             * 处理 toMap 调用中的回调逻辑。
+                             * 入参：left、right。
+                             */
                             (left, right) -> right
                     ));
         }
         return Map.of();
     }
 
+    /**
+     * first长整数的处理逻辑。
+     * @return Long 类型的处理结果。
+     */
     private Long firstLong(Long... values) {
         for (Long value : values) {
             if (value != null) {
@@ -182,6 +224,11 @@ public class IotGatewayCommandService {
         return null;
     }
 
+    /**
+     * 将输入转换为长整数值。
+     * @param value 值参数。
+     * @return Long 类型的处理结果。
+     */
     private Long longValue(Object value) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -194,6 +241,11 @@ public class IotGatewayCommandService {
         }
     }
 
+    /**
+     * 将输入转换为布尔值。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean booleanValue(Object value) {
         if (value instanceof Boolean bool) {
             return bool;
@@ -205,6 +257,10 @@ public class IotGatewayCommandService {
         return "true".equalsIgnoreCase(text) || "1".equals(text) || "yes".equalsIgnoreCase(text);
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {
@@ -214,10 +270,20 @@ public class IotGatewayCommandService {
         return "";
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    /**
+     * 转换为JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String toJson(Object value) {
         if (value == null) {
             return "{}";

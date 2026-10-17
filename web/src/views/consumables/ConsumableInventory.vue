@@ -66,6 +66,11 @@ const movementForm = reactive({
   remark: '',
 })
 
+/**
+ * 获取响应数据。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getResponseData = (payload) => {
   if (Array.isArray(payload)) return payload
   if (Array.isArray(payload?.data)) return payload.data
@@ -74,26 +79,56 @@ const getResponseData = (payload) => {
   return []
 }
 
+/**
+ * 转换为数值。
+ * 入参：value（值）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toNumber = (value, fallback = 0) => {
   const number = Number(String(value ?? '').replace(/[^\d.-]/g, ''))
   return Number.isFinite(number) ? number : fallback
 }
 
+/**
+ * pad数值的处理逻辑。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const padNumber = (value) => String(value).padStart(2, '0')
 
+/**
+ * 格式化日期时间。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDateTime = (date = new Date()) =>
   `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())} ${padNumber(
     date.getHours(),
   )}:${padNumber(date.getMinutes())}:${padNumber(date.getSeconds())}`
 
+/**
+ * 获取记录日期。
+ * 入参：time（时间）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordDate = (time = '') => String(time).slice(0, 10).replace(/\//g, '-')
 
+/**
+ * 获取库存状态。
+ * 入参：stock（库存）；warnThreshold（warnThreshold）。
+ * @returns 组装的键值对象。
+ */
 const getStockState = (stock, warnThreshold) => {
   if (stock <= 0) return { status: '待补货', tagType: 'danger' }
   if (stock <= warnThreshold) return { status: '低库存', tagType: 'warning' }
   return { status: '库存充足', tagType: 'success' }
 }
 
+/**
+ * 归一化耗材库存。
+ * 入参：item（条目）。
+ * @returns 组装的键值对象。
+ */
 const normalizeConsumable = (item = {}) => {
   const stock = Math.max(toNumber(item.stock), 0)
   const warnThreshold = Math.max(toNumber(item.warnThreshold, 5), 0)
@@ -114,6 +149,11 @@ const normalizeConsumable = (item = {}) => {
   }
 }
 
+/**
+ * 归一化库存记录。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeStockRecord = (item = {}) => ({
   id: item.id || `SR-${Date.now()}`,
   type: item.type || item.movementType || '入库',
@@ -131,20 +171,20 @@ const normalizeStockRecord = (item = {}) => ({
   time: item.time || item.operatedAt || item.createdAt || formatDateTime(),
 })
 
-const selectedRecord = computed(() => records.value.find((item) => String(item.id) === String(selectedId.value)) || null)
+const selectedRecord = computed(/** 计算派生状态。 */ () => records.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(selectedId.value)) || null)
 
-const categoryOptions = computed(() => [...new Set(records.value.map((item) => item.category).filter(Boolean))])
+const categoryOptions = computed(/** 计算派生状态。 */ () => [...new Set(records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.category).filter(Boolean))])
 const defaultCategories = ['网络耗材', '电脑配件', '外设配件', '电子元器件', '实验材料', '办公耗材', '打印耗材', '清洁用品', '安全防护用品', '其他']
-const categorySelectOptions = computed(() => [...new Set([
+const categorySelectOptions = computed(/** 计算派生状态。 */ () => [...new Set([
   ...defaultCategories,
   ...categoryOptions.value,
   inventoryForm.category,
 ].filter(Boolean))])
 
-const filteredRecords = computed(() => {
+const filteredRecords = computed(/** 计算派生状态。 */ () => {
   const keyword = filters.keyword.trim().toLowerCase()
 
-  return records.value.filter((item) => {
+  return records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
     const text = [item.name, item.category, item.location, item.status].join(' ').toLowerCase()
     return (
       (!keyword || text.includes(keyword)) &&
@@ -154,12 +194,12 @@ const filteredRecords = computed(() => {
   })
 })
 
-const warningItems = computed(() => records.value.filter((item) => item.tagType === 'warning' || item.tagType === 'danger'))
+const warningItems = computed(/** 计算派生状态。 */ () => records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.tagType === 'warning' || item.tagType === 'danger'))
 
-const dashboard = computed(() => {
-  const totalStock = records.value.reduce((sum, item) => sum + item.stock, 0)
+const dashboard = computed(/** 计算派生状态。 */ () => {
+  const totalStock = records.value.reduce(/** 合并当前条目与累计结果。 入参：sum、item。 */ (sum, item) => sum + item.stock, 0)
   const today = new Date().toISOString().slice(0, 10)
-  const todayMovements = stockRecords.value.filter((item) => getRecordDate(item.time) === today).length
+  const todayMovements = stockRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => getRecordDate(item.time) === today).length
 
   return [
     { label: '耗材种类', value: records.value.length, desc: `${categoryOptions.value.length || 0} 个分类`, tone: 'blue' },
@@ -169,11 +209,11 @@ const dashboard = computed(() => {
   ]
 })
 
-const filteredStockRecords = computed(() => {
+const filteredStockRecords = computed(/** 计算派生状态。 */ () => {
   const keyword = recordFilters.keyword.trim().toLowerCase()
   const [start, end] = recordFilters.dateRange || []
 
-  return stockRecords.value.filter((item) => {
+  return stockRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
     const text = [item.consumableName, item.category, item.operator, item.source, item.reason, item.remark]
       .join(' ')
       .toLowerCase()
@@ -189,22 +229,31 @@ const filteredStockRecords = computed(() => {
   })
 })
 
+/**
+ * 加载库存记录集合。
+ */
 const loadStockRecords = async () => {
   const response = await http.get(API_ENDPOINTS.consumables.records)
   stockRecords.value = getResponseData(response.data).map(normalizeStockRecord)
 }
 
+/**
+ * 借用变化的处理逻辑。
+ */
 const loansChanged = async () => {
   try { await Promise.all([loadRecords(), loadStockRecords()]) }
   catch { ElMessage.warning('借还已登记，库存显示刷新失败，请刷新页面查看') }
 }
 
+/**
+ * 加载记录集合。
+ */
 const loadRecords = async () => {
   loading.value = true
   try {
     const response = await http.get(API_ENDPOINTS.consumables.list)
     records.value = getResponseData(response.data).map(normalizeConsumable)
-    if (records.value.length && !records.value.some((item) => String(item.id) === String(selectedId.value))) {
+    if (records.value.length && !records.value.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => String(item.id) === String(selectedId.value))) {
       selectedId.value = records.value[0].id
     }
     if (warningItems.value.length) {
@@ -215,6 +264,10 @@ const loadRecords = async () => {
   }
 }
 
+/**
+ * 重置库存Form。
+ * 入参：record（记录）。
+ */
 const resetInventoryForm = (record = {}) => {
   inventoryForm.id = record.id || ''
   inventoryForm.name = record.name || ''
@@ -225,18 +278,29 @@ const resetInventoryForm = (record = {}) => {
   inventoryForm.warnThreshold = record.warnThreshold ?? 5
 }
 
+/**
+ * 打开CreateDialog。
+ */
 const openCreateDialog = () => {
   inventoryDialogMode.value = 'create'
   resetInventoryForm()
   inventoryDialogVisible.value = true
 }
 
+/**
+ * 打开EditDialog。
+ * 入参：record（记录）。
+ */
 const openEditDialog = (record) => {
   inventoryDialogMode.value = 'edit'
   resetInventoryForm(record)
   inventoryDialogVisible.value = true
 }
 
+/**
+ * 获取库存载荷。
+ * @returns 组装的键值对象。
+ */
 const getInventoryPayload = () => {
   const stock = Math.max(toNumber(inventoryForm.stock), 0)
   const warnThreshold = Math.max(toNumber(inventoryForm.warnThreshold, 5), 0)
@@ -254,6 +318,9 @@ const getInventoryPayload = () => {
   }
 }
 
+/**
+ * 提交库存。
+ */
 const submitInventory = async () => {
   const payload = getInventoryPayload()
   if (!payload.name) {
@@ -281,6 +348,10 @@ const submitInventory = async () => {
   }
 }
 
+/**
+ * 删除记录。
+ * 入参：record（记录）。
+ */
 const deleteRecord = async (record) => {
   await ElMessageBox.confirm(`确认删除“${record.name}”？删除后不可恢复。`, '删除耗材', {
     type: 'warning',
@@ -295,6 +366,10 @@ const deleteRecord = async (record) => {
   await loadStockRecords()
 }
 
+/**
+ * 打开MovementDialog。
+ * 入参：type（类型）；record（记录）。
+ */
 const openMovementDialog = (type, record = selectedRecord.value) => {
   if (!record) {
     ElMessage.warning('请先选择耗材')
@@ -310,8 +385,11 @@ const openMovementDialog = (type, record = selectedRecord.value) => {
   movementDialogVisible.value = true
 }
 
+/**
+ * 提交Movement。
+ */
 const submitMovement = async () => {
-  const record = records.value.find((item) => String(item.id) === String(movementForm.consumableId))
+  const record = records.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(movementForm.consumableId))
   const quantity = Math.max(toNumber(movementForm.quantity), 0)
 
   if (!record || quantity <= 0) {
@@ -348,6 +426,9 @@ const submitMovement = async () => {
   }
 }
 
+/**
+ * 导出库存。
+ */
 const exportInventory = () => {
   const count = exportTableToExcel({
     filename: '耗材库存清单',
@@ -366,6 +447,9 @@ const exportInventory = () => {
   ElMessage.success(`已导出 ${count} 条库存数据`)
 }
 
+/**
+ * 导出库存记录集合。
+ */
 const exportStockRecords = () => {
   const count = exportTableToExcel({
     filename: '耗材出入库记录',
@@ -375,8 +459,8 @@ const exportStockRecords = () => {
       { label: '类型', prop: 'type' },
       { label: '耗材名称', prop: 'consumableName' },
       { label: '分类', prop: 'category' },
-      { label: '数量', formatter: (row) => `${row.quantity}${row.unit}` },
-      { label: '库存变化', formatter: (row) => `${row.beforeStock} -> ${row.afterStock}` },
+      { label: '数量', /** formatter的处理逻辑。 入参：row（行）。 @returns 由当前表达式或分支生成的处理结果。 */ formatter: (row) => `${row.quantity}${row.unit}` },
+      { label: '库存变化', /** formatter的处理逻辑。 入参：row（行）。 @returns 由当前表达式或分支生成的处理结果。 */ formatter: (row) => `${row.beforeStock} -> ${row.afterStock}` },
       { label: '经办人', prop: 'operator' },
       { label: '来源/去向', prop: 'source' },
       { label: '原因', prop: 'reason' },
@@ -387,15 +471,28 @@ const exportStockRecords = () => {
   ElMessage.success(`已导出 ${count} 条出入库记录`)
 }
 
+/**
+ * pickImport文件的处理逻辑。
+ */
 const pickImportFile = () => {
   fileInputRef.value?.click()
 }
 
+/**
+ * 获取Import值。
+ * 入参：row（行）；keys（键）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getImportValue = (row, keys, fallback = '') => {
-  const key = keys.find((item) => row[item] !== undefined && String(row[item]).trim() !== '')
+  const key = keys.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => row[item] !== undefined && String(row[item]).trim() !== '')
   return key ? row[key] : fallback
 }
 
+/**
+ * 构建Imported载荷。
+ * 入参：row（行）。
+ * @returns 组装的键值对象。
+ */
 const buildImportedPayload = (row) => {
   const stock = Math.max(toNumber(getImportValue(row, ['库存', '当前库存', 'stock'], 0)), 0)
   const warnThreshold = Math.max(toNumber(getImportValue(row, ['预警阈值', '预警线', 'warnThreshold'], 5)), 0)
@@ -413,6 +510,10 @@ const buildImportedPayload = (row) => {
   }
 }
 
+/**
+ * 处理Import文件。
+ * 入参：event（事件）。
+ */
 const handleImportFile = async (event) => {
   const file = event.target.files?.[0]
   event.target.value = ''
@@ -420,7 +521,7 @@ const handleImportFile = async (event) => {
 
   try {
     const rows = await readSpreadsheetRows(file)
-    const payloads = rows.map(buildImportedPayload).filter((item) => item.name)
+    const payloads = rows.map(buildImportedPayload).filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.name)
     if (!payloads.length) {
       ElMessage.warning('导入文件中没有可识别的耗材数据')
       return
@@ -428,7 +529,7 @@ const handleImportFile = async (event) => {
 
     saving.value = true
     for (const payload of payloads) {
-      const existed = records.value.find((item) => item.name === payload.name && item.category === payload.category)
+      const existed = records.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.name === payload.name && item.category === payload.category)
       if (existed) {
         await http.put(`${API_ENDPOINTS.consumables.list}/${existed.id}`, payload)
       } else {
@@ -442,7 +543,7 @@ const handleImportFile = async (event) => {
   }
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   await Promise.all([loadRecords(), loadStockRecords()])
 })
 </script>

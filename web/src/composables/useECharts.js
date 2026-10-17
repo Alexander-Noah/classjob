@@ -15,6 +15,9 @@ import { echarts } from '../utils/echartsCore'
 export function useECharts(chartRef, buildOption) {
   const chartInstance = shallowRef(null)
 
+  /**
+   * 渲染Chart。
+   */
   const renderChart = async () => {
     await nextTick()
 
@@ -28,11 +31,14 @@ export function useECharts(chartRef, buildOption) {
     chartInstance.value.setOption(buildOption(), true)
   }
 
+  /**
+   * resizeChart的处理逻辑。
+   */
   const resizeChart = () => {
     chartInstance.value?.resize()
   }
 
-  onBeforeUnmount(() => {
+  onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
     chartInstance.value?.dispose()
   })
 

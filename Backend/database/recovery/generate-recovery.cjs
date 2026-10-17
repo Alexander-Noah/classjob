@@ -2,9 +2,18 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
+/**
+ * 读取当前操作。
+ * 入参：p（p）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const tables = new Map();
 const timestamps = 'created_at datetime not null default current_timestamp, updated_at datetime not null default current_timestamp on update current_timestamp';
+/**
+ * 基础的处理逻辑。
+ * 入参：name（名称）；columns（columns）；keys（键）。
+ */
 function base(name, columns, keys = '') {
   tables.set(name, `create table ${name} (\n id bigint primary key auto_increment,\n ${columns},\n ${timestamps}${keys ? ',\n '+keys : ''}\n) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci`);
 }
@@ -24,12 +33,12 @@ base('notice', 'title varchar(255), notice_type varchar(50), target_role varchar
 base('schedule_adjustment', 'course varchar(200), original_time varchar(255), target_time varchar(255), reason text, status varchar(40), tag_type varchar(40), flow_step int default 0, reviewer varchar(100), teacher_name varchar(100)');
 base('module_record', 'module_name varchar(100) not null, record_key varchar(160), record_json json', 'key idx_module_name (module_name)');
 const initializer = read('src/main/java/org/example/backend/config/DatabaseSchemaInitializer.java');
-const blocks = [...initializer.matchAll(/"""([\s\S]*?)"""/g)].map(m=>m[1].trim());
+const blocks = [...initializer.matchAll(/"""([\s\S]*?)"""/g)].map(/** 将当前条目转换为目标结果。 入参：m。 */ m=>m[1].trim());
 const migration = read('src/main/resources/db/migration/V20261010_01__expand_core_schema.sql');
 const mapperDir = path.join(root, 'src/main/resources/mapper');
-const mapperFiles = fs.readdirSync(mapperDir).filter(f=>f.endsWith('.xml'));
-const mapperTexts = mapperFiles.map(f=>fs.readFileSync(path.join(mapperDir,f),'utf8'));
-const creates = [...blocks, ...migration.split(';'), ...mapperTexts.flatMap(s=>[...s.matchAll(/create table[\s\S]*?engine=InnoDB default charset=utf8mb4/gi)].map(m=>m[0]))];
+const mapperFiles = fs.readdirSync(mapperDir).filter(/** 判断当前条目是否符合筛选条件。 入参：f。 */ f=>f.endsWith('.xml'));
+const mapperTexts = mapperFiles.map(/** 将当前条目转换为目标结果。 入参：f。 */ f=>fs.readFileSync(path.join(mapperDir,f),'utf8'));
+const creates = [...blocks, ...migration.split(';'), ...mapperTexts.flatMap(/** 转换并展开当前条目。 入参：s。 */ s=>[...s.matchAll(/create table[\s\S]*?engine=InnoDB default charset=utf8mb4/gi)].map(/** 将当前条目转换为目标结果。 入参：m。 */ m=>m[0]))];
 for (let sql of creates) {
   const match = sql.trim().match(/^create table (?:if not exists )?(\w+)/i);
   if (!match) continue;
@@ -37,8 +46,13 @@ for (let sql of creates) {
   if (!/collate=/i.test(sql)) sql = sql.replace(/default charset=utf8mb4/i,'default charset=utf8mb4 collate=utf8mb4_general_ci');
   tables.set(match[1], sql);
 }
+/**
+ * 判断是否具有Column。
+ * 入参：sql（SQL）；col（col）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 function hasColumn(sql, col) { return new RegExp('(?:\\(|,)\\s*`?'+col+'`?\\s+(?:bigint|int|tinyint|varchar|text|longtext|mediumtext|json|datetime|date|decimal|double|float|timestamp|char|boolean)\\b','i').test(sql); }
-const alters = [...blocks.filter(s=>/^alter table/i.test(s)), ...migration.split(';').map(s=>s.trim()).filter(s=>/^alter table/i.test(s))];
+const alters = [...blocks.filter(/** 判断当前条目是否符合筛选条件。 入参：s。 */ s=>/^alter table/i.test(s)), ...migration.split(';').map(/** 将当前条目转换为目标结果。 入参：s。 */ s=>s.trim()).filter(/** 判断当前条目是否符合筛选条件。 入参：s。 */ s=>/^alter table/i.test(s))];
 for (const sql of alters) {
  const name = sql.match(/^alter table (\w+)/i)[1];
  if (!tables.has(name)) throw Error('Unknown ALTER table '+name);
@@ -59,13 +73,13 @@ const ordered = [], pending = new Map(tables);
 while(pending.size) {
  let progress = false;
  for(const [name,sql] of pending) {
-  const refs = [...sql.matchAll(/references\s+(\w+)\s*\(/gi)].map(m=>m[1]);
-  if(refs.every(ref=>ordered.some(t=>t[0]===ref)||ref===name)) {ordered.push([name,sql]);pending.delete(name);progress=true;}
+  const refs = [...sql.matchAll(/references\s+(\w+)\s*\(/gi)].map(/** 将当前条目转换为目标结果。 入参：m。 */ m=>m[1]);
+  if(refs.every(/** 判断当前条目是否满足全部匹配条件。 入参：ref。 */ ref=>ordered.some(/** 判断当前条目是否满足任一匹配条件。 入参：t。 */ t=>t[0]===ref)||ref===name)) {ordered.push([name,sql]);pending.delete(name);progress=true;}
  }
  if(!progress) throw Error('Unresolved FK parents: '+[...pending.keys()]);
 }
 const header = `-- Reconstructed from local backend source, 2026-10-15. MySQL 8.0+.\n-- Fresh database ONLY. CREATE DATABASE deliberately fails if it already exists.\n-- Change BOTH database names below if a different target is needed.\n-- No original business records are included. Keep Flyway disabled for this reconstructed current schema.\nSET NAMES utf8mb4 COLLATE utf8mb4_general_ci;\nCREATE DATABASE smart_lab_recovered_20261015 CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;\nUSE smart_lab_recovered_20261015;\n\n`;
-fs.writeFileSync(path.join(__dirname,'01-schema.sql'), header+ordered.map(([n,s])=>'-- '+n+'\n'+s+';').join('\n\n')+'\n');
+fs.writeFileSync(path.join(__dirname,'01-schema.sql'), header+ordered.map(/** 将当前条目转换为目标结果。 */ ([n,s])=>'-- '+n+'\n'+s+';').join('\n\n')+'\n');
 fs.writeFileSync(path.join(__dirname,'schema-manifest.json'), JSON.stringify(Object.fromEntries(ordered),null,2));
 console.log('Generated '+tables.size+' tables; no database was modified.');
 

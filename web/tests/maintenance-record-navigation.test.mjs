@@ -12,10 +12,15 @@ import {
   parseUserPermissions,
 } from '../src/constants/permissions.js'
 
+/**
+ * 读取来源。
+ * 入参：relativePath（relative路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8')
 
-test('maintenance records have one visible list route and a hidden legacy entry route', () => {
+test('maintenance records have one visible list route and a hidden legacy entry route', /** 验证当前测试用例的预期行为。 */ () => {
   const routeModules = readSource('../src/constants/routeModules.js')
   const router = readSource('../src/router/index.js')
 
@@ -31,7 +36,7 @@ test('maintenance records have one visible list route and a hidden legacy entry 
   assert.match(router, /LabAdminMaintenanceRecordEntry:\s*\(\)\s*=>\s*import\('\.\.\/views\/maintenance-records\/MaintenanceRecordEntry\.vue'\)/)
 })
 
-test('entry and viewing permissions stay separate while legacy repair access expands to both', () => {
+test('entry and viewing permissions stay separate while legacy repair access expands to both', /** 验证当前测试用例的预期行为。 */ () => {
   assert.deepEqual(getAllowedPaths(['维护记录填写']), ['/lab-admin/maintenance-records', '/lab-admin/maintenance-records/new'])
   assert.deepEqual(getAllowedPaths(['维护记录查看']), ['/lab-admin/maintenance-records'])
   assert.equal(isPathAllowed('/lab-admin/maintenance-records/new', ['维护记录查看']), false)
@@ -46,7 +51,7 @@ test('entry and viewing permissions stay separate while legacy repair access exp
   assert.equal(isPathAllowed('/lab-admin/maintenance-records', parsed), true)
 })
 
-test('lab-admin navigation and dashboards point to maintenance-record viewing', () => {
+test('lab-admin navigation and dashboards point to maintenance-record viewing', /** 验证当前测试用例的预期行为。 */ () => {
   const navigation = readSource('../src/constants/navigation.js')
   const frontendDashboard = readSource('../src/constants/dashboard.js')
   const backendDashboard = readSource('../../Backend/src/main/java/org/example/backend/service/impl/DashboardServiceImpl.java')
@@ -59,14 +64,14 @@ test('lab-admin navigation and dashboards point to maintenance-record viewing', 
   }
 })
 
-test('legacy repair URLs redirect to maintenance-record viewing', () => {
+test('legacy repair URLs redirect to maintenance-record viewing', /** 验证当前测试用例的预期行为。 */ () => {
   const router = readSource('../src/router/index.js')
 
   assert.match(router, /path: 'lab-admin\/repairs',[\s\S]*?redirect: '\/lab-admin\/maintenance-records'/)
   assert.match(router, /path: '\/repairs',[\s\S]*?redirect: '\/lab-admin\/maintenance-records'/)
 })
 
-test('maintenance role routes, workbench, presets, and selectors are removed', () => {
+test('maintenance role routes, workbench, presets, and selectors are removed', /** 验证当前测试用例的预期行为。 */ () => {
   const authConstants = readSource('../src/constants/auth.js')
   const authService = readSource('../src/api/services/auth.js')
   const navigation = readSource('../src/constants/navigation.js')

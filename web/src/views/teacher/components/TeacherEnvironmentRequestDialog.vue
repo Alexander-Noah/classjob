@@ -13,6 +13,10 @@ defineOptions({
 const props = defineProps({
   labTypeOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => ['开发实验室', '数据库实验室', 'GPU 实验室', '网络安全实验室', '物联网实验室'],
   },
   modelValue: {
@@ -28,11 +32,20 @@ const props = defineProps({
 const emit = defineEmits(['save', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const resolvedLabTypeOptions = computed(() => {
+const resolvedLabTypeOptions = computed(/** 计算派生状态。 */ () => {
   const options = [...props.labTypeOptions]
   if (props.prefill?.labType && !options.includes(props.prefill.labType)) {
     options.unshift(props.prefill.labType)
@@ -50,6 +63,9 @@ const formModel = reactive({
   specialRequirements: '',
 })
 
+/**
+ * 重置Form。
+ */
 const resetForm = () => {
   formModel.courseName = props.prefill?.courseName || ''
   formModel.className = props.prefill?.className || ''
@@ -61,7 +77,14 @@ const resetForm = () => {
 }
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => [props.modelValue, props.prefill],
+  /**
+   * 响应被监听状态的变化。
+   * 入参：value。
+   */
   (value) => {
     if (value[0]) {
       resetForm()
@@ -70,6 +93,9 @@ watch(
   { immediate: true, deep: true },
 )
 
+/**
+ * 处理Save。
+ */
 const handleSave = () => {
   if (!formModel.courseName.trim()) {
     ElMessage.warning('请填写课程名称')

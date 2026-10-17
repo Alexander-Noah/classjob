@@ -5,6 +5,11 @@
 import http from '../http'
 import { API_ENDPOINTS } from '../endpoints'
 
+/**
+ * 加载Collection。
+ * 入参：endpoint（端点）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 async function loadCollection(endpoint) {
   const response = await http.get(endpoint)
   const payload = response.data
@@ -21,6 +26,10 @@ async function loadCollection(endpoint) {
   return records
 }
 
+/**
+ * 获取Platform快照。
+ * @returns 组装的键值对象。
+ */
 export async function fetchPlatformSnapshot() {
   const results = await Promise.allSettled([
     loadCollection(API_ENDPOINTS.users.list),
@@ -29,6 +38,6 @@ export async function fetchPlatformSnapshot() {
   return {
     users: results[0].status === 'fulfilled' ? results[0].value : null,
     notices: results[1].status === 'fulfilled' ? results[1].value : null,
-    errors: results.flatMap((result, index) => result.status === 'rejected' ? [`${index === 0 ? '账号' : '通知'}数据加载失败，请重试`] : []),
+    errors: results.flatMap(/** 转换并展开当前条目。 入参：result、index。 */ (result, index) => result.status === 'rejected' ? [`${index === 0 ? '账号' : '通知'}数据加载失败，请重试`] : []),
   }
 }

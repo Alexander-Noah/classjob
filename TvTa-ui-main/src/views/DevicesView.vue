@@ -8,11 +8,11 @@ import { useMonitorStore, type DeviceRecord } from '@/stores/monitor'
 
 const monitorStore = useMonitorStore()
 
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   monitorStore.startPolling()
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
   monitorStore.stopPolling()
 })
 
@@ -35,6 +35,11 @@ const columns: DataTableColumns<DeviceRecord> = [
   {
     title: '状态',
     key: 'status',
+    /**
+     * 渲染当前操作。
+     * 入参：row（行）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     render: row =>
       h(
         NTag,
@@ -43,23 +48,38 @@ const columns: DataTableColumns<DeviceRecord> = [
           round: true,
           size: 'small'
         },
-        { default: () => statusLabelMap[row.status] }
+        { /** 构造当前类型的默认状态。 @returns 由当前表达式或分支生成的处理结果。 */ default: () => statusLabelMap[row.status] }
       )
   },
   { title: 'IP 地址', key: 'ipAddress' },
   {
     title: 'CPU',
     key: 'cpuUsage',
+    /**
+     * 渲染当前操作。
+     * 入参：row（行）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     render: row => `${row.metrics.cpuUsage.toFixed(1)}%`
   },
   {
     title: '内存',
     key: 'memoryUsage',
+    /**
+     * 渲染当前操作。
+     * 入参：row（行）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     render: row => `${row.metrics.memoryUsage.toFixed(1)}%`
   },
   {
     title: '磁盘',
     key: 'diskUsage',
+    /**
+     * 渲染当前操作。
+     * 入参：row（行）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     render: row => `${row.metrics.diskUsage.toFixed(1)}%`
   },
   { title: '最近上报', key: 'lastSeen' }

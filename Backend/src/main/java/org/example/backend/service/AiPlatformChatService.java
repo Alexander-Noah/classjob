@@ -38,10 +38,23 @@ public class AiPlatformChatService {
             如果只是问候或通用知识可直接回答。
             """;
 
+    /**
+     * 构造 AiPlatformChatService，初始化当前实例。
+     * @param data 数据参数。
+     * @param config 配置参数。
+     * @param tongyi 通义千问参数。
+     */
     public AiPlatformChatService(AiBusinessDataService data, AiAssistantUserConfigService config, TongyiAgentService tongyi) {
         this.data = data; this.config = config; this.tongyi = tongyi;
     }
 
+    /**
+     * chat的处理逻辑。
+     * @param userId 用户标识参数。
+     * @param question question参数。
+     * @param history 历史参数。
+     * @return 包含 dataset、timetable、mode、now、limit、answer、sources、dataConnected、source、queriedAt、status、total、hasMore 等字段的结果对象。
+     */
     public Map<String, Object> chat(Integer userId, String question, List<Map<String, Object>> history) {
         if (question == null || question.isBlank() || question.length() > 10000)
             throw new IllegalArgumentException("请输入1到10000字的咨询内容");
@@ -53,8 +66,8 @@ public class AiPlatformChatService {
         boolean custom = Boolean.TRUE.equals(config.getConfig(userId).get("enabled"));
         if (!custom && !tongyi.isConfigured()) throw new IllegalArgumentException("请先配置并测试 AI 接口");
         BiFunction<String, String, String> model = custom
-                ? (instruction, content) -> config.chatWithContext(userId, instruction, content)
-                : (instruction, content) -> tongyi.callAgent(instruction + "\n" + content, "platform-data-" + userId);
+                ? /** 处理当前调用传入的回调逻辑。 入参：instruction、content。 */ (instruction, content) -> config.chatWithContext(userId, instruction, content)
+                : /** 处理当前调用传入的回调逻辑。 入参：instruction、content。 */ (instruction, content) -> tongyi.callAgent(instruction + "\n" + content, "platform-data-" + userId);
         List<Map<String, Object>> recent = normalizeHistory(history);
         List<Map<String, Object>> results = new ArrayList<>();
         Set<String> executed = new HashSet<>();
@@ -95,25 +108,35 @@ public class AiPlatformChatService {
                 break;
             }
         }
-        List<Map<String, Object>> sources = results.stream().filter(row -> row.containsKey("dataset"))
-                .map(row -> {
+        List<Map<String, Object>> sources = results.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：row。 */ row -> row.containsKey("dataset"))
+                .map(/** 将当前条目转换为目标结果。 入参：row。 */ row -> {
                     Map<String, Object> source = new LinkedHashMap<>();
                     for (String key : List.of("dataset", "source", "queriedAt", "status", "total", "hasMore", "nextOffset"))
                         if (row.containsKey(key)) source.put(key, row.get(key));
                     return source;
                 }).toList();
-        String sourceText = sources.stream().map(source -> String.valueOf(source.get("source")).split("[：、，（]", 2)[0]).distinct()
+        String sourceText = sources.stream().map(/** 将当前条目转换为目标结果。 入参：source。 */ source -> String.valueOf(source.get("source")).split("[：、，（]", 2)[0]).distinct()
                 .collect(java.util.stream.Collectors.joining("、"));
         if (!sourceText.isEmpty()) answer += "\n\n来源：" + sourceText + " · " + data.now().toLocalTime().withSecond(0).withNano(0);
         return Map.of("answer", answer, "sources", sources, "dataConnected", true);
     }
 
+    /**
+     * 判断是否为当前Class列表。
+     * @param question question参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isCurrentClassList(String question) {
         return question.matches("(?s).*(现在|当前|此刻).*") && question.contains("课")
                 && question.matches("(?s).*(哪些|那些|哪几个).*")
                 && question.matches("(?s).*(实验室|教师|老师).*");
     }
 
+    /**
+     * 当前ClassesAnswer的处理逻辑。
+     * @param result 结果参数。
+     * @return String 类型的处理结果。
+     */
     private String currentClassesAnswer(Map<String, Object> result) {
         if (!"ok".equals(result.get("status"))) {
             return Objects.toString(result.get("message"), "暂时无法查询绑定实验室的课表，请稍后重试。");
@@ -141,16 +164,26 @@ public class AiPlatformChatService {
         return answer.toString();
     }
 
+    /**
+     * 解析查询。
+     * @param text 文本参数。
+     * @return 当前操作得到的记录集合。
+     */
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> parseQueries(String text) {
         try {
             String clean = text.trim().replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "");
             Object value = json.readValue(clean, Object.class);
             if (value instanceof Map<?, ?> map && map.get("queries") instanceof List<?> queries)
-                return queries.stream().filter(Map.class::isInstance).map(row -> (Map<String, Object>) row).toList();
+                return queries.stream().filter(Map.class::isInstance).map(/** 将当前条目转换为目标结果。 入参：row。 */ row -> (Map<String, Object>) row).toList();
         } catch (Exception ignored) { /* A normal final answer is plain text. */ }
         return List.of();
     }
+    /**
+     * 归一化历史。
+     * @param history 历史参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> normalizeHistory(List<Map<String, Object>> history) {
         if (history == null) return List.of();
         List<Map<String, Object>> result = new ArrayList<>();
@@ -163,13 +196,18 @@ public class AiPlatformChatService {
         }
         return result;
     }
+    /**
+     * bounded的处理逻辑。
+     * @param input 输入参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> bounded(Map<String, Object> input) {
         Map<String, Object> result = new LinkedHashMap<>(input);
         if (input.get("groups") instanceof List<?> groups && groups.size() > 100) {
             result.put("groups", groups.subList(0, 100)); result.put("groupsTruncated", true);
         } else if (input.get("groups") instanceof Map<?, ?> groups && groups.size() > 100) {
             Map<String, Object> keptGroups = new LinkedHashMap<>();
-            groups.entrySet().stream().limit(100).forEach(entry -> keptGroups.put(String.valueOf(entry.getKey()), entry.getValue()));
+            groups.entrySet().stream().limit(100).forEach(/** 处理遍历到的当前条目。 入参：entry。 */ entry -> keptGroups.put(String.valueOf(entry.getKey()), entry.getValue()));
             result.put("groups", keptGroups); result.put("groupsTruncated", true);
         }
         if (input.get("records") instanceof List<?> records) {

@@ -27,6 +27,10 @@ public class ApprovalCountersignEntity {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    /**
+     * 获取Tag类型。
+     * @return String 类型的处理结果。
+     */
     public String getTagType() {
         if ("已同意".equals(status) || "已同意".equals(result)) return "success";
         if ("已退回".equals(status) || "已退回".equals(result)) return "danger";

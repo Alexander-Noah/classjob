@@ -16,11 +16,14 @@ export function useAdminGlass() {
   const panels = new Map()
   let observer
   let frame
+  /**
+   * 同步当前操作。
+   */
   const sync = () => {
     const root = glassRoot.value?.$el || glassRoot.value
     if (!root) return
     const current = new Set(root.querySelectorAll('.el-card, .page-panel, .hero-actions'))
-    document.querySelectorAll('.el-dialog, .el-message-box').forEach((element) => {
+    document.querySelectorAll('.el-dialog, .el-message-box').forEach(/** 处理遍历到的当前条目。 入参：element。 */ (element) => {
       current.add(element)
     })
     for (const [element, cleanup] of panels) {
@@ -41,22 +44,22 @@ export function useAdminGlass() {
       }
     }
   }
-  onMounted(() => {
+  onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
     const root = glassRoot.value?.$el || glassRoot.value
     if (!root) return
-    observer = new MutationObserver(records => {
-      const changed = records.some(record => !isGlassResourceNode(record.target) &&
-        [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === 1 && !isGlassResourceNode(node)))
-      if (changed && !frame) frame = requestAnimationFrame(() => { frame = 0; sync() })
+    observer = new MutationObserver(/** 处理当前调用传入的回调逻辑。 入参：records。 */ records => {
+      const changed = records.some(/** 判断当前条目是否满足任一匹配条件。 入参：record。 */ record => !isGlassResourceNode(record.target) &&
+        [...record.addedNodes, ...record.removedNodes].some(/** 判断当前条目是否满足任一匹配条件。 入参：node。 */ node => node.nodeType === 1 && !isGlassResourceNode(node)))
+      if (changed && !frame) frame = requestAnimationFrame(/** 在下一绘制帧更新界面。 */ () => { frame = 0; sync() })
     })
     // 只监听节点增删；滤镜绘制会修改属性，监听属性会造成不必要的重复同步。
     observer.observe(document.body, { childList: true, subtree: true })
     sync()
   })
-  onBeforeUnmount(() => {
+  onBeforeUnmount(/** 在组件卸载前释放相关资源。 */ () => {
     observer?.disconnect()
     cancelAnimationFrame(frame)
-    panels.forEach((cleanup) => cleanup())
+    panels.forEach(/** 处理遍历到的当前条目。 入参：cleanup。 */ (cleanup) => cleanup())
     panels.clear()
   })
   return { glassRoot }

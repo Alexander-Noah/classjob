@@ -12,6 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CoreSchemaMigrationContractTest {
     private static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
 
+    /**
+     * expandMigrationCreatesReplacementTablesAndRetainsClass课表的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void expandMigrationCreatesReplacementTablesAndRetainsClassTimetable() throws Exception {
         String sql = Files.readString(MIGRATIONS.resolve("V20261010_01__expand_core_schema.sql")).toLowerCase();
@@ -32,6 +36,10 @@ class CoreSchemaMigrationContractTest {
         assertFalse(sql.contains("drop column"));
     }
 
+    /**
+     * applicationKeepsFlywayExplicitly已禁用By默认的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void applicationKeepsFlywayExplicitlyDisabledByDefault() throws Exception {
         String yaml = Files.readString(Path.of("src", "main", "resources", "application.yaml"));

@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReservationMapperCalendarContractTest {
+    /**
+     * 课表Conflict查询UsesCharsetThenCollationForWeekday的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void timetableConflictQueryUsesCharsetThenCollationForWeekday() throws Exception {
         Configuration configuration = new Configuration();

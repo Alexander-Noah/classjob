@@ -21,6 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DashboardMapperCalendarContractTest {
+    /**
+     * today课表UsesConfiguredAtomic学期Calendar的处理逻辑。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Test
     void todayScheduleUsesConfiguredAtomicSemesterCalendar() throws IOException {
         byte[] mapperBytes;

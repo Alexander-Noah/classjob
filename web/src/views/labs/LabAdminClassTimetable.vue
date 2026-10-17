@@ -66,7 +66,7 @@ const taskPagination = reactive({
 const accountDialogVisible = ref(false)
 const taskDetailVisible = ref(false)
 const credential = ref({ configured: false, status: 'loading' })
-const credentialState = computed(() => credentialPresentation(credential.value))
+const credentialState = computed(/** 计算派生状态。 */ () => credentialPresentation(credential.value))
 const credentialForm = reactive({
   username: '',
   password: '',
@@ -80,7 +80,7 @@ const isCrawling = ref(false)
 const isSavingConfig = ref(false)
 const isSavingCredential = ref(false)
 
-const accountRows = computed(() => {
+const accountRows = computed(/** 计算派生状态。 */ () => {
   if (!credential.value?.configured) return []
   const keyword = accountFilter.keyword.trim()
   const row = {
@@ -90,45 +90,53 @@ const accountRows = computed(() => {
     sort: 0,
     status: credential.value.usable === false ? '待更新' : '启用',
     latestSuccessAt: summary.value.latestSyncAt || credential.value.updatedAt || '',
-    latestError: credential.value.message || taskRecords.value.find((task) => task.status !== 'success')?.error || '',
+    latestError: credential.value.message || taskRecords.value.find(/** 判断当前条目是否为查找目标。 入参：task。 */ (task) => task.status !== 'success')?.error || '',
   }
   const matchedKeyword = !keyword || row.username.includes(keyword) || row.remark.includes(keyword)
   const matchedStatus = !accountFilter.status || row.status === accountFilter.status
   return matchedKeyword && matchedStatus ? [row] : []
 })
 
-const pagedAccountRows = computed(() => {
+const pagedAccountRows = computed(/** 计算派生状态。 */ () => {
   const start = (accountPagination.page - 1) * accountPagination.pageSize
   return accountRows.value.slice(start, start + accountPagination.pageSize)
 })
 
-const pagedTaskRecords = computed(() => {
+const pagedTaskRecords = computed(/** 计算派生状态。 */ () => {
   const start = (taskPagination.page - 1) * taskPagination.pageSize
   return taskRecords.value.slice(start, start + taskPagination.pageSize)
 })
 
-const latestTask = computed(() => taskRecords.value[0] || null)
+const latestTask = computed(/** 计算派生状态。 */ () => taskRecords.value[0] || null)
 
-const scheduleSummary = computed(() => {
+const scheduleSummary = computed(/** 计算派生状态。 */ () => {
   if (!configForm.scheduleEnabled) return '已关闭自动采集'
   if (configForm.frequency === 'daily') return `每天 ${configForm.dailyTime} 自动采集`
   if (configForm.frequency === 'weekly') {
-    const weekday = weekdayOptions.find((item) => item.value === configForm.weeklyDay)?.label || '周一'
+    const weekday = weekdayOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.value === configForm.weeklyDay)?.label || '周一'
     return `每${weekday} ${configForm.weeklyTime} 自动采集`
   }
   return `每 ${configForm.intervalHours} 小时自动采集`
 })
 
-const nextRunText = computed(() => {
+const nextRunText = computed(/** 计算派生状态。 */ () => {
   if (!configForm.scheduleEnabled) return '自动采集已关闭'
   if (!credentialState.value.canCollect) return '账号可用后恢复自动采集'
   return configForm.nextRunAt || '保存配置后生成'
 })
 
+/**
+ * 加载本地状态。
+ */
 const loadLocalState = () => {
   credentialForm.remark = window.localStorage?.getItem(ACCOUNT_REMARK_STORAGE_KEY) || '课表采集账号'
 }
 
+/**
+ * 解析时间。
+ * 入参：value（值）；fallback（fallback）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTime = (value, fallback = '02:00') => {
   const matched = String(value || '').match(/^(\d{1,2}):(\d{2})$/)
   if (!matched) return fallback
@@ -137,6 +145,10 @@ const parseTime = (value, fallback = '02:00') => {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+/**
+ * 解析Cron目标Form。
+ * 入参：cron（cron）。
+ */
 const parseCronToForm = (cron) => {
   const parts = String(cron || '').trim().split(/\s+/)
   if (parts.length !== 6) {
@@ -160,7 +172,7 @@ const parseCronToForm = (cron) => {
     return
   }
 
-  if (dayOfMonth === '*' && month === '*' && weekdayOptions.some((item) => item.value === dayOfWeek)) {
+  if (dayOfMonth === '*' && month === '*' && weekdayOptions.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.value === dayOfWeek)) {
     configForm.frequency = 'weekly'
     configForm.weeklyDay = dayOfWeek
     configForm.weeklyTime = parseTime(`${hour}:${minute}`)
@@ -171,6 +183,10 @@ const parseCronToForm = (cron) => {
   configForm.intervalHours = 6
 }
 
+/**
+ * 构建Cron来源配置。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildCronFromConfig = () => {
   if (configForm.frequency === 'daily') {
     const [hour, minute] = parseTime(configForm.dailyTime).split(':')
@@ -183,6 +199,10 @@ const buildCronFromConfig = () => {
   return `0 0 */${configForm.intervalHours} * * *`
 }
 
+/**
+ * 应用Crawler配置。
+ * 入参：config（配置）。
+ */
 const applyCrawlerConfig = (config = {}) => {
   configForm.scheduleEnabled =
     config.scheduleEnabled === undefined || config.scheduleEnabled === null
@@ -195,14 +215,23 @@ const applyCrawlerConfig = (config = {}) => {
   parseCronToForm(configForm.cron)
 }
 
+/**
+ * 获取Crawler配置。
+ */
 const fetchCrawlerConfig = async () => {
   applyCrawlerConfig((await getClassTimetableCrawlerConfig()) || {})
 }
 
+/**
+ * 获取Task记录集合。
+ */
 const fetchTaskRecords = async () => {
   taskRecords.value = (await listClassTimetableCrawlerTasks({ limit: 100 })) || []
 }
 
+/**
+ * 获取凭据。
+ */
 const fetchCredential = async () => {
   try {
     credential.value = await getClassTimetableCrawlerCredential()
@@ -211,14 +240,23 @@ const fetchCredential = async () => {
   }
 }
 
+/**
+ * 获取摘要。
+ */
 const fetchSummary = async () => {
   summary.value = (await getClassTimetableSummary()) || {}
 }
 
+/**
+ * 刷新All。
+ */
 const refreshAll = async () => {
   await Promise.all([fetchCredential(), fetchSummary(), fetchCrawlerConfig(), fetchTaskRecords()])
 }
 
+/**
+ * 保存配置。
+ */
 const saveConfig = async () => {
   if (!configForm.semester) {
     ElMessage.warning('请选择课表学期')
@@ -246,6 +284,9 @@ const saveConfig = async () => {
   }
 }
 
+/**
+ * 打开AccountDialog。
+ */
 const openAccountDialog = () => {
   credentialForm.username = ''
   credentialForm.password = ''
@@ -253,6 +294,9 @@ const openAccountDialog = () => {
   accountDialogVisible.value = true
 }
 
+/**
+ * 保存凭据。
+ */
 const saveCredential = async () => {
   if (!credentialForm.username.trim() || !credentialForm.password.trim()) {
     ElMessage.warning('请填写教务账号和密码')
@@ -276,6 +320,9 @@ const saveCredential = async () => {
   }
 }
 
+/**
+ * 删除凭据。
+ */
 const deleteCredential = async () => {
   try {
     await ElMessageBox.confirm('删除后后台采集服务将无法登录教务系统，确认删除这个账号吗？', '删除教务账号', {
@@ -294,16 +341,25 @@ const deleteCredential = async () => {
   }
 }
 
+/**
+ * 重置Account筛选条件。
+ */
 const resetAccountFilter = () => {
   accountFilter.keyword = ''
   accountFilter.status = ''
   accountPagination.page = 1
 }
 
+/**
+ * 查询Account行集合。
+ */
 const queryAccountRows = () => {
   accountPagination.page = 1
 }
 
+/**
+ * 处理Crawler。
+ */
 const handleCrawler = async () => {
   if (!credentialState.value.canCollect) {
     ElMessage.warning(credentialState.value.description)
@@ -331,11 +387,18 @@ const handleCrawler = async () => {
   }
 }
 
+/**
+ * 打开Task详情。
+ * 入参：task（task）。
+ */
 const openTaskDetail = (task) => {
   activeTask.value = task
   taskDetailVisible.value = true
 }
 
+/**
+ * 清理Task记录集合。
+ */
 const clearTaskRecords = async () => {
   if (!taskRecords.value.length) return
   try {
@@ -354,6 +417,11 @@ const clearTaskRecords = async () => {
   }
 }
 
+/**
+ * 获取Task状态Tag类型。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getTaskStatusTagType = (status) => {
   if (status === 'success') return 'success'
   if (status === 'running') return 'primary'
@@ -361,13 +429,18 @@ const getTaskStatusTagType = (status) => {
   return 'danger'
 }
 
+/**
+ * 格式化Trigger类型。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatTriggerType = (value) => {
   if (value === 'scheduled') return '定时'
   if (value === 'manual') return '手动'
   return value || '-'
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   loadLocalState()
   await refreshAll()
 })

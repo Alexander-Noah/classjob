@@ -6,5 +6,10 @@ package org.example.backend.service;
 import org.example.backend.service.CapabilityResult;
 
 public interface ScheduleSnapshotPort {
+    /**
+     * 查找ByTeachingTask标识。
+     * @param teachingTaskId teachingTask标识参数。
+     * @return CapabilityResult<ScheduleSnapshot> 类型的处理结果。
+     */
     CapabilityResult<ScheduleSnapshot> findByTeachingTaskId(Long teachingTaskId);
 }

@@ -5,6 +5,11 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 const chunkLimitBytes = 450 * 1024
+/**
+ * nodeModule的处理逻辑。
+ * 入参：name（名称）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const nodeModule = (name) => new RegExp(`node_modules[\\\\/]${name}[\\\\/]`)
 
 const buildChunkGroups = [
@@ -22,6 +27,11 @@ const buildChunkGroups = [
   },
   {
     name: 'vue-core',
+    /**
+     * 验证当前操作。
+     * 入参：id（标识）。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     test: (id) => nodeModule('@vue').test(id) || nodeModule('vue').test(id) || nodeModule('vue-router').test(id),
     priority: 35,
   },
@@ -51,7 +61,7 @@ const buildChunkGroups = [
   },
 ]
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(/** 处理 defineConfig 调用中的回调逻辑。 */ ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8080'
   const shouldProxyApi = !env.VITE_API_BASE_URL || env.VITE_API_BASE_URL === '/api'
@@ -78,6 +88,11 @@ export default defineConfig(({ mode }) => {
               target: proxyTarget,
               changeOrigin: true,
               secure: false,
+              /**
+               * rewrite的处理逻辑。
+               * 入参：path（路径）。
+               * @returns 由当前表达式或分支生成的处理结果。
+               */
               rewrite: (path) => path.replace(/^\/api/, ''),
             },
           }

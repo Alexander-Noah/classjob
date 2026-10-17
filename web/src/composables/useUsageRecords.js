@@ -112,6 +112,10 @@ const initialRecords = [
   },
 ]
 
+/**
+ * 读取本地Patches。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readLocalPatches = () => {
   if (typeof window === 'undefined') return {}
 
@@ -123,18 +127,36 @@ const readLocalPatches = () => {
   }
 }
 
+/**
+ * 写入本地Patches。
+ * 入参：patches（patches）。
+ */
 const writeLocalPatches = (patches) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(LOCAL_PATCH_STORAGE_KEY, JSON.stringify(patches))
 }
 
+/**
+ * pad数值的处理逻辑。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const padNumber = (value) => String(value).padStart(2, '0')
 
+/**
+ * now标签的处理逻辑。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const nowLabel = () => {
   const now = new Date()
   return `${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())} ${padNumber(now.getHours())}:${padNumber(now.getMinutes())}`
 }
 
+/**
+ * 转换为Display时间。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toDisplayTime = (value) => {
   if (!value) return '-'
   const text = String(value).replace('T', ' ')
@@ -143,6 +165,11 @@ const toDisplayTime = (value) => {
   return text
 }
 
+/**
+ * 获取记录日期。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordDate = (value) => {
   if (!value || value === '-' || value === STATUS.using) return ''
   const text = String(value).replace(/\//g, '-')
@@ -152,6 +179,11 @@ const getRecordDate = (value) => {
   return shortMatch ? `${new Date().getFullYear()}-${shortMatch[1]}-${shortMatch[2]}` : ''
 }
 
+/**
+ * 解析记录时间。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseRecordTime = (value) => {
   const date = getRecordDate(value)
   if (!date) return null
@@ -161,6 +193,11 @@ const parseRecordTime = (value) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
+/**
+ * 格式化时长。
+ * 入参：entryTime（条目时间）；leaveTime（移出时间）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDuration = (entryTime, leaveTime) => {
   const start = parseRecordTime(entryTime)
   const end = parseRecordTime(leaveTime)
@@ -174,6 +211,11 @@ const formatDuration = (entryTime, leaveTime) => {
   return `${hours}小时${minutes}分钟`
 }
 
+/**
+ * 归一化状态。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeStatus = (status) => {
   const text = String(status || '').trim()
   if (Object.values(STATUS).includes(text)) return text
@@ -184,17 +226,47 @@ const normalizeStatus = (status) => {
   return STATUS.normal
 }
 
-const getStatusType = (status) => statusOptions.find((item) => item.label === status)?.type || 'info'
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const getStatusType = (status) => statusOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.label === status)?.type || 'info'
+/**
+ * 判断是否为Abnormal状态。
+ * 入参：status（状态）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isAbnormalStatus = (status) => [STATUS.abnormal, STATUS.pending].includes(status)
+/**
+ * 判断是否为PersistableBackend标识。
+ * 入参：id（标识）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isPersistableBackendId = (id) => /^\d+$/.test(String(id ?? ''))
+/**
+ * 判断是否为Readonly记录。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReadonlyRecord = (record = {}) => Boolean(record.readonly) || !isPersistableBackendId(record.id)
 
+/**
+ * infer实验室的处理逻辑。
+ * 入参：record（记录）；availableLabs（可用实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const inferLab = (record, availableLabs = fallbackLabOptions) => {
   if (record.lab) return record.lab
   const resource = String(record.resource || '')
-  return availableLabs.find((lab) => resource.includes(lab.slice(0, 4)) || resource.includes(lab)) || resource || '-'
+  return availableLabs.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => resource.includes(lab.slice(0, 4)) || resource.includes(lab)) || resource || '-'
 }
 
+/**
+ * 格式化Usage记录No。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatUsageRecordNo = (record = {}) => {
   const existingNo = record.recordNo || record.recordCode || record.usageNo || record.usageCode
   if (existingNo) return String(existingNo)
@@ -205,6 +277,11 @@ const formatUsageRecordNo = (record = {}) => {
   return rawId || `UR-${Date.now()}`
 }
 
+/**
+ * 归一化Usage记录。
+ * 入参：record（记录）；availableLabs（可用实验室）。
+ * @returns 组装的键值对象。
+ */
 const normalizeUsageRecord = (record = {}, availableLabs = fallbackLabOptions) => {
   const id = String(record.id || `UR-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
   const status = normalizeStatus(record.status)
@@ -236,14 +313,23 @@ const normalizeUsageRecord = (record = {}, availableLabs = fallbackLabOptions) =
   }
 }
 
+/**
+ * 应用本地Patches。
+ * 入参：loadedRecords（loaded记录集合）；availableLabs（可用实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const applyLocalPatches = (loadedRecords, availableLabs) => {
   const patches = readLocalPatches()
-  return loadedRecords.map((record) => {
+  return loadedRecords.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => {
     const id = String(record.id)
     return normalizeUsageRecord({ ...record, ...(patches[id] || {}) }, availableLabs)
   })
 }
 
+/**
+ * 提供Usage记录集合。
+ * @returns 组装的键值对象。
+ */
 export function useUsageRecords() {
   const records = ref([])
   const labOptions = ref([...fallbackLabOptions])
@@ -256,30 +342,33 @@ export function useUsageRecords() {
   const abnormalOnly = ref(false)
 
   const selectedRecord = computed(
-    () => records.value.find((item) => String(item.id) === String(selectedRecordId.value)) || records.value[0] || null,
+    /**
+     * 计算派生状态。
+     */
+    () => records.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(selectedRecordId.value)) || records.value[0] || null,
   )
 
-  const effectiveTypeOptions = computed(() => {
-    const dynamicTypes = records.value.map((item) => item.type).filter(Boolean)
+  const effectiveTypeOptions = computed(/** 计算派生状态。 */ () => {
+    const dynamicTypes = records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.type).filter(Boolean)
     return [...new Set([...typeOptions, ...dynamicTypes])]
   })
 
-  const effectiveLabOptions = computed(() => {
-    const dynamicLabs = records.value.map((item) => item.lab).filter(Boolean)
+  const effectiveLabOptions = computed(/** 计算派生状态。 */ () => {
+    const dynamicLabs = records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.lab).filter(Boolean)
     return [...new Set([...labOptions.value, ...dynamicLabs])]
   })
 
-  const statusSummary = computed(() =>
-    statusOptions.map((status) => ({
+  const statusSummary = computed(/** 计算派生状态。 */ () =>
+    statusOptions.map(/** 将当前条目转换为目标结果。 入参：status。 */ (status) => ({
       ...status,
-      count: records.value.filter((item) => item.status === status.label).length,
+      count: records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === status.label).length,
     })),
   )
 
-  const metrics = computed(() => {
-    const usingCount = records.value.filter((item) => item.status === STATUS.using).length
-    const abnormalCount = records.value.filter((item) => isAbnormalStatus(item.status)).length
-    const archivedCount = records.value.filter((item) => item.status === STATUS.archived).length
+  const metrics = computed(/** 计算派生状态。 */ () => {
+    const usingCount = records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === STATUS.using).length
+    const abnormalCount = records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => isAbnormalStatus(item.status)).length
+    const archivedCount = records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === STATUS.archived).length
 
     return [
       { label: '记录总数', value: String(records.value.length), trend: '门禁与设备联动采集' },
@@ -289,11 +378,11 @@ export function useUsageRecords() {
     ]
   })
 
-  const filteredRecords = computed(() => {
+  const filteredRecords = computed(/** 计算派生状态。 */ () => {
     const searchText = keyword.value.trim().toLowerCase()
     const [startDate, endDate] = dateRange.value || []
 
-    return records.value.filter((item) => {
+    return records.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
       const matchesKeyword =
         !searchText ||
         [
@@ -308,7 +397,7 @@ export function useUsageRecords() {
           item.abnormalReason,
           item.note,
           item.sourceType,
-        ].some((value) => String(value ?? '').toLowerCase().includes(searchText))
+        ].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => String(value ?? '').toLowerCase().includes(searchText))
       const matchesStatus = statusFilter.value === 'all' || item.status === statusFilter.value
       const matchesType = typeFilter.value === 'all' || item.type === typeFilter.value
       const matchesLab = labFilter.value === 'all' || item.lab === labFilter.value
@@ -320,6 +409,10 @@ export function useUsageRecords() {
     })
   })
 
+  /**
+   * 保存本地Patch。
+   * 入参：record（记录）。
+   */
   const saveLocalPatch = (record) => {
     const patches = readLocalPatches()
     patches[String(record.id)] = {
@@ -329,6 +422,10 @@ export function useUsageRecords() {
     writeLocalPatches(patches)
   }
 
+  /**
+   * 同步服务端状态。
+   * 入参：record（记录）；actionName（action名称）；payload（载荷）。
+   */
   const syncServerStatus = async (record, actionName, payload = {}) => {
     if (isReadonlyRecord(record)) return
     try {
@@ -338,6 +435,10 @@ export function useUsageRecords() {
     }
   }
 
+  /**
+   * patch记录的处理逻辑。
+   * 入参：record（记录）；patch（patch）；successMessage（成功消息）；actionName（action名称）。
+   */
   const patchRecord = async (record, patch, successMessage, actionName = '') => {
     if (!record) return
     if (isReadonlyRecord(record)) {
@@ -353,7 +454,7 @@ export function useUsageRecords() {
       labOptions.value,
     )
 
-    records.value = records.value.map((item) => (String(item.id) === String(record.id) ? updatedRecord : item))
+    records.value = records.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(record.id) ? updatedRecord : item))
     selectedRecordId.value = updatedRecord.id
     saveLocalPatch(updatedRecord)
 
@@ -367,6 +468,10 @@ export function useUsageRecords() {
     if (successMessage) ElMessage.success(successMessage)
   }
 
+  /**
+   * 标记Reviewed。
+   * 入参：record（记录）。
+   */
   const markReviewed = (record = selectedRecord.value) => {
     patchRecord(
       record,
@@ -382,6 +487,10 @@ export function useUsageRecords() {
     )
   }
 
+  /**
+   * 标记Abnormal。
+   * 入参：record（记录）。
+   */
   const markAbnormal = async (record = selectedRecord.value) => {
     if (!record) return
 
@@ -390,6 +499,11 @@ export function useUsageRecords() {
         confirmButtonText: '标记异常',
         cancelButtonText: '取消',
         inputPlaceholder: '例如：非预约时段进入、设备未归还、门禁识别异常',
+        /**
+         * 输入校验器的处理逻辑。
+         * 入参：value（值）。
+         * @returns 由当前表达式或分支生成的处理结果。
+         */
         inputValidator: (value) => Boolean(String(value || '').trim()) || '异常原因不能为空',
       })
       patchRecord(
@@ -409,6 +523,10 @@ export function useUsageRecords() {
     }
   }
 
+  /**
+   * 归档记录的处理逻辑。
+   * 入参：record（记录）。
+   */
   const archiveRecord = async (record = selectedRecord.value) => {
     if (!record) return
 
@@ -435,6 +553,10 @@ export function useUsageRecords() {
     )
   }
 
+  /**
+   * 关闭Using记录。
+   * 入参：record（记录）。
+   */
   const closeUsingRecord = (record = selectedRecord.value) => {
     if (!record) return
     const leaveTime = nowLabel()
@@ -455,12 +577,18 @@ export function useUsageRecords() {
     )
   }
 
+  /**
+   * 筛选Abnormal记录集合。
+   */
   const filterAbnormalRecords = () => {
     abnormalOnly.value = true
     statusFilter.value = 'all'
     ElMessage.warning('已筛选待复核与异常记录')
   }
 
+  /**
+   * 重置筛选条件。
+   */
   const resetFilters = () => {
     keyword.value = ''
     statusFilter.value = 'all'
@@ -470,6 +598,9 @@ export function useUsageRecords() {
     abnormalOnly.value = false
   }
 
+  /**
+   * 重置记录集合。
+   */
   const resetRecords = async () => {
     try {
       await ElMessageBox.confirm('确认恢复使用记录初始数据吗？', '恢复数据', {
@@ -484,13 +615,16 @@ export function useUsageRecords() {
     resetFilters()
     writeLocalPatches({})
     const resetResult = await usageRecordResourceService.reset({
-      fallbackRecords: initialRecords.map((item) => ({ ...item })),
+      fallbackRecords: initialRecords.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({ ...item })),
     })
     records.value = applyLocalPatches(Array.isArray(resetResult) && resetResult.length ? resetResult : initialRecords, labOptions.value)
     selectedRecordId.value = records.value[0]?.id || ''
     ElMessage.success('已恢复使用记录初始数据')
   }
 
+  /**
+   * 导出记录集合。
+   */
   const exportRecords = () => {
     const exportRows = filteredRecords.value
 
@@ -523,31 +657,41 @@ export function useUsageRecords() {
     ElMessage.success(`已导出 ${exportedCount} 条使用记录`)
   }
 
+  /**
+   * 加载实验室选项。
+   */
   const loadLabOptions = async () => {
     try {
       const labs = await labResourceService.list({ fallbackRecords: [] })
-      const displayNames = (Array.isArray(labs) ? labs : []).map((lab) => formatLabDisplayName(lab)).filter(Boolean)
+      const displayNames = (Array.isArray(labs) ? labs : []).map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => formatLabDisplayName(lab)).filter(Boolean)
       labOptions.value = displayNames.length ? displayNames : [...fallbackLabOptions]
     } catch {
       labOptions.value = [...fallbackLabOptions]
     }
   }
 
+  /**
+   * 加载记录集合。
+   */
   const loadRecords = async () => {
     const loadedRecords = await usageRecordResourceService.list({
-      fallbackRecords: initialRecords.map((item) => ({ ...item })),
+      fallbackRecords: initialRecords.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => ({ ...item })),
     })
     records.value = applyLocalPatches(Array.isArray(loadedRecords) && loadedRecords.length ? loadedRecords : initialRecords, labOptions.value)
     selectedRecordId.value = records.value[0]?.id || ''
   }
 
+  /**
+   * 选择记录。
+   * 入参：record（记录）。
+   */
   const selectRecord = (record) => {
     selectedRecordId.value = record?.id || ''
   }
 
-  watch(filteredRecords, async (nextRecords) => {
+  watch(filteredRecords, /** 响应被监听状态的变化。 入参：nextRecords。 */ async (nextRecords) => {
     if (!nextRecords.length) return
-    if (!nextRecords.some((item) => String(item.id) === String(selectedRecordId.value))) {
+    if (!nextRecords.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => String(item.id) === String(selectedRecordId.value))) {
       await nextTick()
       selectedRecordId.value = nextRecords[0].id
     }

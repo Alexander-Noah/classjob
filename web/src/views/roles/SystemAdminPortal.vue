@@ -14,13 +14,16 @@ defineOptions({
 
 const snapshot = ref({ users: null, notices: null, errors: [] })
 const loading = ref(false)
-const config = computed(() => ({
+const config = computed(/** 计算派生状态。 */ () => ({
   ...SYSTEM_ADMIN_PORTAL,
   stats: buildPlatformSummary(snapshot.value.users, snapshot.value.notices),
   recordsTitle: '平台账号概览',
   columns: ['账号', '姓名', '角色', '创建时间', '状态'],
   records: buildPlatformAccountRows(snapshot.value.users),
 }))
+/**
+ * 加载快照。
+ */
 const loadSnapshot = async () => {
   loading.value = true
   try { snapshot.value = await fetchPlatformSnapshot() }

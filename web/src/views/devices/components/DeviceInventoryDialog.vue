@@ -17,6 +17,10 @@ const props = defineProps({
   },
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   formModel: {
@@ -33,6 +37,10 @@ const props = defineProps({
   },
   resultOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -40,17 +48,46 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
-const targetDevices = computed(() => (props.devices.length ? props.devices : [props.device].filter(Boolean)))
-const isBatch = computed(() => targetDevices.value.length > 1)
-const title = computed(() => (isBatch.value ? `批量盘点 ${targetDevices.value.length} 台设备` : '设备盘点登记'))
-const summaryDevice = computed(() => targetDevices.value[0] || null)
+const targetDevices = computed(/** 计算派生状态。 */ () => (props.devices.length ? props.devices : [props.device].filter(Boolean)))
+const isBatch = computed(/** 计算派生状态。 */ () => targetDevices.value.length > 1)
+const title = computed(/** 计算派生状态。 */ () => (isBatch.value ? `批量盘点 ${targetDevices.value.length} 台设备` : '设备盘点登记'))
+const summaryDevice = computed(/** 计算派生状态。 */ () => targetDevices.value[0] || null)
+/**
+ * 获取设备名称。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceName = (device = {}) => device.deviceName || device.name || '未命名设备'
+/**
+ * 获取设备编码。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceCode = (device = {}) => device.assetNo || device.code || device.deviceCode || '-'
+/**
+ * 获取设备实验室。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceLab = (device = {}) => device.labName || device.lab || device.roomNo || '未关联实验室'
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getStatusType = (status) => {
   if (status === '正常') return 'success'
   if (status === '维修中') return 'warning'
@@ -58,6 +95,10 @@ const getStatusType = (status) => {
   return 'info'
 }
 
+/**
+ * 处理NormalChange。
+ * 入参：value（值）。
+ */
 const handleNormalChange = (value) => {
   if (value) {
     props.formModel.missing = false
@@ -68,6 +109,10 @@ const handleNormalChange = (value) => {
   }
 }
 
+/**
+ * 处理MissingChange。
+ * 入参：value（值）。
+ */
 const handleMissingChange = (value) => {
   if (value) {
     props.formModel.normal = false
@@ -76,6 +121,10 @@ const handleMissingChange = (value) => {
   }
 }
 
+/**
+ * 处理DamagedChange。
+ * 入参：value（值）。
+ */
 const handleDamagedChange = (value) => {
   if (value) {
     props.formModel.normal = false
@@ -84,6 +133,10 @@ const handleDamagedChange = (value) => {
   }
 }
 
+/**
+ * 处理结果Change。
+ * 入参：value（值）。
+ */
 const handleResultChange = (value) => {
   props.formModel.normal = value === '已盘点'
   props.formModel.missing = value === '设备缺失'
@@ -97,7 +150,7 @@ const handleResultChange = (value) => {
       <el-icon><Finished /></el-icon>
       <div>
         <h3>{{ isBatch ? `已选择 ${targetDevices.length} 台设备` : getDeviceName(summaryDevice) }}</h3>
-        <span v-if="isBatch">{{ targetDevices.map((item) => getDeviceCode(item)).join('、') }}</span>
+        <span v-if="isBatch">{{ targetDevices.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => getDeviceCode(item)).join('、') }}</span>
         <span v-else>{{ getDeviceCode(summaryDevice) }} · {{ getDeviceLab(summaryDevice) }}</span>
       </div>
       <el-tag v-if="!isBatch" :type="summaryDevice.tagType || getStatusType(summaryDevice.status)" effect="light">{{ summaryDevice.status }}</el-tag>

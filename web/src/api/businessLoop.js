@@ -19,6 +19,11 @@ const EMPTY_BUSINESS_LOOP = {
   totals: {},
 }
 
+/**
+ * 归一化BusinessLoop概况。
+ * 入参：data（数据）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export const normalizeBusinessLoopOverview = (data) => ({
   ...EMPTY_BUSINESS_LOOP,
   ...(data && typeof data === 'object' ? data : {}),
@@ -33,6 +38,10 @@ export const normalizeBusinessLoopOverview = (data) => ({
   totals: data?.totals && typeof data.totals === 'object' ? data.totals : {},
 })
 
+/**
+ * 获取BusinessLoop概况。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 export async function fetchBusinessLoopOverview() {
   if (API_USE_MOCK) {
     return normalizeBusinessLoopOverview(EMPTY_BUSINESS_LOOP)

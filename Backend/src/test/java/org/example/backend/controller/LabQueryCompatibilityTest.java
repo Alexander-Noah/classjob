@@ -32,6 +32,9 @@ class LabQueryCompatibilityTest {
     private LabCatalogQuery query;
     private MockMvc mockMvc;
 
+    /**
+     * 设置抬起。
+     */
     @BeforeEach
     void setUp() {
         query = mock(LabCatalogQuery.class);
@@ -40,6 +43,10 @@ class LabQueryCompatibilityTest {
                 .build();
     }
 
+    /**
+     * preservesSystemAdministrator列表ContractAndAllDisplayFields的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void preservesSystemAdministratorListContractAndAllDisplayFields() throws Exception {
         when(query.list(any())).thenReturn(List.of(lab()));
@@ -67,6 +74,10 @@ class LabQueryCompatibilityTest {
         verify(query).list(LabAccessScope.all());
     }
 
+    /**
+     * scopes非SystemAdministrator列表目标已认证状态用户的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void scopesNonSystemAdministratorListToAuthenticatedUser() throws Exception {
         when(query.list(any())).thenReturn(List.of(lab()));
@@ -80,6 +91,10 @@ class LabQueryCompatibilityTest {
         verify(query).list(LabAccessScope.managedBy(42L));
     }
 
+    /**
+     * preserves详情AndMissing实验室Contracts的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void preservesDetailAndMissingLabContracts() throws Exception {
         when(query.findById(eq(7L), any())).thenReturn(lab());
@@ -101,6 +116,10 @@ class LabQueryCompatibilityTest {
                 .andExpect(jsonPath("$.data").value(nullValue()));
     }
 
+    /**
+     * preservesForbidden状态WhenAuthentication身份IsMissing的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void preservesForbiddenStatusWhenAuthenticationIdentityIsMissing() throws Exception {
         mockMvc.perform(get("/labs")
@@ -108,6 +127,10 @@ class LabQueryCompatibilityTest {
                 .andExpect(status().isForbidden());
     }
 
+    /**
+     * 实验室的处理逻辑。
+     * @return LabView 类型的处理结果。
+     */
     private LabView lab() {
         return new LabView(
                 7L, "LAB-007", "网络实验室", "实训楼", "3", "305", "网络", 48,

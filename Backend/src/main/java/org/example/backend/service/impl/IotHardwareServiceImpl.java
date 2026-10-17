@@ -36,6 +36,11 @@ public class IotHardwareServiceImpl implements IotHardwareService {
     private final BusinessLoopService businessLoopService;
     private final HttpClient httpClient;
 
+    /**
+     * 构造 IotHardwareServiceImpl，初始化当前实例。
+     * @param properties 属性参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public IotHardwareServiceImpl(IotHardwareProperties properties, BusinessLoopService businessLoopService) {
         this.properties = properties;
         this.businessLoopService = businessLoopService;
@@ -44,11 +49,15 @@ public class IotHardwareServiceImpl implements IotHardwareService {
                 .build();
     }
 
+    /**
+     * 获取概况。
+     * @return 包含 enabled、configuredCount、accessCount、cameraCount、devices 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> getOverview() {
         List<Map<String, Object>> devices = listHardwareDevices();
-        long accessCount = devices.stream().filter(device -> "access-control".equals(device.get("type"))).count();
-        long cameraCount = devices.stream().filter(device -> "camera".equals(device.get("type"))).count();
+        long accessCount = devices.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> "access-control".equals(device.get("type"))).count();
+        long cameraCount = devices.stream().filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> "camera".equals(device.get("type"))).count();
 
         return Map.of(
                 "enabled", properties.isEnabled(),
@@ -59,6 +68,10 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         );
     }
 
+    /**
+     * 列出Hardware设备。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<Map<String, Object>> listHardwareDevices() {
         return properties.getDevices().stream()
@@ -66,11 +79,16 @@ public class IotHardwareServiceImpl implements IotHardwareService {
                 .toList();
     }
 
+    /**
+     * 获取实验室状态。
+     * @param labId 实验室标识参数。
+     * @return 包含 labId、devices、online 等字段的结果对象。
+     */
     @Override
     public Map<String, Object> getLabStatus(Long labId) {
         ensureEnabled();
         List<IotHardwareProperties.HardwareDevice> labDevices = properties.getDevices().stream()
-                .filter(device -> Objects.equals(device.getLabId(), labId))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> Objects.equals(device.getLabId(), labId))
                 .toList();
 
         if (labDevices.isEmpty()) {
@@ -85,15 +103,22 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return Map.of(
                 "labId", labId,
                 "devices", statusList,
-                "online", statusList.stream().anyMatch(status -> Boolean.TRUE.equals(status.get("online")))
+                "online", statusList.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：status。 */ status -> Boolean.TRUE.equals(status.get("online")))
         );
     }
 
+    /**
+     * 执行Access命令。
+     * @param labId 实验室标识参数。
+     * @param action action参数。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> executeAccessCommand(Long labId, String action, Map<String, Object> payload) {
         ensureEnabled();
         IotHardwareProperties.HardwareDevice device = findLabDevice(labId, "access-control")
-                .orElseThrow(() -> new IllegalArgumentException("该实验室未配置门禁控制器"));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("该实验室未配置门禁控制器"));
         String normalizedAction = normalizeAction(action);
         Map<String, Object> result = executeConfiguredCommand(device, normalizedAction, payload);
 
@@ -106,11 +131,16 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return result;
     }
 
+    /**
+     * 获取实验室Camera。
+     * @param labId 实验室标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getLabCamera(Long labId) {
         ensureEnabled();
         IotHardwareProperties.HardwareDevice device = findLabDevice(labId, "camera")
-                .orElseThrow(() -> new IllegalArgumentException("该实验室未配置摄像头"));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("该实验室未配置摄像头"));
         Map<String, Object> result = sanitizeDevice(device);
 
         if (StringUtils.hasText(device.getSnapshotUrl())) {
@@ -120,19 +150,31 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return result;
     }
 
+    /**
+     * 获取设备状态。
+     * @param code 编码参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getDeviceStatus(String code) {
         ensureEnabled();
         IotHardwareProperties.HardwareDevice device = findDevice(code)
-                .orElseThrow(() -> new IllegalArgumentException("未找到硬件设备配置"));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("未找到硬件设备配置"));
         return checkDeviceStatus(device);
     }
 
+    /**
+     * 执行设备命令。
+     * @param code 编码参数。
+     * @param action action参数。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> executeDeviceCommand(String code, String action, Map<String, Object> payload) {
         ensureEnabled();
         IotHardwareProperties.HardwareDevice device = findDevice(code)
-                .orElseThrow(() -> new IllegalArgumentException("未找到硬件设备配置"));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("未找到硬件设备配置"));
         Map<String, Object> result = executeConfiguredCommand(device, normalizeAction(action), payload);
 
         businessLoopService.recordEvent("iot", "device-" + action, device.getName(), String.valueOf(result.get("status")), Map.of(
@@ -144,12 +186,17 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return result;
     }
 
+    /**
+     * 获取Camera快照。
+     * @param code 编码参数。
+     * @return CameraSnapshot 类型的处理结果。
+     */
     @Override
     public CameraSnapshot getCameraSnapshot(String code) {
         ensureEnabled();
         IotHardwareProperties.HardwareDevice device = findDevice(code)
                 .filter(this::isCamera)
-                .orElseThrow(() -> new IllegalArgumentException("未找到摄像头配置"));
+                .orElseThrow(/** 处理 orElseThrow 调用中的回调逻辑。 */ () -> new IllegalArgumentException("未找到摄像头配置"));
 
         if (!StringUtils.hasText(device.getSnapshotUrl())) {
             throw new IllegalArgumentException("摄像头未配置抓拍地址");
@@ -161,14 +208,20 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         }
 
         String contentType = result.headers().entrySet().stream()
-                .filter(entry -> "content-type".equalsIgnoreCase(entry.getKey()))
-                .flatMap(entry -> entry.getValue().stream())
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：entry。 */ entry -> "content-type".equalsIgnoreCase(entry.getKey()))
+                .flatMap(/** 转换并展开当前条目。 入参：entry。 */ entry -> entry.getValue().stream())
                 .findFirst()
                 .orElse("image/jpeg");
 
         return new CameraSnapshot(result.bodyBytes(), contentType);
     }
 
+    /**
+     * 构建能力。
+     * @param type 类型参数。
+     * @param device 设备参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> buildCapabilities(String type, IotHardwareProperties.HardwareDevice device) {
         Set<String> commands = device == null || device.getCommands() == null ? Set.of() : device.getCommands().keySet();
         boolean configured = device != null;
@@ -214,6 +267,16 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return capabilities;
     }
 
+    /**
+     * 添加能力。
+     * @param capabilities 能力参数。
+     * @param key 键参数。
+     * @param label 标签参数。
+     * @param type 类型参数。
+     * @param command 命令参数。
+     * @param enabled 已启用参数。
+     * @param options 选项参数。
+     */
     private void addCapability(
             List<Map<String, Object>> capabilities,
             String key,
@@ -235,6 +298,11 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         capabilities.add(capability);
     }
 
+    /**
+     * 检查设备状态。
+     * @param device 设备参数。
+     * @return 包含 status、GET、code、name、type、online、httpStatus、response 等字段的结果对象。
+     */
     private Map<String, Object> checkDeviceStatus(IotHardwareProperties.HardwareDevice device) {
         if (device.getCommands().containsKey("status")) {
             return executeConfiguredCommand(device, "status", Map.of());
@@ -263,6 +331,13 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         );
     }
 
+    /**
+     * 执行Configured命令。
+     * @param device 设备参数。
+     * @param action action参数。
+     * @param payload 载荷参数。
+     * @return 包含 success、deviceCode、deviceName、action、status、httpStatus、response 等字段的结果对象。
+     */
     private Map<String, Object> executeConfiguredCommand(IotHardwareProperties.HardwareDevice device, String action, Map<String, Object> payload) {
         IotHardwareProperties.HardwareCommand command = device.getCommands().get(action);
         if (command == null) {
@@ -289,6 +364,13 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         );
     }
 
+    /**
+     * 执行Tcp。
+     * @param device 设备参数。
+     * @param command 命令参数。
+     * @param payload 载荷参数。
+     * @return 包含 success、deviceCode、deviceName、status、response 等字段的结果对象。
+     */
     private Map<String, Object> executeTcp(IotHardwareProperties.HardwareDevice device, IotHardwareProperties.HardwareCommand command, Map<String, Object> payload) {
         IotHardwareProperties.TcpCommand tcp = command.getTcp();
         String host = firstNonBlank(tcp.getHost(), device.getBaseUrl());
@@ -336,6 +418,13 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         }
     }
 
+    /**
+     * 执行HTTP。
+     * @param device 设备参数。
+     * @param command 命令参数。
+     * @param payload 载荷参数。
+     * @return HttpResult 类型的处理结果。
+     */
     private HttpResult executeHttp(IotHardwareProperties.HardwareDevice device, IotHardwareProperties.HardwareCommand command, Map<String, Object> payload) {
         URI uri = URI.create(resolveUrl(device, command.getPath()));
         String method = firstNonBlank(command.getMethod(), "POST").toUpperCase(Locale.ROOT);
@@ -366,6 +455,12 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         }
     }
 
+    /**
+     * 应用认证And请求头。
+     * @param builder builder参数。
+     * @param device 设备参数。
+     * @param command 命令参数。
+     */
     private void applyAuthAndHeaders(HttpRequest.Builder builder, IotHardwareProperties.HardwareDevice device, IotHardwareProperties.HardwareCommand command) {
         builder.header("Accept", "*/*");
         if (StringUtils.hasText(command.getBody())) {
@@ -386,6 +481,12 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         }
     }
 
+    /**
+     * 创建AdHoc命令。
+     * @param method 方法参数。
+     * @param path 路径参数。
+     * @return IotHardwareProperties.HardwareCommand 类型的处理结果。
+     */
     private IotHardwareProperties.HardwareCommand createAdHocCommand(String method, String path) {
         IotHardwareProperties.HardwareCommand command = new IotHardwareProperties.HardwareCommand();
         command.setMethod(method);
@@ -393,6 +494,12 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return command;
     }
 
+    /**
+     * 解析URL。
+     * @param device 设备参数。
+     * @param path 路径参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveUrl(IotHardwareProperties.HardwareDevice device, String path) {
         String renderedPath = renderTemplate(path, device, Map.of());
         if (!StringUtils.hasText(renderedPath)) {
@@ -407,6 +514,13 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return device.getBaseUrl().replaceAll("/+$", "") + "/" + renderedPath.replaceAll("^/+", "");
     }
 
+    /**
+     * 渲染模板。
+     * @param template 模板参数。
+     * @param device 设备参数。
+     * @param payload 载荷参数。
+     * @return String 类型的处理结果。
+     */
     private String renderTemplate(String template, IotHardwareProperties.HardwareDevice device, Map<String, Object> payload) {
         if (template == null) {
             return "";
@@ -430,6 +544,12 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return rendered;
     }
 
+    /**
+     * 转换为命令Bytes。
+     * @param payload 载荷参数。
+     * @param charsetName charset名称参数。
+     * @return byte[] 类型的处理结果。
+     */
     private byte[] toCommandBytes(String payload, String charsetName) {
         if (!StringUtils.hasText(payload)) {
             return new byte[0];
@@ -448,27 +568,54 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return payload.getBytes(Charset.forName(firstNonBlank(charsetName, StandardCharsets.UTF_8.name())));
     }
 
+    /**
+     * 判断是否匹配成功正文。
+     * @param command 命令参数。
+     * @param body 正文参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean matchesSuccessBody(IotHardwareProperties.HardwareCommand command, String body) {
         return !StringUtils.hasText(command.getSuccessContains()) || body.contains(command.getSuccessContains());
     }
 
+    /**
+     * 查找实验室设备。
+     * @param labId 实验室标识参数。
+     * @param type 类型参数。
+     * @return Optional<IotHardwareProperties.HardwareDevice> 类型的处理结果。
+     */
     private Optional<IotHardwareProperties.HardwareDevice> findLabDevice(Long labId, String type) {
         return properties.getDevices().stream()
-                .filter(device -> Objects.equals(device.getLabId(), labId))
-                .filter(device -> type.equals(normalizeType(device.getType())))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> Objects.equals(device.getLabId(), labId))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> type.equals(normalizeType(device.getType())))
                 .findFirst();
     }
 
+    /**
+     * 查找设备。
+     * @param code 编码参数。
+     * @return Optional<IotHardwareProperties.HardwareDevice> 类型的处理结果。
+     */
     private Optional<IotHardwareProperties.HardwareDevice> findDevice(String code) {
         return properties.getDevices().stream()
-                .filter(device -> Objects.equals(device.getCode(), code))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ device -> Objects.equals(device.getCode(), code))
                 .findFirst();
     }
 
+    /**
+     * 判断是否为Camera。
+     * @param device 设备参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isCamera(IotHardwareProperties.HardwareDevice device) {
         return "camera".equals(normalizeType(device.getType()));
     }
 
+    /**
+     * 清洗设备。
+     * @param device 设备参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> sanitizeDevice(IotHardwareProperties.HardwareDevice device) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("code", valueOrEmpty(device.getCode()));
@@ -487,6 +634,11 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return result;
     }
 
+    /**
+     * 归一化类型。
+     * @param type 类型参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeType(String type) {
         String value = valueOrEmpty(type).toLowerCase(Locale.ROOT).trim();
         if (List.of("door", "access", "access-control", "lock", "electronic-lock", "门禁", "电子锁").contains(value)
@@ -525,6 +677,11 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return value;
     }
 
+    /**
+     * 归一化Action。
+     * @param action action参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeAction(String action) {
         String value = valueOrEmpty(action).toLowerCase(Locale.ROOT).trim();
         return switch (value) {
@@ -540,12 +697,19 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         };
     }
 
+    /**
+     * 确保满足已启用。
+     */
     private void ensureEnabled() {
         if (!properties.isEnabled()) {
             throw new IllegalArgumentException("物联网硬件接入未启用");
         }
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {
@@ -555,6 +719,11 @@ public class IotHardwareServiceImpl implements IotHardwareService {
         return "";
     }
 
+    /**
+     * 值Or空值的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String valueOrEmpty(String value) {
         return value == null ? "" : value;
     }

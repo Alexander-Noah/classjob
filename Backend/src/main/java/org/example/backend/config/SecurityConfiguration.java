@@ -9,8 +9,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
+    /**
+     * 提供默认DenyAuthorizationPolicy。
+     * @return AuthorizationPolicy 类型的处理结果。
+     */
     @Bean
     public AuthorizationPolicy defaultDenyAuthorizationPolicy() {
-        return (authority, action) -> false;
+        return /** 处理当前调用传入的回调逻辑。 入参：authority、action。 */ (authority, action) -> false;
     }
 }

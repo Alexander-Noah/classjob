@@ -29,11 +29,11 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
-const moduleConfig = computed(() => props.moduleConfig)
-const pageTitle = computed(() => moduleConfig.value.pageTitle || route.meta?.title || '业务管理')
-const pageIcon = computed(() => moduleConfig.value.pageIcon || route.meta?.module?.icon || DocumentChecked)
-const metrics = computed(() => moduleConfig.value.metrics || [])
-const featureCards = computed(() => moduleConfig.value.featureCards || [])
+const moduleConfig = computed(/** 计算派生状态。 */ () => props.moduleConfig)
+const pageTitle = computed(/** 计算派生状态。 */ () => moduleConfig.value.pageTitle || route.meta?.title || '业务管理')
+const pageIcon = computed(/** 计算派生状态。 */ () => moduleConfig.value.pageIcon || route.meta?.module?.icon || DocumentChecked)
+const metrics = computed(/** 计算派生状态。 */ () => moduleConfig.value.metrics || [])
+const featureCards = computed(/** 计算派生状态。 */ () => moduleConfig.value.featureCards || [])
 
 const business = useBusinessModuleRecords({
   route,
@@ -41,6 +41,9 @@ const business = useBusinessModuleRecords({
   pageTitle,
 })
 
+/**
+ * 处理Back目标Dashboard。
+ */
 const handleBackToDashboard = () => {
   const roleScope = route.meta?.roleScope || DEFAULT_AUTH_ROLE
   router.push(AUTH_ROLE_DEFAULT_PATH[roleScope] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE])

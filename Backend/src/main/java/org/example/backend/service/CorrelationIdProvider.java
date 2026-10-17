@@ -4,5 +4,9 @@
 package org.example.backend.service;
 
 public interface CorrelationIdProvider {
+    /**
+     * next的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     String next();
 }

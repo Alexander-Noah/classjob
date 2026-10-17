@@ -3,6 +3,10 @@
  * 主要导出：BrowserSpeechRecognition。
  */
 export class BrowserSpeechRecognition {
+  /**
+   * 初始化当前实例及其所需状态。
+   * 入参：解构参数（onTranscript、onError）。
+   */
   constructor({ onTranscript, onError } = {}) {
     this.onTranscript = onTranscript
     this.onError = onError
@@ -12,10 +16,17 @@ export class BrowserSpeechRecognition {
     this.isListening = false
   }
 
+  /**
+   * 判断是否为Supported。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   get isSupported() {
     return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
   }
 
+  /**
+   * 启动当前操作。
+   */
   start() {
     if (!this.isSupported) {
       throw new Error('当前浏览器不支持语音识别')
@@ -33,7 +44,7 @@ export class BrowserSpeechRecognition {
     this.recognition.interimResults = true
     this.recognition.maxAlternatives = 1
 
-    this.recognition.onresult = (event) => {
+    this.recognition.onresult = /** 处理当前调用传入的回调逻辑。 入参：event。 */ (event) => {
       let interim = ''
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
         const text = event.results[index]?.[0]?.transcript?.trim() || ''
@@ -48,25 +59,32 @@ export class BrowserSpeechRecognition {
       this.onTranscript?.(this.getTranscript())
     }
 
-    this.recognition.onerror = (event) => {
+    this.recognition.onerror = /** 处理当前调用传入的回调逻辑。 入参：event。 */ (event) => {
       this.onError?.(event)
     }
 
-    this.recognition.onend = () => {
+    this.recognition.onend = /** 处理当前调用传入的回调逻辑。 */ () => {
       this.isListening = false
     }
 
     this.recognition.start()
   }
 
+  /**
+   * 停止当前操作。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   stop() {
     if (!this.recognition) {
       return Promise.resolve(this.getTranscript())
     }
 
     const recognition = this.recognition
-    return new Promise((resolve) => {
+    return new Promise(/** 处理当前调用传入的回调逻辑。 入参：resolve。 */ (resolve) => {
       let settled = false
+      /**
+       * 结束当前操作。
+       */
       const finish = () => {
         if (settled) return
         settled = true
@@ -86,6 +104,9 @@ export class BrowserSpeechRecognition {
     })
   }
 
+  /**
+   * abort的处理逻辑。
+   */
   abort() {
     if (!this.recognition) return
     try {
@@ -97,6 +118,10 @@ export class BrowserSpeechRecognition {
     this.isListening = false
   }
 
+  /**
+   * 获取Transcript。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   getTranscript() {
     return (this.finalTranscript || this.interimTranscript || '').trim()
   }

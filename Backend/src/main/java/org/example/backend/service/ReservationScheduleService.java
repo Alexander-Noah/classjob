@@ -19,6 +19,11 @@ public class ReservationScheduleService {
     private final ScheduleOccupancyQuery schedules;
     private final LabCatalogQuery laboratories;
 
+    /**
+     * 构造 ReservationScheduleService，初始化当前实例。
+     * @param schedules 课表参数。
+     * @param laboratories laboratories参数。
+     */
     public ReservationScheduleService(ScheduleOccupancyQuery schedules, LabCatalogQuery laboratories) {
         this.schedules = schedules;
         this.laboratories = laboratories;
@@ -59,6 +64,11 @@ public class ReservationScheduleService {
         }
     }
 
+    /**
+     * aliases的处理逻辑。
+     * @param lab 实验室参数。
+     * @return 当前操作得到的记录集合。
+     */
     private Set<String> aliases(LabView lab) {
         Set<String> aliases = new LinkedHashSet<>();
         if (text(lab.labCode())) {
@@ -70,15 +80,30 @@ public class ReservationScheduleService {
         return Set.copyOf(aliases);
     }
 
+    /**
+     * 有效的处理逻辑。
+     * @param range 范围参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean valid(TimeRange range) {
         return range != null && range.startsAt() != null && range.endsAt() != null
                 && range.startsAt().isBefore(range.endsAt());
     }
 
+    /**
+     * 文本的处理逻辑。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean text(String value) {
         return value != null && !value.isBlank();
     }
 
+    /**
+     * unavailable的处理逻辑。
+     * @param message 消息参数。
+     * @return CapabilityResult<ScheduleConflictSnapshot> 类型的处理结果。
+     */
     private CapabilityResult<ScheduleConflictSnapshot> unavailable(String message) {
         return CapabilityResult.unavailable(message);
     }

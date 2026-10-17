@@ -57,6 +57,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${server.port:8080}")
     private int applicationPort = 8080;
 
+    /**
+     * 构造 JwtAuthenticationFilter，初始化当前实例。
+     * @param jwtService JWT服务参数。
+     * @param enabled 已启用参数。
+     */
     public JwtAuthenticationFilter(
             JwtService jwtService,
             @Value("${smart-lab.security.jwt.enabled:true}") boolean enabled
@@ -65,6 +70,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.enabled = enabled;
     }
 
+    /**
+     * 执行筛选条件Internal。
+     * @param request 请求参数。
+     * @param response 响应参数。
+     * @param filterChain 筛选条件Chain参数。
+     * @throws ServletException 当前调用无法继续完成时抛出。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -97,6 +110,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * 判断是否需要Skip。
+     * @param request 请求参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean shouldSkip(HttpServletRequest request) {
         // 预检请求不携带业务令牌，来源校验由更早执行的 StrictCorsFilter 完成。
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -128,6 +146,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return false;
     }
 
+    /**
+     * 解析令牌。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveToken(HttpServletRequest request) {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null || authorization.isBlank()) {
@@ -139,6 +162,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return authorization.substring(7).trim();
     }
 
+    /**
+     * 写入Unauthorized。
+     * @param response 响应参数。
+     * @param message 消息参数。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -146,6 +175,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"code\":401,\"message\":\"" + escapeJson(message) + "\",\"data\":{}}");
     }
 
+    /**
+     * 转义JSON。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String escapeJson(String value) {
         StringBuilder escaped = new StringBuilder();
         for (int index = 0; index < value.length(); index++) {

@@ -5,9 +5,14 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
+/**
+ * 读取来源。
+ * 入参：path（路径）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('profile dialog updates the current user through auth profile endpoint', () => {
+test('profile dialog updates the current user through auth profile endpoint', /** 验证当前测试用例的预期行为。 */ () => {
   const layoutSource = readSource('../src/views/layout/AdminLayout.vue')
   const authServiceSource = readSource('../src/api/services/auth.js')
 

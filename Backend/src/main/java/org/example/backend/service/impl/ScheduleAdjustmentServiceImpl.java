@@ -23,6 +23,12 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
     private final NoticeMapper noticeMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 ScheduleAdjustmentServiceImpl，初始化当前实例。
+     * @param scheduleAdjustmentMapper 课表Adjustment数据映射器参数。
+     * @param noticeMapper 通知数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public ScheduleAdjustmentServiceImpl(
             ScheduleAdjustmentMapper scheduleAdjustmentMapper,
             NoticeMapper noticeMapper,
@@ -33,12 +39,22 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 列出Adjustments。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<ScheduleAdjustmentEntity> listAdjustments() {
         List<ScheduleAdjustmentEntity> adjustments = scheduleAdjustmentMapper.listAdjustments();
         return adjustments == null ? List.of() : adjustments;
     }
 
+    /**
+     * 创建Adjustment。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param adjustment adjustment参数。
+     * @return ScheduleAdjustmentEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ScheduleAdjustmentEntity createAdjustment(ScheduleAdjustmentEntity adjustment) {
@@ -50,6 +66,13 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         return savedAdjustment;
     }
 
+    /**
+     * 更新Adjustment。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @param adjustment adjustment参数。
+     * @return ScheduleAdjustmentEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ScheduleAdjustmentEntity updateAdjustment(Long id, ScheduleAdjustmentEntity adjustment) {
@@ -63,18 +86,40 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         return savedAdjustment;
     }
 
+    /**
+     * 批准Adjustment。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return ScheduleAdjustmentEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ScheduleAdjustmentEntity approveAdjustment(Long id) {
         return patchStatus(id, "已通过", "success", 3, "调课申请已通过", "调课申请已审核通过，等待同步课表和实验室安排。");
     }
 
+    /**
+     * 完成Adjustment。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param id 标识参数。
+     * @return ScheduleAdjustmentEntity 类型的处理结果。
+     */
     @Override
     @Transactional
     public ScheduleAdjustmentEntity completeAdjustment(Long id) {
         return patchStatus(id, "已调整", "primary", 4, "调课已同步", "调课申请已执行完成，教师课表和实验室安排已同步。");
     }
 
+    /**
+     * patch状态的处理逻辑。
+     * @param id 标识参数。
+     * @param status 状态参数。
+     * @param tagType tag类型参数。
+     * @param flowStep flowStep参数。
+     * @param noticeTitle 通知Title参数。
+     * @param noticeContent 通知内容参数。
+     * @return ScheduleAdjustmentEntity 类型的处理结果。
+     */
     private ScheduleAdjustmentEntity patchStatus(Long id, String status, String tagType, Integer flowStep, String noticeTitle, String noticeContent) {
         int updatedCount = scheduleAdjustmentMapper.patchAdjustment(id, status, tagType, flowStep);
         if (updatedCount == 0) {
@@ -86,6 +131,10 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         return savedAdjustment;
     }
 
+    /**
+     * 归一化Adjustment。
+     * @param adjustment adjustment参数。
+     */
     private void normalizeAdjustment(ScheduleAdjustmentEntity adjustment) {
         if (adjustment.getCourse() == null || adjustment.getCourse().isBlank()) {
             adjustment.setCourse("未命名课程");
@@ -116,6 +165,13 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         }
     }
 
+    /**
+     * publish通知的处理逻辑。
+     * @param adjustment adjustment参数。
+     * @param title title参数。
+     * @param content 内容参数。
+     * @param targetRole 目标角色参数。
+     */
     private void publishNotice(ScheduleAdjustmentEntity adjustment, String title, String content, String targetRole) {
         if (adjustment == null) {
             return;
@@ -133,6 +189,11 @@ public class ScheduleAdjustmentServiceImpl implements ScheduleAdjustmentService 
         noticeMapper.insertNotice(notice);
     }
 
+    /**
+     * 记录事件。
+     * @param action action参数。
+     * @param adjustment adjustment参数。
+     */
     private void recordEvent(String action, ScheduleAdjustmentEntity adjustment) {
         if (adjustment == null) {
             return;

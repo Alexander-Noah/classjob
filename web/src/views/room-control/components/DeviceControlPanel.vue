@@ -23,6 +23,10 @@ defineProps({
   },
   devices: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   labName: {
@@ -35,6 +39,10 @@ defineProps({
   },
   metrics: {
     type: Object,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 由当前表达式或分支生成的处理结果。
+     */
     default: () => ({
       total: 0,
       onlineCount: 0,
@@ -53,13 +61,47 @@ const iconMap = {
   sensor: Monitor,
 }
 
+/**
+ * 获取设备Icon。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceIcon = (device) => iconMap[device.type] || Operation
+/**
+ * 判断是否为Mock网关。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isMockGateway = (device) => device.gatewayMode === 'mock_gateway' || device.sourceType === 'mock' || device.protocol === 'mock'
+/**
+ * 获取网关Mode标签。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getGatewayModeLabel = (device) => (isMockGateway(device) ? '模拟网关演示' : '待配置真实网关')
+/**
+ * 获取网关Mode类型。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getGatewayModeType = (device) => (isMockGateway(device) ? 'warning' : 'info')
+/**
+ * 获取能力状态键。
+ * 入参：device（设备）；capability（能力）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCapabilityStateKey = (device, capability) => `${device.code || device.id}::${capability.key}`
+/**
+ * 获取能力状态。
+ * 入参：capabilityState（能力状态）；device（设备）；capability（能力）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCapabilityState = (capabilityState, device, capability) =>
   capabilityState[getCapabilityStateKey(device, capability)] || { enabled: false, value: '' }
+/**
+ * 设置能力已启用。
+ * 入参：capabilityState（能力状态）；device（设备）；capability（能力）；enabled（已启用）。
+ */
 const setCapabilityEnabled = (capabilityState, device, capability, enabled) => {
   const key = getCapabilityStateKey(device, capability)
   capabilityState[key] = {
@@ -67,6 +109,10 @@ const setCapabilityEnabled = (capabilityState, device, capability, enabled) => {
     enabled,
   }
 }
+/**
+ * 设置能力值。
+ * 入参：capabilityState（能力状态）；device（设备）；capability（能力）；value（值）。
+ */
 const setCapabilityValue = (capabilityState, device, capability, value) => {
   const key = getCapabilityStateKey(device, capability)
   capabilityState[key] = {
@@ -109,7 +155,7 @@ const setCapabilityValue = (capabilityState, device, capability, value) => {
 
     <el-scrollbar v-else class="device-control-scroll">
       <el-alert
-        v-if="devices.some((device) => device.sourceType === 'mock' || device.protocol === 'mock' || !device.configured)"
+        v-if="devices.some(/** 判断当前条目是否满足任一匹配条件。 入参：device。 */ (device) => device.sourceType === 'mock' || device.protocol === 'mock' || !device.configured)"
         class="mock-control-alert"
         title="模拟网关演示：控制命令会写入日志；真实网关待配置后可替换适配器"
         type="warning"
@@ -152,7 +198,11 @@ const setCapabilityValue = (capabilityState, device, capability, value) => {
                 <el-switch
                   :model-value="getCapabilityState(capabilityState, device, capability).enabled"
                   :disabled="!capability.enabled"
-                  @change="(value) => {
+                  @change="/**
+ * 处理当前调用传入的回调逻辑。
+ * 入参：value。
+ */
+(value) => {
                     setCapabilityEnabled(capabilityState, device, capability, value)
                     $emit('capability', device, capability)
                   }"
@@ -175,7 +225,11 @@ const setCapabilityValue = (capabilityState, device, capability, value) => {
                   :disabled="!capability.enabled"
                   :max="capability.max ?? 100"
                   :min="capability.min ?? 0"
-                  @change="(value) => {
+                  @change="/**
+ * 处理当前调用传入的回调逻辑。
+ * 入参：value。
+ */
+(value) => {
                     setCapabilityValue(capabilityState, device, capability, value)
                     $emit('capability', device, capability)
                   }"
@@ -192,7 +246,11 @@ const setCapabilityValue = (capabilityState, device, capability, value) => {
                   :model-value="getCapabilityState(capabilityState, device, capability).value"
                   :disabled="!capability.enabled"
                   size="small"
-                  @change="(value) => {
+                  @change="/**
+ * 处理当前调用传入的回调逻辑。
+ * 入参：value。
+ */
+(value) => {
                     setCapabilityValue(capabilityState, device, capability, value)
                     $emit('capability', device, capability)
                   }"

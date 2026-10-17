@@ -11,8 +11,12 @@ import java.util.UUID;
 
 @Configuration(proxyBeanMethods = false)
 public class WebSupportConfiguration {
+    /**
+     * correlation标识服务商的处理逻辑。
+     * @return CorrelationIdProvider 类型的处理结果。
+     */
     @Bean
     public CorrelationIdProvider correlationIdProvider() {
-        return () -> UUID.randomUUID().toString();
+        return /** 处理当前调用传入的回调逻辑。 */ () -> UUID.randomUUID().toString();
     }
 }

@@ -26,33 +26,45 @@ class AiBusinessDataServiceTest {
             Clock.fixed(Instant.parse("2026-10-16T07:57:00Z"), ZoneOffset.UTC));
     private final AiDataActor admin = new AiDataActor(7, "labAdmin", "管理员", Set.of());
 
+    /**
+     * every资产DatasetIsExcludedBeforeAnyDatabaseAccess的处理逻辑。
+     */
     @Test void everyAssetDatasetIsExcludedBeforeAnyDatabaseAccess() {
         for (String id : List.of("devices", "assets", "device-inventory-records", "device-transfer-records", "dashboard"))
             assertEquals("excluded", service.query(admin, Map.of("dataset", id)).get("status"));
-        assertFalse(service.catalog(admin).stream().anyMatch(row -> row.get("dataset").contains("asset")));
+        assertFalse(service.catalog(admin).stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：row。 */ row -> row.get("dataset").contains("asset")));
         verifyNoInteractions(beans);
     }
 
+    /**
+     * 角色AndCustom权限AreCheckedBeforeReading的处理逻辑。
+     */
     @Test void roleAndCustomPermissionsAreCheckedBeforeReading() {
         AiDataActor teacher = new AiDataActor(8, "teacher", "教师", Set.of());
         assertEquals("forbidden", service.query(teacher, Map.of("dataset", "consumables")).get("status"));
         AiDataActor limited = new AiDataActor(7, "labAdmin", "管理员", Set.of("AI智能助手", "课表数据"));
         assertEquals("forbidden", service.query(limited, Map.of("dataset", "maintenance")).get("status"));
-        assertTrue(service.catalog(limited).stream().anyMatch(row -> row.get("dataset").equals("timetable")));
+        assertTrue(service.catalog(limited).stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：row。 */ row -> row.get("dataset").equals("timetable")));
         verifyNoInteractions(beans);
     }
 
+    /**
+     * 已禁用OrRetiredAccountsCannotUseBusiness查询的处理逻辑。
+     */
     @Test void disabledOrRetiredAccountsCannotUseBusinessQueries() {
         UserMapper users = mock(UserMapper.class);
         when(beans.getBean(UserMapper.class)).thenReturn(users);
         UserEntity user = new UserEntity(); user.setId(7); user.setStatus(0); user.setRoleCode("labAdmin");
         when(users.getUser(7)).thenReturn(user);
-        assertThrows(IllegalArgumentException.class, () -> service.actor(7));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.actor(7));
         user.setStatus(1); user.setRoleCode("maintenance");
-        assertThrows(IllegalArgumentException.class, () -> service.actor(7));
-        assertThrows(IllegalArgumentException.class, () -> service.actor(null));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.actor(7));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.actor(null));
     }
 
+    /**
+     * 实际Database权限AreUsedAndMalformed权限FailClosed的处理逻辑。
+     */
     @Test void actualDatabasePermissionsAreUsedAndMalformedPermissionsFailClosed() {
         UserMapper users = mock(UserMapper.class); when(beans.getBean(UserMapper.class)).thenReturn(users);
         UserEntity user = new UserEntity(); user.setId(7); user.setStatus(1); user.setRoleCode("labAdmin");
@@ -60,9 +72,12 @@ class AiBusinessDataServiceTest {
         when(users.getUser(7)).thenReturn(user);
         assertEquals(Set.of("课表数据", "AI智能助手"), service.actor(7).permissions());
         user.setPermissions("broken");
-        assertThrows(IllegalArgumentException.class, () -> service.actor(7));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.actor(7));
     }
 
+    /**
+     * 实验室ReadsKeepManagerScopeAnd预约Keep操作者Scope的处理逻辑。
+     */
     @Test void labReadsKeepManagerScopeAndReservationsKeepActorScope() {
         LabRecordReadService labs = mock(LabRecordReadService.class);
         when(beans.getBean(LabRecordReadService.class)).thenReturn(labs);
@@ -78,6 +93,9 @@ class AiBusinessDataServiceTest {
         assertEquals(ReservationActorRole.LABORATORY_ADMINISTRATOR, capture.getValue().actor().role());
     }
 
+    /**
+     * 凭据AndIndirect资产数据AreRemovedButSensor值集合Remain的处理逻辑。
+     */
     @Test void credentialsAndIndirectAssetDataAreRemovedButSensorValuesRemain() {
         Object clean = service.sanitize(Map.of(
                 "apiKey", "fixture-secret", "token", "fixture-token", "assetDeviceId", 12,
@@ -95,6 +113,9 @@ class AiBusinessDataServiceTest {
         assertFalse(snapshot.contains("fixture-token")); assertTrue(snapshot.contains("cpuUsage"));
     }
 
+    /**
+     * crawler状态DoesNotReadLog文件集合OrExpose凭据的处理逻辑。
+     */
     @Test void crawlerStatusDoesNotReadLogFilesOrExposeCredentials() {
         ClassTimetableMapper mapper = mock(ClassTimetableMapper.class);
         when(beans.getBean(ClassTimetableMapper.class)).thenReturn(mapper);
@@ -105,6 +126,9 @@ class AiBusinessDataServiceTest {
         verify(mapper).listCrawlerTasks(200); verifyNoMoreInteractions(mapper);
     }
 
+    /**
+     * 当前Class查询UsesShanghai时间活动Calendar周次AndTeachingPeriod的处理逻辑。
+     */
     @Test void currentClassQueryUsesShanghaiTimeActiveCalendarWeekAndTeachingPeriod() {
         bindLab();
         TeachingScheduleReadService calendar = mock(TeachingScheduleReadService.class);
@@ -128,11 +152,14 @@ class AiBusinessDataServiceTest {
         assertTrue(service.encode(result).contains("移动互联实训室"));
         assertFalse(service.encode(result).contains("9-301"));
         List<String> patterns = (List<String>) filters.get("labPatterns");
-        assertTrue(patterns.stream().anyMatch(pattern -> java.util.regex.Pattern.compile(pattern).matcher("2-206M").find()));
-        assertFalse(patterns.stream().anyMatch(pattern -> java.util.regex.Pattern.compile(pattern).matcher("12-206").find()));
-        assertFalse(patterns.stream().anyMatch(pattern -> java.util.regex.Pattern.compile(pattern).matcher("2-2060").find()));
+        assertTrue(patterns.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：pattern。 */ pattern -> java.util.regex.Pattern.compile(pattern).matcher("2-206M").find()));
+        assertFalse(patterns.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：pattern。 */ pattern -> java.util.regex.Pattern.compile(pattern).matcher("12-206").find()));
+        assertFalse(patterns.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：pattern。 */ pattern -> java.util.regex.Pattern.compile(pattern).matcher("2-2060").find()));
     }
 
+    /**
+     * missingCalendarIsUnavailableRatherThanAn空值课表的处理逻辑。
+     */
     @Test void missingCalendarIsUnavailableRatherThanAnEmptySchedule() {
         bindLab();
         TeachingScheduleReadService calendar = mock(TeachingScheduleReadService.class);
@@ -142,6 +169,9 @@ class AiBusinessDataServiceTest {
         verify(beans, never()).getBean(AiScheduleReadMapper.class);
     }
 
+    /**
+     * bind实验室的处理逻辑。
+     */
     private void bindLab() {
         LabRecordReadService labs = mock(LabRecordReadService.class);
         when(beans.getBean(LabRecordReadService.class)).thenReturn(labs);
@@ -149,6 +179,9 @@ class AiBusinessDataServiceTest {
                 "教学", 40, 7L, "开放", "", null, null)));
     }
 
+    /**
+     * noBound实验室NeverFallsBack目标Campus课表的处理逻辑。
+     */
     @Test void noBoundLabsNeverFallsBackToCampusTimetable() {
         LabRecordReadService labs = mock(LabRecordReadService.class);
         when(beans.getBean(LabRecordReadService.class)).thenReturn(labs);
@@ -158,12 +191,18 @@ class AiBusinessDataServiceTest {
         verify(beans, never()).getBean(AiScheduleReadMapper.class);
     }
 
+    /**
+     * noClassPeriod结束ExactlyAtTheConfigured结束时间的处理逻辑。
+     */
     @Test void noClassPeriodEndsExactlyAtTheConfiguredEndTime() {
         assertEquals(7, TeachingSectionTimes.currentSection(LocalTime.of(15, 50)));
         assertNull(TeachingSectionTimes.currentSection(LocalTime.of(17, 20)));
         assertNull(TeachingSectionTimes.currentSection(LocalTime.of(13, 0)));
     }
 
+    /**
+     * 总数AndGroupingUseAllMatching记录集合BeforePagination的处理逻辑。
+     */
     @Test void totalsAndGroupingUseAllMatchingRecordsBeforePagination() {
         ModuleRecordService modules = mock(ModuleRecordService.class); when(beans.getBean(ModuleRecordService.class)).thenReturn(modules);
         when(modules.listModuleRecords("operation-events")).thenReturn(List.of(

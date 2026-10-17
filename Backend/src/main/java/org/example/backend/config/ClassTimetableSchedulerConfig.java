@@ -8,6 +8,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Configuration
 public class ClassTimetableSchedulerConfig {
 
+    /**
+     * class课表TaskScheduler的处理逻辑。
+     * @return ThreadPoolTaskScheduler 类型的处理结果。
+     */
     @Bean
     public ThreadPoolTaskScheduler classTimetableTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

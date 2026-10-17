@@ -23,11 +23,20 @@ public class SystemSettingsController {
     private final ModuleRecordService moduleRecordService;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 SystemSettingsController，初始化当前实例。
+     * @param moduleRecordService module记录服务参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public SystemSettingsController(ModuleRecordService moduleRecordService, BusinessLoopService businessLoopService) {
         this.moduleRecordService = moduleRecordService;
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取设置。
+     * @return Result 类型的处理结果。
+     */
     @GetMapping("/system-settings")
     public Result getSettings() {
         List<Map<String, Object>> records = moduleRecordService.listModuleRecords(MODULE_NAME);
@@ -37,6 +46,11 @@ public class SystemSettingsController {
         return Result.success("获取默认系统配置成功", defaultSettings());
     }
 
+    /**
+     * 保存设置。
+     * @param settings 设置参数。
+     * @return Result 类型的处理结果。
+     */
     @PutMapping("/system-settings")
     public Result saveSettings(@RequestBody Map<String, Object> settings) {
         Map<String, Object> nextSettings = new LinkedHashMap<>(settings == null ? Map.of() : settings);
@@ -46,6 +60,10 @@ public class SystemSettingsController {
         return Result.success("保存系统配置成功", nextSettings);
     }
 
+    /**
+     * 重置设置。
+     * @return Result 类型的处理结果。
+     */
     @PostMapping("/system-settings/reset")
     public Result resetSettings() {
         Map<String, Object> settings = defaultSettings();
@@ -54,6 +72,10 @@ public class SystemSettingsController {
         return Result.success("重置系统配置成功", settings);
     }
 
+    /**
+     * 提供默认设置。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> defaultSettings() {
         Map<String, Object> settings = new LinkedHashMap<>();
         settings.put("id", RECORD_ID);

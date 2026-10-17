@@ -16,10 +16,18 @@ const props = defineProps({
   },
   courses: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   weekDays: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -35,10 +43,15 @@ const periods = [
   { label: '11-12节', time: '20:20-21:50', start: 11 },
 ]
 
+/**
+ * 获取Cell课程。
+ * 入参：dayValue（day值）；periodStart（period开始）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCellCourses = (dayValue, periodStart) =>
-  props.courses.filter((course) => course.day === dayValue && Number(course.periodStart || 1) === periodStart)
+  props.courses.filter(/** 判断当前条目是否符合筛选条件。 入参：course。 */ (course) => course.day === dayValue && Number(course.periodStart || 1) === periodStart)
 
-const hasCourses = computed(() => props.courses.length > 0)
+const hasCourses = computed(/** 计算派生状态。 */ () => props.courses.length > 0)
 </script>
 
 <template>

@@ -14,6 +14,9 @@ public record ScheduleSummaryView(
         LocalDateTime latestSyncAt,
         List<String> semesters
 ) {
+    /**
+     * 构造 ScheduleSummaryView，初始化当前实例。
+     */
     public ScheduleSummaryView {
         semesters = semesters == null ? List.of() : List.copyOf(semesters);
     }

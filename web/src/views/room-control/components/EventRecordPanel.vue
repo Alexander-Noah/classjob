@@ -17,6 +17,10 @@ const props = defineProps({
   },
   categoryOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   keyword: {
@@ -25,6 +29,10 @@ const props = defineProps({
   },
   records: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   roomFilter: {
@@ -33,6 +41,10 @@ const props = defineProps({
   },
   roomOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
@@ -40,17 +52,44 @@ const props = defineProps({
 const emit = defineEmits(['update:categoryFilter', 'update:keyword', 'update:roomFilter'])
 
 const keywordModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.keyword 的当前值。
+   */
   get: () => props.keyword,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:keyword', value),
 })
 
 const roomFilterModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.roomFilter 的当前值。
+   */
   get: () => props.roomFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:roomFilter', value),
 })
 
 const categoryFilterModel = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.categoryFilter 的当前值。
+   */
   get: () => props.categoryFilter,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:categoryFilter', value),
 })
 </script>

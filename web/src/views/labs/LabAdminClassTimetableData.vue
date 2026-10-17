@@ -54,10 +54,25 @@ const rows = ref([])
 const semesters = ref([])
 const isLoading = ref(false)
 
+/**
+ * uniqueSorted的处理逻辑。
+ * 入参：items（条目集合）；sorter（sorter）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const uniqueSorted = (items, sorter) => [...new Set(items.filter(Boolean))].sort(sorter)
 
+/**
+ * 获取Class名称。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getClassName = (record) => record.className || record.rowClassName || ''
 
+/**
+ * 解析ClassMeta。
+ * 入参：className（class名称）。
+ * @returns 组装的键值对象。
+ */
 const resolveClassMeta = (className = '') => {
   const normalized = String(className).trim()
   const match = normalized.match(/^(.+?)(\d{2})(\d{2})班?$/)
@@ -73,10 +88,15 @@ const resolveClassMeta = (className = '') => {
   }
 }
 
+/**
+ * 解析数值列表。
+ * 入参：value（值）。
+ * @returns 生成的数组。
+ */
 const parseNumberList = (value) => {
   const text = String(value || '')
   const numbers = new Set()
-  text.split(',').forEach((part) => {
+  text.split(',').forEach(/** 处理遍历到的当前条目。 入参：part。 */ (part) => {
     const range = part.match(/(\d{1,2})\s*[-~至]\s*(\d{1,2})/)
     if (range) {
       const start = Number(range[1])
@@ -92,12 +112,22 @@ const parseNumberList = (value) => {
   return [...numbers]
 }
 
+/**
+ * 获取记录周次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordWeeks = (record) => {
   const expanded = parseNumberList(record.weekExpanded)
   if (expanded.length) return expanded
   return parseNumberList(record.weekText || record.weekRaw)
 }
 
+/**
+ * 获取记录开始节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordStartSection = (record) => {
   const start = Number(record.startSection || 0)
   if (start > 0) return start
@@ -105,6 +135,11 @@ const getRecordStartSection = (record) => {
   return parsed[0] || 0
 }
 
+/**
+ * 获取记录结束节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordEndSection = (record) => {
   const end = Number(record.endSection || 0)
   if (end > 0) return end
@@ -112,6 +147,11 @@ const getRecordEndSection = (record) => {
   return parsed[parsed.length - 1] || getRecordStartSection(record)
 }
 
+/**
+ * 比较课表行集合。
+ * 入参：left（left）；right（right）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const compareTimetableRows = (left, right) => {
   const weekdayDiff = (weekdayOrder[left.weekday] || 99) - (weekdayOrder[right.weekday] || 99)
   if (weekdayDiff) return weekdayDiff
@@ -128,38 +168,43 @@ const compareTimetableRows = (left, right) => {
   return String(left.courseName || '').localeCompare(String(right.courseName || ''), 'zh-Hans-CN')
 }
 
-const availableClasses = computed(() => uniqueSorted(rows.value.map(getClassName), (a, b) => a.localeCompare(b, 'zh-Hans-CN')))
+const availableClasses = computed(/** 计算派生状态。 */ () => uniqueSorted(rows.value.map(getClassName), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => a.localeCompare(b, 'zh-Hans-CN')))
 
-const availableClassrooms = computed(() =>
-  uniqueSorted(rows.value.map((record) => record.classroom), (a, b) => a.localeCompare(b, 'zh-Hans-CN')),
+const availableClassrooms = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(rows.value.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => record.classroom), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => a.localeCompare(b, 'zh-Hans-CN')),
 )
 
-const availableMajors = computed(() =>
-  uniqueSorted(availableClasses.value.map((className) => resolveClassMeta(className).major), (a, b) =>
+const availableMajors = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(availableClasses.value.map(/** 将当前条目转换为目标结果。 入参：className。 */ (className) => resolveClassMeta(className).major), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) =>
     a.localeCompare(b, 'zh-Hans-CN'),
   ),
 )
 
-const availableGrades = computed(() =>
-  uniqueSorted(availableClasses.value.map((className) => resolveClassMeta(className).grade), (a, b) => a.localeCompare(b)),
+const availableGrades = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(availableClasses.value.map(/** 将当前条目转换为目标结果。 入参：className。 */ (className) => resolveClassMeta(className).grade), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => a.localeCompare(b)),
 )
 
-const availableWeekdays = computed(() =>
-  uniqueSorted(rows.value.map((record) => record.weekday), (a, b) => (weekdayOrder[a] || 99) - (weekdayOrder[b] || 99)),
+const availableWeekdays = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(rows.value.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => record.weekday), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => (weekdayOrder[a] || 99) - (weekdayOrder[b] || 99)),
 )
 
-const availableWeeks = computed(() =>
-  uniqueSorted(rows.value.flatMap((record) => getRecordWeeks(record)), (a, b) => Number(a) - Number(b)),
+const availableWeeks = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(rows.value.flatMap(/** 转换并展开当前条目。 入参：record。 */ (record) => getRecordWeeks(record)), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => Number(a) - Number(b)),
 )
 
-const availableSections = computed(() =>
-  uniqueSorted(rows.value.map((record) => getRecordStartSection(record)), (a, b) => Number(a) - Number(b)),
+const availableSections = computed(/** 计算派生状态。 */ () =>
+  uniqueSorted(rows.value.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => getRecordStartSection(record)), /** 处理 uniqueSorted 调用中的回调逻辑。 入参：a、b。 */ (a, b) => Number(a) - Number(b)),
 )
 
+/**
+ * 文本Includes的处理逻辑。
+ * 入参：value（值）；keyword（keyword）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const textIncludes = (value, keyword) =>
   !keyword || String(value || '').toLowerCase().includes(String(keyword).trim().toLowerCase())
 
-const filteredRows = computed(() => {
+const filteredRows = computed(/** 计算派生状态。 */ () => {
   const weekStart = filters.weekStart ? Number(filters.weekStart) : undefined
   const weekEnd = filters.weekEnd ? Number(filters.weekEnd) : undefined
   const weekdayStart = filters.weekdayStart ? weekdayOrder[filters.weekdayStart] : undefined
@@ -167,7 +212,7 @@ const filteredRows = computed(() => {
   const sectionStart = filters.sectionStart ? Number(filters.sectionStart) : undefined
   const sectionEnd = filters.sectionEnd ? Number(filters.sectionEnd) : undefined
 
-  return rows.value.filter((record) => {
+  return rows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => {
     const className = getClassName(record)
     const classMeta = resolveClassMeta(className)
     if (!textIncludes(record.classroom, filters.classroom)) return false
@@ -179,7 +224,7 @@ const filteredRows = computed(() => {
       const weeks = getRecordWeeks(record)
       const min = weekStart || weekEnd
       const max = weekEnd || weekStart
-      if (!weeks.length || !weeks.some((week) => week >= min && week <= max)) return false
+      if (!weeks.length || !weeks.some(/** 判断当前条目是否满足任一匹配条件。 入参：week。 */ (week) => week >= min && week <= max)) return false
     }
 
     if (weekdayStart || weekdayEnd) {
@@ -215,13 +260,16 @@ const filteredRows = computed(() => {
   })
 })
 
-const sortedRows = computed(() => [...filteredRows.value].sort(compareTimetableRows))
+const sortedRows = computed(/** 计算派生状态。 */ () => [...filteredRows.value].sort(compareTimetableRows))
 
-const pagedRows = computed(() => {
+const pagedRows = computed(/** 计算派生状态。 */ () => {
   const start = (pagination.page - 1) * pagination.pageSize
   return sortedRows.value.slice(start, start + pagination.pageSize)
 })
 
+/**
+ * 加载学期。
+ */
 const loadSemesters = async () => {
   try {
     semesters.value = await getClassTimetableSemesters()
@@ -231,6 +279,9 @@ const loadSemesters = async () => {
   }
 }
 
+/**
+ * 加载行集合。
+ */
 const loadRows = async () => {
   isLoading.value = true
   try {
@@ -249,6 +300,9 @@ const loadRows = async () => {
   }
 }
 
+/**
+ * 重置筛选条件。
+ */
 const resetFilters = () => {
   filters.timeMode = 'default'
   filters.classroom = ''
@@ -265,25 +319,34 @@ const resetFilters = () => {
   loadRows()
 }
 
+/**
+ * 处理MajorChange。
+ */
 const handleMajorChange = () => {
   if (filters.className && resolveClassMeta(filters.className).major !== filters.major) {
     filters.className = ''
   }
 }
 
+/**
+ * 处理GradeChange。
+ */
 const handleGradeChange = () => {
   if (filters.className && resolveClassMeta(filters.className).grade !== filters.grade) {
     filters.className = ''
   }
 }
 
-const classOptions = computed(() =>
-  availableClasses.value.filter((className) => {
+const classOptions = computed(/** 计算派生状态。 */ () =>
+  availableClasses.value.filter(/** 判断当前条目是否符合筛选条件。 入参：className。 */ (className) => {
     const meta = resolveClassMeta(className)
     return (!filters.major || meta.major === filters.major) && (!filters.grade || meta.grade === filters.grade)
   }),
 )
 
+/**
+ * 导出行集合。
+ */
 const exportRows = () => {
   if (!sortedRows.value.length) {
     ElMessage.warning('暂无可导出的校园课表')
@@ -308,7 +371,7 @@ const exportRows = () => {
   ElMessage.success(`已导出 ${exportedCount} 条校园课表`)
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   await loadSemesters()
   await loadRows()
 })

@@ -23,6 +23,10 @@ public class PasswordService {
     private final SecureRandom secureRandom = new SecureRandom();
     private final int iterations;
 
+    /**
+     * 构造 PasswordService，初始化当前实例。
+     * @param iterations iterations参数。
+     */
     public PasswordService(@Value("${smart-lab.security.password.iterations:120000}") int iterations) {
         this.iterations = Math.max(iterations, 10000);
     }
@@ -97,6 +101,13 @@ public class PasswordService {
         return password != null && password.startsWith(PREFIX + "$") && password.split("\\$").length == 4;
     }
 
+    /**
+     * pbkdf2的处理逻辑。
+     * @param rawPassword 原始输入密码参数。
+     * @param salt salt参数。
+     * @param iterationCount iteration数量参数。
+     * @return byte[] 类型的处理结果。
+     */
     private byte[] pbkdf2(String rawPassword, byte[] salt, int iterationCount) {
         try {
             PBEKeySpec spec = new PBEKeySpec(rawPassword.toCharArray(), salt, iterationCount, HASH_BITS);

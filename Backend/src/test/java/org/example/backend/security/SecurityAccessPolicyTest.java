@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SecurityAccessPolicyTest {
     private final Object policy = newPolicy();
 
+    /**
+     * 用户AdministrationRequiresSystemAdmin的处理逻辑。
+     */
     @Test
     void userAdministrationRequiresSystemAdmin() {
         assertTrue(isAllowed("GET", "/users", "systemAdmin"));
@@ -25,6 +28,9 @@ class SecurityAccessPolicyTest {
         assertFalse(isAllowed("POST", "/users/batch/role", "maintenance"));
     }
 
+    /**
+     * system设置AndActivationManagementRequireSystemAdmin的处理逻辑。
+     */
     @Test
     void systemSettingsAndActivationManagementRequireSystemAdmin() {
         assertTrue(isAllowed("PUT", "/system-settings", "systemAdmin"));
@@ -37,6 +43,9 @@ class SecurityAccessPolicyTest {
         assertFalse(isAllowed("POST", "/activation-codes/generate", "teacher"));
     }
 
+    /**
+     * 实验室AdminCanUseOnly实验室ActivationBinding端点的处理逻辑。
+     */
     @Test
     void labAdminCanUseOnlyLabActivationBindingEndpoints() {
         assertTrue(isAllowed("GET", "/activation-codes/lab-bindings", "labAdmin"));
@@ -48,6 +57,9 @@ class SecurityAccessPolicyTest {
         assertFalse(isAllowed("POST", "/activation-codes/abc/unbind-lab", "teacher"));
     }
 
+    /**
+     * 实验室AdminCanManage实验室资源But教师CannotMutateThem的处理逻辑。
+     */
     @Test
     void labAdminCanManageLabResourcesButTeacherCannotMutateThem() {
         assertTrue(isAllowed("POST", "/devices/import", "labAdmin"));
@@ -75,6 +87,9 @@ class SecurityAccessPolicyTest {
         assertFalse(isAllowed("POST", "/course-environment-requests/9/confirm", "teacher"));
     }
 
+    /**
+     * 教师KeepsIts预期SurfaceAndRetired维护角色HasNone的处理逻辑。
+     */
     @Test
     void teacherKeepsItsExpectedSurfaceAndRetiredMaintenanceRoleHasNone() {
         assertTrue(isAllowed("GET", "/class-timetables", "teacher"));
@@ -87,6 +102,10 @@ class SecurityAccessPolicyTest {
         assertFalse(isAllowed("DELETE", "/users/1", "maintenance"));
     }
 
+    /**
+     * newPolicy的处理逻辑。
+     * @return Object 类型的处理结果。
+     */
     private Object newPolicy() {
         try {
             return Class.forName("org.example.backend.security.SecurityAccessPolicy")
@@ -97,6 +116,13 @@ class SecurityAccessPolicyTest {
         }
     }
 
+    /**
+     * 判断是否为Allowed。
+     * @param method 方法参数。
+     * @param path 路径参数。
+     * @param roleCode 角色编码参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isAllowed(String method, String path, String roleCode) {
         try {
             return (Boolean) policy.getClass()

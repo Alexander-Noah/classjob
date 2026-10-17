@@ -13,6 +13,10 @@ defineOptions({
 const props = defineProps({
   courseOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   modelValue: {
@@ -32,7 +36,16 @@ const props = defineProps({
 const emit = defineEmits(['save', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
@@ -72,17 +85,31 @@ const timeFieldMap = {
   target: 'targetTime',
 }
 
+/**
+ * 解析时间文本。
+ * 入参：timeText（时间文本）；fallbackWeek（fallback周次）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeText = (timeText = '', fallbackWeek = '') => ({
-  week: weekOptions.find((item) => timeText.includes(item)) || fallbackWeek,
-  day: dayOptions.find((item) => timeText.includes(item)) || '',
-  period: periodOptions.find((item) => timeText.includes(item.value))?.value || '',
+  week: weekOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => timeText.includes(item)) || fallbackWeek,
+  day: dayOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => timeText.includes(item)) || '',
+  period: periodOptions.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => timeText.includes(item.value))?.value || '',
 })
 
+/**
+ * 构建时间文本。
+ * 入参：timeValue（时间值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildTimeText = (timeValue) => {
   if (!timeValue.week || !timeValue.day || !timeValue.period) return ''
   return `${timeValue.week} ${timeValue.day} ${timeValue.period}`
 }
 
+/**
+ * 同步时间文本。
+ * 入参：field（field）。
+ */
 const syncTimeText = (field) => {
   const value = buildTimeText(timeModel[field])
   if (value) {
@@ -90,6 +117,9 @@ const syncTimeText = (field) => {
   }
 }
 
+/**
+ * 重置Form。
+ */
 const resetForm = () => {
   formModel.course = props.prefill?.course || ''
   formModel.originalTime = props.prefill?.originalTime || ''
@@ -101,7 +131,13 @@ const resetForm = () => {
 }
 
 watch(
+  /**
+   * 响应被监听状态的变化。
+   */
   () => [props.modelValue, props.prefill],
+  /**
+   * 响应被监听状态的变化。
+   */
   () => {
     if (props.modelValue) {
       resetForm()
@@ -112,6 +148,9 @@ watch(
 
 watch(
   timeModel,
+  /**
+   * 响应被监听状态的变化。
+   */
   () => {
     syncTimeText('original')
     syncTimeText('target')
@@ -119,6 +158,9 @@ watch(
   { deep: true },
 )
 
+/**
+ * 处理Save。
+ */
 const handleSave = () => {
   if (!formModel.course) {
     ElMessage.warning('请选择课程')

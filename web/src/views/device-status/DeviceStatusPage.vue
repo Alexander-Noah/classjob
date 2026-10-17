@@ -65,11 +65,41 @@ const labKeyword = ref('')
 const deviceKeyword = ref('')
 const labActivationCode = ref('')
 
+/**
+ * 获取实验室编码。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabCode = (lab = {}) => lab.code || lab.labCode || lab.room || lab.roomNo || ''
+/**
+ * 获取实验室名称。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabName = (lab = {}) => lab.name || lab.labName || getLabCode(lab)
+/**
+ * 获取设备编码。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceCode = (device = {}) => device.code || device.deviceCode || device.assetNo || ''
+/**
+ * 获取设备名称。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getDeviceName = (device = {}) => device.name || device.deviceName || getDeviceCode(device)
+/**
+ * 获取Bound设备键。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getBoundDeviceKey = (device = {}) => normalizeText(device.terminalId || device.macAddress || device.deviceCode || device.code || device.hostName)
+/**
+ * maskActivation编码的处理逻辑。
+ * 入参：code（编码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const maskActivationCode = (code = '') => {
   const value = String(code || '').trim()
   if (!value) return '-'
@@ -77,6 +107,11 @@ const maskActivationCode = (code = '') => {
   return `${value.slice(0, 4)}****${value.slice(-4)}`
 }
 
+/**
+ * 归一化实验室。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeLab = (lab = {}) => ({
   ...lab,
   id: lab.id,
@@ -111,12 +146,22 @@ const onlineStatusMap = {
   abnormal: true,
 }
 
+/**
+ * 格式化Percent。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatPercent = (value) => {
   if (value === undefined || value === null || value === '') return ''
   const number = Number(value)
   return Number.isFinite(number) ? `${number}%` : String(value)
 }
 
+/**
+ * 归一化设备。
+ * 入参：device（设备）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeDevice = (device = {}) => ({
   ...device,
   id: device.id || device.terminalId || device.deviceId,
@@ -143,8 +188,18 @@ const normalizeDevice = (device = {}) => ({
   activatedAt: device.activatedAt || device.createdAt || '',
 })
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) => String(value || '').trim().toLowerCase()
 
+/**
+ * 获取状态类型。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getStatusType = (status) => {
   if (['正常', '开放', '在线', '良好'].includes(status)) return 'success'
   if (['关注', '维护中', '维修中'].includes(status)) return 'warning'
@@ -153,25 +208,30 @@ const getStatusType = (status) => {
   return 'primary'
 }
 
-const selectedLab = computed(() => labs.value.find((lab) => String(lab.id) === String(selectedLabId.value)) || labs.value[0] || null)
+const selectedLab = computed(/** 计算派生状态。 */ () => labs.value.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => String(lab.id) === String(selectedLabId.value)) || labs.value[0] || null)
 
-const visibleLabs = computed(() => {
+const visibleLabs = computed(/** 计算派生状态。 */ () => {
   const keyword = normalizeText(labKeyword.value)
   if (!keyword) return labs.value
-  return labs.value.filter((lab) =>
-    [lab.name, lab.code, lab.building, lab.room, lab.status].some((value) => normalizeText(value).includes(keyword)),
+  return labs.value.filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) =>
+    [lab.name, lab.code, lab.building, lab.room, lab.status].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => normalizeText(value).includes(keyword)),
   )
 })
 
-const currentLabDevices = computed(() => {
+const currentLabDevices = computed(/** 计算派生状态。 */ () => {
   if (!selectedLab.value) return []
-  return devices.value.filter((device) => String(device.labId || '') === String(selectedLab.value.id))
+  return devices.value.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => String(device.labId || '') === String(selectedLab.value.id))
 })
 
+/**
+ * 筛选运行时行集合ByKeyword。
+ * 入参：rows（行集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const filterRuntimeRowsByKeyword = (rows) => {
   const keyword = normalizeText(deviceKeyword.value)
   if (!keyword) return rows
-  return rows.filter((device) =>
+  return rows.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) =>
     [
       device.code,
       device.name,
@@ -182,44 +242,44 @@ const filterRuntimeRowsByKeyword = (rows) => {
       device.status,
       device.health,
       device.source,
-    ].some((value) => normalizeText(value).includes(keyword)),
+    ].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) => normalizeText(value).includes(keyword)),
   )
 }
 
-const selectedLabDevices = computed(() => {
+const selectedLabDevices = computed(/** 计算派生状态。 */ () => {
   return filterRuntimeRowsByKeyword(currentLabDevices.value)
 })
 
-const selectedLabActivation = computed(() =>
-  activationCodes.value.find((record) => String(record.labId || '') === String(selectedLab.value?.id || '') && record.status === 'active'),
+const selectedLabActivation = computed(/** 计算派生状态。 */ () =>
+  activationCodes.value.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => String(record.labId || '') === String(selectedLab.value?.id || '') && record.status === 'active'),
 )
 
-const selectedLabActivationQuota = computed(() => ({
+const selectedLabActivationQuota = computed(/** 计算派生状态。 */ () => ({
   bound: Number(selectedLabActivation.value?.boundCount || 0),
   limit: Number(selectedLabActivation.value?.deviceLimit || 0),
   remaining: Math.max(Number(selectedLabActivation.value?.deviceLimit || 0) - Number(selectedLabActivation.value?.boundCount || 0), 0),
 }))
 
-const activationBoundDevices = computed(() => {
+const activationBoundDevices = computed(/** 计算派生状态。 */ () => {
   const rows = selectedLabActivation.value?.boundDevices
   return Array.isArray(rows) ? rows : []
 })
 
-const activationDeviceStatusRows = computed(() => {
+const activationDeviceStatusRows = computed(/** 计算派生状态。 */ () => {
   if (!selectedLabActivation.value) return []
   if (!activationBoundDevices.value.length) return filterRuntimeRowsByKeyword(currentLabDevices.value)
 
   const labDeviceByKey = new Map()
-  currentLabDevices.value.forEach((device) => {
+  currentLabDevices.value.forEach(/** 处理遍历到的当前条目。 入参：device。 */ (device) => {
     ;[device.code, device.deviceCode, device.macAddress, device.hostName, device.terminalId]
       .map(normalizeText)
       .filter(Boolean)
-      .forEach((key) => labDeviceByKey.set(key, device))
+      .forEach(/** 处理遍历到的当前条目。 入参：key。 */ (key) => labDeviceByKey.set(key, device))
   })
 
   const keyword = normalizeText(deviceKeyword.value)
   return activationBoundDevices.value
-    .map((boundDevice, index) => {
+    .map(/** 将当前条目转换为目标结果。 入参：boundDevice、index。 */ (boundDevice, index) => {
       const matchedDevice = labDeviceByKey.get(getBoundDeviceKey(boundDevice))
       return {
         id: boundDevice.macAddress || boundDevice.deviceCode || boundDevice.hostName || `activation-device-${index}`,
@@ -243,23 +303,27 @@ const activationDeviceStatusRows = computed(() => {
       }
     })
     .filter(
+      /**
+       * 判断当前条目是否符合筛选条件。
+       * 入参：row。
+       */
       (row) =>
         !keyword ||
-        [row.name, row.code, row.macAddress, row.location, row.status, row.health, row.source].some((value) =>
+        [row.name, row.code, row.macAddress, row.location, row.status, row.health, row.source].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) =>
           normalizeText(value).includes(keyword),
         ),
     )
 })
 
-const displayedDeviceStatusRows = computed(() =>
+const displayedDeviceStatusRows = computed(/** 计算派生状态。 */ () =>
   selectedLabActivation.value ? activationDeviceStatusRows.value : selectedLabDevices.value,
 )
 
-const deviceStats = computed(() => {
+const deviceStats = computed(/** 计算派生状态。 */ () => {
   const rows = displayedDeviceStatusRows.value
-  const online = rows.filter((device) => device.online).length
-  const offline = rows.filter((device) => !device.online).length
-  const fault = rows.filter((device) => !['离线'].includes(device.status) && (['故障', '异常'].includes(device.status) || device.health === '风险')).length
+  const online = rows.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => device.online).length
+  const offline = rows.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => !device.online).length
+  const fault = rows.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => !['离线'].includes(device.status) && (['故障', '异常'].includes(device.status) || device.health === '风险')).length
 
   return [
     { label: '设备总数', value: rows.length, trend: selectedLab.value?.name || '未选择实验室', icon: Monitor, type: 'primary' },
@@ -269,6 +333,11 @@ const deviceStats = computed(() => {
   ]
 })
 
+/**
+ * 归一化运行时列表。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeRuntimeList = (payload = {}) => {
   if (Array.isArray(payload?.devices)) return payload.devices
   if (Array.isArray(payload?.records)) return payload.records
@@ -278,6 +347,11 @@ const normalizeRuntimeList = (payload = {}) => {
   return []
 }
 
+/**
+ * 归一化事件列表。
+ * 入参：payload（载荷）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeEventList = (payload = {}) => {
   if (Array.isArray(payload?.records)) return payload.records
   if (Array.isArray(payload?.data?.records)) return payload.data.records
@@ -285,6 +359,10 @@ const normalizeEventList = (payload = {}) => {
   return []
 }
 
+/**
+ * 加载运行时状态。
+ * 入参：labId（实验室标识）。
+ */
 const loadRuntimeStatus = async (labId = selectedLabId.value) => {
   if (!labId) {
     devices.value = []
@@ -294,19 +372,22 @@ const loadRuntimeStatus = async (labId = selectedLabId.value) => {
 
   const [runtimePayload, eventPayload] = await Promise.all([
     listLabRuntimeStatus(labId),
-    listDeviceStatusEvents({ labId, limit: 50 }).catch(() => ({ records: [] })),
+    listDeviceStatusEvents({ labId, limit: 50 }).catch(/** 处理异步失败结果。 */ () => ({ records: [] })),
   ])
 
   devices.value = normalizeRuntimeList(runtimePayload).map(normalizeDevice)
   statusEvents.value = normalizeEventList(eventPayload)
 }
 
+/**
+ * 加载数据。
+ */
 const loadData = async () => {
   loading.value = true
   try {
     const [loadedLabs, loadedActivationCodes] = await Promise.all([
       labResourceService.list({ fallbackRecords: FALLBACK_LABS }),
-      listLabActivationBindings().catch(() => []),
+      listLabActivationBindings().catch(/** 处理异步失败结果。 */ () => []),
     ])
 
     labs.value = loadedLabs.map(normalizeLab)
@@ -324,16 +405,23 @@ const loadData = async () => {
   }
 }
 
+/**
+ * 选择实验室。
+ * 入参：lab（实验室）。
+ */
 const selectLab = (lab) => {
   selectedLabId.value = lab.id
   deviceKeyword.value = ''
-  loadRuntimeStatus(lab.id).catch((error) => {
+  loadRuntimeStatus(lab.id).catch(/** 处理异步失败结果。 入参：error。 */ (error) => {
     devices.value = []
     statusEvents.value = []
     ElMessage.error(error?.message || '当前实验室设备运行状态读取失败')
   })
 }
 
+/**
+ * bindActivation编码的处理逻辑。
+ */
 const bindActivationCode = async () => {
   const lab = selectedLab.value
   const code = labActivationCode.value.trim()
@@ -360,7 +448,7 @@ const bindActivationCode = async () => {
       labName: lab.name,
     })
     labActivationCode.value = ''
-    activationCodes.value = await listLabActivationBindings().catch(() => [record])
+    activationCodes.value = await listLabActivationBindings().catch(/** 处理异步失败结果。 */ () => [record])
     await loadRuntimeStatus(lab.id)
     ElMessage.success('实验室接入授权已启用')
   } catch (error) {
@@ -370,6 +458,9 @@ const bindActivationCode = async () => {
   }
 }
 
+/**
+ * unbindActivation编码的处理逻辑。
+ */
 const unbindActivationCode = async () => {
   const activation = selectedLabActivation.value
   if (!activation?.code) return
@@ -448,8 +539,8 @@ onMounted(loadData)
               </span>
               <span>{{ lab.building }} {{ lab.floor }} {{ lab.room }}</span>
               <small>
-                {{ devices.filter((device) => String(device.labId) === String(lab.id)).length }} 台设备
-                <template v-if="activationCodes.find((record) => String(record.labId || '') === String(lab.id) && record.status === 'active')">
+                {{ devices.filter(/** 判断当前条目是否符合筛选条件。 入参：device。 */ (device) => String(device.labId) === String(lab.id)).length }} 台设备
+                <template v-if="activationCodes.find(/** 判断当前条目是否为查找目标。 入参：record。 */ (record) => String(record.labId || '') === String(lab.id) && record.status === 'active')">
                   · 接入授权已启用
                 </template>
               </small>

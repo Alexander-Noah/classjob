@@ -12,14 +12,33 @@ defineOptions({
 defineProps({
   records: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
 })
 
 defineEmits(['archive', 'close-using', 'mark-abnormal', 'review'])
 
+/**
+ * 判断是否为Archived。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isArchived = (row) => row.status === '已归档'
+/**
+ * 判断是否为Readonly。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isReadonly = (row) => Boolean(row.readonly)
+/**
+ * 判断是否为Action已禁用。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isActionDisabled = (row) => isArchived(row) || isReadonly(row)
 </script>
 

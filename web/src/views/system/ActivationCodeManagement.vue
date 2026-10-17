@@ -138,41 +138,51 @@ const expireStatusOptions = [
   { label: '已过期', value: 'expired' },
 ]
 
-const selectedIds = computed(() => selectionRows.value.map((row) => row.id || row.code).filter(Boolean))
+const selectedIds = computed(/** 计算派生状态。 */ () => selectionRows.value.map(/** 将当前条目转换为目标结果。 入参：row。 */ (row) => row.id || row.code).filter(Boolean))
 
-const authorizationUsage = computed(() => {
+const authorizationUsage = computed(/** 计算派生状态。 */ () => {
   const totalLimit =
-    Number(statistics.value.totalDeviceLimit ?? activationCodes.value.reduce((sum, row) => sum + Number(row.deviceLimit || 0), 0)) || 0
+    Number(statistics.value.totalDeviceLimit ?? activationCodes.value.reduce(/** 合并当前条目与累计结果。 入参：sum、row。 */ (sum, row) => sum + Number(row.deviceLimit || 0), 0)) || 0
   const bound =
-    Number(statistics.value.boundDevices ?? activationCodes.value.reduce((sum, row) => sum + Number(row.boundCount || 0), 0)) || 0
+    Number(statistics.value.boundDevices ?? activationCodes.value.reduce(/** 合并当前条目与累计结果。 入参：sum、row。 */ (sum, row) => sum + Number(row.boundCount || 0), 0)) || 0
   const available = Number(statistics.value.availableDevices ?? Math.max(totalLimit - bound, 0)) || 0
   const percent = totalLimit > 0 ? Math.min(Math.round((bound / totalLimit) * 100), 100) : 0
 
   return { available, bound, percent, totalLimit }
 })
 
-const healthStatusText = computed(() => {
+const healthStatusText = computed(/** 计算派生状态。 */ () => {
   if (!activationCodes.value.length) return '等待授权数据'
   if (authorizationUsage.value.available <= 0 && authorizationUsage.value.totalLimit > 0) return '设备额度已满'
   if (statistics.value.disabledCodes > statistics.value.enabledCodes) return '停用授权偏多'
   return '授权运行正常'
 })
 
-const healthStatusType = computed(() => {
+const healthStatusType = computed(/** 计算派生状态。 */ () => {
   if (authorizationUsage.value.available <= 0 && authorizationUsage.value.totalLimit > 0) return 'warning'
   if (statistics.value.disabledCodes > statistics.value.enabledCodes) return 'danger'
   return 'success'
 })
 
-const quickStatusFilters = computed(() => [
+const quickStatusFilters = computed(/** 计算派生状态。 */ () => [
   { label: '全部授权', status: 'all', expireStatus: 'all', value: statistics.value.totalCodes ?? activationCodes.value.length },
   { label: '可用授权', status: 'enabled', expireStatus: 'all', value: statistics.value.enabledCodes ?? 0 },
   { label: '停用授权', status: 'disabled', expireStatus: 'all', value: statistics.value.disabledCodes ?? 0 },
   { label: '即将到期', status: 'all', expireStatus: 'expiring_soon', value: statistics.value.expiringSoonCodes ?? 0 },
 ])
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) => String(value ?? '').trim()
 
+/**
+ * maskActivation编码的处理逻辑。
+ * 入参：recordOrCode（记录Or编码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const maskActivationCode = (recordOrCode = '') => {
   const value = typeof recordOrCode === 'object' ? recordOrCode.maskedCode || recordOrCode.code : recordOrCode
   const text = normalizeText(value)
@@ -182,6 +192,11 @@ const maskActivationCode = (recordOrCode = '') => {
   return `${text.slice(0, 4)}****${text.slice(-4)}`
 }
 
+/**
+ * 格式化日期时间。
+ * 入参：value（值）；emptyText（空值文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDateTime = (value, emptyText = '-') => {
   if (!value) return emptyText
   const date = new Date(value)
@@ -194,10 +209,25 @@ const formatDateTime = (value, emptyText = '-') => {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
+/**
+ * 格式化ExpireAt。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatExpireAt = (value) => formatDateTime(value, '长期有效')
 
+/**
+ * 获取状态键。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getStatusKey = (record = {}) => record.statusKey || (record.enabled === false || record.status === 'disabled' ? 'disabled' : 'enabled')
 
+/**
+ * 获取状态文本。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getStatusText = (record = {}) => {
   if (record.statusText) return record.statusText
   const key = getStatusKey(record)
@@ -207,6 +237,11 @@ const getStatusText = (record = {}) => {
   return '启用'
 }
 
+/**
+ * 获取状态类型。
+ * 入参：record（记录）。
+ * @returns 文本结果。
+ */
 const getStatusType = (record = {}) => {
   const key = getStatusKey(record)
   if (key === 'disabled') return 'danger'
@@ -215,12 +250,22 @@ const getStatusType = (record = {}) => {
   return 'success'
 }
 
+/**
+ * 获取QuotaPercent。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getQuotaPercent = (record = {}) => {
   const limit = Number(record.deviceLimit || 0)
   if (!limit) return 0
   return Math.min(Math.round((Number(record.boundCount || 0) / limit) * 100), 100)
 }
 
+/**
+ * 获取Binding状态文本。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getBindingStatusText = (status) => {
   const value = normalizeText(status)
   if (value === 'REMOTE_UNBOUND') return '被强制解绑'
@@ -229,6 +274,11 @@ const getBindingStatusText = (status) => {
   return '正常'
 }
 
+/**
+ * 获取Binding状态类型。
+ * 入参：status（状态）。
+ * @returns 文本结果。
+ */
 const getBindingStatusType = (status) => {
   const value = normalizeText(status)
   if (value === 'REMOTE_UNBOUND') return 'danger'
@@ -237,6 +287,9 @@ const getBindingStatusType = (status) => {
   return 'success'
 }
 
+/**
+ * 加载Activation编码集合。
+ */
 const loadActivationCodes = async () => {
   isLoading.value = true
   try {
@@ -256,6 +309,9 @@ const loadActivationCodes = async () => {
   }
 }
 
+/**
+ * 加载AuditLogs。
+ */
 const loadAuditLogs = async () => {
   auditLoading.value = true
   try {
@@ -267,10 +323,16 @@ const loadAuditLogs = async () => {
   }
 }
 
+/**
+ * 重新加载All。
+ */
 const reloadAll = async () => {
   await Promise.all([loadActivationCodes(), loadAuditLogs()])
 }
 
+/**
+ * 重置筛选条件。
+ */
 const resetFilters = () => {
   keyword.value = ''
   statusFilter.value = 'all'
@@ -278,17 +340,27 @@ const resetFilters = () => {
   loadActivationCodes()
 }
 
+/**
+ * 应用状态Shortcut。
+ * 入参：status（状态）；expireStatus（expire状态）。
+ */
 const applyStatusShortcut = (status, expireStatus = 'all') => {
   statusFilter.value = status
   expireStatusFilter.value = expireStatus
   loadActivationCodes()
 }
 
+/**
+ * 清理TableSelection。
+ */
 const clearTableSelection = () => {
   selectionRows.value = []
   tableRef.value?.clearSelection?.()
 }
 
+/**
+ * 重置CreateForm。
+ */
 const resetCreateForm = () => {
   Object.assign(createForm, {
     deviceLimit: 1,
@@ -300,6 +372,9 @@ const resetCreateForm = () => {
   })
 }
 
+/**
+ * 处理Generate。
+ */
 const handleGenerate = async () => {
   await createFormRef.value?.validate()
   isGenerating.value = true
@@ -323,6 +398,11 @@ const handleGenerate = async () => {
   }
 }
 
+/**
+ * 选择回退Copy文本。
+ * 入参：text（文本）。
+ * @returns copied 的当前值。
+ */
 const fallbackCopyText = (text) => {
   const textarea = document.createElement('textarea')
   textarea.value = text
@@ -336,6 +416,10 @@ const fallbackCopyText = (text) => {
   return copied
 }
 
+/**
+ * 复制文本。
+ * 入参：text（文本）；message（消息）。
+ */
 const copyText = async (text, message = '已复制') => {
   const content = normalizeText(text)
   if (!content) return
@@ -356,17 +440,29 @@ const copyText = async (text, message = '已复制') => {
   }
 }
 
+/**
+ * 复制Activation编码。
+ * 入参：row（行）。
+ */
 const copyActivationCode = (row) => {
   const code = row.code || row.maskedCode
   const onlyMasked = !row.code || row.code === row.maskedCode
   copyText(code || row.maskedCode, onlyMasked ? '已复制脱敏码，完整激活码仅生成时展示一次' : '已复制激活码')
 }
 
+/**
+ * 复制已选择Masked编码集合。
+ */
 const copySelectedMaskedCodes = () => {
-  const text = selectionRows.value.map((row) => row.maskedCode || maskActivationCode(row)).join('\n')
+  const text = selectionRows.value.map(/** 将当前条目转换为目标结果。 入参：row。 */ (row) => row.maskedCode || maskActivationCode(row)).join('\n')
   copyText(text, '已复制所选脱敏码列表')
 }
 
+/**
+ * 构建Activation摘要。
+ * 入参：row（行）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildActivationSummary = (row) =>
   [
     row.maskedCode || maskActivationCode(row),
@@ -376,10 +472,17 @@ const buildActivationSummary = (row) =>
     `到期 ${formatExpireAt(row.expireAt || row.expiresAt)}`,
   ].join(' | ')
 
+/**
+ * 复制行摘要。
+ * 入参：row（行）。
+ */
 const copyRowSummary = (row) => {
   copyText(buildActivationSummary(row), '已复制授权摘要')
 }
 
+/**
+ * 复制已选择摘要。
+ */
 const copySelectedSummary = () => {
   if (!selectionRows.value.length) {
     ElMessage.warning('请先勾选激活码')
@@ -388,9 +491,14 @@ const copySelectedSummary = () => {
   copyText(selectionRows.value.map(buildActivationSummary).join('\n'), '已复制所选授权摘要')
 }
 
+/**
+ * 导出行集合。
+ * 涉及：分配对象 URL，须配套释放。
+ * 入参：rows（行集合）；filename（filename）。
+ */
 const exportRows = (rows = activationCodes.value, filename = 'activation-codes.csv') => {
   const header = ['激活码', '状态', '设备额度', '负责人', '到期时间', '创建时间', '最近校验', '备注']
-  const body = rows.map((row) => [
+  const body = rows.map(/** 将当前条目转换为目标结果。 入参：row。 */ (row) => [
     row.maskedCode || maskActivationCode(row),
     getStatusText(row),
     `${Number(row.boundCount || 0)}/${Number(row.deviceLimit || 0)}`,
@@ -400,7 +508,7 @@ const exportRows = (rows = activationCodes.value, filename = 'activation-codes.c
     formatDateTime(row.lastCheckAt),
     row.remark || '',
   ])
-  const csv = [header, ...body].map((line) => line.map((item) => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n')
+  const csv = [header, ...body].map(/** 将当前条目转换为目标结果。 入参：line。 */ (line) => line.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n')
   const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -410,6 +518,10 @@ const exportRows = (rows = activationCodes.value, filename = 'activation-codes.c
   URL.revokeObjectURL(url)
 }
 
+/**
+ * 打开设备Drawer。
+ * 入参：row（行）。
+ */
 const openDeviceDrawer = async (row) => {
   selectedCode.value = row
   deviceDrawerVisible.value = true
@@ -423,6 +535,10 @@ const openDeviceDrawer = async (row) => {
   }
 }
 
+/**
+ * 打开远程BindDialog。
+ * 入参：row（行）。
+ */
 const openRemoteBindDialog = (row) => {
   selectedCode.value = row
   Object.assign(remoteBindForm, {
@@ -435,6 +551,10 @@ const openRemoteBindDialog = (row) => {
   remoteBindDialogVisible.value = true
 }
 
+/**
+ * 提交远程Bind。
+ * 入参：force（force）。
+ */
 const submitRemoteBind = async (force = false) => {
   await remoteBindFormRef.value?.validate()
   if (!selectedCode.value) return
@@ -467,12 +587,19 @@ const submitRemoteBind = async (force = false) => {
   }
 }
 
+/**
+ * 打开远程UnbindDialog。
+ * 入参：binding（binding）。
+ */
 const openRemoteUnbindDialog = (binding) => {
   selectedBinding.value = binding
   remoteUnbindForm.reason = ''
   remoteUnbindDialogVisible.value = true
 }
 
+/**
+ * 提交远程Unbind。
+ */
 const submitRemoteUnbind = async () => {
   await remoteUnbindFormRef.value?.validate()
   if (!selectedCode.value || !selectedBinding.value) return
@@ -492,6 +619,10 @@ const submitRemoteUnbind = async () => {
   }
 }
 
+/**
+ * 切换状态。
+ * 入参：row（行）。
+ */
 const toggleStatus = async (row) => {
   const nextEnabled = getStatusKey(row) === 'disabled'
   const title = nextEnabled ? '启用激活码' : '停用激活码'
@@ -514,6 +645,10 @@ const toggleStatus = async (row) => {
   }
 }
 
+/**
+ * 打开RemarkDialog。
+ * 入参：row（行）。
+ */
 const openRemarkDialog = (row) => {
   selectedCode.value = row
   Object.assign(remarkForm, {
@@ -524,6 +659,9 @@ const openRemarkDialog = (row) => {
   remarkDialogVisible.value = true
 }
 
+/**
+ * 提交Remark。
+ */
 const submitRemark = async () => {
   if (!selectedCode.value) return
   actionLoading.value = true
@@ -544,6 +682,10 @@ const submitRemark = async () => {
   }
 }
 
+/**
+ * 删除编码。
+ * 入参：row（行）。
+ */
 const deleteCode = async (row) => {
   try {
     await ElMessageBox.confirm(`确认删除激活码 ${row.maskedCode || maskActivationCode(row)}？该操作将软删除记录。`, '删除确认', {
@@ -564,6 +706,10 @@ const deleteCode = async (row) => {
   }
 }
 
+/**
+ * 运行SimpleBatch。
+ * 入参：action（action）。
+ */
 const runSimpleBatch = async (action) => {
   if (!selectedIds.value.length) {
     ElMessage.warning('请先勾选激活码')
@@ -593,6 +739,10 @@ const runSimpleBatch = async (action) => {
   }
 }
 
+/**
+ * 打开BatchDialog。
+ * 入参：action（action）。
+ */
 const openBatchDialog = (action) => {
   if (!selectedIds.value.length) {
     ElMessage.warning('请先勾选激活码')
@@ -608,6 +758,9 @@ const openBatchDialog = (action) => {
   batchDialogVisible.value = true
 }
 
+/**
+ * 提交BatchDialog。
+ */
 const submitBatchDialog = async () => {
   await batchFormRef.value?.validate()
   actionLoading.value = true
@@ -635,6 +788,10 @@ const heroActions = [
   { label: '生成激活码', type: 'primary', command: 'generate' },
 ]
 
+/**
+ * 处理HeroAction。
+ * 入参：action（action）。
+ */
 const handleHeroAction = (action) => {
   if (action.command === 'refresh') {
     reloadAll()
@@ -645,6 +802,9 @@ const handleHeroAction = (action) => {
   }
 }
 
+/**
+ * 处理Back。
+ */
 const handleBack = () => {
   router.push(AUTH_ROLE_DEFAULT_PATH.systemAdmin)
 }

@@ -13,10 +13,18 @@ defineOptions({
 const props = defineProps({
   categoryOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   labOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   formModel: {
@@ -33,6 +41,10 @@ const props = defineProps({
   },
   statusOptions: {
     type: Array,
+    /**
+     * 构造当前类型的默认状态。
+     * @returns 生成的数组。
+     */
     default: () => [],
   },
   title: {
@@ -44,7 +56,16 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'update:modelValue'])
 
 const visible = computed({
+  /**
+   * 获取当前操作。
+   * @returns props.modelValue 的当前值。
+   */
   get: () => props.modelValue,
+  /**
+   * 设置当前操作。
+   * 入参：value（值）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   set: (value) => emit('update:modelValue', value),
 })
 
@@ -57,8 +78,12 @@ const rules = {
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 }
 
+/**
+ * 处理实验室Change。
+ * 入参：labId（实验室标识）。
+ */
 const handleLabChange = (labId) => {
-  const selectedLab = props.labOptions.find((lab) => String(getLabId(lab)) === String(labId))
+  const selectedLab = props.labOptions.find(/** 判断当前条目是否为查找目标。 入参：lab。 */ (lab) => String(getLabId(lab)) === String(labId))
   if (!selectedLab) {
     props.formModel.labId = ''
     props.formModel.labName = ''

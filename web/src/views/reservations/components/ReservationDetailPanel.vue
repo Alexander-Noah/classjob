@@ -20,7 +20,7 @@ const props = defineProps({
 
 defineEmits(['approve', 'cancel', 'delete', 'edit', 'reject'])
 
-const actions = computed(() => ({
+const actions = computed(/** 计算派生状态。 */ () => ({
   approve: getActionDisabled(props.reservation || {}, 'approve'),
   reject: getActionDisabled(props.reservation || {}, 'reject'),
   edit: getActionDisabled(props.reservation || {}, 'edit'),
@@ -34,8 +34,18 @@ const actionLabels = {
   cancel: '取消预约',
 }
 
+/**
+ * 获取Tooltip内容。
+ * 入参：action（action）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getTooltipContent = (action) => getActionDisabledReason(props.reservation || {}, action) || actionLabels[action]
 
+/**
+ * 转换为Statistic数值。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const toStatisticNumber = (value) => {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : 0

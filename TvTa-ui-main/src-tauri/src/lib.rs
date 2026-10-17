@@ -50,6 +50,8 @@ struct GatewaySettings {
 }
 
 impl Default for GatewaySettings {
+    /// 构造当前类型的默认状态。
+    /// 返回：Self。
     fn default() -> Self {
         Self {
             cloud_endpoint: String::new(),
@@ -68,6 +70,8 @@ struct CloudStatus {
 }
 
 impl Default for CloudStatus {
+    /// 构造当前类型的默认状态。
+    /// 返回：Self。
     fn default() -> Self {
         Self {
             ok: false,
@@ -178,6 +182,8 @@ struct LanTeacherInner {
 }
 
 impl Default for LanTeacherInner {
+    /// 构造当前类型的默认状态。
+    /// 返回：Self。
     fn default() -> Self {
         Self {
             lab_id: None,
@@ -231,6 +237,8 @@ struct GatewayInner {
 }
 
 impl Default for GatewayInner {
+    /// 构造当前类型的默认状态。
+    /// 返回：Self。
     fn default() -> Self {
         Self {
             running: false,
@@ -277,26 +285,34 @@ struct StudentCollectPayload {
     metrics: DeviceMetrics,
 }
 
+/// 生成当前时间的毫秒表示。
+/// 返回：u128。
 fn now_millis() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|value| value.as_millis())
+        .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.as_millis())
         .unwrap_or_default()
 }
 
+/// 生成日志使用的当前时间文本。
+/// 返回：String。
 fn now_log_text() -> String {
     Local::now().format("%Y/%m/%d %H:%M:%S").to_string()
 }
 
+/// 本地ip文本的处理逻辑。
+/// 返回：String。
 fn local_ip_text() -> String {
     local_ip()
-        .map(|value| value.to_string())
-        .unwrap_or_else(|_| "127.0.0.1".to_string())
+        .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.to_string())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ |_| "127.0.0.1".to_string())
 }
 
+/// 提供默认本地主机状态。
+/// 返回：LocalHostStatus。
 fn default_local_host_status() -> LocalHostStatus {
     LocalHostStatus {
-        host_name: System::host_name().unwrap_or_else(|| "UNKNOWN".to_string()),
+        host_name: System::host_name().unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "UNKNOWN".to_string()),
         ip_address: local_ip_text(),
         status: "offline".to_string(),
         last_seen: "not collected yet".to_string(),
@@ -304,6 +320,9 @@ fn default_local_host_status() -> LocalHostStatus {
     }
 }
 
+/// 收集本地主机状态。
+/// 入参：system（system）；disks（disks）。
+/// 返回：LocalHostStatus。
 fn collect_local_host_status(system: &mut System, disks: &mut Disks) -> LocalHostStatus {
     system.refresh_cpu();
     system.refresh_memory();
@@ -318,9 +337,9 @@ fn collect_local_host_status(system: &mut System, disks: &mut Disks) -> LocalHos
     let disk_usage = disks
         .list()
         .iter()
-        .find(|disk| disk.mount_point().to_string_lossy().starts_with("C:"))
-        .or_else(|| disks.list().first())
-        .map(|disk| {
+        .find(/** 判断当前条目是否为查找目标。 入参：disk。 */ |disk| disk.mount_point().to_string_lossy().starts_with("C:"))
+        .or_else(/** 处理 or_else 调用中的回调逻辑。 */ || disks.list().first())
+        .map(/** 将当前条目转换为目标结果。 入参：disk。 */ |disk| {
             let total = disk.total_space();
             if total == 0 {
                 0.0
@@ -336,7 +355,7 @@ fn collect_local_host_status(system: &mut System, disks: &mut Disks) -> LocalHos
     };
 
     LocalHostStatus {
-        host_name: System::host_name().unwrap_or_else(|| "UNKNOWN".to_string()),
+        host_name: System::host_name().unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "UNKNOWN".to_string()),
         ip_address: local_ip_text(),
         status: status.to_string(),
         last_seen: now_log_text(),
@@ -348,8 +367,11 @@ fn collect_local_host_status(system: &mut System, disks: &mut Disks) -> LocalHos
     }
 }
 
+/// spawn主机状态probe的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：cache（缓存）。
 fn spawn_host_status_probe(cache: Arc<Mutex<LocalHostStatus>>) {
-    thread::spawn(move || {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || {
         let mut system = System::new_all();
         let mut disks = Disks::new_with_refreshed_list();
 
@@ -363,24 +385,32 @@ fn spawn_host_status_probe(cache: Arc<Mutex<LocalHostStatus>>) {
     });
 }
 
+/// 获取本地macaddress。
+/// 返回：Result<String, String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn get_local_mac_address() -> Result<String, String> {
     let mac_address = get_mac_address()
-        .map_err(|error| format!("failed to read local MAC address: {}", error))?
-        .ok_or_else(|| "local MAC address not found".to_string())?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("failed to read local MAC address: {}", error))?
+        .ok_or_else(/** 处理 ok_or_else 调用中的回调逻辑。 */ || "local MAC address not found".to_string())?;
 
     Ok(mac_address.to_string().to_uppercase())
 }
 
+/// 获取本地主机状态。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：Result<LocalHostStatus, String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn get_local_host_status(state: tauri::State<'_, AppState>) -> Result<LocalHostStatus, String> {
     state
         .host_status
         .lock()
-        .map(|status| status.clone())
-        .map_err(|_| "local host status lock error".to_string())
+        .map(/** 将当前条目转换为目标结果。 入参：status。 */ |status| status.clone())
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "local host status lock error".to_string())
 }
 
+/// 推送log。
+/// 入参：inner（inner）；message（消息）。
 fn push_log(inner: &mut GatewayInner, message: impl Into<String>) {
     let line = format!("{} {}", now_log_text(), message.into());
     inner.logs.push(line);
@@ -390,13 +420,16 @@ fn push_log(inner: &mut GatewayInner, message: impl Into<String>) {
     }
 }
 
+/// 构建快照。
+/// 入参：inner（inner）。
+/// 返回：GatewaySnapshot。
 fn build_snapshot(inner: &GatewayInner) -> GatewaySnapshot {
     let now = now_millis();
     let mut devices = inner
         .devices
         .values()
         .cloned()
-        .map(|item| {
+        .map(/** 将当前条目转换为目标结果。 入参：item。 */ |item| {
             let online = now.saturating_sub(item.last_seen_ms) <= OFFLINE_AFTER_MS;
             let warning = item.metrics.cpu_usage >= 85.0
                 || item.metrics.memory_usage >= 85.0
@@ -415,7 +448,7 @@ fn build_snapshot(inner: &GatewayInner) -> GatewaySnapshot {
         })
         .collect::<Vec<_>>();
 
-    devices.sort_by(|left, right| left.hostname.cmp(&right.hostname));
+    devices.sort_by(/** 处理 sort_by 调用中的回调逻辑。 入参：left、right。 */ |left, right| left.hostname.cmp(&right.hostname));
 
     GatewaySnapshot {
         running: inner.running,
@@ -425,7 +458,7 @@ fn build_snapshot(inner: &GatewayInner) -> GatewaySnapshot {
         } else {
             "--".to_string()
         },
-        connected_count: devices.iter().filter(|item| item.online).count(),
+        connected_count: devices.iter().filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ |item| item.online).count(),
         total_count: devices.len(),
         cloud: inner.cloud.clone(),
         devices,
@@ -434,22 +467,32 @@ fn build_snapshot(inner: &GatewayInner) -> GatewaySnapshot {
     }
 }
 
+/// JSON请求头的处理逻辑。
+/// 返回：Header。
 fn json_header() -> Header {
     Header::from_bytes("Content-Type", "application/json; charset=utf-8").unwrap()
 }
 
+/// corsorigin请求头的处理逻辑。
+/// 返回：Header。
 fn cors_origin_header() -> Header {
     Header::from_bytes("Access-Control-Allow-Origin", "*").unwrap()
 }
 
+/// cors方法请求头的处理逻辑。
+/// 返回：Header。
 fn cors_methods_header() -> Header {
     Header::from_bytes("Access-Control-Allow-Methods", "GET, POST, OPTIONS").unwrap()
 }
 
+/// cors请求头请求头的处理逻辑。
+/// 返回：Header。
 fn cors_headers_header() -> Header {
     Header::from_bytes("Access-Control-Allow-Headers", "Content-Type").unwrap()
 }
 
+/// respondJSON的处理逻辑。
+/// 入参：request（请求）；payload（载荷）；status（状态）。
 fn respond_json<T: Serialize>(request: Request, payload: &T, status: u16) {
     match serde_json::to_string(payload) {
         Ok(body) => {
@@ -473,6 +516,8 @@ fn respond_json<T: Serialize>(request: Request, payload: &T, status: u16) {
     }
 }
 
+/// respond选项的处理逻辑。
+/// 入参：request（请求）。
 fn respond_options(request: Request) {
     let response = Response::empty(StatusCode(204))
         .with_header(cors_origin_header())
@@ -481,6 +526,9 @@ fn respond_options(request: Request) {
     let _ = request.respond(response);
 }
 
+/// percentdecode路径segment的处理逻辑。
+/// 入参：value（值）。
+/// 返回：String。
 fn percent_decode_path_segment(value: &str) -> String {
     let bytes = value.as_bytes();
     let mut output = Vec::with_capacity(bytes.len());
@@ -502,6 +550,9 @@ fn percent_decode_path_segment(value: &str) -> String {
     String::from_utf8_lossy(&output).to_string()
 }
 
+/// 判断是否为routable学生ip。
+/// 入参：value（值）。
+/// 返回：bool。
 fn is_routable_student_ip(value: &str) -> bool {
     let value = value.trim();
     if value.is_empty() || value == "--" {
@@ -515,22 +566,28 @@ fn is_routable_student_ip(value: &str) -> bool {
     }
 }
 
+/// 学生ip来源collect的处理逻辑。
+/// 入参：reported_ip（reportedip）；remote_ip（远程ip）。
+/// 返回：String。
 fn student_ip_from_collect(reported_ip: Option<&str>, remote_ip: Option<&str>) -> String {
     [reported_ip, remote_ip]
         .into_iter()
         .flatten()
         .map(str::trim)
-        .find(|value| is_routable_student_ip(value))
+        .find(/** 判断当前条目是否为查找目标。 入参：value。 */ |value| is_routable_student_ip(value))
         .map(ToString::to_string)
-        .or_else(|| {
+        .or_else(/** 处理 or_else 调用中的回调逻辑。 */ || {
             remote_ip
                 .map(str::trim)
-                .filter(|value| !value.is_empty())
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：value。 */ |value| !value.is_empty())
                 .map(ToString::to_string)
         })
-        .unwrap_or_else(|| "--".to_string())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "--".to_string())
 }
 
+/// discoverybroadcast目标forip的处理逻辑。
+/// 入参：local_ip（本地ip）。
+/// 返回：Vec<String>。
 fn discovery_broadcast_targets_for_ip(local_ip: &str) -> Vec<String> {
     let mut targets = vec!["255.255.255.255".to_string()];
 
@@ -538,7 +595,7 @@ fn discovery_broadcast_targets_for_ip(local_ip: &str) -> Vec<String> {
         if !ip.is_unspecified() && !ip.is_loopback() {
             let octets = ip.octets();
             let subnet_broadcast = Ipv4Addr::new(octets[0], octets[1], octets[2], 255).to_string();
-            if !targets.iter().any(|target| target == &subnet_broadcast) {
+            if !targets.iter().any(/** 处理 any 调用中的回调逻辑。 入参：target。 */ |target| target == &subnet_broadcast) {
                 targets.push(subnet_broadcast);
             }
         }
@@ -547,13 +604,18 @@ fn discovery_broadcast_targets_for_ip(local_ip: &str) -> Vec<String> {
     targets
 }
 
+/// discoverybroadcast目标的处理逻辑。
+/// 返回：Vec<String>。
 fn discovery_broadcast_targets() -> Vec<String> {
     discovery_broadcast_targets_for_ip(&local_ip_text())
 }
 
+/// postJSON目标主机的处理逻辑。
+/// 入参：host（主机）；port（端口）；path（路径）；body（正文）。
+/// 返回：Result<(), String>；通过 Result 区分成功值与错误值。
 fn post_json_to_host(host: &str, port: u16, path: &str, body: &str) -> Result<(), String> {
     let mut stream = TcpStream::connect((host, port))
-        .map_err(|error| format!("connect {}:{} failed: {}", host, port, error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("connect {}:{} failed: {}", host, port, error))?;
     let timeout = Duration::from_secs(3);
     let _ = stream.set_read_timeout(Some(timeout));
     let _ = stream.set_write_timeout(Some(timeout));
@@ -568,12 +630,12 @@ fn post_json_to_host(host: &str, port: u16, path: &str, body: &str) -> Result<()
     );
     stream
         .write_all(request.as_bytes())
-        .map_err(|error| format!("write request failed: {}", error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("write request failed: {}", error))?;
 
     let mut response = String::new();
     stream
         .read_to_string(&mut response)
-        .map_err(|error| format!("read response failed: {}", error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("read response failed: {}", error))?;
 
     if response.starts_with("HTTP/1.1 2") || response.starts_with("HTTP/1.0 2") {
         Ok(())
@@ -583,24 +645,27 @@ fn post_json_to_host(host: &str, port: u16, path: &str, body: &str) -> Result<()
     }
 }
 
+/// 解析HTTP基础URL。
+/// 入参：api_base_url（API基础URL）。
+/// 返回：Result<(String, u16, String), String>；通过 Result 区分成功值与错误值。
 fn parse_http_base_url(api_base_url: &str) -> Result<(String, u16, String), String> {
     let trimmed = api_base_url.trim().trim_end_matches('/');
     let without_scheme = trimmed
         .strip_prefix("http://")
-        .ok_or_else(|| "only http backend api base url is supported".to_string())?;
+        .ok_or_else(/** 处理 ok_or_else 调用中的回调逻辑。 */ || "only http backend api base url is supported".to_string())?;
     let (host_port, prefix) = without_scheme
         .split_once('/')
-        .map(|(host, path)| (host, format!("/{}", path.trim_matches('/'))))
+        .map(/** 将当前条目转换为目标结果。 */ |(host, path)| (host, format!("/{}", path.trim_matches('/'))))
         .unwrap_or((without_scheme, String::new()));
     if host_port.trim().is_empty() {
         return Err("backend api host is empty".to_string());
     }
 
     let (host, port) = match host_port.rsplit_once(':') {
-        Some((host, port)) if port.chars().all(|value| value.is_ascii_digit()) => {
+        Some((host, port)) if port.chars().all(/** 处理 all 调用中的回调逻辑。 入参：value。 */ |value| value.is_ascii_digit()) => {
             let parsed_port = port
                 .parse::<u16>()
-                .map_err(|error| format!("invalid backend api port: {}", error))?;
+                .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("invalid backend api port: {}", error))?;
             (host.to_string(), parsed_port)
         }
         _ => (host_port.to_string(), 80),
@@ -609,11 +674,14 @@ fn parse_http_base_url(api_base_url: &str) -> Result<(String, u16, String), Stri
     Ok((host, port, prefix))
 }
 
+/// postJSON目标API的处理逻辑。
+/// 入参：api_base_url（API基础URL）；path（路径）；body（正文）。
+/// 返回：Result<String, String>；通过 Result 区分成功值与错误值。
 fn post_json_to_api(api_base_url: &str, path: &str, body: &str) -> Result<String, String> {
     let (host, port, prefix) = parse_http_base_url(api_base_url)?;
     let request_path = format!("{}{}", prefix, path);
     let mut stream = TcpStream::connect((host.as_str(), port))
-        .map_err(|error| format!("connect backend {}:{} failed: {}", host, port, error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("connect backend {}:{} failed: {}", host, port, error))?;
     let timeout = Duration::from_secs(3);
     let _ = stream.set_read_timeout(Some(timeout));
     let _ = stream.set_write_timeout(Some(timeout));
@@ -628,12 +696,12 @@ fn post_json_to_api(api_base_url: &str, path: &str, body: &str) -> Result<String
     );
     stream
         .write_all(request.as_bytes())
-        .map_err(|error| format!("write backend request failed: {}", error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("write backend request failed: {}", error))?;
 
     let mut response = String::new();
     stream
         .read_to_string(&mut response)
-        .map_err(|error| format!("read backend response failed: {}", error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("read backend response failed: {}", error))?;
 
     if response.starts_with("HTTP/1.1 2") || response.starts_with("HTTP/1.0 2") {
         Ok(response
@@ -647,6 +715,9 @@ fn post_json_to_api(api_base_url: &str, path: &str, body: &str) -> Result<String
     }
 }
 
+/// 处理collect请求。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：gateway（网关）；request（请求）。
 fn handle_collect_request(gateway: &Arc<Mutex<GatewayInner>>, mut request: Request) {
     let mut body = String::new();
     if request.as_reader().read_to_string(&mut body).is_err() {
@@ -682,13 +753,13 @@ fn handle_collect_request(gateway: &Arc<Mutex<GatewayInner>>, mut request: Reque
 
     let hostname = payload
         .hostname
-        .unwrap_or_else(|| "UNKNOWN".to_string())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "UNKNOWN".to_string())
         .trim()
         .to_string();
     let remote_ip = request
         .remote_addr()
-        .map(|address| address.ip().to_string())
-        .unwrap_or_else(|| "--".to_string());
+        .map(/** 将当前条目转换为目标结果。 入参：address。 */ |address| address.ip().to_string())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "--".to_string());
     let ip_address = student_ip_from_collect(payload.ip_address.as_deref(), Some(&remote_ip));
 
     let entry = DeviceEntry {
@@ -698,7 +769,7 @@ fn handle_collect_request(gateway: &Arc<Mutex<GatewayInner>>, mut request: Reque
         } else {
             hostname
         },
-        timestamp: payload.timestamp.unwrap_or_else(|| now_millis() as i64),
+        timestamp: payload.timestamp.unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || now_millis() as i64),
         last_seen_ms: now_millis(),
         ip_address: ip_address.clone(),
         metrics: payload.metrics.unwrap_or_default(),
@@ -719,6 +790,9 @@ fn handle_collect_request(gateway: &Arc<Mutex<GatewayInner>>, mut request: Reque
     respond_json(request, &serde_json::json!({ "ok": true }), 200);
 }
 
+/// 处理设备action请求。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：gateway（网关）；device_id（设备标识）；request（请求）。
 fn handle_device_action_request(
     gateway: &Arc<Mutex<GatewayInner>>,
     device_id: String,
@@ -832,6 +906,9 @@ fn handle_device_action_request(
     }
 }
 
+/// udploop的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：gateway（网关）；stop_flag（stop标记）；socket（socket）。
 fn udp_loop(gateway: Arc<Mutex<GatewayInner>>, stop_flag: Arc<AtomicBool>, socket: UdpSocket) {
     let _ = socket.set_read_timeout(Some(Duration::from_millis(500)));
     let mut buffer = [0_u8; 1024];
@@ -859,6 +936,9 @@ fn udp_loop(gateway: Arc<Mutex<GatewayInner>>, stop_flag: Arc<AtomicBool>, socke
     }
 }
 
+/// 学生ipfor设备的处理逻辑。
+/// 入参：inner（inner）；device_id（设备标识）。
+/// 返回：Result<String, String>；通过 Result 区分成功值与错误值。
 fn student_ip_for_device(inner: &GatewayInner, device_id: &str) -> Result<String, String> {
     match inner.devices.get(device_id) {
         Some(device) if !device.ip_address.trim().is_empty() && device.ip_address != "--" => {
@@ -869,13 +949,16 @@ fn student_ip_for_device(inner: &GatewayInner, device_id: &str) -> Result<String
     }
 }
 
+/// 构建lan教师快照。
+/// 入参：inner（inner）。
+/// 返回：LanTeacherSnapshot。
 fn build_lan_teacher_snapshot(inner: &LanTeacherInner) -> LanTeacherSnapshot {
     let now = now_millis();
     let mut students = inner
         .students
         .values()
         .cloned()
-        .map(|student| {
+        .map(/** 将当前条目转换为目标结果。 入参：student。 */ |student| {
             let online = now.saturating_sub(student.last_heartbeat_ms) <= OFFLINE_AFTER_MS;
             LanStudentSnapshot {
                 student_device_id: student.student_device_id,
@@ -889,7 +972,7 @@ fn build_lan_teacher_snapshot(inner: &LanTeacherInner) -> LanTeacherSnapshot {
             }
         })
         .collect::<Vec<_>>();
-    students.sort_by(|left, right| left.host_name.cmp(&right.host_name));
+    students.sort_by(/** 处理 sort_by 调用中的回调逻辑。 入参：left、right。 */ |left, right| left.host_name.cmp(&right.host_name));
 
     LanTeacherSnapshot {
         running: inner.server_running,
@@ -901,6 +984,10 @@ fn build_lan_teacher_snapshot(inner: &LanTeacherInner) -> LanTeacherSnapshot {
     }
 }
 
+/// 配置lan教师。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：lab_id（实验室标识）；token（令牌）；api_base_url（API基础URL）；state（状态）。
+/// 返回：Result<LanTeacherSnapshot, String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn configure_lan_teacher(
     lab_id: Option<u64>,
@@ -911,8 +998,8 @@ fn configure_lan_teacher(
     let mut inner = state
         .lan_teacher
         .lock()
-        .map_err(|_| "lan teacher lock error".to_string())?;
-    if let Some(value) = lab_id.filter(|value| *value > 0) {
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "lan teacher lock error".to_string())?;
+    if let Some(value) = lab_id.filter(/** 判断当前条目是否符合筛选条件。 入参：value。 */ |value| *value > 0) {
         inner.lab_id = Some(value);
     }
     if let Some(value) = token {
@@ -928,6 +1015,10 @@ fn configure_lan_teacher(
     Ok(build_lan_teacher_snapshot(&inner))
 }
 
+/// 获取lan连接快照。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：Result<LanTeacherSnapshot, String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn get_lan_connection_snapshot(
     state: tauri::State<'_, AppState>,
@@ -935,8 +1026,8 @@ fn get_lan_connection_snapshot(
     state
         .lan_teacher
         .lock()
-        .map(|inner| build_lan_teacher_snapshot(&inner))
-        .map_err(|_| "lan teacher lock error".to_string())
+        .map(/** 将当前条目转换为目标结果。 入参：inner。 */ |inner| build_lan_teacher_snapshot(&inner))
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "lan teacher lock error".to_string())
 }
 
 /// 校验学生消息的实验室归属；教师已配置非空 token 时才进一步比对 token。
@@ -950,10 +1041,10 @@ fn validate_lan_student_message(
 ) -> Result<u64, String> {
     let configured_lab_id = inner
         .lab_id
-        .ok_or_else(|| "teacher lab is not configured".to_string())?;
+        .ok_or_else(/** 处理 ok_or_else 调用中的回调逻辑。 */ || "teacher lab is not configured".to_string())?;
     let message_lab_id = message
         .lab_id
-        .ok_or_else(|| "student labId is required".to_string())?;
+        .ok_or_else(/** 处理 ok_or_else 调用中的回调逻辑。 */ || "student labId is required".to_string())?;
     if message_lab_id != configured_lab_id {
         return Err("student labId does not match teacher labId".to_string());
     }
@@ -994,25 +1085,25 @@ fn upsert_lan_student(
     let (entry, is_new_device) = {
         let mut lan = lan_teacher
             .lock()
-            .map_err(|_| "lan teacher lock error".to_string())?;
+            .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "lan teacher lock error".to_string())?;
         let lab_id = validate_lan_student_message(&lan, &message)?;
         let known = lan.students.get(&student_device_id).cloned();
         let host_name = message
             .host_name
             .as_deref()
             .map(str::trim)
-            .filter(|value| !value.is_empty())
+            .filter(/** 判断当前条目是否符合筛选条件。 入参：value。 */ |value| !value.is_empty())
             .map(ToString::to_string)
-            .or_else(|| known.as_ref().map(|value| value.host_name.clone()))
-            .unwrap_or_else(|| "UNKNOWN".to_string());
+            .or_else(/** 处理 or_else 调用中的回调逻辑。 */ || known.as_ref().map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.host_name.clone()))
+            .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "UNKNOWN".to_string());
         let ip_address = student_ip_from_collect(message.ip_address.as_deref(), Some(&peer_ip));
         let status = message
             .status
             .as_deref()
             .map(str::trim)
-            .filter(|value| !value.is_empty())
+            .filter(/** 判断当前条目是否符合筛选条件。 入参：value。 */ |value| !value.is_empty())
             .map(ToString::to_string)
-            .unwrap_or_else(|| "online".to_string());
+            .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "online".to_string());
         let entry = LanStudentEntry {
             student_device_id: student_device_id.clone(),
             host_name,
@@ -1021,7 +1112,7 @@ fn upsert_lan_student(
             status,
             connected_at_ms: known
                 .as_ref()
-                .map(|value| value.connected_at_ms)
+                .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.connected_at_ms)
                 .unwrap_or(now),
             last_heartbeat_ms: now,
         };
@@ -1057,6 +1148,9 @@ fn upsert_lan_student(
     Ok(student_device_id)
 }
 
+/// 处理lan学生ws。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：stream（stream）；lan_teacher（lan教师）；gateway（网关）。
 fn handle_lan_student_ws(
     stream: TcpStream,
     lan_teacher: Arc<Mutex<LanTeacherInner>>,
@@ -1064,8 +1158,8 @@ fn handle_lan_student_ws(
 ) {
     let peer_ip = stream
         .peer_addr()
-        .map(|address| address.ip().to_string())
-        .unwrap_or_else(|_| "--".to_string());
+        .map(/** 将当前条目转换为目标结果。 入参：address。 */ |address| address.ip().to_string())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ |_| "--".to_string());
     let mut websocket = match accept(stream) {
         Ok(value) => value,
         Err(error) => {
@@ -1118,19 +1212,23 @@ fn handle_lan_student_ws(
     }
 }
 
+/// 启动lan教师ws运行时。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：lan_teacher（lan教师）；gateway（网关）。
+/// 返回：Result<(), String>；通过 Result 区分成功值与错误值。
 fn start_lan_teacher_ws_runtime(
     lan_teacher: Arc<Mutex<LanTeacherInner>>,
     gateway: Arc<Mutex<GatewayInner>>,
 ) -> Result<(), String> {
     let listener = TcpListener::bind(("0.0.0.0", LAN_WS_PORT))
-        .map_err(|error| format!("LAN websocket {} bind failed: {}", LAN_WS_PORT, error))?;
-    thread::spawn(move || {
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("LAN websocket {} bind failed: {}", LAN_WS_PORT, error))?;
+    thread::spawn(/** 执行新工作线程的任务。 */ move || {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
                     let lan_for_client = lan_teacher.clone();
                     let gateway_for_client = gateway.clone();
-                    thread::spawn(move || {
+                    thread::spawn(/** 执行新工作线程的任务。 */ move || {
                         handle_lan_student_ws(stream, lan_for_client, gateway_for_client)
                     });
                 }
@@ -1145,13 +1243,16 @@ fn start_lan_teacher_ws_runtime(
     Ok(())
 }
 
+/// spawnlan教师heartbeat的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：lan_teacher（lan教师）；gateway（网关）。
 fn spawn_lan_teacher_heartbeat(
     lan_teacher: Arc<Mutex<LanTeacherInner>>,
     gateway: Arc<Mutex<GatewayInner>>,
 ) {
-    thread::spawn(move || loop {
-        let config = lan_teacher.lock().ok().and_then(|inner| {
-            inner.lab_id.map(|lab_id| {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || loop {
+        let config = lan_teacher.lock().ok().and_then(/** 处理 and_then 调用中的回调逻辑。 入参：inner。 */ |inner| {
+            inner.lab_id.map(/** 将当前条目转换为目标结果。 入参：lab_id。 */ |lab_id| {
                 (
                     lab_id,
                     inner.token.clone(),
@@ -1198,6 +1299,9 @@ fn spawn_lan_teacher_heartbeat(
     });
 }
 
+/// HTTPloop的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：gateway（网关）；stop_flag（stop标记）；server（服务端）。
 fn http_loop(gateway: Arc<Mutex<GatewayInner>>, stop_flag: Arc<AtomicBool>, server: Server) {
     while !stop_flag.load(Ordering::Relaxed) {
         match server.recv_timeout(Duration::from_millis(500)) {
@@ -1255,12 +1359,20 @@ fn http_loop(gateway: Arc<Mutex<GatewayInner>>, stop_flag: Arc<AtomicBool>, serv
     }
 }
 
+/// 获取网关快照。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：GatewaySnapshot。
 #[tauri::command]
 fn get_gateway_snapshot(state: tauri::State<'_, AppState>) -> GatewaySnapshot {
     let inner = state.gateway.lock().unwrap();
     build_snapshot(&inner)
 }
 
+/// 更新网关设置。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：settings（设置）；state（状态）。
+/// 返回：GatewaySnapshot。
 #[tauri::command]
 fn update_gateway_settings(
     settings: GatewaySettings,
@@ -1282,11 +1394,15 @@ fn update_gateway_settings(
     build_snapshot(&inner)
 }
 
+/// 启动网关运行时。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：gateway（网关）。
+/// 返回：Result<GatewaySnapshot, String>；通过 Result 区分成功值与错误值。
 fn start_gateway_runtime(gateway: Arc<Mutex<GatewayInner>>) -> Result<GatewaySnapshot, String> {
     {
         let mut inner = gateway
             .lock()
-            .map_err(|_| "gateway lock error".to_string())?;
+            .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "gateway lock error".to_string())?;
         if inner.running {
             return Ok(build_snapshot(&inner));
         }
@@ -1294,27 +1410,27 @@ fn start_gateway_runtime(gateway: Arc<Mutex<GatewayInner>>) -> Result<GatewaySna
     }
 
     let udp_socket = UdpSocket::bind(("0.0.0.0", DISCOVERY_PORT))
-        .map_err(|error| format!("UDP {} bind failed: {}", DISCOVERY_PORT, error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("UDP {} bind failed: {}", DISCOVERY_PORT, error))?;
     let server = Server::http(("0.0.0.0", COLLECT_PORT))
-        .map_err(|error| format!("HTTP {} bind failed: {}", COLLECT_PORT, error))?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| format!("HTTP {} bind failed: {}", COLLECT_PORT, error))?;
 
     let stop_flag = Arc::new(AtomicBool::new(false));
 
     let udp_handle = {
         let gateway = gateway.clone();
         let stop_flag = stop_flag.clone();
-        thread::spawn(move || udp_loop(gateway, stop_flag, udp_socket))
+        thread::spawn(/** 执行新工作线程的任务。 */ move || udp_loop(gateway, stop_flag, udp_socket))
     };
 
     let http_handle = {
         let gateway = gateway.clone();
         let stop_flag = stop_flag.clone();
-        thread::spawn(move || http_loop(gateway, stop_flag, server))
+        thread::spawn(/** 执行新工作线程的任务。 */ move || http_loop(gateway, stop_flag, server))
     };
 
     let mut inner = gateway
         .lock()
-        .map_err(|_| "gateway lock error".to_string())?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "gateway lock error".to_string())?;
     inner.running = true;
     inner.cloud = if inner.settings.cloud_endpoint.trim().is_empty() {
         CloudStatus::default()
@@ -1343,6 +1459,9 @@ fn start_gateway_runtime(gateway: Arc<Mutex<GatewayInner>>) -> Result<GatewaySna
     Ok(build_snapshot(&inner))
 }
 
+/// 启动网关。
+/// 入参：state（状态）。
+/// 返回：Result<GatewaySnapshot, String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn start_gateway(state: tauri::State<'_, AppState>) -> Result<GatewaySnapshot, String> {
     start_gateway_runtime(state.gateway.clone())
@@ -1356,7 +1475,7 @@ fn stop_gateway(state: tauri::State<'_, AppState>) -> Result<GatewaySnapshot, St
         let mut inner = state
             .gateway
             .lock()
-            .map_err(|_| "gateway lock error".to_string())?;
+            .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "gateway lock error".to_string())?;
         inner.running = false;
         push_log(&mut inner, "teacher gateway stopped");
         inner.runtime.take()
@@ -1371,10 +1490,14 @@ fn stop_gateway(state: tauri::State<'_, AppState>) -> Result<GatewaySnapshot, St
     let inner = state
         .gateway
         .lock()
-        .map_err(|_| "gateway lock error".to_string())?;
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "gateway lock error".to_string())?;
     Ok(build_snapshot(&inner))
 }
 
+/// 发送设备action。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：device_id（设备标识）；action（action）；message（消息）；state（状态）。
+/// 返回：Result<(), String>；通过 Result 区分成功值与错误值。
 #[tauri::command]
 fn send_device_action(
     device_id: String,
@@ -1386,7 +1509,7 @@ fn send_device_action(
         let inner = state
             .gateway
             .lock()
-            .map_err(|_| "gateway lock error".to_string())?;
+            .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "gateway lock error".to_string())?;
         student_ip_for_device(&inner, &device_id)?
     };
     let request = StudentActionRequest {
@@ -1394,7 +1517,7 @@ fn send_device_action(
         message,
         request_id: Some(format!("local-{}", now_millis())),
     };
-    let body = serde_json::to_string(&request).map_err(|error| error.to_string())?;
+    let body = serde_json::to_string(&request).map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| error.to_string())?;
 
     post_json_to_host(&student_ip, STUDENT_ACTION_PORT, "/api/action", &body)?;
 
@@ -1411,14 +1534,19 @@ fn send_device_action(
     Ok(())
 }
 
+/// 本地设备标识的处理逻辑。
+/// 返回：String。
 fn local_device_id() -> String {
     get_mac_address()
         .ok()
         .flatten()
-        .map(|value| value.to_string().to_uppercase())
-        .unwrap_or_else(|| System::host_name().unwrap_or_else(|| "UNKNOWN".to_string()))
+        .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.to_string().to_uppercase())
+        .unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || System::host_name().unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "UNKNOWN".to_string()))
 }
 
+/// 构建学生collect载荷。
+/// 入参：host_status（主机状态）。
+/// 返回：StudentCollectPayload。
 fn build_student_collect_payload(host_status: &LocalHostStatus) -> StudentCollectPayload {
     StudentCollectPayload {
         device_id: local_device_id(),
@@ -1429,31 +1557,45 @@ fn build_student_collect_payload(host_status: &LocalHostStatus) -> StudentCollec
     }
 }
 
+/// 学生集合错误的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）；message（消息）。
 fn student_set_error(state: &StudentRuntimeState, message: impl Into<String>) {
     if let Ok(mut last_error) = state.last_error.lock() {
         *last_error = message.into();
     }
 }
 
+/// 学生教师ip的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：Option<String>。
 fn student_teacher_ip(state: &StudentRuntimeState) -> Option<String> {
-    state.teacher_ip.lock().ok().and_then(|value| value.clone())
+    state.teacher_ip.lock().ok().and_then(/** 处理 and_then 调用中的回调逻辑。 入参：value。 */ |value| value.clone())
 }
 
+/// 学生集合教师ip的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）；ip（ip）。
 fn student_set_teacher_ip(state: &StudentRuntimeState, ip: Option<String>) {
     if let Ok(mut teacher_ip) = state.teacher_ip.lock() {
         *teacher_ip = ip;
     }
 }
 
+/// 学生reportonce的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：Result<(), String>；通过 Result 区分成功值与错误值。
 fn student_report_once(state: &StudentRuntimeState) -> Result<(), String> {
-    let teacher_ip = student_teacher_ip(state).ok_or_else(|| "teacher not found".to_string())?;
+    let teacher_ip = student_teacher_ip(state).ok_or_else(/** 处理 ok_or_else 调用中的回调逻辑。 */ || "teacher not found".to_string())?;
     let host_status = state
         .host_status
         .lock()
-        .map(|value| value.clone())
-        .map_err(|_| "host status lock error".to_string())?;
+        .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.clone())
+        .map_err(/** 处理 map_err 调用中的回调逻辑。 */ |_| "host status lock error".to_string())?;
     let payload = build_student_collect_payload(&host_status);
-    let body = serde_json::to_string(&payload).map_err(|error| error.to_string())?;
+    let body = serde_json::to_string(&payload).map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| error.to_string())?;
 
     post_json_to_host(&teacher_ip, COLLECT_PORT, "/api/collect", &body)?;
 
@@ -1464,8 +1606,10 @@ fn student_report_once(state: &StudentRuntimeState) -> Result<(), String> {
     Ok(())
 }
 
+/// spawn学生discovery的处理逻辑。
+/// 入参：state（状态）。
 fn spawn_student_discovery(state: StudentRuntimeState) {
-    thread::spawn(move || {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || {
         let socket = match UdpSocket::bind(("0.0.0.0", 0)) {
             Ok(value) => value,
             Err(error) => {
@@ -1507,8 +1651,10 @@ fn spawn_student_discovery(state: StudentRuntimeState) {
     });
 }
 
+/// spawn学生reporter的处理逻辑。
+/// 入参：state（状态）。
 fn spawn_student_reporter(state: StudentRuntimeState) {
-    thread::spawn(move || loop {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || loop {
         if student_teacher_ip(&state).is_some() {
             if let Err(error) = student_report_once(&state) {
                 student_set_error(&state, error);
@@ -1519,6 +1665,8 @@ fn spawn_student_reporter(state: StudentRuntimeState) {
     });
 }
 
+/// 执行学生action。
+/// 入参：action（action）；state（状态）。
 fn execute_student_action(action: StudentActionRequest, state: StudentRuntimeState) {
     match action.action.as_str() {
         "refresh" => {
@@ -1527,7 +1675,7 @@ fn execute_student_action(action: StudentActionRequest, state: StudentRuntimeSta
             }
         }
         "message" => {
-            let message = action.message.unwrap_or_else(|| "教师端消息".to_string());
+            let message = action.message.unwrap_or_else(/** 在当前结果缺失或失败时生成回退值。 */ || "教师端消息".to_string());
             let script = format!(
                 "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('{}','智云学生端')",
                 message.replace('\'', "''")
@@ -1557,6 +1705,8 @@ fn execute_student_action(action: StudentActionRequest, state: StudentRuntimeSta
     }
 }
 
+/// 处理学生action请求。
+/// 入参：state（状态）；request（请求）。
 fn handle_student_action_request(state: &StudentRuntimeState, mut request: Request) {
     let mut body = String::new();
     if request.as_reader().read_to_string(&mut body).is_err() {
@@ -1581,7 +1731,7 @@ fn handle_student_action_request(state: &StudentRuntimeState, mut request: Reque
     };
 
     let state_for_action = state.clone();
-    thread::spawn(move || execute_student_action(action, state_for_action));
+    thread::spawn(/** 执行新工作线程的任务。 */ move || execute_student_action(action, state_for_action));
     respond_json(
         request,
         &serde_json::json!({ "ok": true, "message": "accepted" }),
@@ -1589,15 +1739,18 @@ fn handle_student_action_request(state: &StudentRuntimeState, mut request: Reque
     );
 }
 
+/// 启动学生action服务端。
+/// 入参：state（状态）。
+/// 返回：Result<(), String>；通过 Result 区分成功值与错误值。
 fn start_student_action_server(state: StudentRuntimeState) -> Result<(), String> {
-    let server = Server::http(("0.0.0.0", STUDENT_ACTION_PORT)).map_err(|error| {
+    let server = Server::http(("0.0.0.0", STUDENT_ACTION_PORT)).map_err(/** 处理 map_err 调用中的回调逻辑。 入参：error。 */ |error| {
         format!(
             "student action port {} unavailable: {}",
             STUDENT_ACTION_PORT, error
         )
     })?;
 
-    thread::spawn(move || loop {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || loop {
         match server.recv_timeout(Duration::from_millis(500)) {
             Ok(Some(request)) => {
                 let path = request.url().to_string();
@@ -1620,11 +1773,15 @@ fn start_student_action_server(state: StudentRuntimeState) -> Result<(), String>
     Ok(())
 }
 
+/// 当前学生状态文本的处理逻辑。
+/// 涉及：访问互斥保护的共享状态。
+/// 入参：state（状态）。
+/// 返回：String。
 fn current_student_status_text(state: &StudentRuntimeState) -> String {
     let last_error = state
         .last_error
         .lock()
-        .map(|value| value.clone())
+        .map(/** 将当前条目转换为目标结果。 入参：value。 */ |value| value.clone())
         .unwrap_or_default();
 
     if last_error.contains("student action port") {
@@ -1639,8 +1796,8 @@ fn current_student_status_text(state: &StudentRuntimeState) -> String {
         .last_report_ms
         .lock()
         .ok()
-        .and_then(|value| *value)
-        .map(|last_seen| now_millis().saturating_sub(last_seen) <= OFFLINE_AFTER_MS)
+        .and_then(/** 处理 and_then 调用中的回调逻辑。 入参：value。 */ |value| *value)
+        .map(/** 将当前条目转换为目标结果。 入参：last_seen。 */ |last_seen| now_millis().saturating_sub(last_seen) <= OFFLINE_AFTER_MS)
         .unwrap_or(false);
 
     if recently_reported {
@@ -1650,6 +1807,9 @@ fn current_student_status_text(state: &StudentRuntimeState) -> String {
     }
 }
 
+/// setup学生tray的处理逻辑。
+/// 入参：app（app）；state（状态）。
+/// 返回：tauri::Result<()>。
 fn setup_student_tray(app: &tauri::App, state: StudentRuntimeState) -> tauri::Result<()> {
     let status_item = MenuItem::with_id(app, "status", "正在查找教师端", false, None::<&str>)?;
     let reconnect_item = MenuItem::with_id(app, "reconnect", "重连", true, None::<&str>)?;
@@ -1666,18 +1826,18 @@ fn setup_student_tray(app: &tauri::App, state: StudentRuntimeState) -> tauri::Re
         .icon(icon)
         .menu(&menu)
         .show_menu_on_left_click(true)
-        .on_menu_event(move |_app, event| {
+        .on_menu_event(/** 处理 on_menu_event 调用中的回调逻辑。 入参：_app、event。 */ move |_app, event| {
             if event.id().as_ref() == "reconnect" {
                 student_set_teacher_ip(&state_for_menu, None);
                 let state_for_report = state_for_menu.clone();
-                thread::spawn(move || {
+                thread::spawn(/** 执行新工作线程的任务。 */ move || {
                     let _ = student_report_once(&state_for_report);
                 });
             }
         })
         .build(app)?;
 
-    thread::spawn(move || loop {
+    thread::spawn(/** 执行新工作线程的任务。 */ move || loop {
         let status = current_student_status_text(&state);
         let _ = status_item.set_text(&status);
         let _ = tray.set_tooltip(Some(&status));
@@ -1687,12 +1847,16 @@ fn setup_student_tray(app: &tauri::App, state: StudentRuntimeState) -> tauri::Re
     Ok(())
 }
 
+/// 启用学生autostart。
+/// 入参：app（app）。
 fn enable_student_autostart(app: &tauri::App) {
     if let Err(error) = app.autolaunch().enable() {
         eprintln!("student autostart enable failed: {}", error);
     }
 }
 
+/// 运行当前操作。
+/// 涉及：访问互斥保护的共享状态。
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let host_status = Arc::new(Mutex::new(default_local_host_status()));
@@ -1715,7 +1879,7 @@ pub fn run() {
             Some(vec![]),
         ))
         .plugin(tauri_plugin_os::init())
-        .setup(move |_app| {
+        .setup(/** 处理 setup 调用中的回调逻辑。 入参：_app。 */ move |_app| {
             if let Err(error) = start_gateway_runtime(gateway.clone()) {
                 if let Ok(mut inner) = gateway.lock() {
                     inner.last_error = error.clone();
@@ -1767,6 +1931,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
+/// 运行学生。
 pub fn run_student() {
     let host_status = Arc::new(Mutex::new(default_local_host_status()));
     spawn_host_status_probe(host_status.clone());
@@ -1785,7 +1950,7 @@ pub fn run_student() {
             Some(vec![]),
         ))
         .plugin(tauri_plugin_os::init())
-        .setup(move |app| {
+        .setup(/** 处理 setup 调用中的回调逻辑。 入参：app。 */ move |app| {
             enable_student_autostart(app);
             setup_student_tray(app, student_state.clone())?;
             match start_student_action_server(student_state.clone()) {
@@ -1805,6 +1970,7 @@ pub fn run_student() {
 mod tests {
     use super::*;
 
+    /// 收集载荷reads学生reportedipaddress。
     #[test]
     fn collect_payload_reads_student_reported_ip_address() {
         let payload: CollectPayload = serde_json::from_str(
@@ -1815,6 +1981,7 @@ mod tests {
         assert_eq!(payload.ip_address.as_deref(), Some("192.168.56.101"));
     }
 
+    /// 收集ipprefers学生reportedroutableaddress。
     #[test]
     fn collect_ip_prefers_student_reported_routable_address() {
         let selected = student_ip_from_collect(Some("192.168.56.101"), Some("172.16.0.20"));
@@ -1822,6 +1989,7 @@ mod tests {
         assert_eq!(selected, "192.168.56.101");
     }
 
+    /// discovery目标includesubnetbroadcast的处理逻辑。
     #[test]
     fn discovery_targets_include_subnet_broadcast() {
         let targets = discovery_broadcast_targets_for_ip("192.168.56.42");

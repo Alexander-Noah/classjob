@@ -24,12 +24,19 @@ class ConsumableLoanServiceTest {
     private final ConsumableService stock = mock(ConsumableService.class);
     private final ConsumableLoanService service = new ConsumableLoanService(loans, items, stock);
 
+    /**
+     * fractionalZeroAndOverflowQuantitiesNeverChange库存的处理逻辑。
+     */
     @Test void fractionalZeroAndOverflowQuantitiesNeverChangeInventory() {
         for (String quantity : new String[]{"0", "-1", "1.5", "2147483648"}) {
-            assertThrows(IllegalArgumentException.class, () -> service.borrow(request(quantity, UUID.randomUUID().toString()), "admin"));
+            assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.borrow(request(quantity, UUID.randomUUID().toString()), "admin"));
         }
         verifyNoInteractions(stock, items, loans);
     }
+    /**
+     * replayOfSuccessfulBorrowDoesNotDeduct库存AgainEvenIfNoneRemains的处理逻辑。
+     * 涉及：写入数据库。
+     */
     @Test void replayOfSuccessfulBorrowDoesNotDeductStockAgainEvenIfNoneRemains() {
         String key = UUID.randomUUID().toString();
         ConsumableEntity item = new ConsumableEntity(); item.setId(1L); item.setStock(0);
@@ -41,13 +48,19 @@ class ConsumableLoanServiceTest {
         verifyNoInteractions(stock);
         verify(loans, never()).insert(any());
     }
+    /**
+     * excessReturnAndMissing借用NeverAdd库存的处理逻辑。
+     */
     @Test void excessReturnAndMissingLoanNeverAddStock() {
         when(loans.lock(7L)).thenReturn(loan());
-        assertThrows(IllegalArgumentException.class, () -> service.returnItems(7L, new ConsumableLoanService.ReturnRequest(new BigDecimal("6"), "", UUID.randomUUID().toString()), "admin"));
-        assertThrows(ResponseStatusException.class, () -> service.returnItems(8L, new ConsumableLoanService.ReturnRequest(BigDecimal.ONE, "", UUID.randomUUID().toString()), "admin"));
+        assertThrows(IllegalArgumentException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.returnItems(7L, new ConsumableLoanService.ReturnRequest(new BigDecimal("6"), "", UUID.randomUUID().toString()), "admin"));
+        assertThrows(ResponseStatusException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> service.returnItems(8L, new ConsumableLoanService.ReturnRequest(BigDecimal.ONE, "", UUID.randomUUID().toString()), "admin"));
         verifyNoInteractions(stock);
         verify(loans, never()).addReturned(any(), anyInt());
     }
+    /**
+     * successfulReturnReplayDoesNotAdd库存Again的处理逻辑。
+     */
     @Test void successfulReturnReplayDoesNotAddStockAgain() {
         String key = UUID.randomUUID().toString();
         ConsumableLoanEntity completed = loan(); completed.setRemainingQuantity(0);
@@ -59,9 +72,19 @@ class ConsumableLoanServiceTest {
         verifyNoInteractions(stock);
         verify(loans, never()).addReturned(any(), anyInt());
     }
+    /**
+     * 请求的处理逻辑。
+     * @param quantity quantity参数。
+     * @param key 键参数。
+     * @return ConsumableLoanService.BorrowRequest 类型的处理结果。
+     */
     private ConsumableLoanService.BorrowRequest request(String quantity, String key) {
         return new ConsumableLoanService.BorrowRequest(1L, "张老师", "", new BigDecimal(quantity), "教学", LocalDate.now(), "", key);
     }
+    /**
+     * 借用的处理逻辑。
+     * @return ConsumableLoanEntity 类型的处理结果。
+     */
     private ConsumableLoanEntity loan() {
         ConsumableLoanEntity loan = new ConsumableLoanEntity(); loan.setId(7L); loan.setConsumableId(1L); loan.setQuantity(5); loan.setRemainingQuantity(5);
         return loan;

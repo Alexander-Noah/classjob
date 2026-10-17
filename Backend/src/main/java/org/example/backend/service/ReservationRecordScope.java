@@ -7,6 +7,9 @@ import java.util.Objects;
 import java.util.Set;
 
 public record ReservationRecordScope(Long applicantUserId, Set<Long> laboratoryIds) {
+    /**
+     * 构造 ReservationRecordScope，初始化当前实例。
+     */
     public ReservationRecordScope {
         if (applicantUserId != null && laboratoryIds != null) {
             throw new IllegalArgumentException("A reservation scope may target an applicant or laboratories, not both");
@@ -16,14 +19,28 @@ public record ReservationRecordScope(Long applicantUserId, Set<Long> laboratoryI
         }
     }
 
+    /**
+     * all的处理逻辑。
+     * @return ReservationRecordScope 类型的处理结果。
+     */
     public static ReservationRecordScope all() {
         return new ReservationRecordScope(null, null);
     }
 
+    /**
+     * forApplicant的处理逻辑。
+     * @param applicantUserId applicant用户标识参数。
+     * @return ReservationRecordScope 类型的处理结果。
+     */
     public static ReservationRecordScope forApplicant(long applicantUserId) {
         return new ReservationRecordScope(applicantUserId, null);
     }
 
+    /**
+     * forLaboratory标识集合的处理逻辑。
+     * @param laboratoryIds laboratory标识集合参数。
+     * @return ReservationRecordScope 类型的处理结果。
+     */
     public static ReservationRecordScope forLaboratoryIds(Set<Long> laboratoryIds) {
         return new ReservationRecordScope(null, Objects.requireNonNull(laboratoryIds, "Laboratory IDs are required"));
     }

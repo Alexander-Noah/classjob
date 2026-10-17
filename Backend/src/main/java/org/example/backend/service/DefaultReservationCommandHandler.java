@@ -17,11 +17,22 @@ public class DefaultReservationCommandHandler implements ReservationCommandHandl
     private final DefaultReservationCreationService creation;
     private final DefaultReservationReviewService review;
 
+    /**
+     * 构造 DefaultReservationCommandHandler，初始化当前实例。
+     * @param creation creation参数。
+     * @param review review参数。
+     */
     public DefaultReservationCommandHandler(DefaultReservationCreationService creation, DefaultReservationReviewService review) {
         this.creation = Objects.requireNonNull(creation, "creation");
         this.review = Objects.requireNonNull(review, "review");
     }
 
+    /**
+     * 创建当前操作。
+     * @param command 命令参数。
+     * @param actor 操作者参数。
+     * @return ReservationView 类型的处理结果。
+     */
     @Override
     public ReservationView create(CreateReservationCommand command, ReservationActor actor) {
         for (int attempt = 1; attempt <= MAX_CREATION_ATTEMPTS; attempt++) {
@@ -36,11 +47,23 @@ public class DefaultReservationCommandHandler implements ReservationCommandHandl
         throw new IllegalStateException("reservation creation retry loop exhausted");
     }
 
+    /**
+     * 批准当前操作。
+     * @param command 命令参数。
+     * @param actor 操作者参数。
+     * @return ReservationView 类型的处理结果。
+     */
     @Override
     public ReservationView approve(ReviewReservationCommand command, ReservationActor actor) {
         return review.approve(command, actor);
     }
 
+    /**
+     * 拒绝当前操作。
+     * @param command 命令参数。
+     * @param actor 操作者参数。
+     * @return ReservationView 类型的处理结果。
+     */
     @Override
     public ReservationView reject(ReviewReservationCommand command, ReservationActor actor) {
         return review.reject(command, actor);

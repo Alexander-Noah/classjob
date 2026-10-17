@@ -9,6 +9,9 @@ from pathlib import Path
 MODULE_PATH = Path(__file__).resolve().parents[1] / "timetable_navigation.py"
 
 
+# 加载navigationmodule。
+# 入参：test_case（testcase）。
+# 返回：module 的当前值。
 def load_navigation_module(test_case):
     test_case.assertTrue(MODULE_PATH.exists(), "timetable_navigation.py must exist")
     spec = importlib.util.spec_from_file_location("timetable_navigation", MODULE_PATH)
@@ -18,14 +21,20 @@ def load_navigation_module(test_case):
 
 
 class FakeSwitchTo:
+    # 初始化当前实例及其所需状态。
+    # 入参：driver（驱动）。
     def __init__(self, driver):
         self.driver = driver
 
+    # 窗口的处理逻辑。
+    # 入参：handle（handle）。
     def window(self, handle):
         self.driver.current_handle = handle
 
 
 class FakeDriver:
+    # 初始化当前实例及其所需状态。
+    # 入参：windows（窗口）；redirects（redirects）。
     def __init__(self, windows, redirects=None):
         self.windows = windows
         self.redirects = redirects or {}
@@ -33,10 +42,14 @@ class FakeDriver:
         self.switch_to = FakeSwitchTo(self)
         self.requested_urls = []
 
+    # 窗口handles的处理逻辑。
+    # 返回：由当前表达式或分支生成的处理结果。
     @property
     def window_handles(self):
         return list(self.windows)
 
+    # 当前URL的处理逻辑。
+    # 返回：由当前表达式或分支生成的处理结果。
     @property
     def current_url(self):
         value = self.windows[self.current_handle]
@@ -47,12 +60,15 @@ class FakeDriver:
             return current
         return value
 
+    # 获取当前操作。
+    # 入参：url（URL）。
     def get(self, url):
         self.requested_urls.append(url)
         self.windows[self.current_handle] = self.redirects.get(url, url)
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    # 验证detectscas身份登录页码。
     def test_detects_cas_identity_login_page(self):
         navigation = load_navigation_module(self)
 
@@ -64,6 +80,7 @@ class TimetableNavigationTest(unittest.TestCase):
             )
         )
 
+    # 验证doesnottreatportalas身份登录页码。
     def test_does_not_treat_portal_as_identity_login_page(self):
         navigation = load_navigation_module(self)
 
@@ -75,6 +92,7 @@ class TimetableNavigationTest(unittest.TestCase):
             )
         )
 
+    # 验证rejects教务登录页码evenon目标主机。
     def test_rejects_academic_login_page_even_on_target_host(self):
         navigation = load_navigation_module(self)
 
@@ -85,6 +103,7 @@ class TimetableNavigationTest(unittest.TestCase):
                 '<form id="loginForm" action="/jsxsd/xk/LoginToXk"></form>',
             )
 
+    # 验证accepts已认证状态教务页码。
     def test_accepts_authenticated_academic_page(self):
         navigation = load_navigation_module(self)
 
@@ -94,6 +113,7 @@ class TimetableNavigationTest(unittest.TestCase):
             '<div id="main">个人中心</div>',
         )
 
+    # 验证已认证状态homepagewinsover登录引用进入来源。
     def test_authenticated_homepage_wins_over_login_reference_in_source(self):
         navigation = load_navigation_module(self)
 
@@ -103,6 +123,7 @@ class TimetableNavigationTest(unittest.TestCase):
             '<script>const fallback = "/jsxsd/xk/LoginToXk";</script>',
         )
 
+    # 验证opens已认证状态portalapp条目beforewaitingfor目标。
     def test_opens_authenticated_portal_app_entry_before_waiting_for_target(self):
         navigation = load_navigation_module(self)
         entry_url = "https://ehall.hniu.cn/appShow?appId=6190757434612287"
@@ -128,6 +149,7 @@ class TimetableNavigationTest(unittest.TestCase):
             url,
         )
 
+    # 验证finds目标窗口evenwhenitisnotthelatest。
     def test_finds_target_window_even_when_it_is_not_the_latest(self):
         navigation = load_navigation_module(self)
         driver = FakeDriver({
@@ -140,6 +162,7 @@ class TimetableNavigationTest(unittest.TestCase):
         self.assertEqual("jw", driver.current_handle)
         self.assertEqual("https://jw.hniu.cn/jsxsd/", url)
 
+    # 验证waitsforauthorizedatrustredirect目标reach目标。
     def test_waits_for_authorized_atrust_redirect_to_reach_target(self):
         navigation = load_navigation_module(self)
         driver = FakeDriver({
@@ -153,6 +176,7 @@ class TimetableNavigationTest(unittest.TestCase):
 
         self.assertEqual("https://jw.hniu.cn/jsxsd/", url)
 
+    # 验证reportsatrustauthenticationrequirementafter超时。
     def test_reports_atrust_authentication_requirement_after_timeout(self):
         navigation = load_navigation_module(self)
         driver = FakeDriver({"atrust": "https://atrust.hniu.cn/portal/#/common_info"})
@@ -160,6 +184,7 @@ class TimetableNavigationTest(unittest.TestCase):
         with self.assertRaisesRegex(navigation.ATrustAuthenticationRequired, "aTrust"):
             navigation.wait_for_target_window(driver, "jw.hniu.cn", timeout_seconds=0.01, poll_seconds=0.001)
 
+    # 验证重试次数目标URLonceafteratrustlosesoriginalredirect。
     def test_retries_target_url_once_after_atrust_loses_original_redirect(self):
         navigation = load_navigation_module(self)
         driver = FakeDriver({"atrust": "https://atrust.hniu.cn/portal/#/common_info"})

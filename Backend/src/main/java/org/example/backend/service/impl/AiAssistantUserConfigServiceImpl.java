@@ -29,11 +29,21 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
     private final AiAssistantUserConfigMapper configMapper;
     private final RestClient restClient;
 
+    /**
+     * 构造 AiAssistantUserConfigServiceImpl，初始化当前实例。
+     * @param configMapper 配置数据映射器参数。
+     */
     public AiAssistantUserConfigServiceImpl(AiAssistantUserConfigMapper configMapper) {
         this.configMapper = configMapper;
         this.restClient = RestClient.create();
     }
 
+    /**
+     * 获取配置。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getConfig(Integer userId) {
@@ -41,6 +51,13 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return toSafeResponse(resolveConfig(userId));
     }
 
+    /**
+     * 保存配置。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     @Transactional
     public Map<String, Object> saveConfig(Integer userId, Map<String, Object> payload) {
@@ -50,6 +67,12 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return getConfig(userId);
     }
 
+    /**
+     * 构建Draft配置。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return AiAssistantUserConfigEntity 类型的处理结果。
+     */
     private AiAssistantUserConfigEntity buildDraftConfig(Integer userId, Map<String, Object> payload) {
         Map<String, Object> values = payload == null ? Map.of() : payload;
         AiAssistantUserConfigEntity current = configMapper.getByUserId(userId);
@@ -74,12 +97,25 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return config;
     }
 
+    /**
+     * 验证连接。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> testConnection(Integer userId) {
         return testConnection(userId, null);
     }
 
+    /**
+     * 验证连接。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param payload 载荷参数。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> testConnection(Integer userId, Map<String, Object> payload) {
@@ -97,6 +133,13 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return result;
     }
 
+    /**
+     * chat的处理逻辑。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param userId 用户标识参数。
+     * @param question question参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     @Transactional(readOnly = true)
     public String chat(Integer userId, String question) {
@@ -106,16 +149,33 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return requestChatCompletion(config, question);
     }
 
+    /**
+     * 要求提供已启用配置。
+     * @param config 配置参数。
+     */
     private void requireEnabledConfig(AiAssistantUserConfigEntity config) {
         if (!Boolean.TRUE.equals(config.getEnabled()) || firstNonBlank(config.getApiKey()).isBlank()) {
             throw new IllegalArgumentException("请先在智能辅助页面保存 AI 接口配置");
         }
     }
 
+    /**
+     * 请求ChatCompletion的处理逻辑。
+     * @param config 配置参数。
+     * @param question question参数。
+     * @return String 类型的处理结果。
+     */
     private String requestChatCompletion(AiAssistantUserConfigEntity config, String question) {
         return requestChatCompletion(config, question, firstNonBlank(config.getSystemPrompt(), DEFAULT_SYSTEM_PROMPT));
     }
 
+    /**
+     * chatWith上下文的处理逻辑。
+     * @param userId 用户标识参数。
+     * @param instruction instruction参数。
+     * @param question question参数。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String chatWithContext(Integer userId, String instruction, String question) {
         requireUserId(userId);
@@ -125,6 +185,13 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
                 + "\n" + instruction);
     }
 
+    /**
+     * 请求ChatCompletion的处理逻辑。
+     * @param config 配置参数。
+     * @param question question参数。
+     * @param systemPrompt systemPrompt参数。
+     * @return String 类型的处理结果。
+     */
     private String requestChatCompletion(AiAssistantUserConfigEntity config, String question, String systemPrompt) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", config.getModel());
@@ -156,6 +223,11 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return answer;
     }
 
+    /**
+     * 解析配置。
+     * @param userId 用户标识参数。
+     * @return AiAssistantUserConfigEntity 类型的处理结果。
+     */
     private AiAssistantUserConfigEntity resolveConfig(Integer userId) {
         AiAssistantUserConfigEntity stored = configMapper.getByUserId(userId);
         if (stored != null) {
@@ -172,6 +244,11 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return defaults;
     }
 
+    /**
+     * 转换为安全响应。
+     * @param config 配置参数。
+     * @return 当前操作返回的键值结果。
+     */
     private Map<String, Object> toSafeResponse(AiAssistantUserConfigEntity config) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("enabled", Boolean.TRUE.equals(config.getEnabled()));
@@ -182,6 +259,11 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return response;
     }
 
+    /**
+     * 提取文本。
+     * @param response 响应参数。
+     * @return String 类型的处理结果。
+     */
     @SuppressWarnings("unchecked")
     private String extractText(Map<?, ?> response) {
         Object choices = response == null ? null : response.get("choices");
@@ -199,19 +281,28 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
             return contentList.stream()
                     .filter(Map.class::isInstance)
                     .map(Map.class::cast)
-                    .map((item) -> firstNonBlank(stringValue(item.get("text")), stringValue(item.get("content"))))
-                    .filter((item) -> !item.isBlank())
-                    .reduce((left, right) -> left + "\n" + right)
+                    .map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) -> firstNonBlank(stringValue(item.get("text")), stringValue(item.get("content"))))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) -> !item.isBlank())
+                    .reduce(/** 合并当前条目与累计结果。 入参：left、right。 */ (left, right) -> left + "\n" + right)
                     .orElse("");
         }
         return stringValue(content).trim();
     }
 
+    /**
+     * 归一化ChatCompletionsURL。
+     * @param baseUrl 基础URL参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeChatCompletionsUrl(String baseUrl) {
         String url = firstNonBlank(baseUrl, DEFAULT_BASE_URL).replaceAll("/+$", "");
         return url.endsWith("/chat/completions") ? url : url + "/chat/completions";
     }
 
+    /**
+     * 校验端点。
+     * @param baseUrl 基础URL参数。
+     */
     private void validateEndpoint(String baseUrl) {
         try {
             URI uri = URI.create(normalizeChatCompletionsUrl(baseUrl));
@@ -224,11 +315,22 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         }
     }
 
+    /**
+     * same端点的处理逻辑。
+     * @param first first参数。
+     * @param second second参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean sameEndpoint(String first, String second) {
         try { return URI.create(normalizeChatCompletionsUrl(first)).equals(URI.create(normalizeChatCompletionsUrl(second))); }
         catch (RuntimeException exception) { return false; }
     }
 
+    /**
+     * 构建API错误消息。
+     * @param exception 异常参数。
+     * @return String 类型的处理结果。
+     */
     private String buildApiErrorMessage(RestClientResponseException exception) {
         String responseBody = firstNonBlank(exception.getResponseBodyAsString());
         String message = extractJsonString(responseBody, "message");
@@ -247,6 +349,12 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         );
     }
 
+    /**
+     * 提取JSON字符串。
+     * @param json JSON参数。
+     * @param fieldName field名称参数。
+     * @return String 类型的处理结果。
+     */
     private String extractJsonString(String json, String fieldName) {
         if (json == null || json.isBlank()) {
             return "";
@@ -272,6 +380,12 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
                 .trim();
     }
 
+    /**
+     * 将输入转换为布尔值。
+     * @param value 值参数。
+     * @param fallback fallback参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean booleanValue(Object value, boolean fallback) {
         if (value == null) {
             return fallback;
@@ -283,10 +397,19 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return "true".equalsIgnoreCase(text) || "1".equals(text);
     }
 
+    /**
+     * 将输入转换为字符串值。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String stringValue(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    /**
+     * first非空白的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     private String firstNonBlank(String... values) {
         for (String value : values) {
             if (value != null && !value.isBlank()) {
@@ -296,6 +419,10 @@ public class AiAssistantUserConfigServiceImpl implements AiAssistantUserConfigSe
         return "";
     }
 
+    /**
+     * 要求提供用户标识。
+     * @param userId 用户标识参数。
+     */
     private void requireUserId(Integer userId) {
         if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("登录状态无效，请重新登录");

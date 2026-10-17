@@ -24,6 +24,13 @@ public class DefaultReservationCreationService {
     private final ReservationLabService laboratories;
     private final ReservationAvailabilityEvaluator availability;
 
+    /**
+     * 构造 DefaultReservationCreationService，初始化当前实例。
+     * @param reservations 预约参数。
+     * @param catalog catalog参数。
+     * @param laboratories laboratories参数。
+     * @param availability availability参数。
+     */
     public DefaultReservationCreationService(ReservationPersistenceService reservations, ReservationCatalogQuery catalog,
                                              ReservationLabService laboratories,
                                              ReservationAvailabilityEvaluator availability) {
@@ -61,6 +68,11 @@ public class DefaultReservationCreationService {
         return created;
     }
 
+    /**
+     * 断言CanCreateForLaboratory。
+     * @param actor 操作者参数。
+     * @param labId 实验室标识参数。
+     */
     private void assertCanCreateForLaboratory(ReservationActor actor, long labId) {
         if (actor.role() == ReservationActorRole.SYSTEM_ADMINISTRATOR || actor.role() == ReservationActorRole.TEACHER) {
             return;
@@ -77,6 +89,11 @@ public class DefaultReservationCreationService {
         }
     }
 
+    /**
+     * 校验当前操作。
+     * @param command 命令参数。
+     * @return ValidatedCommand 类型的处理结果。
+     */
     private ValidatedCommand validate(CreateReservationCommand command) {
         if (command == null || command.labId() == null || command.labId() <= 0 || command.attendeeCount() == null
                 || command.attendeeCount() <= 0 || command.reservationDate() == null) {
@@ -88,6 +105,12 @@ public class DefaultReservationCreationService {
                 required(command.scene(), "scene"), command.attendeeCount(), required(command.reason(), "reason"));
     }
 
+    /**
+     * required的处理逻辑。
+     * @param value 值参数。
+     * @param field field参数。
+     * @return String 类型的处理结果。
+     */
     private String required(String value, String field) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Reservation " + field + " is required");

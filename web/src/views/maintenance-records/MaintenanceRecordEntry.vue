@@ -8,7 +8,7 @@ import { useRoute, useRouter } from 'vue-router'
 defineOptions({ name: 'MaintenanceRecordEntry' })
 const route = useRoute()
 const router = useRouter()
-onMounted(() => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ () => {
   const query = route.query.id ? { edit: String(route.query.id) } : { create: '1' }
   router.replace({ path: '/lab-admin/maintenance-records', query })
 })

@@ -17,7 +17,7 @@ const calendarConsumers = [
   timetableAdminUrl,
 ]
 
-test('calculates the current teaching week from the configured semester start date', async () => {
+test('calculates the current teaching week from the configured semester start date', /** 验证当前测试用例的预期行为。 */ async () => {
   assert.ok(existsSync(academicWeekUrl), 'academic week utility must exist')
 
   const { calculateAcademicWeek } = await import(academicWeekUrl.href)
@@ -25,7 +25,7 @@ test('calculates the current teaching week from the configured semester start da
   assert.equal(calculateAcademicWeek(new Date('2026-10-08T15:59:01'), '2026-08-31'), 6)
 })
 
-test('crawler configuration stores semester and semester start as one calendar selection', () => {
+test('crawler configuration stores semester and semester start as one calendar selection', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readFileSync(timetableAdminUrl, 'utf8')
 
   assert.match(source, /v-model="configForm\.semester"/)
@@ -33,7 +33,7 @@ test('crawler configuration stores semester and semester start as one calendar s
   assert.match(source, /semesterStartDate:\s*configForm\.semesterStartDate/)
 })
 
-test('lab management loads the authoritative semester start date before timetable rows', () => {
+test('lab management loads the authoritative semester start date before timetable rows', /** 验证当前测试用例的预期行为。 */ () => {
   const source = readFileSync(labManagementUrl, 'utf8')
 
   assert.match(source, /getClassTimetableCrawlerConfig/)
@@ -42,7 +42,7 @@ test('lab management loads the authoritative semester start date before timetabl
   assert.match(source, /await loadScheduleRows\(\)/)
 })
 
-test('all timetable consumers use the shared teaching calendar instead of a fixed semester date', () => {
+test('all timetable consumers use the shared teaching calendar instead of a fixed semester date', /** 验证当前测试用例的预期行为。 */ () => {
   assert.ok(existsSync(teachingCalendarUrl), 'teaching calendar module must exist')
 
   for (const consumerUrl of calendarConsumers) {

@@ -19,6 +19,11 @@ public class LoginAttemptLimiter {
     private final int maxAttempts;
     private final long lockSeconds;
 
+    /**
+     * 构造 LoginAttemptLimiter，初始化当前实例。
+     * @param maxAttempts max尝试参数。
+     * @param lockSeconds lockSeconds参数。
+     */
     public LoginAttemptLimiter(
             @Value("${smart-lab.security.login-rate-limit.max-attempts:5}") int maxAttempts,
             @Value("${smart-lab.security.login-rate-limit.lock-seconds:900}") long lockSeconds
@@ -45,10 +50,15 @@ public class LoginAttemptLimiter {
         attempts.remove(key(username, request));
     }
 
+    /**
+     * 记录失败。
+     * @param username username参数。
+     * @param request 请求参数。
+     */
     public void recordFailure(String username, HttpServletRequest request) {
         String key = key(username, request);
         // compute 串行更新同一键，避免并行失败请求丢失递增；检查和计数仍是两个调用。
-        attempts.compute(key, (ignored, state) -> {
+        attempts.compute(key, /** 处理 compute 调用中的回调逻辑。 入参：ignored、state。 */ (ignored, state) -> {
             long now = Instant.now().getEpochSecond();
             AttemptState next = state == null
                     || (state.lockedUntilEpochSecond > 0 && state.lockedUntilEpochSecond <= now)
@@ -61,6 +71,12 @@ public class LoginAttemptLimiter {
         });
     }
 
+    /**
+     * 键的处理逻辑。
+     * @param username username参数。
+     * @param request 请求参数。
+     * @return String 类型的处理结果。
+     */
     private String key(String username, HttpServletRequest request) {
         String normalizedUsername = username == null || username.isBlank()
                 ? "unknown"

@@ -35,6 +35,10 @@ import static org.mockito.Mockito.when;
 class MaintenanceRecordNavigationContractTest {
     private static final String RETIRED_ROLE_MESSAGE = "角色已停用，请联系系统管理员重新分配角色";
 
+    /**
+     * backend默认点位目标维护记录Viewing的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void backendDefaultsPointToMaintenanceRecordViewing() throws Exception {
         DashboardServiceImpl dashboardService = new DashboardServiceImpl(null, null, null);
@@ -44,12 +48,12 @@ class MaintenanceRecordNavigationContractTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> shortcuts = (List<Map<String, Object>>) buildShortcuts.invoke(dashboardService);
         Map<String, Object> maintenanceShortcut = shortcuts.stream()
-                .filter(shortcut -> "维护记录查看".equals(shortcut.get("title")))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：shortcut。 */ shortcut -> "维护记录查看".equals(shortcut.get("title")))
                 .findFirst()
                 .orElseThrow();
 
         assertEquals("/lab-admin/maintenance-records", maintenanceShortcut.get("path"));
-        assertFalse(shortcuts.stream().anyMatch(shortcut -> "/lab-admin/repairs".equals(shortcut.get("path"))));
+        assertFalse(shortcuts.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：shortcut。 */ shortcut -> "/lab-admin/repairs".equals(shortcut.get("path"))));
 
         UserServiceImpl userService = new UserServiceImpl(null, null, null);
         Method defaultPermissions = UserServiceImpl.class.getDeclaredMethod("defaultPermissions", String.class);
@@ -62,6 +66,9 @@ class MaintenanceRecordNavigationContractTest {
         assertFalse(permissions.contains("维修工单"));
     }
 
+    /**
+     * 维护角色CannotAccessAny已认证状态BusinessSurface的处理逻辑。
+     */
     @Test
     void maintenanceRoleCannotAccessAnyAuthenticatedBusinessSurface() {
         SecurityAccessPolicy policy = new SecurityAccessPolicy();
@@ -73,6 +80,9 @@ class MaintenanceRecordNavigationContractTest {
         assertFalse(policy.isAllowed("GET", "/maintenance-records", "teacher"));
     }
 
+    /**
+     * 有效维护凭据ReturnTheRetired角色消息的处理逻辑。
+     */
     @Test
     void validMaintenanceCredentialsReturnTheRetiredRoleMessage() {
         UserMapper userMapper = mock(UserMapper.class);
@@ -92,6 +102,9 @@ class MaintenanceRecordNavigationContractTest {
         UserServiceImpl service = new UserServiceImpl(userMapper, businessLoopService, passwordService);
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
+                /**
+                 * 处理 assertThrows 调用中的回调逻辑。
+                 */
                 () -> service.login("repair01", "Valid123")
         );
 
@@ -99,6 +112,10 @@ class MaintenanceRecordNavigationContractTest {
         verify(userMapper, never()).updatePassword(42, "encoded");
     }
 
+    /**
+     * existing维护会话IsRejectedWithTheRetired角色消息的处理逻辑。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test
     void existingMaintenanceSessionIsRejectedWithTheRetiredRoleMessage() throws Exception {
         JwtService jwtService = mock(JwtService.class);

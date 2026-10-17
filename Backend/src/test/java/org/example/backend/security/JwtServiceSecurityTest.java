@@ -12,21 +12,35 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JwtServiceSecurityTest {
+    /**
+     * rejects空白OrDevelopmentJWT秘密配置的处理逻辑。
+     */
     @Test
     void rejectsBlankOrDevelopmentJwtSecret() {
-        assertThrows(IllegalStateException.class, () -> newJwtService("", 7200, "smart-lab"));
-        assertThrows(IllegalStateException.class, () -> newJwtService(
+        assertThrows(IllegalStateException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> newJwtService("", 7200, "smart-lab"));
+        assertThrows(IllegalStateException.class, /** 处理 assertThrows 调用中的回调逻辑。 */ () -> newJwtService(
                 "smart-lab-dev-jwt-secret-change-in-" + "production-2026",
                 7200,
                 "smart-lab"
         ));
     }
 
+    /**
+     * acceptsStrongExplicitJWT秘密配置的处理逻辑。
+     */
     @Test
     void acceptsStrongExplicitJwtSecret() {
-        assertDoesNotThrow(() -> newJwtService("test-only-strong-jwt-secret-with-40-plus-chars", 7200, "smart-lab"));
+        assertDoesNotThrow(/** 处理 assertDoesNotThrow 调用中的回调逻辑。 */ () -> newJwtService("test-only-strong-jwt-secret-with-40-plus-chars", 7200, "smart-lab"));
     }
 
+    /**
+     * newJWT服务的处理逻辑。
+     * @param secret 秘密配置参数。
+     * @param expirationSeconds expirationSeconds参数。
+     * @param issuer issuer参数。
+     * @return Object 类型的处理结果。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     private Object newJwtService(String secret, long expirationSeconds, String issuer) throws Exception {
         try {
             return Class.forName("org.example.backend.security.JwtService")

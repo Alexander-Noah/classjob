@@ -20,19 +20,28 @@ defineOptions({
 })
 
 const router = useRouter()
-const currentUser = computed(() => getStoredUser() || {})
-const currentUserPermissions = computed(() => parseUserPermissions(currentUser.value))
-const canViewTimetableData = computed(() => currentUserPermissions.value.includes('课表数据'))
+const currentUser = computed(/** 计算派生状态。 */ () => getStoredUser() || {})
+const currentUserPermissions = computed(/** 计算派生状态。 */ () => parseUserPermissions(currentUser.value))
+const canViewTimetableData = computed(/** 计算派生状态。 */ () => currentUserPermissions.value.includes('课表数据'))
 const teachingCalendar = ref(null)
-const bindingStorageKey = computed(() => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
+const bindingStorageKey = computed(/** 计算派生状态。 */ () => `teacher-schedule-binding:${currentUser.value.id || currentUser.value.username || 'default'}`)
 
+/**
+ * 解析默认教师名称。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveDefaultTeacherName = () =>
   currentUser.value.realName || currentUser.value.name || currentUser.value.username || ''
 
+/**
+ * 格式化MonthDay。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatMonthDay = (date) =>
   `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 
-const weekOptions = Array.from({ length: 25 }, (_, index) => {
+const weekOptions = Array.from({ length: 25 }, /** 处理 from 调用中的回调逻辑。 入参：_、index。 */ (_, index) => {
   const week = index + 1
   return { label: `第 ${week} 周`, value: week }
 })
@@ -123,12 +132,22 @@ const DEFAULT_SCHEDULE_RECORDS = [
   },
 ]
 
+/**
+ * 归一化列表响应。
+ * 入参：data（数据）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeListResponse = (data) => {
   if (Array.isArray(data?.data)) return data.data
   if (Array.isArray(data)) return data
   return []
 }
 
+/**
+ * 解析节次时间。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveSectionTime = (record = {}) => {
   const section = String(record.sectionText || record.sectionCode || '').trim()
   if (section) return section
@@ -137,12 +156,22 @@ const resolveSectionTime = (record = {}) => {
   return start || end ? `${start}-${end}节` : '待确认'
 }
 
+/**
+ * 解析课程时间文本。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolveCourseTimeText = (record = {}) => {
   const section = resolveSectionTime(record)
   const weekday = record.weekday || ''
   return [weekday, section].filter(Boolean).join(' ') || '待确认'
 }
 
+/**
+ * 解析Period开始。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const resolvePeriodStart = (record = {}) => {
   const start = Number(record.startSection || 0)
   if (start > 0) return start % 2 === 0 ? start - 1 : start
@@ -152,14 +181,24 @@ const resolvePeriodStart = (record = {}) => {
   return parsed % 2 === 0 ? parsed - 1 : parsed
 }
 
+/**
+ * 查找环境记录。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const findEnvironmentRecord = (record = {}) => {
   const courseName = record.courseName || record.course || record.title || ''
-  return environmentRecords.value.find((item) => {
+  return environmentRecords.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => {
     const envCourse = item.course || item.courseName || item.title || ''
     return envCourse && courseName && envCourse === courseName
   })
 }
 
+/**
+ * 归一化Portal课程。
+ * 入参：record（记录）；index（索引）。
+ * @returns 组装的键值对象。
+ */
 const normalizePortalCourse = (record = {}, index = 0) => {
   const environmentRecord = findEnvironmentRecord(record)
   const title = record.title || record.course || record.courseName || '未命名课程'
@@ -193,15 +232,15 @@ const semester = ref('')
 const teacherName = ref('')
 const currentWeek = ref(1)
 
-const scheduleRecords = ref(DEFAULT_SCHEDULE_RECORDS.map((item, index) => normalizePortalCourse(item, index)))
+const scheduleRecords = ref(DEFAULT_SCHEDULE_RECORDS.map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizePortalCourse(item, index)))
 const selectedCourse = ref(scheduleRecords.value[0] || null)
 
-const weekStartDate = computed(() => {
+const weekStartDate = computed(/** 计算派生状态。 */ () => {
   return getTeachingWeekStartDate(teachingCalendar.value, currentWeek.value) || new Date()
 })
 
-const weekDays = computed(() =>
-  dayLabels.map((day, index) => {
+const weekDays = computed(/** 计算派生状态。 */ () =>
+  dayLabels.map(/** 将当前条目转换为目标结果。 入参：day、index。 */ (day, index) => {
     const date = new Date(weekStartDate.value)
     date.setDate(date.getDate() + index)
     return {
@@ -211,30 +250,41 @@ const weekDays = computed(() =>
   }),
 )
 
-const metrics = computed(() => {
-  const courses = scheduleRecords.value.filter((item) => item.week === currentWeek.value)
-  const labCount = new Set(courses.map((item) => item.lab).filter(Boolean)).size
-  const classCount = new Set(courses.map((item) => item.className).filter(Boolean)).size
+const metrics = computed(/** 计算派生状态。 */ () => {
+  const courses = scheduleRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.week === currentWeek.value)
+  const labCount = new Set(courses.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.lab).filter(Boolean)).size
+  const classCount = new Set(courses.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.className).filter(Boolean)).size
   const pendingEnvironmentCount = environmentRecords.value.filter(
+    /**
+     * 判断当前条目是否符合筛选条件。
+     * 入参：item。
+     */
     (item) => !['已确认', '已完成'].includes(item.status || item.confirmStatus),
   ).length
 
   return [
     { label: '本周课程', value: String(courses.length), trend: `第 ${currentWeek.value} 周课表` },
     { label: '授课班级', value: String(classCount), trend: teacherName.value || '当前教师' },
-    { label: '涉及实验室', value: String(labCount), trend: courses.map((item) => item.lab).slice(0, 3).join(' / ') || '暂无实验室' },
+    { label: '涉及实验室', value: String(labCount), trend: courses.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.lab).slice(0, 3).join(' / ') || '暂无实验室' },
     { label: '待确认环境', value: String(pendingEnvironmentCount), trend: '课前完成确认' },
   ]
 })
 
-const visibleCourses = computed(() =>
-  scheduleRecords.value.filter((item) => item.week === currentWeek.value),
+const visibleCourses = computed(/** 计算派生状态。 */ () =>
+  scheduleRecords.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.week === currentWeek.value),
 )
 
+/**
+ * 选择课程。
+ * 入参：course（课程）。
+ */
 const selectCourse = (course) => {
   selectedCourse.value = course
 }
 
+/**
+ * 加载学期。
+ */
 const loadSemesters = async () => {
   try {
     semesters.value = await getClassTimetableSemesters()
@@ -246,12 +296,16 @@ const loadSemesters = async () => {
   }
 }
 
-watch(visibleCourses, (courses) => {
-  if (!courses.some((item) => item.id === selectedCourse.value?.id)) {
+watch(visibleCourses, /** 响应被监听状态的变化。 入参：courses。 */ (courses) => {
+  if (!courses.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.id === selectedCourse.value?.id)) {
     selectedCourse.value = courses[0] || null
   }
 })
 
+/**
+ * 同步教师数据。
+ * 入参：解构参数（silent、false）。
+ */
 const syncTeacherData = async ({ silent = false } = {}) => {
   isSyncing.value = true
   try {
@@ -266,7 +320,7 @@ const syncTeacherData = async ({ silent = false } = {}) => {
     ])
     environmentRecords.value = normalizeListResponse(data)
     if (Array.isArray(timetableRecords) && timetableRecords.length) {
-      scheduleRecords.value = timetableRecords.map((item, index) => normalizePortalCourse(item, index))
+      scheduleRecords.value = timetableRecords.map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizePortalCourse(item, index))
       selectedCourse.value = scheduleRecords.value[0] || null
     } else {
       scheduleRecords.value = []
@@ -285,15 +339,21 @@ const syncTeacherData = async ({ silent = false } = {}) => {
   }
 }
 
+/**
+ * go目标课表的处理逻辑。
+ */
 const goToSchedule = () => {
   router.push('/teacher/schedule')
 }
 
+/**
+ * go目标课表数据的处理逻辑。
+ */
 const goToTimetableData = () => {
   router.push('/teacher/class-timetable-data')
 }
 
-onMounted(async () => {
+onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
   const storedBinding = window.localStorage?.getItem(bindingStorageKey.value)
   teacherName.value = storedBinding || resolveDefaultTeacherName()
   try {

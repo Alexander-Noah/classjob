@@ -3,11 +3,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const backend = path.resolve(__dirname, '../../..');
 const base = 'http://127.0.0.1:8080';
+/**
+ * 执行当前模块的主入口流程。
+ * 涉及：发起 HTTP 请求。
+ */
 async function main() {
   const credentials = fs.readFileSync(path.join(backend, 'database/recovery/.local-admin-credentials.txt'), 'utf8');
   const username = credentials.match(/^系统登录用户名\s*[:：=]\s*(.+)$/m)?.[1]?.trim();
   const password = credentials.match(/^系统登录密码\s*[:：=]\s*(.+)$/m)?.[1]?.trim();
   if (!username || !password) throw new Error('Local administrator credentials missing');
+  /**
+   * 请求的处理逻辑。
+   * 涉及：发起 HTTP 请求。
+   * 入参：endpoint（端点）；token（令牌）；body（正文）。
+   * @returns result.data 的当前值。
+   */
   async function request(endpoint, token, body) {
     const response = await fetch(base + endpoint, {
       method: body ? 'POST' : 'GET',
@@ -34,4 +44,4 @@ async function main() {
   fs.writeFileSync(path.join(__dirname, 'running-project-verification.json'), JSON.stringify(report, null, 2));
   console.log('PASS running frontend, administrator login and all 16 restored feature API reads');
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; });
+main().catch(/** 处理异步失败结果。 入参：error。 */ error => { console.error(error.message); process.exitCode = 1; });

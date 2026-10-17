@@ -11,11 +11,20 @@ import java.util.Map;
 
 @Component
 public class MockGatewayAdapter implements GatewayAdapter {
+    /**
+     * 协议的处理逻辑。
+     * @return String 类型的处理结果。
+     */
     @Override
     public String protocol() {
         return "mock";
     }
 
+    /**
+     * 发送命令。
+     * @param request 请求参数。
+     * @return GatewayCommandResult 类型的处理结果。
+     */
     @Override
     public GatewayCommandResult sendCommand(GatewayCommandRequest request) {
         Map<String, Object> response = new LinkedHashMap<>();
@@ -31,6 +40,11 @@ public class MockGatewayAdapter implements GatewayAdapter {
         return GatewayCommandResult.mockSuccess(request, response);
     }
 
+    /**
+     * 查询状态。
+     * @param request 请求参数。
+     * @return GatewayStatusResult 类型的处理结果。
+     */
     @Override
     public GatewayStatusResult queryStatus(GatewayCommandRequest request) {
         return new GatewayStatusResult(

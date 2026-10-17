@@ -12,6 +12,10 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AiScheduleMapperTest {
+    /**
+     * 安排查询Bind筛选条件And页码ParametersWithout模型SuppliedSQL。
+     * @throws Exception 当前调用无法继续完成时抛出。
+     */
     @Test void scheduleQueriesBindFiltersAndPageParametersWithoutModelSuppliedSql() throws Exception {
         Configuration config = new Configuration();
         for (String file : new String[]{"TeachingScheduleReadMapper", "AiScheduleReadMapper"}) {

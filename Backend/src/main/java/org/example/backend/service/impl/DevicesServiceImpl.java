@@ -73,6 +73,13 @@ public class DevicesServiceImpl implements DevicesService {
     private final LabMapper labMapper;
     private final BusinessLoopService businessLoopService;
 
+    /**
+     * 构造 DevicesServiceImpl，初始化当前实例。
+     * @param devicesMapper 设备数据映射器参数。
+     * @param deviceEventMapper 设备事件数据映射器参数。
+     * @param labMapper 实验室数据映射器参数。
+     * @param businessLoopService businessLoop服务参数。
+     */
     public DevicesServiceImpl(
             DevicesMapper devicesMapper,
             DeviceEventMapper deviceEventMapper,
@@ -85,12 +92,21 @@ public class DevicesServiceImpl implements DevicesService {
         this.businessLoopService = businessLoopService;
     }
 
+    /**
+     * 获取设备。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<DevicesEntity> getDevices() {
         List<DevicesEntity> devices = devicesMapper.getDevices();
         return devices == null ? List.of() : devices;
     }
 
+    /**
+     * 页码设备的处理逻辑。
+     * @param query 查询参数。
+     * @return DevicePageResult 类型的处理结果。
+     */
     @Override
     public DevicePageResult pageDevices(DevicePageQuery query) {
         DevicePageQuery safeQuery = normalizePageQuery(query);
@@ -114,6 +130,10 @@ public class DevicesServiceImpl implements DevicesService {
         return new DevicePageResult(records == null ? List.of() : records, total);
     }
 
+    /**
+     * 获取设备Stats。
+     * @return 当前操作返回的键值结果。
+     */
     @Override
     public Map<String, Object> getDeviceStats() {
         Map<String, Object> stats = devicesMapper.getDeviceStats();
@@ -126,6 +146,11 @@ public class DevicesServiceImpl implements DevicesService {
         return normalized;
     }
 
+    /**
+     * Inserter设备的处理逻辑。
+     * @param devicesEntity 设备Entity参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     @Override
     public DevicesEntity InserterDevices(DevicesEntity devicesEntity) {
         normalizeDevice(devicesEntity);
@@ -137,11 +162,22 @@ public class DevicesServiceImpl implements DevicesService {
         return savedDevice;
     }
 
+    /**
+     * 获取设备By标识。
+     * @param id 标识参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     @Override
     public DevicesEntity getDevicesById(Long id) {
         return devicesMapper.getDevicesById(id);
     }
 
+    /**
+     * 更新设备。
+     * @param id 标识参数。
+     * @param devices 设备参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     @Override
     public DevicesEntity updateDevices(Long id, DevicesEntity devices) {
         normalizeDevice(devices);
@@ -155,6 +191,11 @@ public class DevicesServiceImpl implements DevicesService {
         return savedDevice;
     }
 
+    /**
+     * 更新设备。
+     * @param devices 设备参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<DevicesEntity> updateDevices(List<DevicesEntity> devices) {
         if (devices == null || devices.isEmpty()) {
@@ -172,6 +213,10 @@ public class DevicesServiceImpl implements DevicesService {
         return getDevices();
     }
 
+    /**
+     * 删除设备。
+     * @param id 标识参数。
+     */
     @Override
     public void deleteDevices(Long id) {
         DevicesEntity device = devicesMapper.getDevicesById(id);
@@ -179,6 +224,11 @@ public class DevicesServiceImpl implements DevicesService {
         recordBusinessEvent("delete", device, STATUS_SCRAPPED);
     }
 
+    /**
+     * 获取设备By实验室标识。
+     * @param labId 实验室标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<DevicesEntity> getDevicesByLabId(Integer labId) {
         if (labId == null) {
@@ -188,12 +238,24 @@ public class DevicesServiceImpl implements DevicesService {
         return devices == null ? List.of() : devices;
     }
 
+    /**
+     * 列出库存记录集合。
+     * @param deviceId 设备标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<DeviceInventoryRecordEntity> listInventoryRecords(Long deviceId) {
         List<DeviceInventoryRecordEntity> records = deviceEventMapper.listInventoryEvents(deviceId);
         return records == null ? List.of() : records;
     }
 
+    /**
+     * 记录设备库存。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param deviceId 设备标识参数。
+     * @param record 记录参数。
+     * @return DeviceInventoryRecordResult 类型的处理结果。
+     */
     @Override
     @Transactional
     public DeviceInventoryRecordResult recordDeviceInventory(Long deviceId, DeviceInventoryRecordEntity record) {
@@ -220,12 +282,24 @@ public class DevicesServiceImpl implements DevicesService {
         return new DeviceInventoryRecordResult(savedDevice, record, records == null ? List.of() : records);
     }
 
+    /**
+     * 列出Transfer记录集合。
+     * @param deviceId 设备标识参数。
+     * @return 当前操作得到的记录集合。
+     */
     @Override
     public List<DeviceTransferRecordEntity> listTransferRecords(Long deviceId) {
         List<DeviceTransferRecordEntity> records = deviceEventMapper.listTransferEvents(deviceId);
         return records == null ? List.of() : records;
     }
 
+    /**
+     * 调拨设备。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param deviceId 设备标识参数。
+     * @param record 记录参数。
+     * @return DeviceTransferRecordResult 类型的处理结果。
+     */
     @Override
     @Transactional
     public DeviceTransferRecordResult transferDevice(Long deviceId, DeviceTransferRecordEntity record) {
@@ -252,6 +326,12 @@ public class DevicesServiceImpl implements DevicesService {
         return new DeviceTransferRecordResult(savedDevice, record, records == null ? List.of() : records);
     }
 
+    /**
+     * 导入设备。
+     * 涉及：通过 Spring 代理入口应用事务配置。
+     * @param file 文件参数。
+     * @return DeviceImportResult 类型的处理结果。
+     */
     @Override
     @Transactional
     public DeviceImportResult importDevices(MultipartFile file) {
@@ -273,6 +353,11 @@ public class DevicesServiceImpl implements DevicesService {
         return new DeviceImportResult(true, "导入成功", importedCount);
     }
 
+    /**
+     * 导出设备。
+     * @param query 查询参数。
+     * @return byte[] 类型的处理结果。
+     */
     @Override
     public byte[] exportDevices(DevicePageQuery query) {
         DevicePageQuery exportQuery = normalizePageQuery(query);
@@ -297,6 +382,11 @@ public class DevicesServiceImpl implements DevicesService {
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
+    /**
+     * 解析设备Import文件。
+     * @param file 文件参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<DevicesEntity> parseDeviceImportFile(MultipartFile file) {
         try {
             String filename = textOrEmpty(file.getOriginalFilename()).toLowerCase();
@@ -314,6 +404,10 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * 校验Import文件。
+     * @param file 文件参数。
+     */
     private void validateImportFile(MultipartFile file) {
         if (file.getSize() > MAX_IMPORT_FILE_SIZE) {
             throw new IllegalArgumentException("Import file must not exceed 10MB");
@@ -324,6 +418,12 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * 读取CSV行集合。
+     * @param inputStream 输入Stream参数。
+     * @return 当前操作得到的记录集合。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private List<Map<String, Object>> readCsvRows(InputStream inputStream) throws IOException {
         List<List<String>> rows = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
@@ -337,6 +437,11 @@ public class DevicesServiceImpl implements DevicesService {
         return rowsToObjects(rows);
     }
 
+    /**
+     * 解析CSV内容。
+     * @param content 内容参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<List<String>> parseCsvContent(String content) {
         List<List<String>> rows = new ArrayList<>();
         List<String> row = new ArrayList<>();
@@ -367,7 +472,7 @@ public class DevicesServiceImpl implements DevicesService {
                 }
                 row.add(value.toString());
                 value.setLength(0);
-                if (row.stream().anyMatch(item -> !textOrEmpty(item).isBlank())) {
+                if (row.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：item。 */ item -> !textOrEmpty(item).isBlank())) {
                     rows.add(row);
                 }
                 row = new ArrayList<>();
@@ -377,12 +482,18 @@ public class DevicesServiceImpl implements DevicesService {
         }
 
         row.add(value.toString());
-        if (row.stream().anyMatch(item -> !textOrEmpty(item).isBlank())) {
+        if (row.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：item。 */ item -> !textOrEmpty(item).isBlank())) {
             rows.add(row);
         }
         return rows;
     }
 
+    /**
+     * 读取Xlsx行集合。
+     * @param inputStream 输入Stream参数。
+     * @return 当前操作得到的记录集合。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private List<Map<String, Object>> readXlsxRows(InputStream inputStream) throws IOException {
         Map<String, byte[]> entries = readZipEntries(inputStream);
         List<String> sharedStrings = parseSharedStrings(entries.get("xl/sharedStrings.xml"));
@@ -393,6 +504,12 @@ public class DevicesServiceImpl implements DevicesService {
         return rowsToObjects(parseWorksheetRows(worksheet, sharedStrings));
     }
 
+    /**
+     * 读取Zip条目集合。
+     * @param inputStream 输入Stream参数。
+     * @return 当前操作返回的键值结果。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private Map<String, byte[]> readZipEntries(InputStream inputStream) throws IOException {
         Map<String, byte[]> entries = new HashMap<>();
         int entryCount = 0;
@@ -418,6 +535,13 @@ public class DevicesServiceImpl implements DevicesService {
         return entries;
     }
 
+    /**
+     * 读取Zip条目Bytes。
+     * @param inputStream 输入Stream参数。
+     * @param entryName 条目名称参数。
+     * @return byte[] 类型的处理结果。
+     * @throws IOException 当前调用无法继续完成时抛出。
+     */
     private byte[] readZipEntryBytes(InputStream inputStream, String entryName) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
@@ -433,6 +557,11 @@ public class DevicesServiceImpl implements DevicesService {
         return output.toByteArray();
     }
 
+    /**
+     * 解析Shared字符串。
+     * @param xmlBytes xmlBytes参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<String> parseSharedStrings(byte[] xmlBytes) {
         List<String> sharedStrings = new ArrayList<>();
         if (xmlBytes == null) {
@@ -447,6 +576,12 @@ public class DevicesServiceImpl implements DevicesService {
         return sharedStrings;
     }
 
+    /**
+     * 解析Worksheet行集合。
+     * @param xmlBytes xmlBytes参数。
+     * @param sharedStrings shared字符串参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<List<String>> parseWorksheetRows(byte[] xmlBytes, List<String> sharedStrings) {
         Document document = parseXml(xmlBytes);
         Map<String, String> cells = new HashMap<>();
@@ -494,13 +629,18 @@ public class DevicesServiceImpl implements DevicesService {
             for (int column = 1; column <= maxColumn; column++) {
                 values.add(cells.getOrDefault(cellKey(row, column), ""));
             }
-            if (values.stream().anyMatch(value -> !value.isBlank())) {
+            if (values.stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：value。 */ value -> !value.isBlank())) {
                 rows.add(values);
             }
         }
         return rows;
     }
 
+    /**
+     * 解析Xml。
+     * @param xmlBytes xmlBytes参数。
+     * @return Document 类型的处理结果。
+     */
     private Document parseXml(byte[] xmlBytes) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -512,6 +652,12 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * 读取Cell值。
+     * @param cell cell参数。
+     * @param sharedStrings shared字符串参数。
+     * @return String 类型的处理结果。
+     */
     private String readCellValue(Element cell, List<String> sharedStrings) {
         String type = cell.getAttribute("t");
         String rawValue = firstChildText(cell, "v");
@@ -529,20 +675,41 @@ public class DevicesServiceImpl implements DevicesService {
         return rawValue;
     }
 
+    /**
+     * firstChild文本的处理逻辑。
+     * @param element element参数。
+     * @param localName 本地名称参数。
+     * @return String 类型的处理结果。
+     */
     private String firstChildText(Element element, String localName) {
         NodeList nodes = element.getElementsByTagNameNS("*", localName);
         return nodes.getLength() == 0 ? "" : textOrEmpty(nodes.item(0).getTextContent());
     }
 
+    /**
+     * node文本的处理逻辑。
+     * @param node node参数。
+     * @return String 类型的处理结果。
+     */
     private String nodeText(Node node) {
         return node == null ? "" : textOrEmpty(node.getTextContent());
     }
 
+    /**
+     * cell行的处理逻辑。
+     * @param reference 引用参数。
+     * @return int 类型的处理结果。
+     */
     private int cellRow(String reference) {
         String digits = reference == null ? "" : reference.replaceAll("[^0-9]", "");
         return digits.isBlank() ? 0 : Integer.parseInt(digits);
     }
 
+    /**
+     * cellColumn的处理逻辑。
+     * @param reference 引用参数。
+     * @return int 类型的处理结果。
+     */
     private int cellColumn(String reference) {
         String letters = reference == null ? "" : reference.replaceAll("[^A-Za-z]", "").toUpperCase();
         int column = 0;
@@ -552,10 +719,21 @@ public class DevicesServiceImpl implements DevicesService {
         return column;
     }
 
+    /**
+     * cell键的处理逻辑。
+     * @param row 行参数。
+     * @param column column参数。
+     * @return String 类型的处理结果。
+     */
     private String cellKey(int row, int column) {
         return row + ":" + column;
     }
 
+    /**
+     * 行集合目标Objects的处理逻辑。
+     * @param rows 行集合参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<Map<String, Object>> rowsToObjects(List<List<String>> rows) {
         if (rows == null || rows.isEmpty()) {
             return List.of();
@@ -572,13 +750,18 @@ public class DevicesServiceImpl implements DevicesService {
                     record.put(header, column < row.size() ? textOrEmpty(row.get(column)) : "");
                 }
             }
-            if (record.values().stream().anyMatch(value -> !textOrEmpty(value).isBlank())) {
+            if (record.values().stream().anyMatch(/** 处理 anyMatch 调用中的回调逻辑。 入参：value。 */ value -> !textOrEmpty(value).isBlank())) {
                 records.add(record);
             }
         }
         return records;
     }
 
+    /**
+     * 映射Import行的处理逻辑。
+     * @param row 行参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<DevicesEntity> mapImportRow(Map<String, Object> row) {
         String labName = textValue(row, "labName", "lab", "实验室名称", "所属实验室");
         String roomNo = textValue(row, "roomNo", "location", "地点", "安转位置");
@@ -619,6 +802,12 @@ public class DevicesServiceImpl implements DevicesService {
         return devices;
     }
 
+    /**
+     * 拆分设备文本。
+     * @param value 值参数。
+     * @param allowPlainFallback allowPlainFallback参数。
+     * @return 当前操作得到的记录集合。
+     */
     private List<DeviceTextItem> splitDeviceText(String value, boolean allowPlainFallback) {
         String text = textOrEmpty(value).replace("\r\n", "\n").replace('\r', '\n');
         if (text.isBlank()) {
@@ -648,6 +837,11 @@ public class DevicesServiceImpl implements DevicesService {
         return items;
     }
 
+    /**
+     * 拆分设备Line。
+     * @param value 值参数。
+     * @return DeviceLine 类型的处理结果。
+     */
     private DeviceLine splitDeviceLine(String value) {
         String text = textOrEmpty(value).trim();
         String deviceType = "";
@@ -668,6 +862,10 @@ public class DevicesServiceImpl implements DevicesService {
     private record DeviceLine(String deviceType, String deviceName) {
     }
 
+    /**
+     * 归一化设备。
+     * @param device 设备参数。
+     */
     private void normalizeDevice(DevicesEntity device) {
         if (device == null) {
             throw new IllegalArgumentException("Device is required");
@@ -715,6 +913,10 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * bind设备实验室的处理逻辑。
+     * @param device 设备参数。
+     */
     private void bindDeviceLab(DevicesEntity device) {
         LabEntity matchedLab = matchLab(device);
         if (matchedLab == null) {
@@ -726,6 +928,11 @@ public class DevicesServiceImpl implements DevicesService {
         device.setLocation(matchedLab.getRoomNo());
     }
 
+    /**
+     * 匹配实验室。
+     * @param device 设备参数。
+     * @return LabEntity 类型的处理结果。
+     */
     private LabEntity matchLab(DevicesEntity device) {
         if (labMapper == null) {
             return null;
@@ -738,7 +945,7 @@ public class DevicesServiceImpl implements DevicesService {
 
         if (device.getLabId() != null) {
             LabEntity matchedById = labs.stream()
-                    .filter(lab -> lab.getId() != null && Objects.equals(lab.getId().longValue(), device.getLabId()))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> lab.getId() != null && Objects.equals(lab.getId().longValue(), device.getLabId()))
                     .findFirst()
                     .orElse(null);
             if (matchedById != null) {
@@ -749,7 +956,7 @@ public class DevicesServiceImpl implements DevicesService {
         String location = textOrEmpty(device.getLocation());
         if (!location.isBlank()) {
             LabEntity matchedByRoom = labs.stream()
-                    .filter(lab -> sameText(lab.getRoomNo(), location))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> sameText(lab.getRoomNo(), location))
                     .findFirst()
                     .orElse(null);
             if (matchedByRoom != null) {
@@ -760,7 +967,7 @@ public class DevicesServiceImpl implements DevicesService {
         String labName = textOrEmpty(device.getLabName());
         if (!labName.isBlank()) {
             LabEntity matchedByName = labs.stream()
-                    .filter(lab -> sameText(lab.getLabName(), labName))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> sameText(lab.getLabName(), labName))
                     .findFirst()
                     .orElse(null);
             if (matchedByName != null) {
@@ -768,7 +975,7 @@ public class DevicesServiceImpl implements DevicesService {
             }
 
             LabEntity matchedByFuzzyName = labs.stream()
-                    .filter(lab -> containsText(labName, lab.getLabName()) || containsText(lab.getLabName(), labName))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> containsText(labName, lab.getLabName()) || containsText(lab.getLabName(), labName))
                     .findFirst()
                     .orElse(null);
             if (matchedByFuzzyName != null) {
@@ -778,7 +985,7 @@ public class DevicesServiceImpl implements DevicesService {
 
         if (!location.isBlank()) {
             LabEntity matchedByLocation = labs.stream()
-                    .filter(lab -> containsText(location, lab.getRoomNo()))
+                    .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> containsText(location, lab.getRoomNo()))
                     .findFirst()
                     .orElse(null);
             if (matchedByLocation != null) {
@@ -796,11 +1003,16 @@ public class DevicesServiceImpl implements DevicesService {
         );
 
         return labs.stream()
-                .filter(lab -> containsText(searchable, lab.getLabName()) || containsText(searchable, lab.getRoomNo()))
+                .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ lab -> containsText(searchable, lab.getLabName()) || containsText(searchable, lab.getRoomNo()))
                 .findFirst()
                 .orElse(null);
     }
 
+    /**
+     * 归一化页码查询。
+     * @param query 查询参数。
+     * @return DevicePageQuery 类型的处理结果。
+     */
     private DevicePageQuery normalizePageQuery(DevicePageQuery query) {
         DevicePageQuery safeQuery = query == null ? new DevicePageQuery() : query;
         safeQuery.setPageNum(Math.max(safeQuery.getPageNum(), 1));
@@ -808,6 +1020,11 @@ public class DevicesServiceImpl implements DevicesService {
         return safeQuery;
     }
 
+    /**
+     * 要求提供设备。
+     * @param deviceId 设备标识参数。
+     * @return DevicesEntity 类型的处理结果。
+     */
     private DevicesEntity requireDevice(Long deviceId) {
         if (deviceId == null) {
             throw new IllegalArgumentException("Device id is required");
@@ -819,6 +1036,11 @@ public class DevicesServiceImpl implements DevicesService {
         return device;
     }
 
+    /**
+     * generate设备编码的处理逻辑。
+     * @param device 设备参数。
+     * @return String 类型的处理结果。
+     */
     private String generateDeviceCode(DevicesEntity device) {
         String location = defaultText(device.getLocation(), "000");
         Matcher matcher = ROOM_NUMBER_PATTERN.matcher(location);
@@ -826,6 +1048,11 @@ public class DevicesServiceImpl implements DevicesService {
         return "DEV-" + room + "-" + CODE_SEQUENCE.incrementAndGet();
     }
 
+    /**
+     * 解析分类。
+     * @param deviceName 设备名称参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveCategory(String deviceName) {
         String name = textOrEmpty(deviceName);
         if (name.matches(".*(电脑|主机|工作站|计算机|服务器).*")) {
@@ -843,6 +1070,12 @@ public class DevicesServiceImpl implements DevicesService {
         return CATEGORY_OTHER;
     }
 
+    /**
+     * 解析分类。
+     * @param item 条目参数。
+     * @param fallbackCategory fallback分类参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveCategory(DeviceTextItem item, String fallbackCategory) {
         String category = resolveCategory(item.deviceType() + " " + item.deviceName());
         if (CATEGORY_OTHER.equals(category) && !isBlank(fallbackCategory)) {
@@ -851,6 +1084,13 @@ public class DevicesServiceImpl implements DevicesService {
         return category;
     }
 
+    /**
+     * 解析Specs。
+     * @param item 条目参数。
+     * @param structuredDeviceName structured设备名称参数。
+     * @param specs specs参数。
+     * @return String 类型的处理结果。
+     */
     private String resolveSpecs(DeviceTextItem item, String structuredDeviceName, String specs) {
         if (isBlank(specs)) {
             return "";
@@ -861,21 +1101,43 @@ public class DevicesServiceImpl implements DevicesService {
         return "";
     }
 
+    /**
+     * 判断是否为Computer设备。
+     * @param item 条目参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isComputerDevice(DeviceTextItem item) {
         String name = item.deviceType() + " " + item.deviceName();
         return name.matches(".*(台式电脑|电脑|主机|工作站).*");
     }
 
+    /**
+     * 规范化结果文本的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizedText(String value) {
         return textOrEmpty(value).replaceAll("\\s+", "").toLowerCase();
     }
 
+    /**
+     * same文本的处理逻辑。
+     * @param left left参数。
+     * @param right right参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean sameText(String left, String right) {
         String normalizedLeft = normalizedText(left);
         String normalizedRight = normalizedText(right);
         return !normalizedLeft.isBlank() && normalizedLeft.equals(normalizedRight);
     }
 
+    /**
+     * 判断是否包含文本。
+     * @param text 文本参数。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean containsText(String text, String value) {
         String normalizedSearchText = normalizedText(text);
         String normalizedValue = normalizedText(value);
@@ -884,6 +1146,11 @@ public class DevicesServiceImpl implements DevicesService {
                 && normalizedSearchText.contains(normalizedValue);
     }
 
+    /**
+     * 文本值的处理逻辑。
+     * @param row 行参数。
+     * @return String 类型的处理结果。
+     */
     private String textValue(Map<String, Object> row, String... keys) {
         if (row == null) {
             return "";
@@ -901,10 +1168,20 @@ public class DevicesServiceImpl implements DevicesService {
         return "";
     }
 
+    /**
+     * 归一化键。
+     * @param key 键参数。
+     * @return String 类型的处理结果。
+     */
     private String normalizeKey(String key) {
         return textOrEmpty(key).replaceAll("\\s+", "").toLowerCase();
     }
 
+    /**
+     * 解析Quantity。
+     * @param value 值参数。
+     * @return int 类型的处理结果。
+     */
     private int parseQuantity(String value) {
         String text = textOrEmpty(value);
         if (text.isBlank()) {
@@ -917,6 +1194,11 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * CSVCell的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String csvCell(Object value) {
         String text = value == null ? "" : String.valueOf(value);
         if (text.contains("\"") || text.contains(",") || text.contains("\n") || text.contains("\r")) {
@@ -925,22 +1207,48 @@ public class DevicesServiceImpl implements DevicesService {
         return text;
     }
 
+    /**
+     * 文本Or空值的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String textOrEmpty(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    /**
+     * 提供默认文本。
+     * @param value 值参数。
+     * @param defaultValue 默认值参数。
+     * @return String 类型的处理结果。
+     */
     private String defaultText(String value, String defaultValue) {
         return isBlank(value) ? defaultValue : value.trim();
     }
 
+    /**
+     * 空值目标Null的处理逻辑。
+     * @param value 值参数。
+     * @return String 类型的处理结果。
+     */
     private String emptyToNull(String value) {
         return isBlank(value) ? null : value.trim();
     }
 
+    /**
+     * 判断是否为空白。
+     * @param value 值参数。
+     * @return 当前判断的布尔结果。
+     */
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 
+    /**
+     * 转换为长整数。
+     * @param value 值参数。
+     * @return long 类型的处理结果。
+     */
     private long toLong(Object value) {
         if (value instanceof Number number) {
             return number.longValue();
@@ -955,6 +1263,12 @@ public class DevicesServiceImpl implements DevicesService {
         }
     }
 
+    /**
+     * 记录Business事件。
+     * @param action action参数。
+     * @param device 设备参数。
+     * @param status 状态参数。
+     */
     private void recordBusinessEvent(String action, DevicesEntity device, String status) {
         if (device == null) {
             return;

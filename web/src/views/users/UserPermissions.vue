@@ -42,7 +42,7 @@ const ROLE_CODE_MAP = {
   教务人员: 'academic',
 }
 
-const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(([name, code]) => [code, name]))
+const ROLE_NAME_MAP = Object.fromEntries(Object.entries(ROLE_CODE_MAP).map(/** 将当前条目转换为目标结果。 */ ([name, code]) => [code, name]))
 
 const PERMISSIONS_BY_ROLE = {
   系统管理员: [{ group: '平台治理', items: ['用户管理', '系统设置', '激活管理', '平台统计', '通知公告'] }],
@@ -57,13 +57,23 @@ const PERMISSIONS_BY_ROLE = {
   教务人员: [{ group: '教务管理', items: ['课表数据', '通知公告'] }],
 }
 
+/**
+ * 归一化权限标签。
+ * 入参：item（条目）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizePermissionLabel = (item) => (item === '用户权限' ? '用户管理' : item)
 
+/**
+ * 解析权限。
+ * 入参：permissions（权限）；role（角色）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parsePermissions = (permissions, role) => {
   try {
     const parsed = typeof permissions === 'string' ? JSON.parse(permissions) : permissions
     if (Array.isArray(parsed) && parsed.length) {
-      return parsed.map((group) => ({
+      return parsed.map(/** 将当前条目转换为目标结果。 入参：group。 */ (group) => ({
         group: group.group || group.label || '权限范围',
         items: Array.isArray(group.items) ? group.items.map(normalizePermissionLabel) : [],
       }))
@@ -75,8 +85,18 @@ const parsePermissions = (permissions, role) => {
   return PERMISSIONS_BY_ROLE[role] || PERMISSIONS_BY_ROLE.教师
 }
 
+/**
+ * serialize权限的处理逻辑。
+ * 入参：role（角色）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const serializePermissions = (role) => JSON.stringify(PERMISSIONS_BY_ROLE[role] || PERMISSIONS_BY_ROLE.教师)
 
+/**
+ * 归一化用户记录。
+ * 入参：record（记录）。
+ * @returns 组装的键值对象。
+ */
 const normalizeUserRecord = (record = {}) => {
   const role = record.roleName || ROLE_NAME_MAP[record.roleCode] || record.role || '教师'
   const username = record.username || record.account || record.employeeNo || ''
@@ -108,6 +128,11 @@ const normalizeUserRecord = (record = {}) => {
   }
 }
 
+/**
+ * 构建用户载荷。
+ * 入参：formModel（form模型）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildUserPayload = (formModel) => ({
   username: String(formModel.account || '').trim(),
   employeeNo: String(formModel.account || '').trim(),
@@ -158,19 +183,19 @@ const batchDepartmentForm = reactive({
   department: '',
 })
 
-const departmentOptions = computed(() => [
-  ...new Set([...DEPARTMENT_OPTIONS, ...userList.value.map((item) => item.department).filter(Boolean)]),
+const departmentOptions = computed(/** 计算派生状态。 */ () => [
+  ...new Set([...DEPARTMENT_OPTIONS, ...userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.department).filter(Boolean)]),
 ])
 
-const currentUser = computed(() => getStoredUser())
+const currentUser = computed(/** 计算派生状态。 */ () => getStoredUser())
 
-const systemAdminCount = computed(() => userList.value.filter((item) => item.role === '系统管理员').length)
+const systemAdminCount = computed(/** 计算派生状态。 */ () => userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.role === '系统管理员').length)
 
-const metrics = computed(() => {
-  const enabledCount = userList.value.filter((item) => item.enabled).length
+const metrics = computed(/** 计算派生状态。 */ () => {
+  const enabledCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.enabled).length
   const disabledCount = userList.value.length - enabledCount
-  const teacherCount = userList.value.filter((item) => item.role === '教师').length
-  const adminCount = userList.value.filter((item) => ['系统管理员', '实验室管理员'].includes(item.role)).length
+  const teacherCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.role === '教师').length
+  const adminCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => ['系统管理员', '实验室管理员'].includes(item.role)).length
 
   return [
     { label: '用户总数', value: String(userList.value.length), trend: '覆盖平台全部角色' },
@@ -181,14 +206,14 @@ const metrics = computed(() => {
   ]
 })
 
-const filteredUsers = computed(() =>
-  userList.value.filter((item) => {
+const filteredUsers = computed(/** 计算派生状态。 */ () =>
+  userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
     const keyword = queryModel.keyword.trim().toLowerCase()
     const matchKeyword =
       !keyword ||
       [item.name, item.phone, item.email, item.employeeNo, item.username, item.department]
         .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(keyword))
+        .some(/** 判断当前条目是否满足任一匹配条件。 入参：field。 */ (field) => String(field).toLowerCase().includes(keyword))
     const matchRole = queryModel.role === '全部' || item.role === queryModel.role
     const matchStatus = queryModel.status === '全部' || item.statusText === queryModel.status
     const matchDepartment = queryModel.department === '全部' || item.department === queryModel.department
@@ -205,6 +230,11 @@ const {
   pagedRecords: pagedUsers,
 } = useTablePagination(filteredUsers)
 
+/**
+ * 判断是否为当前用户。
+ * 入参：user（用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isCurrentUser = (user) => {
   const storedUser = currentUser.value
   if (!storedUser || !user) return false
@@ -215,21 +245,42 @@ const isCurrentUser = (user) => {
   )
 }
 
+/**
+ * 判断是否为LastSystemAdmin。
+ * 入参：user（用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isLastSystemAdmin = (user) => user?.role === '系统管理员' && systemAdminCount.value <= 1
 
+/**
+ * 判断是否允许Delete用户。
+ * 入参：user（用户）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const canDeleteUser = (user) => !user?.builtIn && !isLastSystemAdmin(user)
 
+/**
+ * 清理Selection。
+ */
 const clearSelection = () => {
   selectedRows.value = []
-  nextTick(() => tableRef.value?.clearSelection())
+  nextTick(/** 处理 nextTick 调用中的回调逻辑。 */ () => tableRef.value?.clearSelection())
 }
 
+/**
+ * 同步已选择用户。
+ * 入参：updatedUser（updated用户）。
+ */
 const syncSelectedUser = (updatedUser) => {
   if (selectedUser.value && String(selectedUser.value.id) === String(updatedUser.id)) {
     selectedUser.value = updatedUser
   }
 }
 
+/**
+ * 同步当前会话用户。
+ * 入参：updatedUser（updated用户）。
+ */
 const syncCurrentSessionUser = (updatedUser) => {
   if (!isCurrentUser(updatedUser)) return
 
@@ -251,6 +302,10 @@ const syncCurrentSessionUser = (updatedUser) => {
   )
 }
 
+/**
+ * showAction错误的处理逻辑。
+ * 入参：error（错误）；fallback（fallback）。
+ */
 const showActionError = (error, fallback) => {
   if (error?.__handled) {
     return
@@ -259,6 +314,9 @@ const showActionError = (error, fallback) => {
   ElMessage.error(error?.userMessage || error?.response?.data?.message || error?.message || fallback)
 }
 
+/**
+ * 刷新用户列表。
+ */
 const refreshUserList = async () => {
   isLoading.value = true
   try {
@@ -271,11 +329,17 @@ const refreshUserList = async () => {
   }
 }
 
+/**
+ * 处理Search。
+ */
 const handleSearch = () => {
   Object.assign(queryModel, filterModel)
   currentPage.value = 1
 }
 
+/**
+ * 处理Reset。
+ */
 const handleReset = () => {
   Object.assign(filterModel, {
     department: '全部',
@@ -286,25 +350,44 @@ const handleReset = () => {
   handleSearch()
 }
 
+/**
+ * 处理SelectionChange。
+ * 入参：rows（行集合）。
+ */
 const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
+/**
+ * 处理OpenCreate。
+ */
 const handleOpenCreate = () => {
   selectedUser.value = null
   userDialogVisible.value = true
 }
 
+/**
+ * 处理OpenEdit。
+ * 入参：user（用户）。
+ */
 const handleOpenEdit = (user) => {
   selectedUser.value = user
   userDialogVisible.value = true
 }
 
+/**
+ * 处理Open详情。
+ * 入参：user（用户）。
+ */
 const handleOpenDetail = (user) => {
   selectedUser.value = user
   detailVisible.value = true
 }
 
+/**
+ * 处理Save用户。
+ * 入参：formModel（form模型）。
+ */
 const handleSaveUser = async (formModel) => {
   const payload = buildUserPayload(formModel)
   const nextRole = formModel.role
@@ -318,7 +401,7 @@ const handleSaveUser = async (formModel) => {
     if (selectedUser.value?.id) {
       const savedUser = await updateUser(selectedUser.value.id, payload)
       const normalizedUser = normalizeUserRecord({ ...selectedUser.value, ...payload, ...savedUser })
-      userList.value = userList.value.map((item) => (String(item.id) === String(normalizedUser.id) ? normalizedUser : item))
+      userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(normalizedUser.id) ? normalizedUser : item))
       syncSelectedUser(normalizedUser)
       syncCurrentSessionUser(normalizedUser)
       ElMessage.success('用户信息已更新')
@@ -335,6 +418,10 @@ const handleSaveUser = async (formModel) => {
   }
 }
 
+/**
+ * 处理Toggle状态。
+ * 入参：user（用户）。
+ */
 const handleToggleStatus = async (user) => {
   const nextStatus = user.enabled ? '停用' : '启用'
 
@@ -350,7 +437,7 @@ const handleToggleStatus = async (user) => {
       ...savedUser,
       status: nextStatus === '启用' ? 1 : 0,
     })
-    userList.value = userList.value.map((item) => (String(item.id) === String(user.id) ? normalizedUser : item))
+    userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (String(item.id) === String(user.id) ? normalizedUser : item))
     syncSelectedUser(normalizedUser)
     syncCurrentSessionUser(normalizedUser)
     ElMessage.success(`用户已${nextStatus}`)
@@ -359,6 +446,11 @@ const handleToggleStatus = async (user) => {
   }
 }
 
+/**
+ * confirmDanger的处理逻辑。
+ * 入参：message（消息）；title（title）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const confirmDanger = (message, title = '操作确认') =>
   ElMessageBox.confirm(message, title, {
     cancelButtonText: '取消',
@@ -366,6 +458,10 @@ const confirmDanger = (message, title = '操作确认') =>
     type: 'warning',
   })
 
+/**
+ * 处理Reset密码。
+ * 入参：user（用户）。
+ */
 const handleResetPassword = async (user) => {
   try {
     await confirmDanger(`确认重置“${user.name}”的登录密码？`, '重置密码')
@@ -379,6 +475,10 @@ const handleResetPassword = async (user) => {
   }
 }
 
+/**
+ * 处理Delete用户。
+ * 入参：user（用户）。
+ */
 const handleDeleteUser = async (user) => {
   if (user.builtIn) {
     ElMessage.warning('系统内置管理员账号不能删除')
@@ -393,7 +493,7 @@ const handleDeleteUser = async (user) => {
   try {
     await confirmDanger(`确认删除用户“${user.name}”？删除后不可直接恢复。`, '删除用户')
     await deleteUser(user.id)
-    userList.value = userList.value.filter((item) => String(item.id) !== String(user.id))
+    userList.value = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => String(item.id) !== String(user.id))
     clearSelection()
     ElMessage.success('用户已删除')
   } catch (error) {
@@ -403,26 +503,42 @@ const handleDeleteUser = async (user) => {
   }
 }
 
+/**
+ * 处理行命令。
+ * 入参：command（命令）；user（用户）。
+ */
 const handleRowCommand = (command, user) => {
   if (command === 'status') handleToggleStatus(user)
   if (command === 'delete') handleDeleteUser(user)
 }
 
-const getSelectedIds = (rows = selectedRows.value) => rows.map((item) => item.id)
+/**
+ * 获取已选择标识集合。
+ * 入参：rows（行集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const getSelectedIds = (rows = selectedRows.value) => rows.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => item.id)
 
+/**
+ * warnSkipped用户的处理逻辑。
+ * 入参：skippedUsers（skipped用户）。
+ */
 const warnSkippedUsers = (skippedUsers) => {
   if (skippedUsers.length) {
     ElMessage.warning(`已跳过 ${skippedUsers.length} 个受保护账号`)
   }
 }
 
+/**
+ * 处理BatchEnable。
+ */
 const handleBatchEnable = async () => {
   if (!selectedRows.value.length) return
 
   try {
     const ids = getSelectedIds()
     await batchEnableUsers(ids)
-    userList.value = userList.value.map((item) => (ids.includes(item.id) ? normalizeUserRecord({ ...item, status: 1 }) : item))
+    userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (ids.includes(item.id) ? normalizeUserRecord({ ...item, status: 1 }) : item))
     clearSelection()
     ElMessage.success('批量启用完成')
   } catch (error) {
@@ -430,9 +546,12 @@ const handleBatchEnable = async () => {
   }
 }
 
+/**
+ * 处理BatchDisable。
+ */
 const handleBatchDisable = async () => {
   const skippedUsers = selectedRows.value.filter(isCurrentUser)
-  const operableUsers = selectedRows.value.filter((item) => !isCurrentUser(item))
+  const operableUsers = selectedRows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !isCurrentUser(item))
 
   if (!operableUsers.length) {
     ElMessage.warning('没有可停用的用户')
@@ -443,7 +562,7 @@ const handleBatchDisable = async () => {
     await confirmDanger(`确认批量停用 ${operableUsers.length} 个用户？`, '批量停用')
     const ids = getSelectedIds(operableUsers)
     await batchDisableUsers(ids)
-    userList.value = userList.value.map((item) => (ids.includes(item.id) ? normalizeUserRecord({ ...item, status: 0 }) : item))
+    userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => (ids.includes(item.id) ? normalizeUserRecord({ ...item, status: 0 }) : item))
     warnSkippedUsers(skippedUsers)
     clearSelection()
     ElMessage.success('批量停用完成')
@@ -454,8 +573,11 @@ const handleBatchDisable = async () => {
   }
 }
 
+/**
+ * 处理BatchDelete。
+ */
 const handleBatchDelete = async () => {
-  const skippedUsers = selectedRows.value.filter((item) => !canDeleteUser(item))
+  const skippedUsers = selectedRows.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !canDeleteUser(item))
   const operableUsers = selectedRows.value.filter(canDeleteUser)
 
   if (!operableUsers.length) {
@@ -467,7 +589,7 @@ const handleBatchDelete = async () => {
     await confirmDanger(`确认批量删除 ${operableUsers.length} 个用户？该操作不可直接恢复。`, '批量删除')
     const ids = getSelectedIds(operableUsers)
     await batchDeleteUsers(ids)
-    userList.value = userList.value.filter((item) => !ids.includes(item.id))
+    userList.value = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !ids.includes(item.id))
     warnSkippedUsers(skippedUsers)
     clearSelection()
     ElMessage.success('批量删除完成')
@@ -478,12 +600,15 @@ const handleBatchDelete = async () => {
   }
 }
 
+/**
+ * 处理BatchReset密码。
+ */
 const handleBatchResetPassword = async () => {
   if (!selectedRows.value.length) return
 
   try {
     await confirmDanger(`确认批量重置 ${selectedRows.value.length} 个用户的密码？`, '批量重置密码')
-    await Promise.all(selectedRows.value.map((item) => resetUserPassword(item.id)))
+    await Promise.all(selectedRows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => resetUserPassword(item.id)))
     await refreshUserList()
     clearSelection()
     ElMessage.success('批量重置密码完成')
@@ -494,16 +619,25 @@ const handleBatchResetPassword = async () => {
   }
 }
 
+/**
+ * 打开Batch角色Dialog。
+ */
 const openBatchRoleDialog = () => {
   batchRoleForm.role = ''
   roleDialogVisible.value = true
 }
 
+/**
+ * 打开Batch部门Dialog。
+ */
 const openBatchDepartmentDialog = () => {
   batchDepartmentForm.department = ''
   departmentDialogVisible.value = true
 }
 
+/**
+ * 提交Batch角色。
+ */
 const submitBatchRole = async () => {
   if (!batchRoleForm.role) {
     ElMessage.warning('请选择目标角色')
@@ -518,7 +652,7 @@ const submitBatchRole = async () => {
   try {
     const ids = getSelectedIds()
     await batchUpdateRole(ids, batchRoleForm.role)
-    userList.value = userList.value.map((item) =>
+    userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) =>
       ids.includes(item.id)
         ? normalizeUserRecord({
             ...item,
@@ -536,6 +670,9 @@ const submitBatchRole = async () => {
   }
 }
 
+/**
+ * 提交Batch部门。
+ */
 const submitBatchDepartment = async () => {
   if (!batchDepartmentForm.department) {
     ElMessage.warning('请选择目标部门')
@@ -545,7 +682,7 @@ const submitBatchDepartment = async () => {
   try {
     const ids = getSelectedIds()
     await batchUpdateDepartment(ids, batchDepartmentForm.department)
-    userList.value = userList.value.map((item) =>
+    userList.value = userList.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) =>
       ids.includes(item.id) ? normalizeUserRecord({ ...item, department: batchDepartmentForm.department }) : item,
     )
     clearSelection()
@@ -556,20 +693,33 @@ const submitBatchDepartment = async () => {
   }
 }
 
+/**
+ * 打开ImportDialog。
+ */
 const openImportDialog = () => {
   importFile.value = null
   importDialogVisible.value = true
-  nextTick(() => uploadRef.value?.clearFiles())
+  nextTick(/** 处理 nextTick 调用中的回调逻辑。 */ () => uploadRef.value?.clearFiles())
 }
 
+/**
+ * 处理Import文件Change。
+ * 入参：file（文件）。
+ */
 const handleImportFileChange = (file) => {
   importFile.value = file.raw || file
 }
 
+/**
+ * 处理Import文件Remove。
+ */
 const handleImportFileRemove = () => {
   importFile.value = null
 }
 
+/**
+ * 下载Import模板。
+ */
 const downloadImportTemplate = () => {
   exportTableToExcel({
     filename: '用户导入模板',
@@ -585,6 +735,9 @@ const downloadImportTemplate = () => {
   })
 }
 
+/**
+ * 提交Import用户。
+ */
 const submitImportUsers = async () => {
   if (!importFile.value) {
     ElMessage.warning('请先选择 xlsx 文件')
@@ -600,6 +753,9 @@ const submitImportUsers = async () => {
   }
 }
 
+/**
+ * 处理Export用户。
+ */
 const handleExportUsers = async () => {
   const exportedCount = exportTableToExcel({
     filename: '用户管理',
@@ -731,7 +887,11 @@ onMounted(refreshUserList)
             <el-button link type="primary" @click="handleOpenDetail(row)">查看</el-button>
             <el-button link type="primary" @click="handleOpenEdit(row)">编辑</el-button>
             <el-button link type="primary" @click="handleResetPassword(row)">重置密码</el-button>
-            <el-dropdown @command="(command) => handleRowCommand(command, row)">
+            <el-dropdown @command="/**
+ * 处理当前调用传入的回调逻辑。
+ * 入参：command。
+ */
+(command) => handleRowCommand(command, row)">
               <el-button link type="primary">
                 更多
                 <el-icon><MoreFilled /></el-icon>

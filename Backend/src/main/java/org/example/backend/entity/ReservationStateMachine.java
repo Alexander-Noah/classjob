@@ -5,6 +5,9 @@ package org.example.backend.entity;
 
 /** 预约状态转换规则；仅返回目标状态，不持久化，也不代替操作者权限与实时冲突校验。 */
 public final class ReservationStateMachine {
+    /**
+     * 构造 ReservationStateMachine，初始化当前实例。
+     */
     private ReservationStateMachine() {
     }
 

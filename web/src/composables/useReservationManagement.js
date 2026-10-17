@@ -32,7 +32,7 @@ const fallbackLabs = [
   { code: 'C305', name: 'C305 人工智能实验室', capacity: 64 },
   { code: 'D407', name: 'D407 物联网实验室', capacity: 48 },
 ]
-const fallbackLabOptions = fallbackLabs.map((lab) => formatLabDisplayName(lab))
+const fallbackLabOptions = fallbackLabs.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => formatLabDisplayName(lab))
 
 const weekdayOrder = {
   星期一: 1,
@@ -158,43 +158,86 @@ const initialReservations = [
   },
 ]
 
+/**
+ * 创建预约标识。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const createReservationId = () => `RSV-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
 
 const getStatusType = getReservationStatusType
 
-const cloneRecords = (records) => records.map((record) => ({ ...record }))
+/**
+ * 复制记录集合。
+ * 入参：records（记录集合）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
+const cloneRecords = (records) => records.map(/** 将当前条目转换为目标结果。 入参：record。 */ (record) => ({ ...record }))
 
+/**
+ * 获取当前标签。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getCurrentLabel = () => {
   const now = new Date()
   return `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
+/**
+ * 格式化日期。
+ * 入参：date（日期）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatDate = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
+/**
+ * 解析日期。
+ * 入参：dateText（日期文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseDate = (dateText) => {
   if (!dateText) return null
   const date = new Date(`${dateText}T00:00:00`)
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/**
+ * 获取Weekday。
+ * 入参：dateText（日期文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getWeekday = (dateText) => {
   const date = parseDate(dateText)
   return date ? date.getDay() || 7 : 0
 }
 
+/**
+ * 归一化文本。
+ * 入参：value（值）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const normalizeText = (value) =>
   String(value || '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '')
 
+/**
+ * 解析时间目标Minutes。
+ * 入参：timeText（时间文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeToMinutes = (timeText) => {
   const match = String(timeText || '').match(/^(\d{1,2}):(\d{2})$/)
   if (!match) return 0
   return Number(match[1]) * 60 + Number(match[2])
 }
 
+/**
+ * 解析时间范围。
+ * 入参：timeRange（时间区间）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const parseTimeRange = (timeRange) => {
   const [startTime, endTime] = String(timeRange || '').split('-')
   const start = parseTimeToMinutes(startTime)
@@ -202,13 +245,23 @@ const parseTimeRange = (timeRange) => {
   return start && end && end > start ? { start, end, startTime, endTime } : null
 }
 
+/**
+ * 范围Overlap的处理逻辑。
+ * 入参：left（left）；right（right）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const rangesOverlap = (left, right) => Boolean(left && right && left.start < right.end && right.start < left.end)
 
+/**
+ * 解析数值列表。
+ * 入参：value（值）。
+ * @returns 生成的数组。
+ */
 const parseNumberList = (value) => {
   const numbers = new Set()
   String(value || '')
     .split(',')
-    .forEach((part) => {
+    .forEach(/** 处理遍历到的当前条目。 入参：part。 */ (part) => {
       const range = part.match(/(\d{1,2})\s*[-~至]\s*(\d{1,2})/)
       if (range) {
         const start = Number(range[1])
@@ -225,12 +278,22 @@ const parseNumberList = (value) => {
   return [...numbers]
 }
 
+/**
+ * 获取记录周次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordWeeks = (record = {}) => {
   const expanded = parseNumberList(record.weekExpanded)
   if (expanded.length) return expanded
   return parseNumberList(record.weekText || record.weekRaw)
 }
 
+/**
+ * 获取记录开始节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordStartSection = (record = {}) => {
   const start = Number(record.startSection || 0)
   if (start > 0) return start
@@ -238,6 +301,11 @@ const getRecordStartSection = (record = {}) => {
   return parsed[0] || 0
 }
 
+/**
+ * 获取记录结束节次。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordEndSection = (record = {}) => {
   const end = Number(record.endSection || 0)
   if (end > 0) return end
@@ -245,11 +313,21 @@ const getRecordEndSection = (record = {}) => {
   return parsed[parsed.length - 1] || getRecordStartSection(record)
 }
 
+/**
+ * 获取节次范围。
+ * 入参：section（节次）；edge（edge）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getSectionRange = (section, edge) => {
   const unit = Math.ceil(Number(section || 0) / 2)
   return sectionTimeRanges[unit]?.[edge] || 0
 }
 
+/**
+ * 获取记录时间范围。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getRecordTimeRange = (record = {}) => {
   const startSection = getRecordStartSection(record)
   const endSection = getRecordEndSection(record)
@@ -258,8 +336,18 @@ const getRecordTimeRange = (record = {}) => {
   return start && end && end > start ? { start, end } : null
 }
 
+/**
+ * 获取实验室编码。
+ * 入参：lab（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const getLabCode = (lab = {}) => lab.code || lab.labCode || lab.room || lab.roomNo || String(lab.name || '').match(/^[A-Z]\d{3}/i)?.[0] || ''
 
+/**
+ * 归一化实验室Meta。
+ * 入参：lab（实验室）。
+ * @returns 组装的键值对象。
+ */
 const normalizeLabMeta = (lab = {}) => {
   const name = lab.name || lab.labName || lab.roomName || lab.code || lab.labCode || ''
   const code = getLabCode({ ...lab, name })
@@ -273,16 +361,26 @@ const normalizeLabMeta = (lab = {}) => {
   }
 }
 
+/**
+ * 构建实验室Meta映射。
+ * 入参：labs（实验室）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const buildLabMetaMap = (labs = fallbackLabs) =>
   Object.fromEntries(
     labs
       .map(normalizeLabMeta)
-      .filter((lab) => lab.name)
-      .flatMap((lab) =>
-        [...new Set([lab.displayName, lab.name, lab.code].filter(Boolean))].map((key) => [key, lab]),
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) => lab.name)
+      .flatMap(/** 转换并展开当前条目。 入参：lab。 */ (lab) =>
+        [...new Set([lab.displayName, lab.name, lab.code].filter(Boolean))].map(/** 将当前条目转换为目标结果。 入参：key。 */ (key) => [key, lab]),
       ),
   )
 
+/**
+ * 判断是否具有实验室编码令牌。
+ * 入参：classroom（classroom）；code（编码）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const hasLabCodeToken = (classroom, code) => {
   const normalizedCode = String(code || '').trim()
   if (!normalizedCode) return false
@@ -291,6 +389,11 @@ const hasLabCodeToken = (classroom, code) => {
   )
 }
 
+/**
+ * 判断是否为记录For实验室。
+ * 入参：record（记录）；labName（实验室名称）；labMeta（实验室Meta）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRecordForLab = (record = {}, labName, labMeta = {}) => {
   const classroomRaw = String(record.classroom || '')
   const classroom = normalizeText(classroomRaw)
@@ -303,6 +406,11 @@ const isRecordForLab = (record = {}, labName, labMeta = {}) => {
   return hasLabCodeToken(classroomRaw, code)
 }
 
+/**
+ * 判断是否为记录For日期。
+ * 入参：record（记录）；dateText（日期文本）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const isRecordForDate = (record = {}, dateText) => {
   const week = getAcademicWeek(dateText)
   const weekday = getWeekday(dateText)
@@ -314,11 +422,20 @@ const isRecordForDate = (record = {}, dateText) => {
   return true
 }
 
+/**
+ * 格式化课表Conflict。
+ * 入参：record（记录）。
+ * @returns 由当前表达式或分支生成的处理结果。
+ */
 const formatTimetableConflict = (record = {}) =>
   [record.courseName, record.teacher, record.sectionText || record.sectionCode, record.className || record.rowClassName]
     .filter(Boolean)
     .join(' · ')
 
+/**
+ * 提供预约Management。
+ * @returns 组装的键值对象。
+ */
 export function useReservationManagement() {
   const reservations = ref([])
   const selectedReservationId = ref('')
@@ -350,15 +467,30 @@ export function useReservationManagement() {
   const activeSemester = ref('')
   const teachingCalendar = ref(null)
 
+  /**
+   * 获取教务周次。
+   * 入参：dateText（日期文本）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getAcademicWeek = (dateText) => {
     const date = parseDate(dateText)
     return date && teachingCalendar.value ? resolveAcademicWeek(teachingCalendar.value, date) : 0
   }
 
-  const selectedReservation = computed(() => reservations.value.find((item) => item.id === selectedReservationId.value) || reservations.value[0] || null)
-  const selectedLabMeta = computed(() => labMetaMap.value[formModel.lab] || normalizeLabMeta({ name: formModel.lab }))
-  const selectedLabId = computed(() => resolveReservationLabId(selectedLabMeta.value))
+  const selectedReservation = computed(/** 计算派生状态。 */ () => reservations.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => item.id === selectedReservationId.value) || reservations.value[0] || null)
+  const selectedLabMeta = computed(/** 计算派生状态。 */ () => labMetaMap.value[formModel.lab] || normalizeLabMeta({ name: formModel.lab }))
+  const selectedLabId = computed(/** 计算派生状态。 */ () => resolveReservationLabId(selectedLabMeta.value))
+  /**
+   * 获取Canonical实验室值。
+   * 入参：labName（实验室名称）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getCanonicalLabValue = (labName) => labMetaMap.value[labName]?.displayName || labName
+  /**
+   * 获取实验室匹配令牌。
+   * 入参：labName（实验室名称）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const getLabMatchTokens = (labName) => {
     const labMeta = labMetaMap.value[labName] || normalizeLabMeta({ name: labName })
 
@@ -377,29 +509,54 @@ export function useReservationManagement() {
       .map(normalizeText)
       .filter(Boolean)
   }
+  /**
+   * 判断是否为Same实验室。
+   * 入参：leftLab（left实验室）；rightLab（right实验室）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const isSameLab = (leftLab, rightLab) => {
     if (!leftLab || !rightLab) return false
     const leftTokens = new Set(getLabMatchTokens(leftLab))
-    return getLabMatchTokens(rightLab).some((token) => leftTokens.has(token))
+    return getLabMatchTokens(rightLab).some(/** 判断当前条目是否满足任一匹配条件。 入参：token。 */ (token) => leftTokens.has(token))
   }
+  /**
+   * 归一化预约记录。
+   * 入参：record（记录）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const normalizeReservationRecord = (record = {}) =>
     normalizeReservationForDisplay({
       ...record,
       lab: getCanonicalLabValue(record.lab) || record.lab,
     })
+  /**
+   * 归一化预约记录集合。
+   * 入参：records（记录集合）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const normalizeReservationRecords = (records = []) => records.map(normalizeReservationRecord)
+  /**
+   * 应用Authoritative预约。
+   * 入参：reservation（预约）；解构参数（insertIfMissing、false、expectedId）。
+   * @returns normalizedReservation 的当前值。
+   */
   const applyAuthoritativeReservation = (reservation, { insertIfMissing = false, expectedId } = {}) => {
     const normalizedReservation = normalizeReservationRecord(reservation)
     reservations.value = applyAuthoritativeReservationRecord(reservations.value, normalizedReservation, { insertIfMissing, expectedId })
     return normalizedReservation
   }
+  /**
+   * 判断是否具有Display状态Changes。
+   * 入参：records（记录集合）；normalizedRecords（规范化结果记录集合）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const hasDisplayStatusChanges = (records = [], normalizedRecords = []) =>
-    records.some((record, index) => {
+    records.some(/** 判断当前条目是否满足任一匹配条件。 入参：record、index。 */ (record, index) => {
       const normalizedRecord = normalizedRecords[index]
       return normalizedRecord && (record.status !== normalizedRecord.status || Boolean(record.conflict) !== Boolean(normalizedRecord.conflict))
     })
 
-  const formAvailability = computed(() => {
+  const formAvailability = computed(/** 计算派生状态。 */ () => {
     const timeRange = parseTimeRange(formModel.timeRange)
     const capacity = Number(selectedLabMeta.value.capacity) || 0
     const baseResult = {
@@ -422,20 +579,20 @@ export function useReservationManagement() {
     }
 
     const reservationConflicts = reservations.value
-      .filter((item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
-      .filter((item) => String(item.id) !== String(editingId.value))
-      .filter((item) => isSameLab(item.lab, formModel.lab) && item.date === formModel.date)
-      .filter((item) => rangesOverlap(parseTimeRange(item.timeRange), timeRange))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => String(item.id) !== String(editingId.value))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => isSameLab(item.lab, formModel.lab) && item.date === formModel.date)
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => rangesOverlap(parseTimeRange(item.timeRange), timeRange))
 
     const timetableConflicts = timetableRows.value
-      .filter((record) => isRecordForLab(record, formModel.lab, selectedLabMeta.value))
-      .filter((record) => isRecordForDate(record, formModel.date))
-      .filter((record) => rangesOverlap(getRecordTimeRange(record), timeRange))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForLab(record, formModel.lab, selectedLabMeta.value))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, formModel.date))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => rangesOverlap(getRecordTimeRange(record), timeRange))
 
     const capacityExceeded = capacity > 0 && Number(formModel.attendees || 0) > capacity
     const messages = [
-      ...reservationConflicts.map((item) => `已有预约：${item.applicant} ${item.timeRange}`),
-      ...timetableConflicts.map((item) => `课表占用：${formatTimetableConflict(item) || item.classroom || '课表记录'}`),
+      ...reservationConflicts.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => `已有预约：${item.applicant} ${item.timeRange}`),
+      ...timetableConflicts.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => `课表占用：${formatTimetableConflict(item) || item.classroom || '课表记录'}`),
       ...(capacityExceeded ? [`预约人数超过实验室容量 ${capacity} 人`] : []),
       ...(!timetableReady.value ? ['课表数据暂不可用，当前仅按已有预约判断'] : []),
     ]
@@ -449,6 +606,11 @@ export function useReservationManagement() {
     }
   })
 
+  /**
+   * 获取AvailabilityFor预约。
+   * 入参：reservation（预约）；excludedId（excluded标识）。
+   * @returns 组装的键值对象。
+   */
   const getAvailabilityForReservation = (reservation = {}, excludedId = reservation.id) => {
     const timeRange = parseTimeRange(reservation.timeRange)
     const labMeta = labMetaMap.value[reservation.lab] || normalizeLabMeta({ name: reservation.lab })
@@ -464,15 +626,15 @@ export function useReservationManagement() {
     }
 
     const reservationConflicts = reservations.value
-      .filter((item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
-      .filter((item) => String(item.id) !== String(excludedId))
-      .filter((item) => isSameLab(item.lab, reservation.lab) && item.date === reservation.date)
-      .filter((item) => rangesOverlap(parseTimeRange(item.timeRange), timeRange))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => String(item.id) !== String(excludedId))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => isSameLab(item.lab, reservation.lab) && item.date === reservation.date)
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => rangesOverlap(parseTimeRange(item.timeRange), timeRange))
 
     const timetableConflicts = timetableRows.value
-      .filter((record) => isRecordForLab(record, reservation.lab, labMeta))
-      .filter((record) => isRecordForDate(record, reservation.date))
-      .filter((record) => rangesOverlap(getRecordTimeRange(record), timeRange))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForLab(record, reservation.lab, labMeta))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, reservation.date))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => rangesOverlap(getRecordTimeRange(record), timeRange))
 
     const capacityExceeded = capacity > 0 && Number(reservation.attendees || 0) > capacity
 
@@ -485,19 +647,19 @@ export function useReservationManagement() {
     }
   }
 
-  const statusSummary = computed(() =>
-    statusOptions.map((status) => ({
+  const statusSummary = computed(/** 计算派生状态。 */ () =>
+    statusOptions.map(/** 将当前条目转换为目标结果。 入参：status。 */ (status) => ({
       ...status,
-      count: reservations.value.filter((item) => item.status === status.label).length,
+      count: reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === status.label).length,
     })),
   )
 
-  const metrics = computed(() => {
-    const pendingCount = reservations.value.filter((item) => item.status === '待审核').length
-    const approvedCount = reservations.value.filter((item) => item.status === '已通过').length
-    const conflictCount = reservations.value.filter((item) => item.conflict || item.status === '冲突').length
-    const expiredCount = reservations.value.filter((item) => item.status === '已过期').length
-    const courseCount = reservations.value.filter((item) => item.scene === '课程').length
+  const metrics = computed(/** 计算派生状态。 */ () => {
+    const pendingCount = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '待审核').length
+    const approvedCount = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '已通过').length
+    const conflictCount = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.conflict || item.status === '冲突').length
+    const expiredCount = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.status === '已过期').length
+    const courseCount = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.scene === '课程').length
 
     return [
       { label: '预约申请', value: reservations.value.length, trend: `课程 ${courseCount} 条` },
@@ -508,13 +670,13 @@ export function useReservationManagement() {
     ]
   })
 
-  const filteredReservations = computed(() => {
+  const filteredReservations = computed(/** 计算派生状态。 */ () => {
     const searchText = keyword.value.trim().toLowerCase()
 
-    return reservations.value.filter((item) => {
+    return reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => {
       const matchesKeyword =
         !searchText ||
-        [item.id, item.applicant, item.department, item.contact, item.lab, item.reason, item.note].some((value) =>
+        [item.id, item.applicant, item.department, item.contact, item.lab, item.reason, item.note].some(/** 判断当前条目是否满足任一匹配条件。 入参：value。 */ (value) =>
           String(value ?? '').toLowerCase().includes(searchText),
         )
       const matchesStatus = statusFilter.value === 'all' || item.status === statusFilter.value
@@ -526,20 +688,29 @@ export function useReservationManagement() {
     })
   })
 
-  const dialogTitle = computed(() => (dialogMode.value === 'create' ? '新建预约申请' : '编辑预约申请'))
+  const dialogTitle = computed(/** 计算派生状态。 */ () => (dialogMode.value === 'create' ? '新建预约申请' : '编辑预约申请'))
 
+  /**
+   * 持久化预约。
+   */
   const persistReservations = async () => {
     const persistedRecords = await reservationResourceService.replace(reservations.value)
     reservations.value = normalizeReservationRecords(Array.isArray(persistedRecords) ? persistedRecords : cloneRecords(initialReservations))
   }
 
+  /**
+   * 持久化ConflictMarks。
+   */
   const persistConflictMarks = () => {
     if (!API_USE_MOCK) return
-    reservationResourceService.replace(reservations.value).catch((error) => {
+    reservationResourceService.replace(reservations.value).catch(/** 处理异步失败结果。 入参：error。 */ (error) => {
       console.warn('[ReservationManagement] failed to persist conflict marks', error)
     })
   }
 
+  /**
+   * 加载预约。
+   */
   const loadReservations = async () => {
     const loadedRecords = await reservationResourceService.list({
       fallbackRecords: cloneRecords(initialReservations),
@@ -553,11 +724,14 @@ export function useReservationManagement() {
     selectedReservationId.value = reservations.value[0]?.id || ''
   }
 
+  /**
+   * 加载实验室选项。
+   */
   const loadLabOptions = async () => {
     try {
       const labs = await labResourceService.list()
-      const normalizedLabs = labs.map(normalizeLabMeta).filter((lab) => lab.name)
-      const displayNames = normalizedLabs.map((lab) => lab.displayName || lab.name).filter(Boolean)
+      const normalizedLabs = labs.map(normalizeLabMeta).filter(/** 判断当前条目是否符合筛选条件。 入参：lab。 */ (lab) => lab.name)
+      const displayNames = normalizedLabs.map(/** 将当前条目转换为目标结果。 入参：lab。 */ (lab) => lab.displayName || lab.name).filter(Boolean)
       labOptions.value = displayNames.length ? [...new Set(displayNames)] : [...fallbackLabOptions]
       labMetaMap.value = displayNames.length ? buildLabMetaMap(normalizedLabs) : buildLabMetaMap()
     } catch {
@@ -566,6 +740,9 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 加载课表行集合。
+   */
   const loadTimetableRows = async () => {
     try {
       teachingCalendar.value = await loadTeachingCalendar()
@@ -581,10 +758,18 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 选择预约。
+   * 入参：reservation（预约）。
+   */
   const selectReservation = (reservation) => {
     selectedReservationId.value = reservation?.id || ''
   }
 
+  /**
+   * assignForm模型的处理逻辑。
+   * 入参：reservation（预约）。
+   */
   const assignFormModel = (reservation = {}) => {
     const hasReservation = Boolean(reservation?.id)
     formModel.applicant = reservation.applicant || ''
@@ -599,6 +784,9 @@ export function useReservationManagement() {
     formModel.note = reservation.note || ''
   }
 
+  /**
+   * 打开CreateDialog。
+   */
   const openCreateDialog = () => {
     dialogMode.value = 'create'
     editingId.value = ''
@@ -606,6 +794,10 @@ export function useReservationManagement() {
     dialogVisible.value = true
   }
 
+  /**
+   * 打开EditDialog。
+   * 入参：reservation（预约）。
+   */
   const openEditDialog = (reservation) => {
     const actions = getReservationActions(reservation)
     if (!actions.edit) {
@@ -618,6 +810,10 @@ export function useReservationManagement() {
     dialogVisible.value = true
   }
 
+  /**
+   * 校验Form。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const validateForm = () => {
     const applicantError = getMeaningfulTextError(formModel.applicant, { label: '申请人', min: 2, max: 50 })
     if (applicantError) {
@@ -743,7 +939,7 @@ export function useReservationManagement() {
         const displayedReservation = applyAuthoritativeReservation(savedReservation, { insertIfMissing: true })
         selectedReservationId.value = displayedReservation.id
       } else {
-        const currentRecord = reservations.value.find((item) => String(item.id) === String(editingId.value))
+        const currentRecord = reservations.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ (item) => String(item.id) === String(editingId.value))
         if (!currentRecord) throw new Error('未找到要更新的预约记录')
 
         const nextRecord = {
@@ -772,11 +968,21 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 判断是否为CancellationAllowed。
+   * 入参：reservation（预约）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const isCancellationAllowed = (reservation) => {
     const status = normalizeReservationStatus(reservation)
     return [RESERVATION_STATUS.pending, RESERVATION_STATUS.approved].includes(status) && !isReservationExpired(reservation)
   }
 
+  /**
+   * 构建Review载荷。
+   * 入参：note（note）。
+   * @returns 由当前表达式或分支生成的处理结果。
+   */
   const buildReviewPayload = (note) => ({
     reviewer: '张明',
     reviewerName: '张明',
@@ -784,6 +990,10 @@ export function useReservationManagement() {
     reviewRemark: note,
   })
 
+  /**
+   * 批准预约。
+   * 入参：reservation（预约）。
+   */
   const approveReservation = async (reservation = selectedReservation.value) => {
     if (!reservation) return
 
@@ -843,6 +1053,10 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 拒绝预约。
+   * 入参：reservation（预约）。
+   */
   const rejectReservation = async (reservation = selectedReservation.value) => {
     if (!reservation) return
 
@@ -861,6 +1075,11 @@ export function useReservationManagement() {
         confirmButtonText: '驳回',
         cancelButtonText: '取消',
         inputPlaceholder: '例如：预约时段冲突或申请信息不完整',
+        /**
+         * 输入校验器的处理逻辑。
+         * 入参：value（值）。
+         * @returns 由当前表达式或分支生成的处理结果。
+         */
         inputValidator: (value) => (!normalizeInputText(value) ? '请填写驳回原因' : getMeaningfulTextError(value, { label: '驳回原因', min: 4, max: 120 }) || true),
       })
       const reason = normalizeInputText(value)
@@ -881,6 +1100,10 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 取消预约。
+   * 入参：reservation（预约）。
+   */
   const cancelReservation = async (reservation = selectedReservation.value) => {
     if (!reservation) return
 
@@ -897,6 +1120,11 @@ export function useReservationManagement() {
         confirmButtonText: '取消预约',
         cancelButtonText: '返回',
         inputPlaceholder: '例如：课程调整或申请人主动取消',
+        /**
+         * 输入校验器的处理逻辑。
+         * 入参：value（值）。
+         * @returns 由当前表达式或分支生成的处理结果。
+         */
         inputValidator: (value) => (!normalizeInputText(value) ? '请填写取消原因' : getMeaningfulTextError(value, { label: '取消原因', min: 2, max: 120 }) || true),
       })
       const reason = normalizeInputText(value)
@@ -926,6 +1154,10 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 删除预约。
+   * 入参：reservation（预约）。
+   */
   const deleteReservation = async (reservation) => {
     if (!reservation) return
 
@@ -944,13 +1176,17 @@ export function useReservationManagement() {
       }
     }
   }
+  /**
+   * 检测Conflicts。
+   * 入参：showMessage（show消息）。
+   */
   const detectConflicts = (showMessage = true) => {
-    const activeRecords = reservations.value.filter((item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
+    const activeRecords = reservations.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => !['已驳回', '已取消', '已过期', '已完成'].includes(item.status))
     const conflictIds = new Set()
 
-    activeRecords.forEach((item, index) => {
+    activeRecords.forEach(/** 处理遍历到的当前条目。 入参：item、index。 */ (item, index) => {
       const itemRange = parseTimeRange(item.timeRange)
-      activeRecords.slice(index + 1).forEach((other) => {
+      activeRecords.slice(index + 1).forEach(/** 处理遍历到的当前条目。 入参：other。 */ (other) => {
         if (!isSameLab(item.lab, other.lab) || item.date !== other.date) return
         if (!rangesOverlap(itemRange, parseTimeRange(other.timeRange))) return
         conflictIds.add(item.id)
@@ -963,7 +1199,7 @@ export function useReservationManagement() {
       }
     })
 
-    reservations.value = reservations.value.map((item) => {
+    reservations.value = reservations.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => {
       if (['已驳回', '已取消', '已过期', '已完成'].includes(item.status)) {
         return { ...item, conflict: false, tagType: getStatusType(item.status) }
       }
@@ -989,6 +1225,9 @@ export function useReservationManagement() {
     }
   }
 
+  /**
+   * 重置预约。
+   */
   const resetReservations = async () => {
     try {
       await ElMessageBox.confirm('确认恢复预约管理初始数据吗？', '恢复数据', {
@@ -1009,13 +1248,16 @@ export function useReservationManagement() {
       .reset({
         fallbackRecords: cloneRecords(initialReservations),
       })
-      .then((resetRecords) => {
+      .then(/** 处理异步成功结果。 入参：resetRecords。 */ (resetRecords) => {
         reservations.value = normalizeReservationRecords(Array.isArray(resetRecords) ? resetRecords : cloneRecords(initialReservations))
         selectedReservationId.value = reservations.value[0]?.id || ''
       })
     ElMessage.success('已恢复预约初始数据')
   }
 
+  /**
+   * 导出预约。
+   */
   const exportReservations = () => {
     const exportRows = filteredReservations.value
 
@@ -1039,7 +1281,7 @@ export function useReservationManagement() {
         { label: '类型', prop: 'scene' },
         { label: '人数', prop: 'attendees' },
         { label: '状态', prop: 'status' },
-        { label: '冲突状态', formatter: (item) => (item.conflict ? '存在冲突' : '无冲突') },
+        { label: '冲突状态', /** formatter的处理逻辑。 入参：item（条目）。 @returns 由当前表达式或分支生成的处理结果。 */ formatter: (item) => (item.conflict ? '存在冲突' : '无冲突') },
         { label: '审核人', prop: 'reviewer' },
         { label: '提交时间', prop: 'submittedAt' },
         { label: '审核时间', prop: 'reviewedAt' },
@@ -1051,7 +1293,13 @@ export function useReservationManagement() {
   }
 
   watch(
+    /**
+     * 响应被监听状态的变化。
+     */
     () => [formModel.lab, formModel.attendees],
+    /**
+     * 响应被监听状态的变化。
+     */
     () => {
       const capacity = Number(selectedLabMeta.value.capacity) || 0
       if (capacity > 0 && Number(formModel.attendees || 0) > capacity) {
@@ -1060,15 +1308,15 @@ export function useReservationManagement() {
     },
   )
 
-  watch(filteredReservations, async (records) => {
+  watch(filteredReservations, /** 响应被监听状态的变化。 入参：records。 */ async (records) => {
     if (!records.length) return
-    if (!records.some((item) => item.id === selectedReservationId.value)) {
+    if (!records.some(/** 判断当前条目是否满足任一匹配条件。 入参：item。 */ (item) => item.id === selectedReservationId.value)) {
       await nextTick()
       selectedReservationId.value = records[0].id
     }
   })
 
-  void Promise.all([loadLabOptions(), loadTimetableRows()]).then(async () => {
+  void Promise.all([loadLabOptions(), loadTimetableRows()]).then(/** 处理异步成功结果。 */ async () => {
     await loadReservations()
   })
 
