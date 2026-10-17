@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/** 设备资产台账及批量导入服务，同时维护盘点、调拨记录和相关业务事件。 */
 @Service
 public class DevicesServiceImpl implements DevicesService {
     private static final String STATUS_NORMAL = "正常";

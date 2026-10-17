@@ -1,3 +1,6 @@
+/*
+ * Result实现模块。
+ */
 package org.example.backend.result;
 
 import java.util.Collections;

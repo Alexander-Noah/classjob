@@ -1,0 +1,51 @@
+/* SVG 定义保持可引用，但不参与布局、命中测试或无障碍阅读。 */
+.liquid-filter-host {
+  position: fixed;
+  left: -10000px;
+  top: -10000px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* 光学处理仅施加在背景；高光变量由指针更新，文字保持原始清晰度。 */
+.liquid-glass-surface {
+  --glass-surface:
+    radial-gradient(ellipse at var(--liquid-light-x, 30%) var(--liquid-light-y, 0%), rgba(255, 255, 255, var(--liquid-light-alpha, .1)), transparent 65%),
+    linear-gradient(135deg, rgba(255, 255, 255, .22), rgba(241, 247, 255, .07) 55%, rgba(255, 255, 255, .14));
+}
+body .el-dialog.liquid-glass-surface,
+body .el-message-box.liquid-glass-surface {
+  /* 弹窗覆盖业务内容，需要较高透光底色，防止背景文字与正文重叠。 */
+  background: linear-gradient(135deg, rgba(255, 255, 255, .82), rgba(245, 249, 255, .68));
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+}
+.login-page .login-card.liquid-glass-surface {
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+}
+.login-page .login-card.liquid-glass-surface > .liquid-glass {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body [data-liquid-kind="button"] { transform: none !important; }
+}
+
+/* 滚动窗口内暂时停用背景采样，保留透明底色、描边和静态高光。
+   涵盖布局的 blur 与 Teleport 浮层；停止滚动 160ms 后恢复。
+   不使用 will-change 为整张表格的所有按钮预分配合成层。 */
+html.liquid-scrolling body #app *,
+html.liquid-scrolling body .el-overlay *,
+html.liquid-scrolling body .el-popper,
+html.liquid-scrolling body .liquid-glass-surface {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.liquid-scrolling body [data-liquid-kind="button"] {
+  transform: none !important;
+}

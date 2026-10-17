@@ -1,3 +1,7 @@
+/*
+ * 设备管理回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：transferReturnsRereadDeviceAndHistory、inventoryReturnsRereadDeviceAndHistory、springProxyExposesTransactionsForTransferAndInventory。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.DeviceInventoryRecordEntity;

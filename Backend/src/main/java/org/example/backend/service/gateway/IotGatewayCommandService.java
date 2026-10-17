@@ -1,3 +1,7 @@
+/*
+ * 物联网实现模块。
+ * 主要协作组件：GatewayAdapterRegistry。
+ */
 package org.example.backend.service.gateway;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

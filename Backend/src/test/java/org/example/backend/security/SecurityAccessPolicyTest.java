@@ -1,3 +1,7 @@
+/*
+ * 安全策略回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：userAdministrationRequiresSystemAdmin、systemSettingsAndActivationManagementRequireSystemAdmin、labAdminCanUseOnlyLabActivationBindingEndpoints、labAdminCanManageLabResourcesButTeacherCannotMutateThem 等。
+ */
 package org.example.backend.security;
 
 import org.junit.jupiter.api.Test;

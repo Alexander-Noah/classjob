@@ -1,3 +1,7 @@
+/*
+ * 工作台统计实现模块。
+ * 主要协作组件：DashboardMapper、BusinessLoopReportService、LabService。
+ */
 package org.example.backend.service.impl;
 
 import lombok.extern.slf4j.Slf4j;

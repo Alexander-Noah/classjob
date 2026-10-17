@@ -1,3 +1,7 @@
+/*
+ * 业务记录的 Vue 组合逻辑；视图通过返回的状态和方法调用本模块。
+ * 主要导出：useBusinessModuleRecords。
+ */
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBusinessModuleEndpoints } from '../api/endpoints'

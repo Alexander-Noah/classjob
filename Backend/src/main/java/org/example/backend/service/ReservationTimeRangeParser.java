@@ -1,3 +1,6 @@
+/*
+ * 实验室预约实现模块。
+ */
 package org.example.backend.service;
 
 import org.example.backend.service.TimeRange;
@@ -14,6 +17,14 @@ public final class ReservationTimeRangeParser {
 
     private ReservationTimeRangeParser() { }
 
+    /**
+     * 将同一天内的文本区间转为规范文本和绝对时间，整个过程不执行 I/O。
+     *
+     * @param value 严格的 HH:mm-HH:mm，不接受前后空白或跨午夜表达
+     * @param reservationDate 预约的上海本地日期，不能为 null
+     * @return 补齐两位时分的文本及按 Asia/Shanghai 转换的 Instant 区间
+     * @throws IllegalArgumentException 日期缺失、格式错误、时间越界或终点不晚于起点
+     */
     public static ParsedReservationTimeRange parse(String value, LocalDate reservationDate) {
         if (reservationDate == null) {
             throw new IllegalArgumentException("Reservation command has invalid required fields");

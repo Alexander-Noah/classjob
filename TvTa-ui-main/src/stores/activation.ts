@@ -1,10 +1,16 @@
+/*
+ * activation的 Pinia 状态模块，集中维护桌面页面共用状态。
+ * 主要导出：useActivationStore。
+ */
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import request from '@/utils/request'
 import { getMacAddress } from '@/sys-methods/system'
 
+// 本地缓存用于启动时恢复显示，设备许可的最终状态仍需服务端验证。
 const ACTIVATION_KEY = 'tvta-ui-activation-token'
 const TRIAL_LOCK_KEY = 'tvta-ui-trial-lock'
+// 本地试用只允许在 test 模式显式开启，正式构建不能以缓存替代远程激活。
 const LOCAL_TRIAL_ENABLED = import.meta.env.MODE === 'test' && import.meta.env.VITE_ENABLE_LOCAL_TRIAL === 'true'
 const TRIAL_DAYS = Number(import.meta.env.VITE_LOCAL_TRIAL_DAYS || 30)
 const TRIAL_DEVICE_LIMIT = Number(import.meta.env.VITE_LOCAL_TRIAL_DEVICE_LIMIT || 10)

@@ -17,6 +17,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+/**
+ * 在角色授权之前校验 Bearer 令牌，并将身份放入请求属性供后续组件使用。
+ * 匿名路径应逐项维护；监控采集仅允许通过独立管理端口访问。
+ */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -94,6 +98,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldSkip(HttpServletRequest request) {
+        // 预检请求不携带业务令牌，来源校验由更早执行的 StrictCorsFilter 完成。
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
@@ -107,7 +112,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        // Only the dedicated management listener permits unauthenticated scraping.
+        // 以实际接收请求的本地端口判断监控入口，不能用可由请求方填写的 Host 头放行。
+        // 管理端口与业务端口相同时也不放行，避免配置覆盖扩大匿名访问范围。
         if ("/actuator/prometheus".equals(path)
                 && request.getLocalPort() == managementPort
                 && managementPort != applicationPort) {

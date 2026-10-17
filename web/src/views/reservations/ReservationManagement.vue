@@ -1,3 +1,7 @@
+<!--
+  Web 管理平台的实验室预约视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useReservationManagement、../../composables/useTablePagination。
+-->
 <script setup>
 import { useReservationManagement } from '../../composables/useReservationManagement'
 import { useTablePagination } from '../../composables/useTablePagination'

@@ -16,6 +16,10 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
 
+/**
+ * 按凭据键保存 AES-GCM 加密的教务账号；对外仅提供配置状态与脱敏账号。
+ * 加密密钥必须稳定保存，变更密钥后历史密文不能直接解密。
+ */
 @Service
 public class AcademicCredentialServiceImpl implements AcademicCredentialService {
     private static final int IV_LENGTH = 12;
@@ -76,6 +80,7 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
     }
 
     @Override
+    /** 仅在服务内部执行导入前还原凭据，不将解密后的密码作为接口响应返回。 */
     public synchronized void applySavedCredential(AcademicScheduleImportRequest request) {
         String credentialKey = resolveCredentialKey(request);
         Map<String, Object> credential = classTimetableMapper.getCrawlerCredential(credentialKey);
@@ -109,6 +114,7 @@ public class AcademicCredentialServiceImpl implements AcademicCredentialService 
 
     private String encrypt(String value) {
         try {
+            // 每次加密生成独立随机 IV，同一账号的多次保存也不会产生相同密文。
             byte[] iv = new byte[IV_LENGTH];
             secureRandom.nextBytes(iv);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");

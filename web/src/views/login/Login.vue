@@ -1,3 +1,7 @@
+<!--
+  Web 管理平台的登录视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useLiquidGlass。
+-->
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -96,8 +100,8 @@ const handleLogin = async () => {
       <div class="brand-rule"></div>
       <p class="intro">数据驱动管理<br />协同创造更好的实验环境。</p>
     </section>
-    <section class="login-card" aria-label="账户登录">
-      <div ref="glassElement" class="liquid-glass" aria-hidden="true"></div>
+    <section ref="glassElement" class="login-card" aria-label="账户登录">
+      <div class="liquid-glass" aria-hidden="true"></div>
       <div class="tabs" role="tablist" aria-label="账户操作">
         <button id="login-tab" type="button" role="tab" :aria-selected="activeTab === 'login'" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
         <button id="register-tab" type="button" role="tab" :aria-selected="activeTab === 'register'" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">注册</button>
@@ -172,10 +176,26 @@ h2 { margin: 31px 0 8px; font-size: 28px; line-height: 1.4; font-weight: 700; te
 .remember-me { display: flex; align-items: center; gap: 11px; cursor: pointer; }
 .remember-me input { width: 23px; height: 23px; margin: 0 0 0 3px; accent-color: #2e7fff; cursor: pointer; }
 .forgot-link { border: 0; padding: 0; background: transparent; font: inherit; color: #397fff; cursor: pointer; }
-.login-button { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 59px; padding: 0; border: 0; border-radius: 17px; background: linear-gradient(105deg, #08b3f2 0%, #377dff 42%, #9361ff 72%, #df43f4 100%); color: #fff; font-family: 'SimSun', serif; font-size: 22px; font-weight: 400; letter-spacing: 0; cursor: pointer; box-shadow: 0 5px 14px rgba(126,100,239,.20), inset 0 1px 0 rgba(255,255,255,.24); transition: filter .2s, transform .2s, box-shadow .2s; }
+/* 此处只定义布局与文字尺寸；玻璃背景、边框和交互状态由 button-glass.css 统一提供。
+   scoped 选择器优先级高于公共皮肤，不能在这里再次设置不透明渐变或白色文字。 */
+.login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  height: 59px;
+  padding: 0;
+  font-family: 'SimSun', serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+  cursor: pointer;
+}
 .login-button svg { width: 20px; height: 20px; opacity: .9; transition: transform .2s; }
-.login-button:hover { filter: brightness(1.04); transform: translateY(-1px); box-shadow: 0 7px 18px rgba(126,100,239,.27); } .login-button:hover svg { transform: translateX(3px); } .login-button:active { transform: translateY(0); box-shadow: 0 2px 7px rgba(126,100,239,.16); } @media (prefers-reduced-motion: reduce) { .login-button, .login-button svg { transition: none; } }
-.login-button:disabled { opacity: .7; cursor: wait; }
+.login-button:hover:not(:disabled) svg { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) { .login-button svg { transition: none; transform: none; } }
+.login-button:disabled { cursor: wait; }
 button:focus-visible { outline: 2px solid #287aff; outline-offset: 4px; }
 .registration-copy { margin: 48px 0; text-align: center; font-size: 16px; line-height: 2; color: #61649a; }
 @media (min-width: 1900px) { .login-card { margin-left: calc(50% - 223px); } }

@@ -1,3 +1,7 @@
+/*
+ * 实验室预约实现模块。
+ * 主要协作组件：ReservationPersistenceService、ReservationCatalogQuery。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.ReservationStateMachine;
@@ -25,10 +29,20 @@ public class DefaultReservationReviewService {
         this.availability = Objects.requireNonNull(availability, "availability");
     }
 
+    /**
+     * 审核通过前重新查询实时可用性，排除当前预约自身；不能仅沿用提交时的冲突标记。
+     *
+     * @param command 目标预约及可选审核备注
+     * @param actor 已认证的系统管理员或实验室管理员，教师不能审核
+     * @return 条件更新后重新回读并核对的记录
+     * @throws IllegalArgumentException 标识无效或记录不在操作者可见范围
+     * @throws IllegalStateException 当前状态不可审核、发生冲突、并发修改或回读校验失败
+     */
     public ReservationView approve(ReviewReservationCommand command, ReservationActor actor) {
         return review(command, actor, ReservationStatus.APPROVED, APPROVABLE, "通过");
     }
 
+    /** 驳回待审核或冲突状态记录；沿用审核身份、条件更新与回读校验，不执行通过前的可用性检查。 */
     public ReservationView reject(ReviewReservationCommand command, ReservationActor actor) {
         return review(command, actor, ReservationStatus.REJECTED, REJECTABLE, "驳回");
     }
@@ -56,6 +70,7 @@ public class DefaultReservationReviewService {
         String remark = normalizedRemark(command.reviewRemark(), defaultRemark);
         ReservationReviewUpdate update = new ReservationReviewUpdate(command.reservationId(), target, false, reviewerName,
                 remark, allowedCurrentStatuses);
+        // SQL 的旧状态条件是本次更新的并发检查，不依赖前端按钮是否已禁用。
         if (!reservations.updateReview(update)) {
             throw new IllegalStateException("Reservation review failed because the state is stale or changed concurrently");
         }

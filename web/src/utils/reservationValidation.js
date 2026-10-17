@@ -1,3 +1,7 @@
+/*
+ * 实验室预约公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：normalizeInputText、hasUnsafeContent、hasMeaningfulText、isValidContactText、getMeaningfulTextError 等。
+ */
 const unsafePattern = /<\s*script|javascript:|on\w+\s*=|<[^>]+>/i
 const textSignalPattern = /[\u4e00-\u9fa5A-Za-z]/
 const mobilePattern = /^1[3-9]\d{9}$/

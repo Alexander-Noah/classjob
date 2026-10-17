@@ -1,3 +1,7 @@
+/*
+ * basicResources的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：labResourceService、reservationResourceService、usageRecordResourceService。
+ */
 import { API_ENDPOINTS } from '../endpoints'
 import { createCollectionService } from './collectionService'
 

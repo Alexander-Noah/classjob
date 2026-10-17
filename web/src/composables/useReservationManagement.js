@@ -1,3 +1,7 @@
+/*
+ * 实验室预约的 Vue 组合逻辑；视图通过返回的状态和方法调用本模块。
+ * 主要导出：useReservationManagement。
+ */
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { labResourceService, reservationResourceService } from '../api/services/basicResources'
@@ -698,10 +702,15 @@ export function useReservationManagement() {
     return true
   }
 
+  /**
+   * 校验表单后提交，并用服务端返回记录更新列表；任何失败同时还原列表与当前选择。
+   * 正式模式只传实验室主键，不用显示名称替代关联 ID；mock 才允许生成本地预约 ID。
+   */
   const submitReservation = async () => {
     if (!validateForm()) return
 
     formSubmitting.value = true
+    // 列表更新采用替换记录方式，因此数组浅拷贝即可用于本次界面回滚。
     const previousReservations = [...reservations.value]
     const previousSelectedReservationId = selectedReservationId.value
     const payload = {
@@ -730,6 +739,7 @@ export function useReservationManagement() {
           submittedAt: getCurrentLabel(),
           reviewedAt: '-',
         })
+        // 创建允许插入缺失项；不能在 HTTP 失败或响应错配时把提交表单当作已落库数据。
         const displayedReservation = applyAuthoritativeReservation(savedReservation, { insertIfMissing: true })
         selectedReservationId.value = displayedReservation.id
       } else {
@@ -745,6 +755,7 @@ export function useReservationManagement() {
           reviewedAt: currentRecord.status === '已通过' ? '-' : currentRecord.reviewedAt,
         }
 
+        // 保存返回的记录仍需核对 expectedId，避免错误响应覆盖其他预约。
         const savedReservation = await reservationResourceService.update(editingId.value, nextRecord)
         const displayedReservation = applyAuthoritativeReservation(savedReservation, { expectedId: editingId.value })
         selectedReservationId.value = displayedReservation.id

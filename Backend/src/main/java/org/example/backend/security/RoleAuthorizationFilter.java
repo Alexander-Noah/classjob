@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+/** 读取认证过滤器写入的角色并执行接口授权；无身份请求仍由认证层负责拦截。 */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 25)
 public class RoleAuthorizationFilter extends OncePerRequestFilter {

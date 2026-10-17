@@ -1,3 +1,7 @@
+/*
+ * 维护记录的自动化测试；夹具用于验证行为，不是运行时配置。
+ * 主要导出：MAINTENANCE_PORTAL、MAINTENANCE_WORK_ORDER_MODULE。
+ */
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import test from 'node:test'

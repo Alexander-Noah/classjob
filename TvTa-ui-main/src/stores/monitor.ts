@@ -1,9 +1,14 @@
+/*
+ * monitor的 Pinia 状态模块，集中维护桌面页面共用状态。
+ * 主要导出：DeviceMetrics、DeviceAction、DeviceRecord、GatewayStatus、LocalHostStatus 等。
+ */
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { invoke } from '@tauri-apps/api/core'
 import { useActivationStore } from '@/stores/activation'
 import { getApiBaseUrl } from '@/utils/request'
 
+/** Rust 网关快照到 UI 的适配模型；状态采集和设备指令通过 Tauri invoke 执行。 */
 export interface DeviceMetrics {
   cpuUsage: number
   memoryUsage: number
@@ -46,6 +51,7 @@ interface GatewaySettings {
   businessSystemUrl: string
 }
 
+// 快照字段允许缺失，兼容网关初始化与较早版本；展示层负责补默认值。
 interface GatewaySnapshot {
   running?: boolean
   lastError?: string

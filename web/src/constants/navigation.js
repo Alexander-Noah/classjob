@@ -1,3 +1,7 @@
+/*
+ * navigation共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：ROLE_LAYOUTS、getRoleLayout、getRoleMenus。
+ */
 import { DEFAULT_AUTH_ROLE } from './auth'
 import { getRouteModulesByRole, ROLE_DEFAULT_PATHS, ROUTE_MODULES } from './routeModules'
 import { isPathAllowed, parseUserPermissions } from './permissions'

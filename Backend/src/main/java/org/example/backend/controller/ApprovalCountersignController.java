@@ -1,3 +1,8 @@
+/*
+ * 审批会签的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/approval-countersigns、/approval-countersigns、/approval-countersigns/{id:\\d+}/complete、/approval-countersigns/{id:\\d+}/cancel；完整路径由类级与方法级映射组合。
+ * 主要协作组件：ApprovalCountersignService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.entity.ApprovalCountersignEntity;

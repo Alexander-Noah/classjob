@@ -1,3 +1,6 @@
+/*
+ * 维护记录的服务端安全组件；调用方应保持身份认证与权限判断边界。
+ */
 package org.example.backend.security;
 
 import tools.jackson.databind.ObjectMapper;

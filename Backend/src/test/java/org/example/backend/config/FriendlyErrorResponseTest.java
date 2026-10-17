@@ -1,3 +1,7 @@
+/*
+ * FriendlyErrorResponseTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：oversizedAvatarHasAnActionable413Response、oversizedOtherUploadsDoNotUseTheAvatarMessage、genericErrorsKeepInternalDetailsAndRequestIdsOutOfTheUserMessage、unreadableCredentialsReturnAnActionableConflict。
+ */
 package org.example.backend.config;
 
 import org.example.backend.service.CrawlerCredentialException;

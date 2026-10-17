@@ -1,8 +1,12 @@
+<!--
+  Web 管理平台的AdminLayout视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useCurrentTime、../../composables/useAdminGlass。
+-->
 <script setup>
 import { computed, onBeforeUnmount, provide, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Clock, Iphone, Message, OfficeBuilding, UploadFilled, UserFilled } from '@element-plus/icons-vue'
+import { ElImageViewer, ElMessage } from 'element-plus'
+import { Clock, UploadFilled, UserFilled } from '@element-plus/icons-vue'
 import { getStoredRole, getStoredUser, logout, updateCurrentUserProfile, updateStoredUser } from '../../api/services/auth'
 import { uploadUserAvatar } from '../../api/services/users'
 import { API_BASE_URL } from '../../api/config'
@@ -23,6 +27,7 @@ const profileDialogVisible = ref(false)
 const profileSubmitting = ref(false)
 const sessionUser = ref(getStoredUser() || {})
 const avatarPreviewUrl = ref('')
+const avatarViewerUrl = ref('')
 const pendingAvatarFile = ref(null)
 const profileForm = reactive({
   username: '',
@@ -56,6 +61,15 @@ const resolveUploadedAvatarUrl = (uploaded = {}) => {
 }
 const currentAvatarUrl = computed(() => avatarPreviewUrl.value || normalizeAvatarUrl(currentUser.value.avatarUrl || currentUser.value.avatar || ''))
 const displayedProfileAvatarUrl = computed(() => avatarPreviewUrl.value || normalizeAvatarUrl(profileForm.avatarUrl))
+// 保存本次预览的地址，避免账号信息更新时把正在查看的图片替换掉。
+const openAvatarViewer = (url) => {
+  if (url) avatarViewerUrl.value = url
+}
+const closeAvatarViewer = () => { avatarViewerUrl.value = '' }
+const handleProfileAvatarPreview = (event) => {
+  // 上传控件仍接收自己的点击事件；冒泡到姓名区域后不再触发大图预览。
+  if (!event.target.closest('.el-upload')) openAvatarViewer(displayedProfileAvatarUrl.value)
+}
 const navMenus = computed(() => getRoleMenus(currentRole.value, currentUser.value))
 const defaultOpenMenus = computed(() => navMenus.value.filter((menu) => menu.children?.length).map((menu) => menu.index))
 const sidebarWidth = computed(() => (isSidebarCollapsed.value ? '72px' : '236px'))
@@ -94,6 +108,8 @@ const handleMenuSelect = (index) => {
 }
 
 const clearAvatarPreview = () => {
+  // 先关闭大图，再释放待上传文件的 blob URL，避免预览引用已撤销的资源。
+  closeAvatarViewer()
   if (avatarPreviewUrl.value) {
     URL.revokeObjectURL(avatarPreviewUrl.value)
     avatarPreviewUrl.value = ''
@@ -312,14 +328,24 @@ onBeforeUnmount(clearAvatarPreview)
       align-center
       class="profile-dialog"
       title="个人中心"
-      width="min(640px, calc(100vw - 32px))"
+      width="min(560px, calc(100vw - 32px))"
       destroy-on-close
       @closed="clearAvatarPreview"
     >
       <div class="profile-panel">
         <div class="profile-hero">
+          <div
+            class="profile-preview-area"
+            :role="displayedProfileAvatarUrl ? 'button' : undefined"
+            :tabindex="displayedProfileAvatarUrl ? 0 : undefined"
+            :title="displayedProfileAvatarUrl ? '点击预览头像' : undefined"
+            aria-label="预览头像"
+            @click.stop="handleProfileAvatarPreview"
+            @keydown.enter.self.stop.prevent="openAvatarViewer(displayedProfileAvatarUrl)"
+            @keydown.space.self.stop.prevent="openAvatarViewer(displayedProfileAvatarUrl)"
+          >
           <div class="profile-avatar-wrap">
-            <el-avatar :size="72" :src="displayedProfileAvatarUrl" class="profile-avatar">
+            <el-avatar :size="56" :src="displayedProfileAvatarUrl" class="profile-avatar">
               <el-icon>
                 <UserFilled />
               </el-icon>
@@ -330,7 +356,7 @@ onBeforeUnmount(clearAvatarPreview)
               :on-change="handleAvatarSelection"
               :show-file-list="false"
             >
-              <button class="avatar-upload-button" type="button" title="上传头像">
+              <button class="avatar-upload-button" type="button" title="上传头像" aria-label="上传头像">
                 <el-icon>
                   <UploadFilled />
                 </el-icon>
@@ -341,22 +367,8 @@ onBeforeUnmount(clearAvatarPreview)
             <strong>{{ currentUserName }}</strong>
             <span>{{ currentUserRole }}</span>
           </div>
+          </div>
           <div class="profile-badge">账号信息</div>
-        </div>
-
-        <div class="profile-summary">
-          <div>
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>{{ profileForm.department || '暂未填写部门' }}</span>
-          </div>
-          <div>
-            <el-icon><Iphone /></el-icon>
-            <span>{{ profileForm.phone || '暂未填写手机号' }}</span>
-          </div>
-          <div>
-            <el-icon><Message /></el-icon>
-            <span>{{ profileForm.email || '暂未填写邮箱' }}</span>
-          </div>
         </div>
 
         <el-form :model="profileForm" label-position="top" class="profile-form">
@@ -399,6 +411,15 @@ onBeforeUnmount(clearAvatarPreview)
         </div>
       </template>
     </el-dialog>
+    <ElImageViewer
+      v-if="avatarViewerUrl"
+      class="avatar-image-viewer"
+      :url-list="[avatarViewerUrl]"
+      :z-index="4000"
+      teleported
+      hide-on-click-modal
+      @close="closeAvatarViewer"
+    />
   </el-container>
 </template>
 
@@ -631,44 +652,50 @@ onBeforeUnmount(clearAvatarPreview)
   min-width: 0;
 }
 
-.profile-dialog :deep(.el-dialog) {
+/* Dialog 被 Teleport 后没有当前组件的 scope 属性，根部样式需显式全局限定。 */
+:global(.el-dialog.profile-dialog) {
+  padding: 0;
   border-radius: 10px;
   overflow: hidden;
 }
 
-.profile-dialog :deep(.el-dialog__header) {
+:global(.profile-dialog > .el-dialog__header) {
   margin: 0;
-  padding: 18px 22px 14px;
+  padding: 14px 18px 12px;
   border-bottom: 1px solid var(--border-light);
 }
 
-.profile-dialog :deep(.el-dialog__title) {
+:global(.profile-dialog .el-dialog__title) {
   color: var(--text-primary);
   font-size: 18px;
   font-weight: 700;
 }
 
-.profile-dialog :deep(.el-dialog__body) {
+:global(.profile-dialog > .el-dialog__body) {
   padding: 0;
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
 }
 
-.profile-dialog :deep(.el-dialog__footer) {
-  padding: 14px 22px 18px;
+:global(.profile-dialog > .el-dialog__footer) {
+  padding: 12px 18px;
   border-top: 1px solid var(--border-light);
   background: #fbfdff;
 }
 
 .profile-panel {
-  padding: 20px 22px 22px;
+  display: grid;
+  gap: 12px;
+  padding: 14px 18px;
 }
 
 .profile-hero {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 116px;
-  padding: 20px;
+  gap: 12px;
+  min-height: 84px;
+  padding: 14px;
   overflow: hidden;
   border-radius: 8px;
   background:
@@ -691,7 +718,12 @@ onBeforeUnmount(clearAvatarPreview)
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
 }
+
+/* 上传触发容器固定为头像大小，按钮的定位不依赖悬停滤镜或 transform。 */
+.profile-avatar-wrap :deep(.el-upload) { position: absolute; inset: 0; pointer-events: none; }
 
 .profile-avatar {
   position: relative;
@@ -702,6 +734,11 @@ onBeforeUnmount(clearAvatarPreview)
   box-shadow: 0 10px 22px rgba(37, 99, 235, 0.16);
   font-size: 30px;
 }
+
+.profile-preview-area { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 12px; border-radius: 10px; }
+.profile-preview-area[role="button"] { cursor: zoom-in; }
+.profile-preview-area:focus-visible { outline: 2px solid #2563eb; outline-offset: 4px; }
+:global(.avatar-image-viewer [data-liquid-kind="button"]) { color: #fff !important; }
 
 .profile-avatar :deep(img),
 .header-user :deep(.el-avatar img) {
@@ -726,6 +763,7 @@ onBeforeUnmount(clearAvatarPreview)
   background: var(--primary-color);
   color: #ffffff;
   cursor: pointer;
+  pointer-events: auto;
   box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
 }
 
@@ -772,45 +810,13 @@ onBeforeUnmount(clearAvatarPreview)
   font-weight: 600;
 }
 
-.profile-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 14px 0;
-}
-
-.profile-summary div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.profile-summary .el-icon {
-  flex: 0 0 auto;
-  color: var(--primary-color);
-  font-size: 16px;
-}
-
-.profile-summary span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .profile-form {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .profile-section {
-  padding: 16px;
+  padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
@@ -818,7 +824,7 @@ onBeforeUnmount(clearAvatarPreview)
 }
 
 .profile-section h3 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 700;
@@ -827,11 +833,11 @@ onBeforeUnmount(clearAvatarPreview)
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px 14px;
+  gap: 10px 12px;
 }
 
 .profile-form :deep(.el-form-item) {
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .profile-form :deep(.el-form-item:last-child) {
@@ -842,6 +848,7 @@ onBeforeUnmount(clearAvatarPreview)
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 .profile-form :deep(.el-input__wrapper) {
@@ -896,9 +903,9 @@ onBeforeUnmount(clearAvatarPreview)
     padding: 14px;
   }
 
-  .profile-summary,
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
+}
+
+@media (max-width: 480px) {
+  .profile-grid { grid-template-columns: 1fr; }
 }
 </style>

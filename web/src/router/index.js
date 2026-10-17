@@ -1,3 +1,6 @@
+/*
+ * router index公共逻辑模块，供相关视图或服务复用。
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -50,6 +53,7 @@ const buildRouteMeta = (routeModule) => ({
   module: routeModule,
 })
 
+// 路由元信息来自统一模块表，组件使用懒加载，避免首页下载所有业务页面。
 const routeComponentMap = {
   LabAdminPortal: () => import('../views/roles/LabAdminPortal.vue'),
   LabAdminLabManagement: () => import('../views/labs/LabManagement.vue'),
@@ -250,6 +254,8 @@ const getRedirectPath = () => {
   return AUTH_ROLE_DEFAULT_PATH[getStoredRole()] || AUTH_ROLE_DEFAULT_PATH[DEFAULT_AUTH_ROLE]
 }
 
+// 校验顺序：公开页面 → 登录状态/服务端资料 → 角色范围 → 自定义菜单权限。
+// 路由守卫只控制页面访问体验，不能替代后端对接口和数据范围的授权。
 router.beforeEach(async (to) => {
   const isPublicRoute = to.matched.some((matchedRoute) => matchedRoute.meta?.public)
   const requiresAuth = !isPublicRoute

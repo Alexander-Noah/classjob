@@ -1,3 +1,7 @@
+/*
+ * 设备管理的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：getLabId、getLabName、getLabRoom、getDeviceLabId、getDeviceLabName 等。
+ */
 const trimText = (value) => String(value ?? '').trim()
 
 export const getLabId = (lab = {}) => lab.id ?? lab.labId ?? ''

@@ -1,3 +1,7 @@
+/*
+ * 环境模板实现模块。
+ * 主要协作组件：EnvironmentTemplateMapper、BusinessLoopService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.VO.TeacherOptionVO;

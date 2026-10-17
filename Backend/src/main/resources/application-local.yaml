@@ -1,3 +1,5 @@
+# 后端本地开发配置：仅在 local profile 下加载对应覆盖项。
+
 spring:
   config:
     import: optional:file:.local-dev-secrets.properties

@@ -1,3 +1,8 @@
+/*
+ * 设备运行状态的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/device-status/labs/{labId:\\d+}、/device-status/devices/{deviceId:\\d+}、/device-status/events、/device-status/report、/device-status/summary；完整路径由类级与方法级映射组合。
+ * 主要协作组件：DeviceStatusService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.result.Result;

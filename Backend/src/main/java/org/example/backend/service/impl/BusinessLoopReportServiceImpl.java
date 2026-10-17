@@ -1,3 +1,7 @@
+/*
+ * 业务闭环实现模块。
+ * 主要协作组件：BusinessLoopReportMapper、ObjectMapper。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.mapper.BusinessLoopReportMapper;

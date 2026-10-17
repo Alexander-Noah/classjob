@@ -1,3 +1,7 @@
+/*
+ * 实验室实现模块。
+ * 主要协作组件：LabMapper、BusinessLoopService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.LabEntity;

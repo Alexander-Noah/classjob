@@ -1,3 +1,6 @@
+<!--
+  桌面端的登录弹窗视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 

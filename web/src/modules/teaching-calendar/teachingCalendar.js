@@ -1,3 +1,7 @@
+/*
+ * 教学日历公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：MAXIMUM_ACADEMIC_WEEK、normalizeTeachingCalendar、loadTeachingCalendar、getAcademicWeek、getTeachingWeekStartDate。
+ */
 import { getClassTimetableCrawlerConfig } from '../../api/services/classTimetable'
 import { calculateAcademicWeek } from '../../utils/academicWeek'
 

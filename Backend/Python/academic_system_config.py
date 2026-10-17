@@ -1,3 +1,4 @@
+# 集中维护学校入口地址和表单标识，避免导航与查询使用不同环境的 URL。
 from dataclasses import dataclass
 import os
 from urllib.parse import urlparse
@@ -17,6 +18,11 @@ class AcademicSystemConfig:
         return f"{parsed.scheme}://{parsed.netloc}"
 
     def validate(self) -> "AcademicSystemConfig":
+        """校验地址结构及查询同源约束，返回自身；不发起网络请求。
+
+        Raises:
+            ValueError: 地址缺少 HTTP(S) 协议/主机、查询接口不同源或必填表单标识为空。
+        """
         named_urls = {
             "TIMETABLE_PORTAL_URL": self.portal_url,
             "TIMETABLE_CLASS_PAGE_URL": self.class_timetable_url,
@@ -29,6 +35,7 @@ class AcademicSystemConfig:
 
         result = urlparse(self.class_timetable_result_url)
         page = urlparse(self.class_timetable_url)
+        # 浏览器 fetch 复用当前登录 Cookie，课表页面和查询接口必须同源。
         if (result.scheme, result.netloc) != (page.scheme, page.netloc):
             raise ValueError("课表页面和查询接口必须属于同一个教务系统来源")
         if not self.portal_app_id:

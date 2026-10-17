@@ -1,3 +1,7 @@
+/*
+ * 头像资源公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：normalizeAvatarUrl。
+ */
 import { API_BASE_URL } from '../api/config'
 
 export function normalizeAvatarUrl(value = '') {

@@ -1,3 +1,6 @@
+<!--
+  Web 管理平台的激活码视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'

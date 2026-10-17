@@ -1,7 +1,12 @@
+/*
+ * collectionService的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：createCollectionService。
+ */
 import http from '../http'
 import { API_USE_MOCK } from '../config'
 import { requireAuthoritativeRecord } from './authoritativeRecord'
 
+// 仅面向可 JSON 序列化的台账数据；Date 会转成字符串，不能传入循环对象或函数。
 const cloneRecords = (records) => JSON.parse(JSON.stringify(records || []))
 
 const readLocalRecords = (storageKey) => {
@@ -26,6 +31,7 @@ const removeLocalRecords = (storageKey) => {
   window.localStorage.removeItem(storageKey)
 }
 
+// 兼容列表、records/items 和统一 data 包装；未识别的响应保持空列表，不填造业务记录。
 const normalizeListResponse = (data) => {
   if (Array.isArray(data?.data?.records)) return data.data.records
   if (Array.isArray(data?.data?.items)) return data.data.items
@@ -42,6 +48,13 @@ const normalizeRecordResponse = (data, fallbackRecord) => {
   return fallbackRecord
 }
 
+/**
+ * 创建台账资源的请求适配器；真实模式走 HTTP，mock 模式在 localStorage 保存副本。
+ * @param {object} options 资源配置，endpoints.list 用于列表与单条增删改
+ * @param {boolean} options.serverAuthoritativeRecords 正式创建/更新是否必须返回有效服务端记录
+ * @returns {object} list/replace/create/update/reset/remove 等异步操作
+ * @description 严格记录校验只作用于 create/update，不等于所有批量接口都提供同等保证。
+ */
 export function createCollectionService({ endpoints, resourceName, storageKey, serverAuthoritativeRecords = false }) {
   const list = async ({ fallbackRecords = [] } = {}) => {
     if (API_USE_MOCK) {
@@ -74,6 +87,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
       Array.isArray(data?.records) ||
       Array.isArray(data?.items)
 
+    // 只有响应明确不含列表时才兼容回显提交值；显式空列表必须作为服务端结果保留。
     return responseContainsList ? normalizedRecords : nextRecords
   }
 
@@ -91,6 +105,7 @@ export function createCollectionService({ endpoints, resourceName, storageKey, s
       return savedRecord
     }
 
+    // 正式模式不生成本地 ID；严格资源必须接受服务端已保存对象，否则整次操作报错。
     const { data } = await http.post(endpoints.list, nextRecord)
     return serverAuthoritativeRecords ? requireAuthoritativeRecord(data, resourceName, 'create') : normalizeRecordResponse(data, nextRecord)
   }

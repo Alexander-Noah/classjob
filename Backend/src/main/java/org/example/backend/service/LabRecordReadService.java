@@ -1,3 +1,7 @@
+/*
+ * 实验室实现模块。
+ * 主要协作组件：LabRecordReadMapper。
+ */
 package org.example.backend.service;
 
 import org.example.backend.mapper.LabRecordReadMapper;

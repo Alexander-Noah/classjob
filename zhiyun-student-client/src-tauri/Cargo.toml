@@ -1,3 +1,5 @@
+# Rust 包与构建目标配置；平台依赖和功能开关在此声明。
+
 [package]
 name = "zhiyun-student-client"
 version = "0.1.0"

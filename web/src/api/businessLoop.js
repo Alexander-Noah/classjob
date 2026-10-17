@@ -1,3 +1,7 @@
+/*
+ * 业务闭环公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：normalizeBusinessLoopOverview、fetchBusinessLoopOverview。
+ */
 import http from './http'
 import { API_USE_MOCK } from './config'
 

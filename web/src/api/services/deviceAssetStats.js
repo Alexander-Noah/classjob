@@ -1,3 +1,7 @@
+/*
+ * 设备资产的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：calculateDeviceAssetStats。
+ */
 const normalizeStatus = (device = {}) => String(device.status || '正常').trim() || '正常'
 
 export function calculateDeviceAssetStats(records = []) {

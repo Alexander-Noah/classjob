@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/** 以实验室和学生设备 ID 登记上下线；调用方必须携带有效 labId，避免设备串入其他实验室。 */
 @Service
 public class StudentClientServiceImpl implements StudentClientService {
     private final StudentClientMapper studentClientMapper;

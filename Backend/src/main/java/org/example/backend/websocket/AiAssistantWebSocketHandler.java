@@ -1,3 +1,7 @@
+/*
+ * AI 助手实现模块。
+ * 主要协作组件：AiAssistantService、SpeechRecognitionService、ObjectMapper。
+ */
 package org.example.backend.websocket;
 
 import lombok.extern.slf4j.Slf4j;

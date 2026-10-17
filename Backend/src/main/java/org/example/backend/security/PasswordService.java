@@ -1,3 +1,6 @@
+/*
+ * 密码安全的服务端安全组件；调用方应保持身份认证与权限判断边界。
+ */
 package org.example.backend.security;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +27,12 @@ public class PasswordService {
         this.iterations = Math.max(iterations, 10000);
     }
 
+    /**
+     * 为每次保存生成独立随机盐，再使用 PBKDF2 派生密码摘要。
+     * @param rawPassword 已由业务入口检查格式的明文密码；禁止写入日志
+     * @return pbkdf2$迭代次数$Base64盐$Base64摘要，验证旧密码时使用其中保存的参数
+     * @throws IllegalStateException 密码派生失败，包括无效输入导致的底层异常
+     */
     public String encode(String rawPassword) {
         byte[] salt = new byte[SALT_BYTES];
         secureRandom.nextBytes(salt);
@@ -37,12 +46,19 @@ public class PasswordService {
         );
     }
 
+    /**
+     * 验证现有密码，不执行数据库更新。支持历史明文仅用于兼容迁移。
+     * @param rawPassword 本次登录输入
+     * @param storedPassword 数据库保存的摘要串或尚未迁移的历史密码
+     * @return 是否匹配；空输入和损坏的摘要格式均返回 false
+     */
     public boolean matches(String rawPassword, String storedPassword) {
         if (rawPassword == null || storedPassword == null || storedPassword.isBlank()) {
             return false;
         }
 
         if (!isEncoded(storedPassword)) {
+            // 旧值验证成功后，由登录业务结合 needsRehash 迁移；不能在这里直接改用户记录。
             return MessageDigest.isEqual(
                     rawPassword.getBytes(StandardCharsets.UTF_8),
                     storedPassword.getBytes(StandardCharsets.UTF_8)
@@ -62,6 +78,7 @@ public class PasswordService {
         }
     }
 
+    /** 返回是否需要升级格式/迭代次数；必须在密码匹配成功后使用明文重新 encode 并保存。 */
     public boolean needsRehash(String storedPassword) {
         if (!isEncoded(storedPassword)) {
             return true;
@@ -75,6 +92,7 @@ public class PasswordService {
         }
     }
 
+    /** 只识别前缀和四段结构；不保证 Base64、迭代次数或摘要内容合法。 */
     public boolean isEncoded(String password) {
         return password != null && password.startsWith(PREFIX + "$") && password.split("\\$").length == 4;
     }

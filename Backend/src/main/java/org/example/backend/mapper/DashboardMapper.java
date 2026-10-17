@@ -1,3 +1,7 @@
+/*
+ * 工作台统计的 MyBatis 持久化契约。
+ * SQL 定义位于 resources/mapper/DashboardMapper.xml，修改参数或字段需同步接口与 XML。
+ */
 package org.example.backend.mapper;
 
 import org.apache.ibatis.annotations.Mapper;

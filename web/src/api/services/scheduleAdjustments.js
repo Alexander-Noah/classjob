@@ -1,3 +1,7 @@
+/*
+ * 调课申请的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：listScheduleAdjustments、createScheduleAdjustment、updateScheduleAdjustment、approveScheduleAdjustment、completeScheduleAdjustment。
+ */
 import http from '../http'
 import { API_ENDPOINTS } from '../endpoints'
 

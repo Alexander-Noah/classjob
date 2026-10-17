@@ -1,3 +1,7 @@
+/*
+ * 维护记录回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：maintenanceRecordInterfaceExposesOnlyCrudEndpointsAndFields、serviceRejectsEveryRequiredBlankFieldBeforeWriting、serviceGeneratesRecordNumberAndRequiresResolvedReferences、serviceAllowsNoDeviceAndClearingAnExistingDevice 等。
+ */
 package org.example.backend.maintenance;
 
 import org.junit.jupiter.api.Test;

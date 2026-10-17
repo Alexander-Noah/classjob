@@ -1,3 +1,6 @@
+/*
+ * vite.config.js 构建配置，区分开发服务、编译输出与插件行为。
+ */
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 

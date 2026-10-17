@@ -53,6 +53,10 @@ export function isControlledPath(path) {
   return CONTROLLED_PATHS.some((controlled) => path.startsWith(controlled))
 }
 
+/**
+ * 空权限列表沿用角色默认菜单；受控路径按授权项匹配。
+ * 维护记录“查看”和“填写”使用精确匹配，避免父路径授权连带开放填写入口。
+ */
 export function isPathAllowed(path, permissionItems) {
   if (!permissionItems || !permissionItems.length) return true
   if (!isControlledPath(path)) return true
@@ -63,6 +67,7 @@ export function isPathAllowed(path, permissionItems) {
   )
 }
 
+/** 兼容 JSON 字符串、分组数组及旧权限名称，输出去重后的权限项名称。 */
 export function parseUserPermissions(user) {
   if (!user?.permissions) return []
 

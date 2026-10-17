@@ -1,3 +1,7 @@
+/*
+ * 使用记录回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：courseUsageUsesConfiguredAtomicSemesterCalendar。
+ */
 package org.example.backend.usage;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;

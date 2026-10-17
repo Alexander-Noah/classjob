@@ -1,4 +1,8 @@
-﻿<script setup>
+﻿<!--
+  Web 管理平台的统计分析视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useECharts。
+-->
+<script setup>
 import { computed, markRaw, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

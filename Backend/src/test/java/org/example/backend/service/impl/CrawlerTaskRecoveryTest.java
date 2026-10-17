@@ -1,3 +1,7 @@
+/*
+ * CrawlerTaskRecoveryTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：reconcilesInterruptedTasksBeforeSchedulingNewWork。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.mapper.ClassTimetableMapper;

@@ -1,3 +1,7 @@
+/*
+ * 课程环境的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/course-environment-requests、/course-environment-requests、/course-environment-requests/{id}、/course-environment-requests/{id}、/course-environment-requests/{id}；完整路径由类级与方法级映射组合。
+ */
 package org.example.backend.controller;
 
 import lombok.extern.slf4j.Slf4j;

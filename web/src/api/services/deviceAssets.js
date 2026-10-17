@@ -1,3 +1,7 @@
+/*
+ * 设备资产的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：normalizeDeviceAsset、resolveCategory、createEmptyDeviceAsset、toDeviceAssetPayload、deviceAssetService。
+ */
 import { API_USE_MOCK } from '../config'
 import { API_ENDPOINTS } from '../endpoints'
 import http from '../http'

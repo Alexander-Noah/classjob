@@ -1,3 +1,8 @@
+/*
+ * 耗材借还回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：fractionalZeroAndOverflowQuantitiesNeverChangeInventory、replayOfSuccessfulBorrowDoesNotDeductStockAgainEvenIfNoneRemains、excessReturnAndMissingLoanNeverAddStock、successfulReturnReplayDoesNotAddStockAgain。
+ * 主要协作组件：ConsumableLoanMapper、ConsumableMapper、ConsumableService、ConsumableLoanService。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.ConsumableEntity;

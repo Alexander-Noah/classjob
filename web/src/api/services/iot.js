@@ -1,3 +1,7 @@
+/*
+ * 物联网的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：listIotDevices、listLabIotDevices、getLabIotOverview、createIotDevice、updateIotDevice 等。
+ */
 import { API_BASE_URL } from '../config'
 import { API_ENDPOINTS } from '../endpoints'
 import http from '../http'

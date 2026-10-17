@@ -1,3 +1,5 @@
+# 主机状态辅助探针：提供状态 API 与上报命令；psutil 缺失时使用平台能力回退。
+# 环境变量输出需经过敏感名称过滤，设备缓存由 DEVICE_LOCK 保护。
 from __future__ import annotations
 
 import argparse
@@ -61,6 +63,7 @@ def bytes_to_gib(value: float) -> float:
     return round(value / (1024**3), 2)
 
 
+# 无有效总量时返回 None，区别于“有效采样且占用率为零”。
 def percent(used: float, total: float) -> Optional[float]:
     if total <= 0:
         return None

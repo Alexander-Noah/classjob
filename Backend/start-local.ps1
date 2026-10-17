@@ -1,3 +1,6 @@
+# start-local运维脚本；执行前确认参数、工作目录和目标环境，不能作为业务请求入口。
+# 参数/局部变量包括：DbPassword、DbUsername、DbUrl、Port、SkipRun、Value、Path、Secrets。
+
 param(
     [string]$DbPassword,
     [string]$DbUsername,

@@ -1,3 +1,6 @@
+/*
+ * CrawlerCredentialException实现模块。
+ */
 package org.example.backend.service;
 
 public final class CrawlerCredentialException extends RuntimeException {

@@ -8,6 +8,10 @@ import java.time.ZoneId;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * 按实验室编码与名称查询教学占用，使用上海时区解释预约时间。
+ * 数据源不可用时返回 UNAVAILABLE，不能把查询失败误认为“没有冲突”。
+ */
 @Service
 public class ReservationScheduleService {
     private static final ZoneId RESERVATION_TIME_ZONE = ZoneId.of("Asia/Shanghai");
@@ -20,6 +24,7 @@ public class ReservationScheduleService {
         this.laboratories = laboratories;
     }
 
+    /** 只接受起止时间均落在预约日期内的有效区间，查询结果同时携带能力可用状态。 */
     public CapabilityResult<ScheduleConflictSnapshot> checkConflict(Long labId, LocalDate date, TimeRange range) {
         if (labId == null || labId <= 0 || date == null || !valid(range)) {
             return unavailable("reservation request is malformed");

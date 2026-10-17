@@ -1,3 +1,7 @@
+/*
+ * MonolithWiringTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：applicationUsesTheRootPackageAndDoesNotImportModuleHosts、featureReadAndWriteRoutesHaveOneControllerOwner、legacyWriteMapperRemainsAvailableAlongsideFeatureMappers、targetFeaturesDoNotRetainSingleImplementationForwardingPorts 等。
+ */
 package org.example.backend;
 
 import org.apache.ibatis.annotations.Mapper;

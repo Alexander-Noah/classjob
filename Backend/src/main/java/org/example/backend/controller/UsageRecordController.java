@@ -1,3 +1,8 @@
+/*
+ * 使用记录的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/usage-records、/usage-records/batch、/usage-records/{id}/review、/usage-records/{id}/abnormal、/usage-records/{id}/archive；完整路径由类级与方法级映射组合。
+ * 主要协作组件：UsageRecordService。
+ */
 package org.example.backend.controller;
 
 import lombok.Data;

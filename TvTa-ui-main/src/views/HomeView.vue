@@ -1,3 +1,6 @@
+<!--
+  桌面端的HomeView视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup lang="ts">
 import { computed, h, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useMessage } from 'naive-ui'

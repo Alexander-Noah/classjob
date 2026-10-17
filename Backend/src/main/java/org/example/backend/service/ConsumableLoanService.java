@@ -1,3 +1,7 @@
+/*
+ * 耗材借还实现模块。
+ * 主要协作组件：ConsumableLoanMapper、ConsumableMapper、ConsumableService。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.ConsumableEntity;

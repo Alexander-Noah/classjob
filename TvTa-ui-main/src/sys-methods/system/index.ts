@@ -1,3 +1,7 @@
+/*
+ * 桌面端 system 系统能力适配；调用方式以导入的 Tauri 插件 API 为准。
+ * 主要导出：getMacAddress。
+ */
 import { Command } from '@tauri-apps/plugin-shell';
 import { invoke } from '@tauri-apps/api/core';
 import { platform } from '@tauri-apps/plugin-os';

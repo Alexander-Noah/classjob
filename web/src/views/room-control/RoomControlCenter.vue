@@ -1,4 +1,8 @@
-﻿<script setup>
+﻿<!--
+  Web 管理平台的实验室控制视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useRoomControl。
+-->
+<script setup>
 import MetricGrid from '../../components/common/MetricGrid.vue'
 import DeviceControlPanel from './components/DeviceControlPanel.vue'
 import EventRecordPanel from './components/EventRecordPanel.vue'

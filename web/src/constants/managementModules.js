@@ -1,3 +1,7 @@
+/*
+ * managementModules共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：LAB_MANAGEMENT_MODULE、DEVICE_MANAGEMENT_MODULE、RESERVATION_MANAGEMENT_MODULE、REPAIR_MANAGEMENT_MODULE、USAGE_RECORDS_MODULE 等。
+ */
   import { API_ENDPOINTS, getBusinessModuleEndpoints } from '../api/endpoints'
 
   export const LAB_MANAGEMENT_MODULE = {

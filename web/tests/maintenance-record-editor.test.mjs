@@ -1,3 +1,6 @@
+/*
+ * 维护记录的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildMaintenancePayload, canWriteMaintenanceRecords, createMaintenanceDraft, devicesForMaintenanceLab, filterMaintenanceRecords } from '../src/modules/maintenance-records/maintenanceRecordEditor.js'

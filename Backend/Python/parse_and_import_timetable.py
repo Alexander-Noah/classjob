@@ -1,3 +1,4 @@
+# 将爬虫导出的 HTML/Excel 规范化为标准 CSV；脚本名称保留历史兼容，实际入库由 Java 完成。
 from bs4 import BeautifulSoup
 import pandas as pd
 import re

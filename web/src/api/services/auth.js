@@ -1,3 +1,7 @@
+/*
+ * 身份认证的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：RETIRED_ROLE_MESSAGE、assertActiveSessionRole、getStoredRole、getStoredUser、getAuthToken 等。
+ */
 import http from '../http'
 import { API_ENDPOINTS } from '../endpoints'
 import { API_USE_MOCK } from '../config'
@@ -12,6 +16,7 @@ import {
   DEFAULT_AUTH_ROLE,
 } from '../../constants/auth'
 
+// 路由与页面共用会话适配器；缓存仅用于显示和导航，最终接口权限由后端判断。
 const PROFILE_REFRESH_INTERVAL = 8000
 export const RETIRED_ROLE_MESSAGE = '角色已停用，请联系系统管理员重新分配角色'
 
@@ -256,6 +261,7 @@ export function getRememberedLogin() {
   }
 }
 
+/** 仅记住账号和选项，不保存用户输入的登录密码。 */
 export function persistRememberedLogin({ username, remember }) {
   const storage = getLocalStorage()
   if (!storage) return
@@ -270,6 +276,7 @@ export function persistRememberedLogin({ username, remember }) {
   storage.removeItem(AUTH_REMEMBER_USERNAME_STORAGE_KEY)
 }
 
+/** 按记住模式写入会话；writeStorage 会清理另一种存储中的同名键。 */
 export function persistAuthSession({ role, token, user, remember = true }) {
   assertActiveSessionRole(role, user)
   writeStorage(AUTH_STORAGE_KEY, 'true', remember)
@@ -349,6 +356,7 @@ export async function updateCurrentUserProfile(payload = {}) {
   return data?.data || data || null
 }
 
+/** 刷新服务端身份并同步缓存；force 用于路由切换时跳过八秒刷新间隔。 */
 export async function refreshCurrentUserSession({ force = false } = {}) {
   if (!isAuthenticated()) return null
 

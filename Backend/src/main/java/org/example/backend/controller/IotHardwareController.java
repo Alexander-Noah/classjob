@@ -1,3 +1,8 @@
+/*
+ * 物联网的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/iot/hardware、/iot/hardware/devices、/iot/labs/{labId:\\d+}/devices、/iot/devices、/iot/labs/{labId:\\d+}/overview；完整路径由类级与方法级映射组合。
+ * 主要协作组件：IotHardwareService、IotDeviceService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.result.Result;

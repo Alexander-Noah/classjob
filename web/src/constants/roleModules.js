@@ -1,3 +1,7 @@
+/*
+ * roleModules共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：TEACHER_COURSE_ENVIRONMENT_MODULE、TEACHER_SCHEDULE_MODULE。
+ */
 export const TEACHER_COURSE_ENVIRONMENT_MODULE = {
   badge: '教学环境',
   recordName: '课程环境',

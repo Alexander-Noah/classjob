@@ -1,7 +1,11 @@
+# 课表的 Python 脚本模块，入口及参数以 main/命令行解析和环境变量读取为准。
+# 主要处理函数：resolve_semester。
+
 from bs4 import BeautifulSoup
 
 
 def resolve_semester(configured_semester, timetable_page_html):
+    # 用户显式配置优先；缺省时读取学校页面选中项，不根据当前月份猜测学期。
     configured = str(configured_semester or "").strip()
     if configured:
         return configured

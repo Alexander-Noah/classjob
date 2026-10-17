@@ -1,3 +1,6 @@
+# 课表的 Python 脚本模块，入口及参数以 main/命令行解析和环境变量读取为准。
+# 主要处理函数：clean_text、add_utf8_meta、save_html、save_text、js_click 等。
+
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By

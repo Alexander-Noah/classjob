@@ -1,3 +1,7 @@
+/*
+ * 全校课表采集回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：preservesTimetableSearchContract、preservesSummaryAndSemesterContracts。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.controller.TeachingScheduleQueryController;

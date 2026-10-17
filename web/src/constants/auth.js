@@ -1,3 +1,7 @@
+/*
+ * 身份认证共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：AUTH_STORAGE_KEY、AUTH_ROLE_STORAGE_KEY、AUTH_TOKEN_STORAGE_KEY、AUTH_USER_STORAGE_KEY、AUTH_REMEMBER_ENABLED_STORAGE_KEY 等。
+ */
 export const AUTH_STORAGE_KEY = 'smart-lab-authenticated'
 export const AUTH_ROLE_STORAGE_KEY = 'smart-lab-role'
 export const AUTH_TOKEN_STORAGE_KEY = 'smart-lab-token'

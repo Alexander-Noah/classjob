@@ -1,3 +1,7 @@
+/*
+ * 课表与时间占用实现模块。
+ * 主要协作组件：TeachingScheduleReadService。
+ */
 package org.example.backend.service;
 
 import org.springframework.stereotype.Service;

@@ -1,3 +1,8 @@
+/*
+ * AiProviderCredentialScopeTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：changingProviderCannotReuseThePreviousProvidersSecret、equivalentEndpointAndModelChangesKeepTheExistingKeyWithoutExposingIt、switchingWhileDisabledClearsTheOldKey、newProviderAcceptsItsOwnKeyAndRejectsInvalidEndpoints。
+ * 主要协作组件：AiAssistantUserConfigMapper。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.AiAssistantUserConfigEntity;

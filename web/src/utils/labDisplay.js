@@ -1,3 +1,7 @@
+/*
+ * 实验室公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：getLabName、getLabRoomCode、formatLabDisplayName、formatLabOptionLabel、createLabSelectOption。
+ */
 export const getLabName = (lab = {}) => {
   if (typeof lab === 'string') return lab
   return lab.name || lab.labName || lab.roomName || lab.classroomName || lab.label || lab.value || ''

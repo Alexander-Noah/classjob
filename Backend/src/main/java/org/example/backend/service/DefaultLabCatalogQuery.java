@@ -1,3 +1,7 @@
+/*
+ * 实验室实现模块。
+ * 主要协作组件：LabRecordReadService、ManagerNamePort、DeviceCountPort。
+ */
 package org.example.backend.service;
 
 import org.springframework.stereotype.Service;

@@ -1,3 +1,5 @@
+# 后端调度的课表采集入口：读取环境变量，建立门户 SSO 会话，导出供 Java 导入的文件。
+# 不直接操作数据库；学校页面、账号和浏览器目录由配置注入。
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By
@@ -51,6 +53,7 @@ BROWSER_PROFILE_DIR = Path(
         str(Path(__file__).resolve().parent / ".timetable-browser-profile"),
     )
 ).resolve()
+# 此标记只代表曾完成授权，不保证 Cookie 仍有效；失效时需要重新建立会话。
 PROFILE_AUTH_MARKER = BROWSER_PROFILE_DIR / ".academic-session-initialized"
 
 # 导出文件夹：当前 Python 文件同目录下的“课表导出结果”
@@ -593,6 +596,7 @@ def login_portal_and_enter_jw(driver):
 # =========================
 
 def create_driver(automatic_visible_authorization=False):
+    # 有历史授权才允许无头运行；恢复模式显式覆盖为可视浏览器，沿用同一用户目录。
     BROWSER_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     effective_headless = should_run_headless(HEADLESS, PROFILE_AUTH_MARKER.exists())
     if automatic_visible_authorization:
@@ -635,8 +639,8 @@ def main():
                 raise
 
             authorization_retried = True
-            # A portal-only timeout also needs the same visible SSO recovery.
-            # The retry guard above keeps visible failures and repeated failures terminal.
+            # 门户跳转超时与会话失效共用一次可视恢复；可视模式再失败时直接结束，防止无限重启。
+            # 标记只用于决定是否允许无头模式，删除它不会删除浏览器的 Cookie 或整个用户目录。
             PROFILE_AUTH_MARKER.unlink(missing_ok=True)
             print("后台教务导航失败，准备尝试一次可视恢复：", error)
             driver.quit()
@@ -678,7 +682,7 @@ def main():
             print("所有文件已导出到：", OUTPUT_DIR)
 
     finally:
-        # 不关闭浏览器，方便你检查
+        # 成功和失败都释放 WebDriver，避免残留浏览器占用持久化用户目录。
         driver.quit()
 
 

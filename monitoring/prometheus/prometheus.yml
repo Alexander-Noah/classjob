@@ -1,8 +1,12 @@
+# Prometheus 采集任务配置：目标地址需与后端独立管理端口一致。
+
 global:
+  # 每 15 秒采样，瞬时的 SQL 活跃连接可能发生在两个采样点之间。
   scrape_interval: 15s
   evaluation_interval: 15s
 scrape_configs:
   - job_name: zhiyun-backend
+    # 与后端 management.server.port 对齐，业务端口 8080 不提供匿名指标访问。
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ['host.docker.internal:8081']

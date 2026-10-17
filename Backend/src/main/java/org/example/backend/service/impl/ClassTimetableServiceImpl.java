@@ -41,6 +41,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 编排手动与定时课表采集：解密凭据、执行 Python、导入标准 CSV，并维护任务记录。
+ * Python 负责浏览器导航和文件转换，数据库写入由本服务统一处理。
+ * 调度与运行锁按单个后端实例管理，不是跨实例的分布式任务锁。
+ */
 @Service
 @Slf4j
 public class ClassTimetableServiceImpl implements ClassTimetableService {
@@ -95,6 +100,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     public void initializeCrawlerScheduler() {
         try {
             ensureDefaultCrawlerConfig();
+            // 进程重启后旧任务已无执行线程，先收尾再注册下一次定时任务。
             classTimetableMapper.failInterruptedCrawlerTasks();
             rescheduleCrawler();
         } catch (RuntimeException exception) {
@@ -148,6 +154,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     }
 
     private Map<String, Object> runCrawlerTask(String triggerType) {
+        // 手动和定时共用同一把锁，避免同时使用浏览器用户目录及导出文件。
         if (!crawlerRunning.compareAndSet(false, true)) {
             throw new IllegalStateException("课表抓取任务正在执行，请稍后再试");
         }
@@ -184,6 +191,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         Map<String, Object> crawlerConfig = getCrawlerConfig();
         Map<String, Object> task = insertStartedCrawlerTask(triggerType, credential, logPath);
 
+        // 凭据通过子进程环境传递，避免拼进命令行参数或任务日志。
         Map<String, String> crawlerEnv = new HashMap<>();
         crawlerEnv.put("TIMETABLE_USERNAME", credential.username());
         crawlerEnv.put("TIMETABLE_PASSWORD", credential.password());
@@ -205,6 +213,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             int crawlExitCode = runPythonScript(python, scriptPath, workingDir, logPath, timeoutSeconds, false, crawlerEnv);
             result.put("crawlExitCode", crawlExitCode);
 
+            // 只有浏览器采集成功才转换文件，避免沿用上一轮遗留的导出结果入库。
             if (crawlExitCode == 0) {
                 int importExitCode = runPythonScript(python, importScriptPath, workingDir, logPath, timeoutSeconds, true, crawlerEnv);
                 result.put("importExitCode", importExitCode);
@@ -232,7 +241,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             result.put("output", readLogTail(logPath));
             result.put("finishedAt", LocalDateTime.now().toString());
             updateFinishedCrawlerTask(task, result, credential, logPath);
-            // A failed script must be recorded without waiting for unrelated statistics.
+            // 先持久化任务终态再读统计，统计查询故障不能让已结束任务一直显示运行中。
             if ("success".equals(result.get("status"))) {
                 try {
                     result.put("summary", teachingScheduleQuery.summary());
@@ -245,6 +254,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
             updateFailedCrawlerTask(task, credential, logPath, "无法启动课表爬虫脚本：" + exception.getMessage());
             throw new IllegalStateException("无法启动课表爬虫脚本：" + exception.getMessage(), exception);
         } catch (InterruptedException exception) {
+            // 保留线程中断语义，允许容器关闭/调度取消流程识别本次执行已经被打断。
             Thread.currentThread().interrupt();
             updateFailedCrawlerTask(task, credential, logPath, "课表爬虫脚本执行被中断");
             throw new IllegalStateException("课表爬虫脚本执行被中断", exception);
@@ -271,6 +281,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
     }
 
     private void rescheduleCrawler() {
+        // 保存配置后替换旧计划；cancel(false) 不打断已经开始的采集。
         synchronized (schedulerMonitor) {
             if (scheduledCrawler != null) {
                 scheduledCrawler.cancel(false);
@@ -512,10 +523,21 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return Math.min(limit, MAX_TASK_LIMIT);
     }
 
+    // 毫秒时间加随机尾码用于本地任务排序；不提供多实例下的严格全局唯一保证。
     private long nextTaskId() {
         return System.currentTimeMillis() * 1000 + secureRandom.nextInt(1000);
     }
 
+    /**
+     * 将当前导出的标准 CSV 按涉及学期替换课表数据；空表不触发删除。
+     * 文件按物理行读取，因此字段不得包含 CSV 引号包裹的跨行换行。
+     * 本私有方法没有自行开启事务，不能据此宣称删除和全部插入具有自动回滚保证。
+     *
+     * @param workingDir Python 工作目录，文件固定在其“课表导出结果”子目录
+     * @param logPath 当前任务日志，写入导入数量或文件读取失败原因
+     * @return 有效实体的插入数量；缺少学期或课程名的行会跳过
+     * @throws IllegalStateException 文件缺失、仅有表头或 UTF-8 读取失败
+     */
     private int importStandardCsv(Path workingDir, Path logPath) {
         Path csvPath = workingDir.resolve("课表导出结果").resolve("班级课表标准数据.csv").normalize();
         if (!Files.exists(csvPath)) {
@@ -547,6 +569,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
                 semesters.add(entity.getSemester());
             }
 
+            // 先解析完文件再决定替换哪些学期，未出现在有效数据中的学期保持原状。
             for (String semester : semesters) {
                 classTimetableMapper.deleteBySemester(semester);
             }
@@ -712,6 +735,20 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         return view;
     }
 
+    /**
+     * 启动一个脚本并等待退出；通过文件接收合并输出，不在 Java 内消费输出管道。
+     *
+     * @param python 解释器路径或命令名，作为独立 ProcessBuilder 参数使用
+     * @param scriptPath 待执行脚本的绝对路径
+     * @param workingDir 子进程工作目录，影响脚本的相对路径解析
+     * @param logPath 任务日志文件；输出包含诊断路径，不包含传入的凭据环境变量
+     * @param timeoutSeconds 当前脚本的等待上限，单位秒，并非整次采集的总时限
+     * @param appendLog 是否在已有任务日志后追加脚本启动说明
+     * @param extraEnv 仅传给子进程的配置，不修改当前 JVM 的环境变量
+     * @return Python 退出码；等待超时返回服务内部约定值 -1
+     * @throws IOException 日志写入或子进程创建失败
+     * @throws InterruptedException 当前线程等待被中断，由外层恢复中断标记并记录失败
+     */
     private int runPythonScript(
             String python,
             Path scriptPath,
@@ -730,6 +767,7 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
                 appendLog ? StandardOpenOption.APPEND : StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE
         );
+        // 标准输出和错误输出合并写入文件，避免管道未消费导致子进程阻塞。
         ProcessBuilder processBuilder = new ProcessBuilder(python, scriptPath.toString());
         processBuilder.directory(workingDir.toFile());
         processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
@@ -743,8 +781,10 @@ public class ClassTimetableServiceImpl implements ClassTimetableService {
         }
 
         Process process = processBuilder.start();
+        // 超时按每个脚本分别计算，-1 是本服务约定的超时结果，不是 Python 退出码。
         boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
         if (!finished) {
+            // 这里只请求终止直接子进程；浏览器资源的正常收尾仍依赖 Python 的 finally。
             process.destroyForcibly();
             return -1;
         }

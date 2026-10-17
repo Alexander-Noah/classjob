@@ -1,3 +1,6 @@
+/*
+ * 设备运行状态实现模块。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.service.DeviceStatusService;

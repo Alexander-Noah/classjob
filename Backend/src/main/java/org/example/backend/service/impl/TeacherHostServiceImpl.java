@@ -9,8 +9,10 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+/** 按实验室登记教师主机心跳；查询时根据最后心跳时间识别过期的在线状态。 */
 @Service
 public class TeacherHostServiceImpl implements TeacherHostService {
+    // 云端教师主机判定阈值，与 Rust 网关的学生设备离线阈值不是同一配置。
     private static final int DEFAULT_OFFLINE_SECONDS = 15;
     static final String LAB_ID_REQUIRED = "labId must be positive";
 

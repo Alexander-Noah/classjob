@@ -1,3 +1,7 @@
+/*
+ * 二维码公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：generateQrSvg、generateQrSvgDataUrl。
+ */
 const VERSION_CONFIGS = [
   { version: 1, size: 21, dataCodewords: 19, ecCodewords: 7 },
   { version: 2, size: 25, dataCodewords: 34, ecCodewords: 10 },

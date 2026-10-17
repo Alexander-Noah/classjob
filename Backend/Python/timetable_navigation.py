@@ -1,3 +1,4 @@
+# 多窗口门户导航与身份状态识别；只观察页面，不绕过 CAS、验证码或 aTrust 授权。
 import time
 from urllib.parse import urlparse
 
@@ -36,6 +37,7 @@ def is_identity_login_page(current_url, title, page_html):
 
 
 def ensure_academic_authenticated(current_url, title, page_html):
+    # 到达教务域名不等于登录成功，仍需识别登录表单，交给上层触发会话恢复。
     normalized_url = str(current_url or "").strip().lower()
     normalized_title = str(title or "").strip().lower()
     normalized_html = str(page_html or "").lower()
@@ -78,6 +80,27 @@ def open_portal_app_and_wait(
 
 
 def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1, target_url=None):
+    """在所有浏览器窗口中等待目标主机，并将 WebDriver 留在命中的窗口。
+
+    Args:
+        driver: 已登录门户的 WebDriver，本函数会改变其当前窗口。
+        target_host: 目标主机名，接受该主机及其子域名，不接受任意包含同名的域名。
+        timeout_seconds: 轮询等待上限，单位秒；不覆盖 WebDriver 单次网络命令的超时。
+        poll_seconds: 扫描窗口之间的轮询间隔，负值按零处理。
+        target_url: 观察到 aTrust 后可再请求一次的目标地址，None 表示不主动重试。
+
+    Returns:
+        str: 命中目标主机时的 URL。域名匹配仅确认到达入口，不保证已建立教务登录态。
+
+    Raises:
+        ATrustAuthenticationRequired: 观察到学校零信任页面，等待结束后仍未进入目标。
+        TargetSystemUnavailable: 未观察到零信任页面，且目标在等待期内没有出现。
+
+    Notes:
+        调用方须继续调用 ensure_academic_authenticated 检查身份状态，
+        并负责 WebDriver 的 finally 释放；此函数不会关闭浏览器。
+    """
+    # 单调时钟不受系统时间校准影响；每轮重新读取句柄以发现 SSO 打开的新窗口。
     deadline = time.monotonic() + max(0, float(timeout_seconds))
     atrust_seen = False
     observed_urls = []
@@ -100,6 +123,7 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1,
             if _matches_host(current_host, "atrust.hniu.cn"):
                 atrust_seen = True
 
+        # 仅在观察到 aTrust 后重试目标一次；持续被拦截则明确要求完成学校授权。
         if atrust_seen and target_url and not target_retry_attempted:
             target_retry_attempted = True
             try:

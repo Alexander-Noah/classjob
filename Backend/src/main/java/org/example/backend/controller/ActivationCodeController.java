@@ -1,3 +1,8 @@
+/*
+ * 激活码的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/activation-codes/lab-bindings、/activation-codes/bind-lab、/activation-codes/{code}/unbind-lab；完整路径由类级与方法级映射组合。
+ * 主要协作组件：ModuleRecordService、BusinessLoopService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.result.Result;

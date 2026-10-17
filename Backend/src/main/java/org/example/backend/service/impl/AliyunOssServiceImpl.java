@@ -1,3 +1,6 @@
+/*
+ * 阿里云对象存储实现模块。
+ */
 package org.example.backend.service.impl;
 
 import com.aliyun.oss.OSS;

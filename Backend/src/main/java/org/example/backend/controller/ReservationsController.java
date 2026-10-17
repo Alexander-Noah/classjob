@@ -1,3 +1,8 @@
+/*
+ * 实验室预约的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/public/labs/{id:\\d+}/reservation-profile、/public/reservations/scan、/public/reservations/{id:\\d+}/status、/reservations/{id:\\d+}、/reservations/batch；完整路径由类级与方法级映射组合。
+ * 主要协作组件：ReservationsService。
+ */
 package org.example.backend.controller;
 
 import lombok.extern.slf4j.Slf4j;

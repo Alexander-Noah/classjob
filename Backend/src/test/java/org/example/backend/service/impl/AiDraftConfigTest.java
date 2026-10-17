@@ -1,3 +1,7 @@
+/*
+ * AiDraftConfigTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：testsUnsavedDraftWithoutPersistingIt、draftCannotBorrowAKeyFromAnotherProvider。
+ */
 package org.example.backend.service.impl;
 
 import com.sun.net.httpserver.HttpServer;

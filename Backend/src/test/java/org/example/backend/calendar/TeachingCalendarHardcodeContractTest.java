@@ -1,3 +1,7 @@
+/*
+ * 教学日历回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：backendServicesDoNotFallBackToAReleasedSemesterDate。
+ */
 package org.example.backend.calendar;
 
 import org.junit.jupiter.api.Test;

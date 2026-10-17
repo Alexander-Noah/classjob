@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** 耗材库存与出入库流水的事务边界，库存变化后同步业务闭环状态。 */
 @Service
 public class ConsumableServiceImpl implements ConsumableService {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -114,6 +115,7 @@ public class ConsumableServiceImpl implements ConsumableService {
 
         String type = normalizeMovementType(movement.getType());
         int beforeStock = consumable.getStock() == null ? 0 : Math.max(consumable.getStock(), 0);
+        // 先提升到 long 检查范围，再写回 int；同时禁止出库后出现负库存。
         long computedStock = MOVEMENT_IN.equals(type) ? (long) beforeStock + quantity : (long) beforeStock - quantity;
         if (computedStock > Integer.MAX_VALUE) throw new IllegalArgumentException("库存数量超出允许范围");
         int afterStock = (int) computedStock;
@@ -141,6 +143,7 @@ public class ConsumableServiceImpl implements ConsumableService {
         movement.setReason(textOrDefault(movement.getReason(), "-"));
         movement.setRemark(textOrDefault(movement.getRemark(), ""));
         movement.setTime(LocalDateTime.now().format(DATE_TIME_FORMATTER));
+        // 与库存更新处于同一事务，避免出现“库存已变但没有流水”的记录。
         consumableMapper.insertStockRecord(movement);
 
         ConsumableEntity savedConsumable = consumableMapper.getConsumable(id);

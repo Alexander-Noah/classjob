@@ -1,3 +1,7 @@
+/*
+ * 实验室元数据实现模块。
+ * 主要协作组件：LabResourceMetadataMapper。
+ */
 package org.example.backend.service;
 
 import org.example.backend.service.DeviceCountPort;

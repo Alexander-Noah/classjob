@@ -1,3 +1,7 @@
+/*
+ * 教务课表集成实现模块。
+ * 主要协作组件：CourseEnvironmentService、AcademicCredentialService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.AcademicScheduleCourse;

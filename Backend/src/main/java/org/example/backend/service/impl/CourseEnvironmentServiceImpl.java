@@ -1,3 +1,7 @@
+/*
+ * 课程环境实现模块。
+ * 主要协作组件：CourseEnvironmentMapper、EnvironmentTemplateMapper、NoticeMapper、BusinessLoopService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.CourseEnvironmentEntity;

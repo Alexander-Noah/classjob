@@ -1,3 +1,6 @@
+/*
+ * vite.config.ts 构建配置，区分开发服务、编译输出与插件行为。
+ */
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'

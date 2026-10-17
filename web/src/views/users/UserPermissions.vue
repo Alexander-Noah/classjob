@@ -1,3 +1,7 @@
+<!--
+  Web 管理平台的用户权限视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useTablePagination。
+-->
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

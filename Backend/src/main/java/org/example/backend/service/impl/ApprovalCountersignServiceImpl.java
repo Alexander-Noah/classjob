@@ -1,3 +1,7 @@
+/*
+ * 审批会签实现模块。
+ * 主要协作组件：ApprovalCountersignMapper、ReservationsMapper、BusinessLoopService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.ApprovalCountersignEntity;

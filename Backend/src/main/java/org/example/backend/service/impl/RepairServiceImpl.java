@@ -1,3 +1,7 @@
+/*
+ * 报修实现模块。
+ * 主要协作组件：RepairMapper、BusinessLoopService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.entity.RepairEntity;

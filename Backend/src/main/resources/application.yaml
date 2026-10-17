@@ -159,6 +159,7 @@ springdoc:
 # Prometheus / Grafana 监控：IDEA 直接启动即可启用，无需额外 profile。
 management:
   server:
+    # 与 monitoring/prometheus/prometheus.yml 的 target 一起修改；8080 仍承载业务 HTTP。
     port: ${SMART_LAB_MANAGEMENT_PORT:8081}
     # 供 Docker Desktop 采集；服务器部署时限制此端口仅供监控网络访问。
     address: ${SMART_LAB_MANAGEMENT_ADDRESS:0.0.0.0}
@@ -174,4 +175,5 @@ management:
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
+        # 导出 HTTP 延迟桶供 Grafana 计算 P95；桶数据增加时序数量，避免附加用户 ID 等高基数标签。
         http.server.requests: true

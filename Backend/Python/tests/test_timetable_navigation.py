@@ -1,3 +1,6 @@
+# 课表的 Python 单元测试，测试替身用于隔离浏览器或外部服务。
+# 主要处理函数：load_navigation_module。
+
 import importlib.util
 import unittest
 from pathlib import Path

@@ -1,3 +1,7 @@
+/*
+ * 实验室预约公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：resolveReservationLabId。
+ */
 const toPositiveInteger = (value) => {
   if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0 ? value : null
   if (typeof value !== 'string') return null

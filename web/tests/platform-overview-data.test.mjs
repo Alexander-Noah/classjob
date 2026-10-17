@@ -1,3 +1,6 @@
+/*
+ * 平台概览的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'

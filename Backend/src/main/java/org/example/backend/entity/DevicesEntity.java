@@ -1,3 +1,7 @@
+/*
+ * 设备管理数据模型，用于表达字段结构，不在此处执行数据库操作。
+ * 主要字段：id、deviceCode、deviceName、category、labId、labName；JSON 别名和类型转换以字段注解为准。
+ */
 package org.example.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
@@ -14,6 +18,7 @@ public class DevicesEntity {
     private String deviceName;
 
     private String category;
+    /** 关联实验室的主键；名称/位置用于展示，不能代替关联标识完成写入。 */
     private Long labId;
 
     @JsonAlias({"labName", "lab_name", "lab"})
@@ -29,11 +34,11 @@ public class DevicesEntity {
 
     private Integer quantity;
     private String unit;
-    // Asset lifecycle status only. Runtime online/health data belongs to device_runtime_status.
+    // 仅表示资产生命周期；终端在线及健康状态由 device_runtime_status 维护。
     private String status;
-    // Legacy compatibility field. Keep returning it for old /devices consumers during migration.
+    // 旧 /devices 响应兼容字段，不在资产台账中推断实时健康状态。
     private String health;
-    // Legacy compatibility field. Keep returning it for old /devices consumers during migration.
+    // 旧 /devices 响应兼容字段；真实在线状态应读取终端监控接口。
     private Boolean online;
 
     @JsonAlias({"specification", "specs"})
@@ -47,6 +52,7 @@ public class DevicesEntity {
     private String purchaseDate;
     private String inventoryDate;
     private String warrantyDate;
+    /** 使用时长，单位小时；接口传递整数，展示层不要按秒再次换算。 */
     private Integer usageHours;
     private String maintenance;
     private Integer deleted;

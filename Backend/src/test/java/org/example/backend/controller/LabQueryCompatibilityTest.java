@@ -1,3 +1,7 @@
+/*
+ * 实验室回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：preservesSystemAdministratorListContractAndAllDisplayFields、scopesNonSystemAdministratorListToAuthenticatedUser、preservesDetailAndMissingLabContracts、preservesForbiddenStatusWhenAuthenticationIdentityIsMissing。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.config.GlobalExceptionHandler;

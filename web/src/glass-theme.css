@@ -1,4 +1,5 @@
-/* Shared light glass theme for every role and teleported Element Plus surface. */
+/* 全角色共用的透明浅色主题；弹窗和菜单会 Teleport 到 body，不能只限定在 #app。
+   玻璃参数集中在此处维护，页面组件主要负责布局与业务状态颜色。 */
 :root {
   --surface-color: rgba(255, 255, 255, 0.22);
   --glass-surface: linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(241, 247, 255, 0.12) 55%, rgba(255, 255, 255, 0.2));
@@ -52,7 +53,7 @@ body #app :is(.filter-bar, .loan-filters, .advanced-filter, .search-form,
   border-color: var(--glass-line);
 }
 
-/* Transparent cells expose the parent surface; do not blur every table cell. */
+/* 表格通过透明单元格显露父容器；避免每个单元格单独执行背景模糊。 */
 body #app .el-table {
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
@@ -69,7 +70,7 @@ body #app .el-table tr.el-table__row--striped td.el-table__cell { background: rg
 body #app .el-table tr:hover > td.el-table__cell { background: rgba(219, 234, 254, 0.36); }
 body #app .el-table tr.current-row > td.el-table__cell { background: rgba(219, 234, 254, 0.42); }
 
-/* Fixed columns need a reading surface over horizontally scrolling content. */
+/* 固定列会盖住横向滚动内容，保留较厚底色，防止两层文字重叠。 */
 body #app .el-table :is(td, th).el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
   background: rgba(245, 249, 255, 0.94);
 }
@@ -110,7 +111,7 @@ body :is(.el-dialog__header, .el-dialog__body, .el-dialog__footer,
   border-color: var(--glass-line);
 }
 
-/* Menus sit over other text, so their opacity is deliberately higher. */
+/* 下拉菜单覆盖其他文字，透明度比页面容器低，以保证选项可读。 */
 body .el-popper.is-light,
 body :is(.el-select-dropdown, .el-dropdown-menu, .el-picker-panel,
   .el-autocomplete-suggestion, .el-cascader-panel) {
@@ -150,10 +151,10 @@ body :is(.el-message, .el-notification) {
 }
 
 body #app .message-bubble {
-  background: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.82);
   border-color: var(--glass-line);
 }
-body #app .message-row.user .message-bubble { background: rgba(219, 234, 254, 0.32); border-color: rgba(37, 99, 235, 0.15); }
+body #app .message-row.user .message-bubble { background: rgba(235, 243, 255, 0.86); border-color: rgba(37, 99, 235, 0.15); }
 body #app .scan-reservation-page { background: transparent; }
 
 body .el-loading-mask {
@@ -163,6 +164,7 @@ body .el-loading-mask {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* 不支持背景模糊时回退为浅色实体表面，优先保证阅读。 */
   body #app :is(.el-card, .page-panel, .metric-card, .stat-card, .assistant-shell),
   body :is(.el-dialog, .el-message-box, .el-drawer, .el-popper.is-light) {
     background: rgba(248, 251, 255, 0.95);
@@ -170,6 +172,7 @@ body .el-loading-mask {
 }
 
 @media print {
+  /* 打印时不输出装饰性背景、阴影和折射，避免浪费墨水并保持文本清晰。 */
   body { background: #fff; }
   body #app :is(.el-card, .page-panel, .metric-card, .stat-card),
   body :is(.el-dialog, .el-drawer) {

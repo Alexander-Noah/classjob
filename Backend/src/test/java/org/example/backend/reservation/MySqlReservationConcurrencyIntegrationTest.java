@@ -1,3 +1,8 @@
+/*
+ * 实验室预约回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：concurrentOverlappingCreatesPersistOnePendingAndOneConflict。
+ * 主要协作组件：ReservationPersistenceMapper。
+ */
 package org.example.backend;
 
 import org.apache.ibatis.session.SqlSessionFactory;

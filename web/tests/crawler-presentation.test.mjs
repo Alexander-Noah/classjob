@@ -1,3 +1,6 @@
+/*
+ * crawler-presentation.test的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { credentialPresentation, crawlerTaskStatusLabel } from '../src/modules/timetable/crawlerPresentation.js'

@@ -1,3 +1,7 @@
+<!--
+  Web 管理平台的实验室预约筛选栏视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  组件输入通过 defineProps 声明，父子交互以 props/emits 契约为准。
+-->
 <script setup>
 import { computed } from 'vue'
 import { Search } from '@element-plus/icons-vue'

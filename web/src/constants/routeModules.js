@@ -1,3 +1,7 @@
+/*
+ * routeModules共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：DEFAULT_ROUTE_PATH、APP_DOCUMENT_TITLE、ROLE_DEFAULT_PATHS、ROUTE_MODULES、ROUTE_MODULE_MAP 等。
+ */
 import { markRaw } from 'vue'
 import {
   Bell,

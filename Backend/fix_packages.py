@@ -1,3 +1,5 @@
+# fix_packages的 Python 脚本模块，入口及参数以 main/命令行解析和环境变量读取为准。
+
 import os
 for root, dirs, files in os.walk('src/main/java/org/example/backend'):
     for file in files:

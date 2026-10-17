@@ -1,3 +1,7 @@
+/*
+ * 平台概览公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：buildPlatformSummary、buildPlatformAccountRows、buildPlatformStatistics。
+ */
 const roleNames = {
   systemAdmin: '系统管理员',
   labAdmin: '实验室管理员',

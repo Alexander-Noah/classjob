@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  org.example.backend.mapper.ReservationPersistenceMapper 的 SQL 映射，参数名与 Java 接口保持一致。
+  关联表：lab_reservation。
+-->
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -104,6 +108,8 @@
         )
     </insert>
 
+    <!-- 严格小于对应半开区间重叠：前一预约的终点等于后一预约起点时可以相邻。
+         终态排除集来自服务层；审核重新检查时用 excludingReservationId 排除自身。 -->
     <select id="countActiveOverlaps" resultMap="overlapCount">
         select count(1) as overlap_count
         from lab_reservation
@@ -120,6 +126,7 @@
           and (#{check.excludingReservationId} is null or id &lt;&gt; #{check.excludingReservationId})
     </select>
 
+    <!-- 旧状态条件必须保留；更新零行由服务层作为陈旧状态处理，不无条件覆盖其他审核结果。 -->
     <update id="updateReview">
         update lab_reservation
         set status = #{update.status,typeHandler=org.example.backend.mapper.ReservationStatusTypeHandler},

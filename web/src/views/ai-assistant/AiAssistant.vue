@@ -1,7 +1,11 @@
+<!--
+  Web 管理平台的AI 助手视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup>
 import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Delete, Microphone, Promotion, Setting } from '@element-plus/icons-vue'
+import { ChatDotRound, CopyDocument, Delete, Microphone, Promotion, Setting } from '@element-plus/icons-vue'
+import { formatMessageContent } from '../../modules/ai-assistant/formatMessage'
 import { getAuthToken, getStoredUser } from '../../api/services/auth'
 import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 import {
@@ -168,22 +172,17 @@ const getConversationTitle = (messageList = []) => {
   return title.length > 18 ? `${title.slice(0, 18)}...` : title
 }
 
-const escapeHtml = (value = '') =>
-  String(value).replace(/[&<>"']/g, (character) => {
-    const entityMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    }
-    return entityMap[character]
-  })
+const copyMessage = async (content) => {
+  try { await navigator.clipboard.writeText(content); ElMessage.success('已复制回答') }
+  catch { ElMessage.warning('复制失败，请选中文字后复制') }
+}
 
-const formatMessageContent = (content = '') =>
-  escapeHtml(content)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>')
+// 输入法确认候选字时的 Enter 不发送消息，避免中文输入被提前提交。
+const handleComposerEnter = (event) => {
+  if (event.isComposing) return
+  event.preventDefault()
+  sendMessage()
+}
 
 const normalizeConversation = (conversation = {}) => {
   const messageList = Array.isArray(conversation.messages) && conversation.messages.length
@@ -849,8 +848,8 @@ onUnmounted(() => {
   <section class="assistant-shell">
     <aside class="history-panel">
       <div class="history-searchbar">
-        <el-input v-model="historyKeyword" clearable placeholder="搜索" />
-        <el-button class="new-chat-button" circle @click="startNewConversation">+</el-button>
+        <el-input v-model="historyKeyword" clearable placeholder="搜索聊天记录" aria-label="搜索聊天记录" />
+        <el-button class="new-chat-button" circle aria-label="新建聊天" title="新建聊天" @click="startNewConversation">+</el-button>
       </div>
 
       <div class="history-list">
@@ -860,7 +859,7 @@ onUnmounted(() => {
           class="history-item"
           :class="{ active: conversation.id === activeConversationId }"
         >
-          <button class="history-select" type="button" @click="switchConversation(conversation.id)">
+          <button class="history-select" type="button" :aria-pressed="conversation.id === activeConversationId" @click="switchConversation(conversation.id)">
           <span class="history-avatar">
             <el-icon><ChatDotRound /></el-icon>
           </span>
@@ -893,9 +892,11 @@ onUnmounted(() => {
       <header class="chat-topbar">
         <div class="chat-title-block">
           <h1>{{ activeConversationTitle }}</h1>
-          <span>
+          <span class="chat-subtitle">
             <i class="status-dot" :class="connectionStatus"></i>
-            {{ currentServiceStatusText }} · 平台业务数据已接入（不含资产） · {{ messages.length }} 条消息
+            {{ currentServiceStatusText }}
+            <span class="data-context" title="数据范围不含设备资产">平台业务数据已接入</span>
+            <span class="message-count">{{ messages.length }} 条消息</span>
           </span>
         </div>
 
@@ -944,39 +945,41 @@ onUnmounted(() => {
                 v-html="formatMessageContent(message.content)"
               ></div>
             </div>
+            <div v-if="message.role === 'assistant' && message.content" class="message-actions">
+              <el-button text size="small" :icon="CopyDocument" aria-label="复制回答" @click="copyMessage(message.content)">复制</el-button>
+            </div>
           </div>
         </article>
       </div>
 
       <footer class="composer">
-        <div class="composer-toolbar">
+        <div class="composer-box">
+        <el-input
+          v-model="inputValue"
+          :autosize="{ minRows: 1, maxRows: 5 }"
+          class="composer-input"
+          placeholder="询问实验室、课表或预约安排…"
+          aria-label="咨询内容"
+          resize="none"
+          type="textarea"
+          @keydown.enter.exact="handleComposerEnter"
+        />
+        <div class="composer-footer">
           <div class="composer-tools">
             <button
               class="micro-tool"
               :class="{ active: isCapturingVoice }"
               :disabled="connectionStatus !== 'connected'"
               type="button"
+              :aria-label="isCapturingVoice ? '结束语音识别' : '语音输入'"
               @click="isCapturingVoice ? stopVoiceCapture() : startVoiceCapture()"
             >
               <el-icon><Microphone /></el-icon>
             </button>
+            <span class="composer-hint">Enter 发送 · Shift + Enter 换行</span>
           </div>
-          <span>{{ currentServiceStatusText }}</span>
+          <el-button :disabled="!canSend" :loading="isDirectAiLoading" :icon="Promotion" type="primary" @click="sendMessage">发送</el-button>
         </div>
-
-        <el-input
-          v-model="inputValue"
-          :autosize="{ minRows: 3, maxRows: 6 }"
-          class="composer-input"
-          placeholder="输入咨询内容"
-          resize="none"
-          type="textarea"
-          @keydown.enter.exact.prevent="sendMessage"
-        />
-
-        <div class="composer-footer">
-          <span>Enter 发送，Shift + Enter 换行</span>
-          <el-button :disabled="!canSend" :icon="Promotion" type="primary" @click="sendMessage">发送</el-button>
         </div>
       </footer>
     </main>
@@ -1056,13 +1059,13 @@ onUnmounted(() => {
 <style scoped>
 .assistant-shell {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   height: calc(100vh - 112px);
   max-height: calc(100vh - 112px);
-  min-height: 620px;
+  min-height: min(620px, calc(100dvh - 112px));
   overflow: hidden;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 18px;
   background: transparent;
 }
 
@@ -1159,8 +1162,8 @@ onUnmounted(() => {
 }
 
 .history-item.active {
-  background: rgba(7, 193, 96, 0.18);
-  box-shadow: inset 3px 0 #07c160;
+  background: rgba(219, 234, 254, 0.52);
+  box-shadow: inset 3px 0 #3b82f6;
 }
 
 .history-avatar,
@@ -1225,7 +1228,7 @@ onUnmounted(() => {
 .history-item.active .history-item-title,
 .history-item.active .history-item-preview,
 .history-item.active .history-item-time {
-  color: #14532d;
+  color: #1e40af;
 }
 
 .history-item.active .history-delete {
@@ -1246,8 +1249,9 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 16px;
   flex: 0 0 auto;
-  height: 74px;
-  padding: 0 24px;
+  min-height: 74px;
+  padding: 12px 24px;
+  flex-wrap: wrap;
   border-bottom: 1px solid #e5e5e5;
   background: rgba(255, 255, 255, 0.2);
 }
@@ -1267,14 +1271,19 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.chat-title-block span {
+.chat-title-block > .chat-subtitle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin-top: 6px;
   color: #8b9099;
   font-size: 12px;
+  flex-wrap: wrap;
 }
+
+.chat-subtitle .data-context { padding-left: 10px; border-left: 1px solid #d5dfed; }
+.chat-subtitle .message-count { color: #64748b; }
+.header-actions { margin-left: auto; }
 
 .status-dot {
   width: 7px;
@@ -1378,12 +1387,15 @@ onUnmounted(() => {
 .message-list {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 26px;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 28px 48px 30px;
+  padding: 28px clamp(20px, 3vw, 48px) 24px;
   overflow-y: auto;
   background: transparent;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .message-row {
@@ -1391,12 +1403,13 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 10px;
   width: fit-content;
-  max-width: min(780px, 72%);
+  max-width: min(920px, 94%);
 }
 
 .message-row.user {
   align-self: flex-end;
   flex-direction: row-reverse;
+  max-width: min(680px, 82%);
 }
 
 .avatar {
@@ -1429,7 +1442,7 @@ onUnmounted(() => {
 .message-bubble {
   position: relative;
   min-width: 0;
-  padding: 10px 14px;
+  padding: 16px 20px;
   color: #111827;
   background: rgba(255, 255, 255, 0.24);
   border: 1px solid #e9eaec;
@@ -1438,6 +1451,7 @@ onUnmounted(() => {
 }
 
 .message-bubble::before {
+  display: none;
   position: absolute;
   top: 12px;
   left: -6px;
@@ -1487,8 +1501,22 @@ onUnmounted(() => {
   word-break: break-word;
   white-space: normal;
   font-size: 15px;
-  line-height: 1.72;
+  line-height: 1.85;
 }
+
+/* 受控 Markdown 的块级排版；用段距代替多重换行，长答案更容易扫描。 */
+.message-content :deep(p) { margin: 0 0 12px; }
+.message-content :deep(p:last-child) { margin-bottom: 0; }
+.message-content :deep(ol), .message-content :deep(ul) { margin: 12px 0; padding-left: 24px; }
+.message-content :deep(li) { padding-left: 4px; margin: 6px 0; }
+.message-content :deep(li::marker) { color: #64748b; font-weight: 600; }
+.message-content :deep(h3) { margin: 16px 0 8px; font-size: 16px; }
+.message-content :deep(h3:first-child) { margin-top: 0; }
+.message-content :deep(code) { border-radius: 5px; padding: 2px 5px; background: rgba(226, 232, 240, .6); font-size: .9em; }
+.message-content :deep(pre) { max-width: 100%; overflow-x: auto; padding: 14px; border-radius: 10px; background: #f1f5f9; line-height: 1.6; }
+.message-content :deep(pre code) { padding: 0; background: none; white-space: pre; }
+.message-actions { display: flex; gap: 8px; padding-left: 2px; }
+.message-actions :deep(.el-button) { font-size: 12px; color: #64748b; }
 
 .message-content :deep(strong) {
   color: #111827;
@@ -1500,19 +1528,29 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 8px;
   flex: 0 0 auto;
-  min-height: 178px;
-  padding: 10px 16px 14px;
-  border-top: 1px solid #dedede;
+  padding: 10px 24px 12px;
+  border-top: 1px solid rgba(203, 213, 225, .45);
   background: rgba(255, 255, 255, 0.16);
 }
 
 .history-panel,
-.chat-topbar,
-.composer,
-.message-bubble {
+.chat-topbar {
   -webkit-backdrop-filter: blur(1px) saturate(1.15);
   backdrop-filter: blur(1px) saturate(1.15);
 }
+
+/* 消息只用底色保证对比度，避免每个气泡叠加背景模糊影响长会话滚动。 */
+.composer, .message-bubble { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.composer-box {
+  border: 1px solid rgba(148, 163, 184, .3);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .76);
+  padding: 12px 14px 10px;
+  box-shadow: 0 4px 18px rgba(30, 41, 59, .04), inset 0 1px 0 #fff;
+  transition: border-color .2s, box-shadow .2s;
+}
+.composer-box:focus-within { border-color: rgba(59, 130, 246, .55); box-shadow: 0 0 0 3px rgba(59, 130, 246, .07); }
+.composer-footer { padding-top: 8px; }
 
 .history-search :deep(.el-input__wrapper) {
   background: rgba(255, 255, 255, 0.24);
@@ -1568,7 +1606,7 @@ onUnmounted(() => {
 }
 
 .composer :deep(.el-textarea__inner) {
-  min-height: 82px !important;
+  min-height: 44px !important;
   padding: 6px 2px;
   color: #111827;
   background: transparent;
@@ -1592,22 +1630,29 @@ onUnmounted(() => {
 @media (max-width: 900px) {
   .assistant-shell {
     grid-template-columns: 1fr;
-    min-height: 720px;
+    grid-template-rows: 128px minmax(0, 1fr);
+    min-height: 0;
   }
 
   .history-panel {
-    max-height: 230px;
+    max-height: 128px;
     border-right: 0;
     border-bottom: 1px solid #d9d9dc;
   }
 
-  .chat-topbar,
-  .header-actions {
+  .chat-topbar {
     align-items: flex-start;
     flex-direction: column;
     height: auto;
     padding: 14px 16px;
   }
+
+  .header-actions { margin-left: 0; gap: 8px; }
+  .history-searchbar { height: 54px; padding: 8px 12px; }
+  .history-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  .history-item { min-width: 230px; min-height: 68px; padding: 8px 12px; }
+  .history-avatar { width: 34px; height: 34px; }
+  .history-main { gap: 4px; }
 
   .message-list {
     padding: 22px 18px;
@@ -1618,7 +1663,17 @@ onUnmounted(() => {
   }
 
   .composer {
-    min-height: 160px;
+    padding: 10px 14px 12px;
   }
+}
+
+@media (max-width: 600px) {
+  .message-row { max-width: 100%; gap: 8px; }
+  .message-row.user { max-width: 94%; }
+  .avatar { width: 32px; height: 32px; }
+  .message-row :deep(.el-avatar) { width: 32px !important; height: 32px !important; }
+  .message-bubble { padding: 12px 14px; }
+  .composer-hint { display: none; }
+  .chat-subtitle .data-context { display: none; }
 }
 </style>

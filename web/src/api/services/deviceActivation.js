@@ -1,3 +1,7 @@
+/*
+ * 设备激活的前端接口适配，封装请求参数和响应数据，供页面与组合函数复用。
+ * 主要导出：listLabActivationBindings、bindActivationCodeToLab、unbindActivationCodeFromLab、generateLabActivationCode、deviceActivationService。
+ */
 import { API_ENDPOINTS } from '../endpoints'
 import http from '../http'
 

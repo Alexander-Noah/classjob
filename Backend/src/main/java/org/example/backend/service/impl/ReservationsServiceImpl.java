@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 维护预约状态、时间冲突及实验室使用状态；写入流程同时记录业务闭环事件。
+ * 更新与审核应通过本服务，避免直接写 Mapper 跳过状态流转规则。
+ */
 @Service
 public class ReservationsServiceImpl implements ReservationsService {
     private static final String CRAWLER_CONFIG_KEY = "lab-admin-class-timetable";
@@ -107,6 +111,7 @@ public class ReservationsServiceImpl implements ReservationsService {
 
     @Override
     @Transactional
+    /** 非空列表按全量台账替换；空列表仅查询，不能用此入口清空预约记录。 */
     public List<ReservationsEntity> replaceReservations(List<ReservationsEntity> reservations) {
         if (reservations == null || reservations.isEmpty()) {
             return reservationsMapper.getReservations();

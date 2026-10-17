@@ -1,3 +1,7 @@
+/*
+ * rolePortals共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：LAB_ADMIN_PORTAL、SYSTEM_ADMIN_PORTAL、TEACHER_PORTAL。
+ */
 export const LAB_ADMIN_PORTAL = {
   badge: '实验室管理员',
   digitalTwinOnly: true,

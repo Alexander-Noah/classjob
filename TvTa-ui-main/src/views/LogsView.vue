@@ -1,3 +1,6 @@
+<!--
+  桌面端的运行日志视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useMonitorStore } from '@/stores/monitor'

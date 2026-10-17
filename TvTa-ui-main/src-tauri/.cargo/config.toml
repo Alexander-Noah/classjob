@@ -1,3 +1,5 @@
+# config的声明式配置，键名与路径需符合对应工具格式。
+
 [source.crates-io]
 replace-with = "ustc"
 

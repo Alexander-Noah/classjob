@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** 签发和校验 HS256 登录令牌；密钥只从配置注入，令牌中的角色来自已登录用户。 */
 @Service
 public class JwtService {
     private static final String HMAC_ALGORITHM = "HmacSHA256";
@@ -48,6 +49,7 @@ public class JwtService {
         return secretValue;
     }
 
+    /** 返回签名令牌；载荷采用 Base64URL 编码，并不加密，禁止放入密码等秘密。 */
     public String generateToken(UserEntity user) {
         long issuedAt = Instant.now().getEpochSecond();
         long expiresAt = issuedAt + expirationSeconds;
@@ -72,6 +74,7 @@ public class JwtService {
         return encodedHeader + "." + encodedPayload + "." + signature;
     }
 
+    /** 校验签名、令牌头、签发者和有效期，失败时抛出参数异常交给认证过滤器处理。 */
     public JwtClaims validateToken(String token) {
         if (token == null || token.isBlank()) {
             throw new IllegalArgumentException("缺少令牌");
@@ -83,6 +86,7 @@ public class JwtService {
         }
 
         String expectedSignature = sign(parts[0] + "." + parts[1]);
+        // 比较签名时使用恒定时间比较接口，避免普通字符串比较的提前返回。
         if (!MessageDigest.isEqual(
                 expectedSignature.getBytes(StandardCharsets.UTF_8),
                 parts[2].getBytes(StandardCharsets.UTF_8)

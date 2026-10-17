@@ -1,3 +1,8 @@
+<!--
+  Web 管理平台的耗材借还视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../../composables/useTablePagination。
+  组件输入通过 defineProps 声明，父子交互以 props/emits 契约为准。
+-->
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'

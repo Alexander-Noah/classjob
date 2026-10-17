@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+/** 优先处理跨域来源及 OPTIONS 预检；不依赖 Cookie，业务身份通过 Authorization 传递。 */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class StrictCorsFilter extends OncePerRequestFilter {

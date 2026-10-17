@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** 按用户隔离 AI 会话历史，消息序列使用 JSON 保存，并限制每个用户保留的会话数。 */
 @Service
 public class AiConversationServiceImpl implements AiConversationService {
     private static final int MAX_HISTORY_COUNT = 30;
@@ -40,6 +41,7 @@ public class AiConversationServiceImpl implements AiConversationService {
     @Transactional
     public List<Map<String, Object>> saveConversations(Integer userId, List<Map<String, Object>> conversations) {
         requireUserId(userId);
+        // 空同步不会删除服务端历史；单个会话删除走显式的用户范围删除接口。
         if (conversations == null || conversations.isEmpty()) {
             return listConversations(userId);
         }
@@ -59,6 +61,7 @@ public class AiConversationServiceImpl implements AiConversationService {
         if (conversationId == null || conversationId.isBlank()) {
             throw new IllegalArgumentException("会话 ID 不能为空");
         }
+        // 必须同时匹配用户和会话 ID，防止跨用户删除同名会话。
         conversationMapper.deleteByUserAndConversationId(userId, conversationId);
     }
 

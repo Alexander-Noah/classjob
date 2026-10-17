@@ -1,3 +1,7 @@
+/*
+ * 表格导出公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：exportTableToExcel。
+ */
 function normalizeCellValue(value) {
   if (value === undefined || value === null) return ''
   if (Array.isArray(value)) return value.map(normalizeCellValue).filter(Boolean).join('；')

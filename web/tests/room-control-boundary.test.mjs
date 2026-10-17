@@ -1,3 +1,6 @@
+/*
+ * 实验室控制的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import { readFileSync } from 'node:fs'
 import { existsSync } from 'node:fs'
 import { test } from 'node:test'

@@ -1,3 +1,7 @@
+/*
+ * JWT 登录令牌回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：rejectsBlankOrDevelopmentJwtSecret、acceptsStrongExplicitJwtSecret。
+ */
 package org.example.backend.security;
 
 import org.junit.jupiter.api.Test;

@@ -1,3 +1,7 @@
+/*
+ * 维护记录公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：normalizeMaintenanceRecord。
+ */
 const TEXT_FALLBACK = '未填写'
 
 const firstPresent = (record, fields, fallback = TEXT_FALLBACK) => {

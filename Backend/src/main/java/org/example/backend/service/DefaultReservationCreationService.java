@@ -1,3 +1,7 @@
+/*
+ * 实验室预约实现模块。
+ * 主要协作组件：ReservationPersistenceService、ReservationCatalogQuery、ReservationLabService。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.ReservationStateMachine;
@@ -11,6 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 
 @Service
+// 通过 Spring Bean 的公开方法进入时，校验、重叠查询、写入与回读处于同一串行化事务。
+// 数据库仍可能返回死锁/串行化失败；本服务没有隐藏的自动重试或请求去重机制。
 @Transactional(isolation = Isolation.SERIALIZABLE)
 public class DefaultReservationCreationService {
     private final ReservationPersistenceService reservations;
@@ -27,6 +33,17 @@ public class DefaultReservationCreationService {
         this.availability = Objects.requireNonNull(availability, "availability");
     }
 
+    /**
+     * 校验申请人数据和实验室访问范围，评估可用性后写入并回读服务端记录。
+     * 发现冲突时由状态机创建冲突状态记录，而不是把请求当作成功占用。
+     *
+     * @param command 预约字段，必须包含有效实验室、人数、日期和同日时间区间
+     * @param actor 由认证上下文构造的操作者，不能直接信任请求体声明的角色
+     * @return 操作者可见范围内的已落库记录，不回显提交对象代替数据库结果
+     * @throws IllegalArgumentException 参数无效或实验室管理员操作超出管理范围
+     * @throws IllegalStateException 查询能力不可用、角色不受支持或写入结果无法回读
+     * @throws NullPointerException actor 为 null
+     */
     public ReservationView create(CreateReservationCommand command, ReservationActor actor) {
         ValidatedCommand validated = validate(command);
         ReservationActor authenticatedActor = Objects.requireNonNull(actor, "actor");

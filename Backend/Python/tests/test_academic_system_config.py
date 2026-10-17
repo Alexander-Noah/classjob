@@ -1,3 +1,5 @@
+# 教务系统接入的 Python 单元测试，测试替身用于隔离浏览器或外部服务。
+
 import unittest
 from pathlib import Path
 import sys

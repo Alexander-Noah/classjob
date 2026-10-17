@@ -1,3 +1,7 @@
+/*
+ * DatabaseSchemaInitializer配置组件，声明应用启动或框架集成时使用的行为。
+ * 主要协作组件：ConsumableMapper。
+ */
 package org.example.backend.config;
 
 import org.springframework.boot.ApplicationArguments;

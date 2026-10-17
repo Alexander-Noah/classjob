@@ -1,3 +1,11 @@
+/*
+ * assistantWebSocket公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：AssistantWebSocket。
+ */
+/**
+ * AI 助手文本/音频通道，维护单个 WebSocket 实例及服务端 hello 返回的会话 ID。
+ * 不内置重连、离线队列或发送重试；组件负责连接时机、错误提示和卸载时 disconnect。
+ */
 export class AssistantWebSocket {
   constructor({ onStatusChange, onTextMessage, onAudioMessage, onError } = {}) {
     this.ws = null
@@ -12,6 +20,13 @@ export class AssistantWebSocket {
     return this.ws?.readyState === WebSocket.OPEN
   }
 
+  /**
+   * 关闭旧连接后建立新连接；连接成功时自动发送 v3 hello。
+   * @param {string} url 已构造好的 ws/wss 地址，禁止记录包含令牌的完整地址
+   * @param {Array<string>} protocols 浏览器 WebSocket 子协议，不是 HTTP 请求头
+   * @returns {void} 连接异步完成，通过 onStatusChange/onError 回调通知调用方
+   * @throws {DOMException} 浏览器拒绝非法 URL、协议或安全上下文时可能同步抛出
+   */
   connect(url, protocols = []) {
     this.disconnect()
     this.setStatus('connecting')
@@ -30,6 +45,7 @@ export class AssistantWebSocket {
       this.onError?.(event)
     }
     this.ws.onmessage = async (event) => {
+      // 二进制帧交给音频回调；文本帧按 JSON 解析，非 JSON 文本仍交由文本回调展示。
       if (event.data instanceof Blob) {
         this.onAudioMessage?.(await event.data.arrayBuffer())
         return
@@ -54,6 +70,7 @@ export class AssistantWebSocket {
     }
   }
 
+  /** 返回值只表示当前连接允许提交帧，不代表服务端已确认业务处理完成。 */
   sendJson(message) {
     if (!this.isConnected) return false
     this.ws.send(JSON.stringify(message))
@@ -66,6 +83,7 @@ export class AssistantWebSocket {
     return true
   }
 
+  // 协议约定：PCM signed 16-bit little-endian，16 kHz，单声道；服务端须使用相同采样参数。
   sendHello() {
     return this.sendJson({
       type: 'hello',

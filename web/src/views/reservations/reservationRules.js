@@ -1,3 +1,7 @@
+/*
+ * 实验室预约公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：RESERVATION_STATUS、reservationStatusOptions、getReservationStatusType、getReservationStartAt、isReservationExpired 等。
+ */
 export const RESERVATION_STATUS = {
   pending: '待审核',
   approved: '已通过',

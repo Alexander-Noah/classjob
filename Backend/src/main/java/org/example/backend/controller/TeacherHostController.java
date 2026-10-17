@@ -1,3 +1,7 @@
+/*
+ * 教师主机的 HTTP 接口入口，负责参数接收和响应适配。
+ * 主要协作组件：TeacherHostService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.entity.TeacherHostEntity;

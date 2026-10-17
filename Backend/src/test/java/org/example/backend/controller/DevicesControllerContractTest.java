@@ -1,3 +1,8 @@
+/*
+ * 设备管理回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：listPageAndStatsKeepTheirEstablishedGetContracts、createReturnsTheAuthoritativeServiceDevice、updateAndBatchUpdateReturnTheAuthoritativeServiceDevices、deleteKeepsTheEstablishedDeleteBinding 等。
+ * 主要协作组件：ObjectMapper。
+ */
 package org.example.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

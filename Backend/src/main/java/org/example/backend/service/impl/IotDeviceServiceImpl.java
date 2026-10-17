@@ -1,3 +1,7 @@
+/*
+ * 设备管理实现模块。
+ * 主要协作组件：IotGatewayCommandService。
+ */
 package org.example.backend.service.impl;
 
 import org.example.backend.service.IotDeviceService;
@@ -36,7 +40,7 @@ public class IotDeviceServiceImpl implements IotDeviceService {
     @Override
     public Map<String, Object> listLabDevices(Long labId) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                iotDeviceSelectSql() + " where coalesce(deleted, 0) = 0 and lab_id = ? order by device_type asc, sort_name asc, id desc",
+                iotDeviceSelectSql() + " where coalesce(deleted, 0) = 0 and lab_id = ? order by device_type asc, iot_name asc, id desc",
                 labId
         );
         long configuredCount = rows.stream().filter(row -> booleanValue(row.get("configured"))).count();

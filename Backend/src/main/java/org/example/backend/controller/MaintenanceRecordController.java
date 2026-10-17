@@ -1,3 +1,8 @@
+/*
+ * 维护记录的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/maintenance-records、/maintenance-records/{id}、/maintenance-records、/maintenance-records/{id}、/maintenance-records/{id}；完整路径由类级与方法级映射组合。
+ * 主要协作组件：MaintenanceRecordService、UserService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.entity.MaintenanceRecord;

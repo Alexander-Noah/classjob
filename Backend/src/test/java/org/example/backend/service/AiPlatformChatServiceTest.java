@@ -1,3 +1,8 @@
+/*
+ * AI 平台问答回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：customProviderQueriesPlatformBeforeProducingAnAnswerWithSources、defaultProviderUsesTheSameDataQueries、currentClassQuestionsAlwaysUseAuthoritativeTimeFiltering、currentClassesUseReadableBoundLabNamesWithoutModelGeneratedRoomLists 等。
+ * 主要协作组件：AiBusinessDataService、AiAssistantUserConfigService、TongyiAgentService、AiPlatformChatService。
+ */
 package org.example.backend.service;
 
 import org.junit.jupiter.api.Test;

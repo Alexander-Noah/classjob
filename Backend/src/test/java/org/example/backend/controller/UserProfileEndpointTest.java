@@ -1,3 +1,7 @@
+/*
+ * 用户回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：exposesSelfServiceProfileUpdateEndpoint。
+ */
 package org.example.backend.controller;
 
 import org.junit.jupiter.api.Test;

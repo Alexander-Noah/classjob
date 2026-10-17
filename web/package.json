@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@wxperia/liquid-glass-vue": "1.0.9",
     "axios": "^1.18.1",
     "echarts": "^6.1.0",
     "element-plus": "^2.13.7",

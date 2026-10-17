@@ -1,3 +1,6 @@
+//! 教师端本地网关与 Tauri 命令入口。
+//! UDP 发现、HTTP 状态采集与局域网 WebSocket 分别由后台线程处理，
+//! UI 通过共享状态快照观察运行结果；修改协议字段时需同步独立学生端。
 use std::{
     collections::HashMap,
     io::{Read, Write},
@@ -24,6 +27,7 @@ use tauri_plugin_autostart::ManagerExt;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use tungstenite::{accept, Message};
 
+// 与学生端保持一致的协议常量；时间间隔使用毫秒，离线判定基于最后一次报告。
 const DISCOVERY_PORT: u16 = 8888;
 const COLLECT_PORT: u16 = 5000;
 const STUDENT_ACTION_PORT: u16 = 5001;
@@ -935,6 +939,11 @@ fn get_lan_connection_snapshot(
         .map_err(|_| "lan teacher lock error".to_string())
 }
 
+/// 校验学生消息的实验室归属；教师已配置非空 token 时才进一步比对 token。
+///
+/// # Errors
+/// 教师未配置实验室、学生缺少 labId、实验室不一致或 token 不一致时返回诊断字符串。
+/// 本函数只读状态，不发送网络消息；调用方持有的锁不应跨后续网络 I/O。
 fn validate_lan_student_message(
     inner: &LanTeacherInner,
     message: &LanStudentMessage,
@@ -954,6 +963,9 @@ fn validate_lan_student_message(
     Ok(configured_lab_id)
 }
 
+/// 接收 HELLO/HEARTBEAT/STATUS 后更新局域网在线记录及网关设备快照。
+/// 两个共享状态分别在独立作用域加锁，不同时持有两把 Mutex。
+/// 设备时间戳由教师端接收时间生成，不能信任客户端报告时间判断是否在线。
 fn upsert_lan_student(
     lan_teacher: &Arc<Mutex<LanTeacherInner>>,
     gateway: &Arc<Mutex<GatewayInner>>,
@@ -1336,6 +1348,8 @@ fn start_gateway(state: tauri::State<'_, AppState>) -> Result<GatewaySnapshot, S
     start_gateway_runtime(state.gateway.clone())
 }
 
+/// 标记停止并取出线程句柄，然后在释放网关锁后 join。
+/// 不能持锁等待线程结束：工作线程退出前仍可能需要访问同一网关状态。
 #[tauri::command]
 fn stop_gateway(state: tauri::State<'_, AppState>) -> Result<GatewaySnapshot, String> {
     let runtime = {

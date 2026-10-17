@@ -1,3 +1,6 @@
+/*
+ * frontend-service-boundaries.test的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import { existsSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

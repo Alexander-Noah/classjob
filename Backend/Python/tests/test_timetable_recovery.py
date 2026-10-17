@@ -1,3 +1,5 @@
+# 课表的 Python 单元测试，测试替身用于隔离浏览器或外部服务。
+
 """Exercise main's recovery branch without opening a browser or contacting school."""
 import ast
 import importlib.util

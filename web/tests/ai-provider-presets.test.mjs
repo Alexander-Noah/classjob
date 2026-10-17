@@ -1,3 +1,6 @@
+/*
+ * ai-provider-presets.test的自动化测试；夹具用于验证行为，不是运行时配置。
+ */
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { AI_PROVIDERS, aiConfigFingerprint, canReuseSavedAiKey, inferAiProvider, normalizedApiEndpoint, selectAiProvider } from '../src/modules/ai-assistant/providerPresets.js'

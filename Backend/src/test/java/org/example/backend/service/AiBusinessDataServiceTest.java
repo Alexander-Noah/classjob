@@ -1,3 +1,8 @@
+/*
+ * AI 业务数据查询回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：everyAssetDatasetIsExcludedBeforeAnyDatabaseAccess、roleAndCustomPermissionsAreCheckedBeforeReading、disabledOrRetiredAccountsCannotUseBusinessQueries、actualDatabasePermissionsAreUsedAndMalformedPermissionsFailClosed 等。
+ * 主要协作组件：AiBusinessDataService。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.UserEntity;

@@ -1,3 +1,6 @@
+# 课表的 Python 脚本模块，入口及参数以 main/命令行解析和环境变量读取为准。
+# 主要处理函数：clean_text、to_int、clean、parse_section、expand_weeks 等。
+
 from bs4 import BeautifulSoup
 import pandas as pd
 import re

@@ -1,3 +1,7 @@
+/*
+ * 桌面端 file 系统能力适配；调用方式以导入的 Tauri 插件 API 为准。
+ * 主要导出：selectSaveLocation。
+ */
 import { save } from '@tauri-apps/plugin-dialog';
 
 /**

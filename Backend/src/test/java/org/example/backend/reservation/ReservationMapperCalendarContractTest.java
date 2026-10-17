@@ -1,3 +1,7 @@
+/*
+ * 实验室预约回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：timetableConflictQueryUsesCharsetThenCollationForWeekday。
+ */
 package org.example.backend;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;

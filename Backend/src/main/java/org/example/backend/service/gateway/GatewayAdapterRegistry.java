@@ -1,3 +1,6 @@
+/*
+ * 本地网关实现模块。
+ */
 package org.example.backend.service.gateway;
 
 import org.springframework.stereotype.Component;

@@ -1,3 +1,8 @@
+/*
+ * AI 助手的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/ai-assistant/user-config、/ai-assistant/user-config、/ai-assistant/user-config/test、/ai-assistant/chat；完整路径由类级与方法级映射组合。
+ * 主要协作组件：TongyiAgentService、AiAssistantUserConfigService、AiPlatformChatService。
+ */
 package org.example.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;

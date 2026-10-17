@@ -1,3 +1,7 @@
+/*
+ * 学生客户端的 HTTP 接口入口，负责参数接收和响应适配。
+ * 主要协作组件：StudentClientService。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.entity.StudentClientEntity;

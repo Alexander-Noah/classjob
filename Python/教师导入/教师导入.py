@@ -1,3 +1,6 @@
+# 教师导入的 Python 脚本模块，入口及参数以 main/命令行解析和环境变量读取为准。
+# 主要处理函数：generate_digits、generate_username、generate_password、split_teacher_names、username_exists 等。
+
 import csv
 import secrets
 from datetime import datetime

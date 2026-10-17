@@ -1,3 +1,7 @@
+/*
+ * 实验室预约实现模块。
+ * 主要协作组件：LabCatalogQuery、LabAvailabilityQuery。
+ */
 package org.example.backend.service;
 
 import org.springframework.stereotype.Service;

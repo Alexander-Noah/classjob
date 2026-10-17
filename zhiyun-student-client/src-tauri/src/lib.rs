@@ -1,3 +1,6 @@
+//! 独立学生端运行时：发现教师网关、上报本机状态并提供托盘入口。
+//! 网络循环与主界面分离；共享状态经 Arc/Mutex 访问，停止信号使用原子变量。
+//! 与教师端的发现消息、采集字段和心跳间隔需要协同维护。
 use std::{
     collections::HashMap,
     env,
@@ -27,6 +30,7 @@ use tauri_plugin_autostart::ManagerExt;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use tungstenite::{connect, Message};
 
+// 8888 用于发现，5000 用于采集，5001 用于学生动作；这些不是云端后端端口。
 const DISCOVERY_PORT: u16 = 8888;
 const COLLECT_PORT: u16 = 5000;
 const STUDENT_ACTION_PORT: u16 = 5001;
@@ -1306,6 +1310,8 @@ fn build_student_status_snapshot(state: &StudentRuntimeState) -> StudentStatusSn
     }
 }
 
+/// 复制本机状态快照后发送到教师的 /api/collect，网络请求期间不持有主机状态锁。
+/// 只有 HTTP 上报成功后才更新最后上报时间；失败通过 Result 交由后台循环记录。
 fn student_report_once(state: &StudentRuntimeState) -> Result<(), String> {
     let teacher_ip = student_teacher_ip(state).ok_or_else(|| "teacher not found".to_string())?;
     let host_status = state
@@ -1549,6 +1555,9 @@ fn spawn_student_discovery(state: StudentRuntimeState) {
     });
 }
 
+/// 启动进程存续期间的上报循环，不返回可单独取消的 JoinHandle。
+/// 失败时清除自动发现的教师地址以触发重新发现，但保留用户显式配置的地址。
+/// 间隔以毫秒计，实际两次尝试之间还包含前一次网络请求耗时。
 fn spawn_student_reporter(state: StudentRuntimeState) {
     thread::spawn(move || loop {
         if student_teacher_ip(&state).is_some() {

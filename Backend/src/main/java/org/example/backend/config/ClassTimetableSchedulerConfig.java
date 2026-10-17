@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+/** 为课表采集提供独立调度线程，避免长时间浏览器任务占用其他调度器。 */
 @Configuration
 public class ClassTimetableSchedulerConfig {
 

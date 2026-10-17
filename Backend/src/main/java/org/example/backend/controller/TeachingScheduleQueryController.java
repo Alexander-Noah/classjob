@@ -1,3 +1,8 @@
+/*
+ * 教学课表查询的 HTTP 接口入口，负责参数接收和响应适配。
+ * 声明的路由片段：/class-timetables、/class-timetables/summary、/class-timetables/semesters；完整路径由类级与方法级映射组合。
+ * 主要协作组件：TeachingScheduleQuery。
+ */
 package org.example.backend.controller;
 
 import org.example.backend.result.Result;

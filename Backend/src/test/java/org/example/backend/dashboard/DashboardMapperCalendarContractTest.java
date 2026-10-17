@@ -1,3 +1,7 @@
+/*
+ * 工作台统计回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：todayScheduleUsesConfiguredAtomicSemesterCalendar。
+ */
 package org.example.backend.dashboard;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;

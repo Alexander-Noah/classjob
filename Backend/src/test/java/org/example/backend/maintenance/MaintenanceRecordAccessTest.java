@@ -1,3 +1,7 @@
+/*
+ * 维护记录回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：legacyWritePermissionsWorkButReadOnlyPermissionsDoNot。
+ */
 package org.example.backend.maintenance;
 
 import org.example.backend.security.MaintenanceRecordAccess;

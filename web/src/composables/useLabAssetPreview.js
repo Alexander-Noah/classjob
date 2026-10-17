@@ -1,3 +1,7 @@
+/*
+ * 实验室的 Vue 组合逻辑；视图通过返回的状态和方法调用本模块。
+ * 主要导出：getAssetStatusType、getAssetHealthType、normalizeAssetRecord、loadLabAssetRecords、getLabAssetRecordsByLabName。
+ */
 const DEVICE_STORAGE_KEY = 'smart-lab:device-management:records'
 const PREVIEW_STORAGE_KEY = 'smart-lab:lab-asset-preview:records'
 

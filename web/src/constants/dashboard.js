@@ -1,3 +1,7 @@
+/*
+ * 工作台统计共享常量与映射，修改取值时同步检查使用方。
+ * 主要导出：DASHBOARD_OVERVIEW_MOCK。
+ */
 export const DASHBOARD_OVERVIEW_MOCK = {
   stats: [
     {

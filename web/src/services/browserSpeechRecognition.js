@@ -1,3 +1,7 @@
+/*
+ * 语音识别公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：BrowserSpeechRecognition。
+ */
 export class BrowserSpeechRecognition {
   constructor({ onTranscript, onError } = {}) {
     this.onTranscript = onTranscript

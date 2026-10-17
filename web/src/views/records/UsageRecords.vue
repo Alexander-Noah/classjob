@@ -1,4 +1,8 @@
-﻿<script setup>
+﻿<!--
+  Web 管理平台的使用记录视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useTablePagination、../../composables/useUsageRecords。
+-->
+<script setup>
 import MetricGrid from '../../components/common/MetricGrid.vue'
 import TablePagination from '../../components/common/TablePagination.vue'
 import { useTablePagination } from '../../composables/useTablePagination'

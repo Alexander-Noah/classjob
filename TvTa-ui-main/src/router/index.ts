@@ -1,3 +1,6 @@
+/*
+ * router index公共逻辑模块，供相关视图或服务复用。
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { useActivationStore } from '@/stores/activation'

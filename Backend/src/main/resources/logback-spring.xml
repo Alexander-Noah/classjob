@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  logback-spring.xml 的 XML 配置；依赖、插件或日志规则按对应 XML 节点维护。
+-->
 <configuration>
     <!-- 后端日志输出目录；默认写入 Backend/logs。 -->
     <property name="LOG_PATH" value="logs"/>

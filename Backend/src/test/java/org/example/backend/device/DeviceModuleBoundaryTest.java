@@ -1,3 +1,7 @@
+/*
+ * 设备管理回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：deviceStatusHasDedicatedRuntimeApisBackedByRuntimeTables、iotApisUseIotTablesInsteadOfAssetDevicesForLabDevices、iotControlUsesGatewayAdapterLayerAndDoesNotInlineMockLogic、globalExceptionFallbackKeepsRequestIdInDiagnosticsRatherThanUserCopy 等。
+ */
 package org.example.backend.device;
 
 import org.junit.jupiter.api.Test;

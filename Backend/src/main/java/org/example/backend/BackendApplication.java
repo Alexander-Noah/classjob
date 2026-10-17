@@ -1,3 +1,6 @@
+/*
+ * BackendApplication实现模块。
+ */
 package org.example.backend;
 
 import org.example.backend.config.LocalDevelopmentSecretsInitializer;

@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  org.example.backend.mapper.TeachingScheduleReadMapper 的 SQL 映射，参数名与 Java 接口保持一致。
+  关联表：timetable_integration_config、class_timetable。
+-->
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">

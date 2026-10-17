@@ -1,3 +1,7 @@
+/*
+ * 实验室元数据回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：convertsUnorderedRowsToIdentifierMaps、rejectsDuplicateRowsInsteadOfSilentlyOverwritingData、avoidsDatabaseCallsForEmptyIdentifierSets。
+ */
 package org.example.backend.service;
 
 import org.example.backend.entity.DeviceCountRow;

@@ -1,3 +1,7 @@
+<!--
+  Web 管理平台的实验环境视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+  业务状态复用：../../composables/useBusinessModuleRecords。
+-->
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

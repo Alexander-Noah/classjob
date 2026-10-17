@@ -1,3 +1,7 @@
+/*
+ * 本地网关回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：mockGatewayReturnsStandardizedCommandResultWithoutClaimingRealHardware、realGatewayPlaceholdersReturnPendingConfigurationState。
+ */
 package org.example.backend.service.gateway;
 
 import org.junit.jupiter.api.Test;

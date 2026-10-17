@@ -1,3 +1,6 @@
+/*
+ * 物联网配置组件，声明应用启动或框架集成时使用的行为。
+ */
 package org.example.backend.config;
 
 import lombok.Data;

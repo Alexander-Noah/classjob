@@ -1,3 +1,6 @@
+/*
+ * 登录的服务端安全组件；调用方应保持身份认证与权限判断边界。
+ */
 package org.example.backend.security;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class LoginAttemptLimiter {
+    /** 单 JVM 的失败计数，进程重启即丢失；多实例部署时不是全局限流。 */
     private final Map<String, AttemptState> attempts = new ConcurrentHashMap<>();
     private final int maxAttempts;
     private final long lockSeconds;
@@ -23,6 +27,10 @@ public class LoginAttemptLimiter {
         this.lockSeconds = Math.max(lockSeconds, 60);
     }
 
+    /**
+     * 在密码校验前检查当前账号/IP 组合的锁定状态；不会增加失败次数。
+     * @throws IllegalArgumentException 尚在锁定期内，消息给出剩余秒数
+     */
     public void assertAllowed(String username, HttpServletRequest request) {
         AttemptState state = attempts.get(key(username, request));
         if (state == null || state.lockedUntilEpochSecond <= Instant.now().getEpochSecond()) {
@@ -32,12 +40,14 @@ public class LoginAttemptLimiter {
         throw new IllegalArgumentException("登录失败次数过多，请 " + waitSeconds + " 秒后再试");
     }
 
+    /** 登录成功后只清除相同账号/IP 的计数，不影响其他来源。 */
     public void recordSuccess(String username, HttpServletRequest request) {
         attempts.remove(key(username, request));
     }
 
     public void recordFailure(String username, HttpServletRequest request) {
         String key = key(username, request);
+        // compute 串行更新同一键，避免并行失败请求丢失递增；检查和计数仍是两个调用。
         attempts.compute(key, (ignored, state) -> {
             long now = Instant.now().getEpochSecond();
             AttemptState next = state == null
@@ -58,6 +68,7 @@ public class LoginAttemptLimiter {
         return normalizedUsername + "|" + clientIp(request);
     }
 
+    // 依次采用代理头和连接地址；部署端需由可信代理清理外部伪造的转发头。
     private String clientIp(HttpServletRequest request) {
         String forwardedFor = request.getHeader("X-Forwarded-For");
         if (forwardedFor != null && !forwardedFor.isBlank()) {

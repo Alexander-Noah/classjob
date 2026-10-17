@@ -1,4 +1,7 @@
-﻿<script setup>
+﻿<!--
+  Web 管理平台的课表与时间占用视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
+<script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

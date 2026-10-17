@@ -1,3 +1,7 @@
+/*
+ * 工作台统计公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：fetchDashboardOverview。
+ */
 import http from './http'
 import { API_ENDPOINTS } from './endpoints'
 import { API_USE_MOCK } from './config'

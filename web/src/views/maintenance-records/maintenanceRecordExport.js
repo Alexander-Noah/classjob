@@ -1,3 +1,7 @@
+/*
+ * 维护记录公共逻辑模块，供相关视图或服务复用。
+ * 主要导出：sanitizeMaintenanceRecordExportCell、toMaintenanceRecordExportRow。
+ */
 const FORMULA_PREFIX = /^\s*[=+\-@]/
 
 export function sanitizeMaintenanceRecordExportCell(value) {

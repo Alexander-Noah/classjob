@@ -1,3 +1,6 @@
+<!--
+  Web 管理平台的Forbidden视图组件；模板、响应式状态与局部样式在本文件内协同维护。
+-->
 <script setup>
 import { useRouter } from 'vue-router'
 import { ArrowLeft, House, Lock } from '@element-plus/icons-vue'

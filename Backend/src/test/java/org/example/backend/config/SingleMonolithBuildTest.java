@@ -1,3 +1,7 @@
+/*
+ * SingleMonolithBuildTest回归测试；测试夹具与生产配置分离。
+ * 覆盖场景：backendPomBuildsOneSpringBootJarWithoutReactorModules。
+ */
 package org.example.backend.config;
 
 import org.junit.jupiter.api.Test;

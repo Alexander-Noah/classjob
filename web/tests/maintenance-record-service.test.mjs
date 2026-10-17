@@ -1,3 +1,7 @@
+/*
+ * 维护记录的自动化测试；夹具用于验证行为，不是运行时配置。
+ * 主要导出：listMaintenanceRecords、getMaintenanceRecord、createMaintenanceRecord、updateMaintenanceRecord、deleteMaintenanceRecord。
+ */
 import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'

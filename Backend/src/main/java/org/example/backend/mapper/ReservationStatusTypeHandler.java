@@ -1,3 +1,6 @@
+/*
+ * 实验室预约实现模块。
+ */
 package org.example.backend.mapper;
 
 import org.apache.ibatis.type.BaseTypeHandler;
