@@ -1,0 +1,108 @@
+/* Shared buttons, including those in teleported dialogs. No extra DOM layers:
+   Element Plus keeps ownership of its loading overlay and button-group layout. */
+body .el-button:not(.is-text):not(.is-link),
+body .login-button {
+  --button-glass-rgb: 100, 116, 139;
+  --button-glass-tint: 0.012;
+  position: relative;
+  border: 1px solid rgba(var(--button-glass-rgb), 0.12);
+  border-radius: 12px;
+  color: #334155;
+  background-color: rgba(255, 255, 255, 0.12);
+  background-image:
+    linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.09) 48%, transparent 66%),
+    radial-gradient(ellipse at 12% 0%, rgba(255, 255, 255, 0.1), transparent 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 60%, rgba(var(--button-glass-rgb), 0.012)),
+    linear-gradient(rgba(var(--button-glass-rgb), var(--button-glass-tint)), rgba(var(--button-glass-rgb), var(--button-glass-tint)));
+  background-size: 260% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position: 100% 0, 0 0, 0 0, 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 1px 3px rgba(30, 41, 59, 0.025);
+  -webkit-backdrop-filter: blur(3px) saturate(1.05);
+  backdrop-filter: blur(3px) saturate(1.05);
+  transition: background-position 0.45s ease, background-color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+body .el-button--primary { --button-glass-rgb: 37, 99, 235 !important; }
+body .el-button--success { --button-glass-rgb: 21, 128, 61 !important; }
+body .el-button--warning { --button-glass-rgb: 161, 98, 7 !important; }
+body .el-button--danger { --button-glass-rgb: 185, 28, 28 !important; }
+body .el-button--info { --button-glass-rgb: 71, 85, 105 !important; }
+
+body .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info):not(.is-plain):not(.is-text):not(.is-link),
+body .login-button {
+  --button-glass-tint: 0.025;
+  color: rgb(var(--button-glass-rgb));
+  border-color: rgba(var(--button-glass-rgb), 0.15);
+  background-color: rgba(255, 255, 255, 0.14);
+  text-shadow: none;
+}
+
+body .el-button.is-plain:not(.is-text):not(.is-link) {
+  --button-glass-tint: 0.012;
+  color: rgb(var(--button-glass-rgb));
+}
+
+body .login-button {
+  --button-glass-rgb: 37, 99, 235;
+  border-radius: 17px;
+}
+
+@media (hover: hover) {
+  body .el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-loading):hover,
+  body .login-button:not(:disabled):hover {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    background-color: rgba(255, 255, 255, 0.24);
+    border-color: rgba(var(--button-glass-rgb), 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 2px 6px rgba(30, 41, 59, 0.045);
+    transform: translateY(-1px);
+  }
+}
+
+body .el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-loading):active,
+body .login-button:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 3px rgba(var(--button-glass-rgb), 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+body .el-button:focus-visible,
+body .login-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+body .el-button.is-disabled:not(.is-text):not(.is-link),
+body .login-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+body .el-button.is-circle { border-radius: 50%; }
+body .el-button.is-round { border-radius: 999px; }
+body .el-button-group > .el-button:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+body .el-button-group > .el-button:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body .el-button:not(.is-text):not(.is-link) { background-color: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .el-button:not(.is-text):not(.is-link), body .login-button {
+    transition: none;
+  }
+  body .el-button:not(.is-text):not(.is-link):hover,
+  body .el-button:not(.is-text):not(.is-link):active,
+  body .login-button:hover, body .login-button:active { transform: none; }
+}

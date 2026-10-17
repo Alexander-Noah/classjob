@@ -647,11 +647,6 @@ onBeforeUnmount(clearAvatarPreview)
   background-color: transparent;
 }
 
-.admin-content :deep(.el-button) {
-  border-radius: 12px;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
-}
-
 .admin-content > :deep(*) {
   min-width: 0;
 }
