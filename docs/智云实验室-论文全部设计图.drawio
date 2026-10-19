@@ -1,0 +1,1021 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="p21" name="图2-1 系统管理员用例图">
+    <mxGraphModel dx="820" dy="662" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="820" pageHeight="662" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="actor" parent="1" vertex="1" value="系统管理员" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;verticalAlign=top;spacingTop=8;">
+          <mxGeometry as="geometry" x="125" y="242.0" width="80" height="140" />
+        </mxCell>
+        <mxCell id="u0" parent="1" vertex="1" value="登录与退出" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="40" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u1" parent="1" vertex="1" value="用户与权限管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="116" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u2" parent="1" vertex="1" value="系统参数配置" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="192" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u3" parent="1" vertex="1" value="客户端激活管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="268" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u4" parent="1" vertex="1" value="通知公告管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="344" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u5" parent="1" vertex="1" value="平台统计分析" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="420" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u6" parent="1" vertex="1" value="个人信息管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="496" width="290" height="60" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图2-1  系统管理员用例图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="610" width="780" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="actor" target="u0" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.32220726296097524;entryY=0.9673218833482679;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="actor" target="u1" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.25748707009898475;entryY=0.9372499043234034;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="actor" target="u2" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.1424520419784985;entryY=0.8495131724479847;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="actor" target="u3" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.005682204028580639;entryY=0.5751659270278642;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="actor" target="u4" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.08526978694835595;entryY=0.22071725727833116;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="actor" target="u5" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.22250601494361624;entryY=0.08407081340987001;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="actor" target="u6" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3023974356351777;entryY=0.040703552641165666;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p22" name="图2-2 实验室管理员用例图">
+    <mxGraphModel dx="820" dy="1042" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="820" pageHeight="1042" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="actor" parent="1" vertex="1" value="实验室管理员" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;verticalAlign=top;spacingTop=8;">
+          <mxGeometry as="geometry" x="125" y="432.0" width="80" height="140" />
+        </mxCell>
+        <mxCell id="u0" parent="1" vertex="1" value="登录与个人信息管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="40" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u1" parent="1" vertex="1" value="实验室资源管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="116" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u2" parent="1" vertex="1" value="设备资产与状态管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="192" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u3" parent="1" vertex="1" value="耗材库存与借还管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="268" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u4" parent="1" vertex="1" value="课表采集与查询" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="344" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u5" parent="1" vertex="1" value="实验室预约审批" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="420" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u6" parent="1" vertex="1" value="课程实验环境管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="496" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u7" parent="1" vertex="1" value="设备维护记录管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="572" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u8" parent="1" vertex="1" value="通知公告管理" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="648" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u9" parent="1" vertex="1" value="使用记录与统计分析" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="724" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u10" parent="1" vertex="1" value="智能辅助" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="800" width="290" height="60" />
+        </mxCell>
+        <mxCell id="u11" parent="1" vertex="1" value="物联感知与控制" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="465" y="876" width="290" height="60" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图2-2  实验室管理员用例图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="990" width="780" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="actor" target="u0" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.39577933013244215;entryY=0.9890174352437318;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="actor" target="u1" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3748085890157411;entryY=0.9840734558058007;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="actor" target="u2" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3438177684453453;entryY=0.9749811686231443;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="actor" target="u3" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.29431810182852;entryY=0.9557356215664706;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="actor" target="u4" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.20803779146930035;entryY=0.9059040142569131;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="actor" target="u5" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.0646396445552835;entryY=0.7458889198541698;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="actor" target="u6" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.01616827960320177;entryY=0.37387757400892385;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="actor" target="u7" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.1613343653566666;entryY=0.13216092117390682;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="actor" target="u8" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.26823655724985757;entryY=0.05695857236077586;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="actor" target="u9" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3284166069289603;entryY=0.03036275784151409;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="actor" target="u10" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3648734509989234;entryY=0.018605343034367176;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="actor" target="u11" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.4;exitPerimeter=0;entryX=0.3889017137624231;entryY=0.012499055595712131;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p31" name="图3-1 智云实验室总体架构图">
+    <mxGraphModel dx="980" dy="960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="960" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="users" parent="1" vertex="1" value="系统管理员 / 实验室管理员" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="265" y="25" width="450" height="52" />
+        </mxCell>
+        <mxCell id="browser" parent="1" vertex="1" value="浏览器管理页面&#10;Vue 3 · Vue Router · Element Plus · ECharts" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="165" y="120" width="650" height="80" />
+        </mxCell>
+        <mxCell id="http" parent="1" vertex="1" value="Axios / HTTP API / JWT" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="305" y="245" width="370" height="54" />
+        </mxCell>
+        <mxCell id="controller" parent="1" vertex="1" value="接口层 Controller&#10;请求适配、身份与角色校验" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="225" y="345" width="530" height="74" />
+        </mxCell>
+        <mxCell id="service" parent="1" vertex="1" value="业务层 Service&#10;资源、设备、课表、预约、维护、耗材、统计" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="125" y="465" width="730" height="80" />
+        </mxCell>
+        <mxCell id="mapper" parent="1" vertex="1" value="数据访问层 MyBatis Mapper&#10;参数化查询、事务协作、实体映射" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="225" y="590" width="530" height="74" />
+        </mxCell>
+        <mxCell id="db" parent="1" vertex="1" value="MySQL 业务数据库&#10;smart_lab_basic" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="315" y="720" width="350" height="70" />
+        </mxCell>
+        <mxCell id="python" parent="1" vertex="1" value="Python / Selenium&#10;课表采集与解析" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="25" y="720" width="250" height="70" />
+        </mxCell>
+        <mxCell id="external" parent="1" vertex="1" value="对象存储 / 智能问答&#10;外部服务接口" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="705" y="720" width="250" height="70" />
+        </mxCell>
+        <mxCell id="monitor" parent="1" vertex="1" value="运行监控：Actuator → Prometheus → Grafana" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="160" y="835" width="660" height="50" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-1  智云实验室总体架构图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="908" width="940" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="users" target="browser" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="browser" target="http" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="http" target="controller" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="controller" target="service" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="service" target="mapper" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="mapper" target="db" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="service" target="python" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="65" y="505" />
+              <mxPoint x="65" y="680" />
+              <mxPoint x="150" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="service" target="external" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="920" y="505" />
+              <mxPoint x="920" y="680" />
+              <mxPoint x="830" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="service" target="monitor" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=1;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="10" y="505" />
+              <mxPoint x="10" y="860" />
+              <mxPoint x="160" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p32" name="图3-2 系统总体结构图">
+    <mxGraphModel dx="940" dy="720" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="940" pageHeight="720" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" vertex="1" value="智云实验室协同管控平台" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="300" y="25" width="340" height="55" />
+        </mxCell>
+        <mxCell id="sys" parent="1" vertex="1" value="系统管理员" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="155" y="145" width="220" height="52" />
+        </mxCell>
+        <mxCell id="lab" parent="1" vertex="1" value="实验室管理员" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="565" y="145" width="220" height="52" />
+        </mxCell>
+        <mxCell id="sys0" parent="1" vertex="1" value="登&#10;录&#10;与&#10;个&#10;人&#10;中&#10;心" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="55" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="sys1" parent="1" vertex="1" value="用&#10;户&#10;与&#10;权&#10;限&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="119" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="sys2" parent="1" vertex="1" value="系&#10;统&#10;参&#10;数&#10;配&#10;置" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="183" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="sys3" parent="1" vertex="1" value="客&#10;户&#10;端&#10;激&#10;活&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="247" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="sys4" parent="1" vertex="1" value="通&#10;知&#10;公&#10;告&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="311" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="sys5" parent="1" vertex="1" value="平&#10;台&#10;统&#10;计&#10;分&#10;析" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="375" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab0" parent="1" vertex="1" value="实&#10;验&#10;室&#10;与&#10;设&#10;备&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="505" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab1" parent="1" vertex="1" value="课&#10;表&#10;采&#10;集&#10;预&#10;约&#10;审&#10;批" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="569" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab2" parent="1" vertex="1" value="课&#10;程&#10;实&#10;验&#10;环&#10;境&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="633" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab3" parent="1" vertex="1" value="维&#10;护&#10;记&#10;录&#10;物&#10;联&#10;感&#10;知" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="697" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab4" parent="1" vertex="1" value="耗&#10;材&#10;库&#10;存&#10;借&#10;还&#10;管&#10;理" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="761" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="lab5" parent="1" vertex="1" value="通&#10;知&#10;统&#10;计&#10;智&#10;能&#10;辅&#10;助" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;spacing=0;">
+          <mxGeometry as="geometry" x="825" y="290" width="48" height="300" />
+        </mxCell>
+        <mxCell id="legend" parent="1" vertex="1" value="按业务职责分组，具体功能见图2-1和图2-2。" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="175" y="620" width="590" height="35" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-2  系统总体结构图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="668" width="900" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="system" target="sys" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="470" y="110" />
+              <mxPoint x="265" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="system" target="lab" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="470" y="110" />
+              <mxPoint x="675" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="sys" target="sys0" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="79" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="sys" target="sys1" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="143" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="sys" target="sys2" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="207" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="sys" target="sys3" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="271" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="sys" target="sys4" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="335" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="sys" target="sys5" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="265" y="245" />
+              <mxPoint x="399" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="lab" target="lab0" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="529" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="lab" target="lab1" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="593" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="lab" target="lab2" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="657" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="lab" target="lab3" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="721" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="lab" target="lab4" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="785" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="lab" target="lab5" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="675" y="245" />
+              <mxPoint x="849" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p33" name="图3-3 系统总体E-R图">
+    <mxGraphModel dx="1180" dy="1060" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1180" pageHeight="1060" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="role" parent="1" vertex="1" value="角色" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="user_role" parent="1" vertex="1" value="用户角色" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="sys_user" parent="1" vertex="1" value="用户" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="consumable_inventory" parent="1" vertex="1" value="耗材库存" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="consumable_loan" parent="1" vertex="1" value="耗材借还" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="lab" parent="1" vertex="1" value="实验室" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="repair_order" parent="1" vertex="1" value="维护记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="device" parent="1" vertex="1" value="设备资产" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="lab_reservation" parent="1" vertex="1" value="实验室预约" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="rel0" parent="1" vertex="1" value="分配&#10;角色" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="121.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel1" parent="1" vertex="1" value="关联&#10;用户" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="650.0" y="121.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel2" parent="1" vertex="1" value="管理" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="830.0" y="283.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel3" parent="1" vertex="1" value="借还" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="446.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel4" parent="1" vertex="1" value="配置" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="650.0" y="608.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel5" parent="1" vertex="1" value="维护" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="771.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel6" parent="1" vertex="1" value="预约" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="830.0" y="608.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="legend" parent="1" vertex="1" value="矩形表示实体，菱形表示关系；1/N表示基数，0..1表示可选父关联。&#10;本页展示核心关系；全库39表、42项外键及完整属性见附属E-R分图。" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="65" y="915" width="1050" height="70" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-3  系统总体E-R图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1008" width="1140" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="role" target="rel0" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="rel0" target="user_role" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="sys_user" target="rel1" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="rel1" target="user_role" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="sys_user" target="rel2" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="rel2" target="lab" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="consumable_inventory" target="rel3" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="rel3" target="consumable_loan" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="lab" target="rel4" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.2415384615384619;exitY=1.0;exitPerimeter=0;entryX=0.7032209862194918;entryY=0.2032209862194918;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="rel4" target="device" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.2967790137805082;exitY=0.7967790137805082;exitPerimeter=0;entryX=0.7584615384615381;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="device" target="rel5" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="rel5" target="repair_order" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="lab" target="rel6" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="rel6" target="lab_reservation" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p34" name="图3-4 管理员登录流程图">
+    <mxGraphModel dx="930" dy="1110" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="930" pageHeight="1110" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" vertex="1" value="开始" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="355" y="20" width="140" height="44" />
+        </mxCell>
+        <mxCell id="input" parent="1" vertex="1" value="输入账号和密码" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="255" y="110" width="340" height="60" />
+        </mxCell>
+        <mxCell id="required" parent="1" vertex="1" value="必填项完整？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="320" y="215" width="210" height="90" />
+        </mxCell>
+        <mxCell id="validate" parent="1" vertex="1" value="校验失败次数限制、账号状态&#10;及密码摘要" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="235" y="355" width="380" height="70" />
+        </mxCell>
+        <mxCell id="valid" parent="1" vertex="1" value="验证通过？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="320" y="465" width="210" height="90" />
+        </mxCell>
+        <mxCell id="role" parent="1" vertex="1" value="角色允许登录？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="320" y="620" width="210" height="90" />
+        </mxCell>
+        <mxCell id="token" parent="1" vertex="1" value="签发JWT令牌并保存会话" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="255" y="770" width="340" height="60" />
+        </mxCell>
+        <mxCell id="home" parent="1" vertex="1" value="按角色进入管理员工作台" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="255" y="880" width="340" height="60" />
+        </mxCell>
+        <mxCell id="end" parent="1" vertex="1" value="结束" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="355" y="990" width="140" height="44" />
+        </mxCell>
+        <mxCell id="required_error" parent="1" vertex="1" value="提示补全信息" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="35" y="230" width="200" height="60" />
+        </mxCell>
+        <mxCell id="invalid" parent="1" vertex="1" value="提示错误并记录失败&#10;达到阈值后暂时锁定" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="665" y="475" width="230" height="75" />
+        </mxCell>
+        <mxCell id="retired" parent="1" vertex="1" value="提示账号角色已停用" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="665" y="635" width="230" height="60" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-4  管理员登录流程图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1058" width="890" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="start" target="input" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="input" target="required" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="validate" target="valid" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="token" target="home" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="home" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="required" target="validate" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="required" target="required_error" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="-7.5" y="-13.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="required_error" target="input" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=0.0;exitPerimeter=0;entryX=8.359326303060002e-17;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="135" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="valid" target="role" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="2.5" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="valid" target="invalid" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.9919168591224017;exitY=0.5080831408775983;exitPerimeter=0;entryX=0.0;entryY=0.48920187793427206;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="3.3487297921478785" y="-11.208811762027153" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="invalid" target="input" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.46805555555555584;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="900" y="510" />
+              <mxPoint x="900" y="140" />
+              <mxPoint x="640" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="role" target="token" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="role" target="retired" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="2.5" y="-10.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="retired" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="780" y="1012" />
+              <mxPoint x="560" y="1012" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p35" name="图3-5 实验室预约审批流程图">
+    <mxGraphModel dx="940" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="940" pageHeight="1300" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" vertex="1" value="开始" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="350" y="20" width="140" height="44" />
+        </mxCell>
+        <mxCell id="input" parent="1" vertex="1" value="填写预约信息并提交" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="240" y="105" width="360" height="60" />
+        </mxCell>
+        <mxCell id="validate" parent="1" vertex="1" value="校验参数、身份和实验室管理范围" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="200" y="205" width="440" height="64" />
+        </mxCell>
+        <mxCell id="valid" parent="1" vertex="1" value="请求有效？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="315" y="310" width="210" height="90" />
+        </mxCell>
+        <mxCell id="create" parent="1" vertex="1" value="结合课表和预约检测冲突&#10;在事务中保存申请与待审/冲突状态" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="200" y="445" width="440" height="76" />
+        </mxCell>
+        <mxCell id="review" parent="1" vertex="1" value="管理员校验权限、记录范围及当前状态" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="190" y="565" width="460" height="64" />
+        </mxCell>
+        <mxCell id="approve" parent="1" vertex="1" value="同意审批通过？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="315" y="675" width="210" height="90" />
+        </mxCell>
+        <mxCell id="update" parent="1" vertex="1" value="重新检查最新冲突&#10;按原状态条件更新审批结果" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="220" y="810" width="400" height="76" />
+        </mxCell>
+        <mxCell id="success" parent="1" vertex="1" value="可通过且&#10;更新成功？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="300" y="930" width="240" height="90" />
+        </mxCell>
+        <mxCell id="read" parent="1" vertex="1" value="回读结果并刷新页面" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="220" y="1060" width="400" height="56" />
+        </mxCell>
+        <mxCell id="end" parent="1" vertex="1" value="结束" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="350" y="1170" width="140" height="44" />
+        </mxCell>
+        <mxCell id="bad" parent="1" vertex="1" value="提示错误，重新填写" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="670" y="325" width="235" height="60" />
+        </mxCell>
+        <mxCell id="reject" parent="1" vertex="1" value="保存驳回状态及原因" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="670" y="690" width="235" height="60" />
+        </mxCell>
+        <mxCell id="conflict" parent="1" vertex="1" value="提示冲突或记录已变化&#10;不覆盖其他人的更新" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="670" y="945" width="235" height="70" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-5  实验室预约审批流程图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1248" width="900" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="start" target="input" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="input" target="validate" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="validate" target="valid" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="create" target="review" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="review" target="approve" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="update" target="success" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="valid" target="create" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="-2.5" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="valid" target="bad" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="2.5" y="-10.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="bad" target="input" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="915" y="355" />
+              <mxPoint x="915" y="135" />
+              <mxPoint x="650" y="135" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="approve" target="update" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="2.5" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="approve" target="reject" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="2.5" y="-10.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="success" target="read" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="success" target="conflict" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.9824945295404812;exitY=0.5175054704595191;exitPerimeter=0;entryX=0.0;entryY=0.47716229348882444;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="-2.899343544857743" y="-12.488426442787159" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="reject" target="read" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="915" y="720" />
+              <mxPoint x="915" y="1125" />
+              <mxPoint x="650" y="1125" />
+              <mxPoint x="650" y="1088" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" parent="1" edge="1" source="conflict" target="read" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="915" y="980" />
+              <mxPoint x="915" y="1125" />
+              <mxPoint x="650" y="1125" />
+              <mxPoint x="650" y="1088" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" parent="1" edge="1" source="read" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p36" name="图3-6 设备资产管理流程图">
+    <mxGraphModel dx="1060" dy="1110" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1060" pageHeight="1110" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" vertex="1" value="开始" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="460" y="20" width="140" height="44" />
+        </mxCell>
+        <mxCell id="list" parent="1" vertex="1" value="登录并进入设备资产页面&#10;按实验室、编号或状态筛选" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="105" width="500" height="76" />
+        </mxCell>
+        <mxCell id="auth" parent="1" vertex="1" value="后端统一校验权限及数据管理范围" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="230" width="500" height="64" />
+        </mxCell>
+        <mxCell id="choice" parent="1" vertex="1" value="选择管理操作" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="410" y="340" width="240" height="90" />
+        </mxCell>
+        <mxCell id="edit" parent="1" vertex="1" value="填写台账并校验&#10;设备编号及实验室关联" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="30" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="editsave" parent="1" vertex="1" value="保存设备资产" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="30" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="import" parent="1" vertex="1" value="上传文件，解析并&#10;校验导入记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="importsave" parent="1" vertex="1" value="写入校验通过的记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="delete" parent="1" vertex="1" value="确认删除并检查&#10;相关业务约束" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="550" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="deletesave" parent="1" vertex="1" value="更新逻辑删除标记" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="550" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="event" parent="1" vertex="1" value="填写盘点结果或&#10;设备调拨目标" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="eventsave" parent="1" vertex="1" value="保存资产事件记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="refresh" parent="1" vertex="1" value="刷新资产列表并反馈操作结果&#10;运行指标由客户端心跳上报" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="855" width="500" height="76" />
+        </mxCell>
+        <mxCell id="end" parent="1" vertex="1" value="结束" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="460" y="990" width="140" height="44" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-6  设备资产管理流程图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1058" width="1020" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="choice" target="edit" value="新增 / 编辑" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="140" y="475" />
+            </Array>
+            <mxPoint as="offset" x="-190.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="edit" target="editsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="choice" target="import" value="导入" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="400" y="475" />
+            </Array>
+            <mxPoint as="offset" x="-60.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="import" target="importsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="choice" target="delete" value="删除" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="660" y="475" />
+            </Array>
+            <mxPoint as="offset" x="60.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="delete" target="deletesave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="choice" target="event" value="盘点 / 调拨" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="920" y="475" />
+            </Array>
+            <mxPoint as="offset" x="190.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="event" target="eventsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="refresh" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="editsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="140" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="importsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="400" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="deletesave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="660" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="eventsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="920" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="start" target="list" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e14" parent="1" edge="1" source="list" target="auth" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e15" parent="1" edge="1" source="auth" target="choice" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="p37" name="图3-7 课表采集与导入流程图">
+    <mxGraphModel dx="980" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="1200" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" vertex="1" value="手动采集 / 定时任务触发" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="240" y="20" width="420" height="56" />
+        </mxCell>
+        <mxCell id="config" parent="1" vertex="1" value="加载教务账号、学期及采集配置" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="220" y="120" width="460" height="64" />
+        </mxCell>
+        <mxCell id="run" parent="1" vertex="1" value="创建任务记录，调用Python脚本&#10;通过Selenium进入门户与教务系统" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="210" y="225" width="480" height="76" />
+        </mxCell>
+        <mxCell id="crawl" parent="1" vertex="1" value="采集成功？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="340" y="350" width="220" height="90" />
+        </mxCell>
+        <mxCell id="retry" parent="1" vertex="1" value="允许限定重试？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="690" y="350" width="230" height="90" />
+        </mxCell>
+        <mxCell id="authorize" parent="1" vertex="1" value="按策略进行可见授权&#10;或限定次数重试" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="690" y="500" width="230" height="76" />
+        </mxCell>
+        <mxCell id="parse" parent="1" vertex="1" value="解析课表并运行导入脚本" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="230" y="510" width="440" height="64" />
+        </mxCell>
+        <mxCell id="import" parent="1" vertex="1" value="导入成功？" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="340" y="625" width="220" height="90" />
+        </mxCell>
+        <mxCell id="ok" parent="1" vertex="1" value="保存成功状态及更新条数" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="240" y="780" width="420" height="64" />
+        </mxCell>
+        <mxCell id="fail" parent="1" vertex="1" value="保存失败或超时状态&#10;记录具体错误原因" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="690" y="780" width="230" height="76" />
+        </mxCell>
+        <mxCell id="finish" parent="1" vertex="1" value="记录结束时间与任务日志&#10;页面展示采集结果" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="240" y="940" width="420" height="76" />
+        </mxCell>
+        <mxCell id="end" parent="1" vertex="1" value="结束" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="380" y="1070" width="140" height="44" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-7  课表采集与导入流程图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1148" width="940" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="start" target="config" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="config" target="run" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="run" target="crawl" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="parse" target="import" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="ok" target="finish" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="finish" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="crawl" target="parse" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="crawl" target="retry" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="5.0" y="-10.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="retry" target="authorize" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="retry" target="fail" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="950" y="395" />
+              <mxPoint x="950" y="818" />
+            </Array>
+            <mxPoint as="offset" x="3.0" y="3.5" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="authorize" target="run" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="935" y="538" />
+              <mxPoint x="935" y="263" />
+              <mxPoint x="735" y="263" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="import" target="ok" value="是" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <mxPoint as="offset" x="20.0" y="0.5" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="import" target="fail" value="否" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="640" y="670" />
+              <mxPoint x="640" y="735" />
+              <mxPoint x="805" y="735" />
+            </Array>
+            <mxPoint as="offset" x="-7.5" y="-45.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="fail" target="finish" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="805" y="978" />
+              <mxPoint x="710" y="978" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

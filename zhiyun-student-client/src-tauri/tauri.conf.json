@@ -11,7 +11,7 @@
   "app": {
     "windows": [],
     "security": {
-      "csp": null
+      "csp": "script-src 'self'; object-src 'none'; base-uri 'self'"
     }
   },
   "bundle": {

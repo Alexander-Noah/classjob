@@ -1,3 +1,4 @@
+import { validateRequestData } from '../../../shared/requestValidation.js'
 /*
  * request公共逻辑模块，供相关视图或服务复用。
  * 主要导出：getApiBaseUrl。
@@ -40,6 +41,8 @@ service.interceptors.request.use(
    * 入参：config。
    */
   config => {
+    try { validateRequestData(config.data) }
+    catch (error) { Object.assign(error as Error, { config }); throw error }
     config.baseURL = getApiBaseUrl()
     try {
       // 登录会话与设备激活状态分开保存；激活成功不代表用户已获得业务接口权限。

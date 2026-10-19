@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="p36" name="图3-6 设备资产管理流程图">
+    <mxGraphModel dx="1060" dy="1110" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1060" pageHeight="1110" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" vertex="1" value="开始" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="460" y="20" width="140" height="44" />
+        </mxCell>
+        <mxCell id="list" parent="1" vertex="1" value="登录并进入设备资产页面&#10;按实验室、编号或状态筛选" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="105" width="500" height="76" />
+        </mxCell>
+        <mxCell id="auth" parent="1" vertex="1" value="后端统一校验权限及数据管理范围" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="230" width="500" height="64" />
+        </mxCell>
+        <mxCell id="choice" parent="1" vertex="1" value="选择管理操作" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="410" y="340" width="240" height="90" />
+        </mxCell>
+        <mxCell id="edit" parent="1" vertex="1" value="填写台账并校验&#10;设备编号及实验室关联" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="30" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="editsave" parent="1" vertex="1" value="保存设备资产" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="30" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="import" parent="1" vertex="1" value="上传文件，解析并&#10;校验导入记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="importsave" parent="1" vertex="1" value="写入校验通过的记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="delete" parent="1" vertex="1" value="确认删除并检查&#10;相关业务约束" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="550" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="deletesave" parent="1" vertex="1" value="更新逻辑删除标记" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="550" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="event" parent="1" vertex="1" value="填写盘点结果或&#10;设备调拨目标" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="530" width="220" height="85" />
+        </mxCell>
+        <mxCell id="eventsave" parent="1" vertex="1" value="保存资产事件记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="680" width="220" height="64" />
+        </mxCell>
+        <mxCell id="refresh" parent="1" vertex="1" value="刷新资产列表并反馈操作结果&#10;运行指标由客户端心跳上报" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="280" y="855" width="500" height="76" />
+        </mxCell>
+        <mxCell id="end" parent="1" vertex="1" value="结束" style="ellipse;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="460" y="990" width="140" height="44" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-6  设备资产管理流程图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1058" width="1020" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="choice" target="edit" value="新增 / 编辑" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="140" y="475" />
+            </Array>
+            <mxPoint as="offset" x="-190.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="edit" target="editsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="choice" target="import" value="导入" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="400" y="475" />
+            </Array>
+            <mxPoint as="offset" x="-60.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="import" target="importsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="choice" target="delete" value="删除" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="660" y="475" />
+            </Array>
+            <mxPoint as="offset" x="60.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="delete" target="deletesave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="choice" target="event" value="盘点 / 调拨" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="530" y="475" />
+              <mxPoint x="920" y="475" />
+            </Array>
+            <mxPoint as="offset" x="190.0" y="-20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="event" target="eventsave" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="refresh" target="end" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="editsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="140" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="importsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="400" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="deletesave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="660" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="eventsave" target="refresh" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="920" y="800" />
+              <mxPoint x="530" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="start" target="list" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e14" parent="1" edge="1" source="list" target="auth" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e15" parent="1" edge="1" source="auth" target="choice" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

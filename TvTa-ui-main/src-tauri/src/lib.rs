@@ -1,6 +1,9 @@
 //! 教师端本地网关与 Tauri 命令入口。
 //! UDP 发现、HTTP 状态采集与局域网 WebSocket 分别由后台线程处理，
 //! UI 通过共享状态快照观察运行结果；修改协议字段时需同步独立学生端。
+#[path = "../../../shared/desktop_input_validation.rs"]
+mod input_validation;
+
 use std::{
     collections::HashMap,
     io::{Read, Write},
@@ -720,12 +723,17 @@ fn post_json_to_api(api_base_url: &str, path: &str, body: &str) -> Result<String
 /// 入参：gateway（网关）；request（请求）。
 fn handle_collect_request(gateway: &Arc<Mutex<GatewayInner>>, mut request: Request) {
     let mut body = String::new();
-    if request.as_reader().read_to_string(&mut body).is_err() {
+    if request.as_reader().take(input_validation::MAX_BODY_BYTES + 1).read_to_string(&mut body).is_err() {
         respond_json(
             request,
             &serde_json::json!({ "ok": false, "message": "invalid json" }),
             400,
         );
+        return;
+    }
+
+    if let Err(message) = input_validation::validate_json(&body, false) {
+        respond_json(request, &serde_json::json!({ "ok": false, "message": message }), if body.len() as u64 > input_validation::MAX_BODY_BYTES { 413 } else { 400 });
         return;
     }
 
@@ -799,12 +807,17 @@ fn handle_device_action_request(
     mut request: Request,
 ) {
     let mut body = String::new();
-    if request.as_reader().read_to_string(&mut body).is_err() {
+    if request.as_reader().take(input_validation::MAX_BODY_BYTES + 1).read_to_string(&mut body).is_err() {
         respond_json(
             request,
             &serde_json::json!({ "ok": false, "message": "invalid json" }),
             400,
         );
+        return;
+    }
+
+    if let Err(message) = input_validation::validate_json(&body, true) {
+        respond_json(request, &serde_json::json!({ "ok": false, "message": message }), if body.len() as u64 > input_validation::MAX_BODY_BYTES { 413 } else { 400 });
         return;
     }
 
@@ -1709,12 +1722,17 @@ fn execute_student_action(action: StudentActionRequest, state: StudentRuntimeSta
 /// 入参：state（状态）；request（请求）。
 fn handle_student_action_request(state: &StudentRuntimeState, mut request: Request) {
     let mut body = String::new();
-    if request.as_reader().read_to_string(&mut body).is_err() {
+    if request.as_reader().take(input_validation::MAX_BODY_BYTES + 1).read_to_string(&mut body).is_err() {
         respond_json(
             request,
             &serde_json::json!({ "ok": false, "message": "invalid json" }),
             400,
         );
+        return;
+    }
+
+    if let Err(message) = input_validation::validate_json(&body, true) {
+        respond_json(request, &serde_json::json!({ "ok": false, "message": message }), if body.len() as u64 > input_validation::MAX_BODY_BYTES { 413 } else { 400 });
         return;
     }
 

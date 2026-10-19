@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="p31" name="图3-1 智云实验室总体架构图">
+    <mxGraphModel dx="980" dy="960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="960" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="users" parent="1" vertex="1" value="系统管理员 / 实验室管理员" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="265" y="25" width="450" height="52" />
+        </mxCell>
+        <mxCell id="browser" parent="1" vertex="1" value="浏览器管理页面&#10;Vue 3 · Vue Router · Element Plus · ECharts" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="165" y="120" width="650" height="80" />
+        </mxCell>
+        <mxCell id="http" parent="1" vertex="1" value="Axios / HTTP API / JWT" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="305" y="245" width="370" height="54" />
+        </mxCell>
+        <mxCell id="controller" parent="1" vertex="1" value="接口层 Controller&#10;请求适配、身份与角色校验" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="225" y="345" width="530" height="74" />
+        </mxCell>
+        <mxCell id="service" parent="1" vertex="1" value="业务层 Service&#10;资源、设备、课表、预约、维护、耗材、统计" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="125" y="465" width="730" height="80" />
+        </mxCell>
+        <mxCell id="mapper" parent="1" vertex="1" value="数据访问层 MyBatis Mapper&#10;参数化查询、事务协作、实体映射" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="225" y="590" width="530" height="74" />
+        </mxCell>
+        <mxCell id="db" parent="1" vertex="1" value="MySQL 业务数据库&#10;smart_lab_basic" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="315" y="720" width="350" height="70" />
+        </mxCell>
+        <mxCell id="python" parent="1" vertex="1" value="Python / Selenium&#10;课表采集与解析" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="25" y="720" width="250" height="70" />
+        </mxCell>
+        <mxCell id="external" parent="1" vertex="1" value="对象存储 / 智能问答&#10;外部服务接口" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="705" y="720" width="250" height="70" />
+        </mxCell>
+        <mxCell id="monitor" parent="1" vertex="1" value="运行监控：Actuator → Prometheus → Grafana" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="160" y="835" width="660" height="50" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-1  智云实验室总体架构图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="908" width="940" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="users" target="browser" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="browser" target="http" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="http" target="controller" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="controller" target="service" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="service" target="mapper" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="mapper" target="db" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="service" target="python" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="65" y="505" />
+              <mxPoint x="65" y="680" />
+              <mxPoint x="150" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="service" target="external" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="920" y="505" />
+              <mxPoint x="920" y="680" />
+              <mxPoint x="830" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="service" target="monitor" value="" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=1;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="10" y="505" />
+              <mxPoint x="10" y="860" />
+              <mxPoint x="160" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

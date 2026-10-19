@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="智云实验室图标.png" alt="智云实验室 Logo" width="110" style="border-radius: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);" />
+![](C:\Users\zheng\Desktop\智云实验室\image\login-brand-transparent.png)
 
   # 智云实验室 (Zhiyun Laboratory)
 
@@ -569,4 +569,3 @@ flowchart LR
 <div align="center">
   <sub>智云实验室 (Zhiyun Laboratory) &copy; 2026. Made with ❤️ for Smart Campus & Laboratory Management.</sub>
 </div>
-

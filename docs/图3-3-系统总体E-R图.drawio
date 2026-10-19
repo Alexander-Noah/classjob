@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="p33" name="图3-3 系统总体E-R图">
+    <mxGraphModel dx="1180" dy="1060" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1180" pageHeight="1060" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="role" parent="1" vertex="1" value="角色" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="user_role" parent="1" vertex="1" value="用户角色" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="sys_user" parent="1" vertex="1" value="用户" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="120" width="150" height="70" />
+        </mxCell>
+        <mxCell id="consumable_inventory" parent="1" vertex="1" value="耗材库存" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="consumable_loan" parent="1" vertex="1" value="耗材借还" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="lab" parent="1" vertex="1" value="实验室" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="445" width="150" height="70" />
+        </mxCell>
+        <mxCell id="repair_order" parent="1" vertex="1" value="维护记录" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="90" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="device" parent="1" vertex="1" value="设备资产" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="450" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="lab_reservation" parent="1" vertex="1" value="实验室预约" style="rounded=0;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="810" y="770" width="150" height="70" />
+        </mxCell>
+        <mxCell id="rel0" parent="1" vertex="1" value="分配&#10;角色" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="121.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel1" parent="1" vertex="1" value="关联&#10;用户" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="650.0" y="121.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel2" parent="1" vertex="1" value="管理" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="830.0" y="283.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel3" parent="1" vertex="1" value="借还" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="446.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel4" parent="1" vertex="1" value="配置" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="650.0" y="608.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel5" parent="1" vertex="1" value="维护" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="290.0" y="771.0" width="110" height="68" />
+        </mxCell>
+        <mxCell id="rel6" parent="1" vertex="1" value="预约" style="rhombus;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=20;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;">
+          <mxGeometry as="geometry" x="830.0" y="608.5" width="110" height="68" />
+        </mxCell>
+        <mxCell id="legend" parent="1" vertex="1" value="矩形表示实体，菱形表示关系；1/N表示基数，0..1表示可选父关联。&#10;本页展示核心关系；全库39表、42项外键及完整属性见附属E-R分图。" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=18;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="65" y="915" width="1050" height="70" />
+        </mxCell>
+        <mxCell id="caption" parent="1" vertex="1" value="图3-3  系统总体E-R图" style="text;strokeColor=none;fillColor=none;html=0;whiteSpace=wrap;fontFamily=SimSun;fontSize=22;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.3;align=center;verticalAlign=middle;spacing=5;strokeColor=none;fillColor=none;">
+          <mxGeometry as="geometry" x="20" y="1008" width="1140" height="36" />
+        </mxCell>
+        <mxCell id="e0" parent="1" edge="1" source="role" target="rel0" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e1" parent="1" edge="1" source="rel0" target="user_role" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e2" parent="1" edge="1" source="sys_user" target="rel1" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e3" parent="1" edge="1" source="rel1" target="user_role" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e4" parent="1" edge="1" source="sys_user" target="rel2" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e5" parent="1" edge="1" source="rel2" target="lab" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e6" parent="1" edge="1" source="consumable_inventory" target="rel3" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e7" parent="1" edge="1" source="rel3" target="consumable_loan" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e8" parent="1" edge="1" source="lab" target="rel4" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.2415384615384619;exitY=1.0;exitPerimeter=0;entryX=0.7032209862194918;entryY=0.2032209862194918;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e9" parent="1" edge="1" source="rel4" target="device" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.2967790137805082;exitY=0.7967790137805082;exitPerimeter=0;entryX=0.7584615384615381;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e10" parent="1" edge="1" source="device" target="rel5" value="0..1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e11" parent="1" edge="1" source="rel5" target="repair_order" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e12" parent="1" edge="1" source="lab" target="rel6" value="1" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="e13" parent="1" edge="1" source="rel6" target="lab_reservation" value="N" style="edgeStyle=none;rounded=0;html=0;strokeColor=#000000;strokeWidth=1.3;fontColor=#000000;fontFamily=SimSun;fontSize=18;labelBackgroundColor=#ffffff;endArrow=none;endFill=1;startArrow=none;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
