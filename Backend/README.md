@@ -8,7 +8,7 @@ Prometheus / Grafana 监控配置与启动步骤见 [监控说明](../monitoring
 
 ## 技术栈
 
-- **框架**: Spring Boot 3.x
+- **框架**: Spring Boot 4.0.6
 - **ORM**: MyBatis
 - **数据库**: MySQL 8.0+
 - **认证**: JWT Token
@@ -20,7 +20,7 @@ Prometheus / Grafana 监控配置与启动步骤见 [监控说明](../monitoring
 - **JDK版本**: Java 17说明
 
 这份文档写给后续维护和二次开发使用。重点说明后端代码怎么分层、接口在哪里、Mapper 怎么写、数据库字段怎么对应、前后端联调时怎么排错。
-前端仓库：https://gitee.com/translator-of-zheng-haotao/zhiyun-laboratory
+前端代码位于本仓库的 [web 目录](../web/README.md)。
 ## 1. 技术栈
 
 后端目录：`Backend`
@@ -812,14 +812,14 @@ http://127.0.0.1:8080
 
 项目引入了 SpringDoc。
 
-启动后可以尝试访问：
+OpenAPI 与 Swagger UI 默认关闭。本地调试时设置 `SMART_LAB_OPENAPI_ENABLED=true` 和 `SMART_LAB_SWAGGER_UI_ENABLED=true`，重启后访问：
 
 ```text
 http://127.0.0.1:8080/swagger-ui.html
 http://127.0.0.1:8080/v3/api-docs
 ```
 
-如果生产环境不想暴露接口文档，可以在配置中关闭：
+生产环境保持关闭；等价的配置如下：
 
 ```yaml
 springdoc:
@@ -1490,12 +1490,12 @@ mvn spring-boot:run
 
 # 或者打包后运行
 mvn clean package
-java -jar target/backend-0.0.1-SNAPSHOT.jar
+java -jar target/Backend-0.0.1-SNAPSHOT.jar
 ```
 
 4. **访问API文档**
 
-启动后访问: http://localhost:8080/swagger-ui.html
+显式启用 OpenAPI 和 Swagger UI 后访问：http://localhost:8080/swagger-ui.html（默认关闭，见第 17 节）。
 
 ## 项目结构
 
@@ -1857,13 +1857,13 @@ mvn clean package
 ### 运行
 
 ```bash
-java -jar target/backend-0.0.1-SNAPSHOT.jar
+java -jar target/Backend-0.0.1-SNAPSHOT.jar
 ```
 
 ### 后台运行
 
 ```bash
-nohup java -jar target/backend-0.0.1-SNAPSHOT.jar > logs/app.log 2>&1 &
+nohup java -jar target/Backend-0.0.1-SNAPSHOT.jar > logs/app.log 2>&1 &
 ```
 
 ### 停止服务

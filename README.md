@@ -1,6 +1,6 @@
 <div align="center">
 
-![](C:\Users\zheng\Desktop\智云实验室\image\login-brand-transparent.png)
+  <img src="image/login-brand-transparent.png" alt="智云实验室 Logo" width="180" />
 
   # 智云实验室 (Zhiyun Laboratory)
 
@@ -14,17 +14,14 @@
   </p>
 
   <p>
-    <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml">
-      <img src="https://img.shields.io/github/actions/workflow/status/Alexander-Noah/classjob/ci.yml?branch=main&label=Frontend%20CI&logo=github" alt="Frontend CI" />
+    <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain">
+      <img src="https://img.shields.io/github/actions/workflow/status/Alexander-Noah/classjob/ci.yml?branch=main&amp;label=CI&amp;logo=github" alt="main 分支整体 CI 状态" />
     </a>
-    <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml">
-      <img src="https://img.shields.io/github/actions/workflow/status/Alexander-Noah/classjob/ci.yml?branch=main&label=Backend%20CI&logo=github" alt="Backend CI" />
-    </a>
-    <a href="https://github.com/Alexander-Noah/classjob">
-      <img src="https://img.shields.io/badge/Coverage-96%25-brightgreen.svg?logo=codecov" alt="Code Coverage" />
+    <a href="#ci-与自动化质量保障">
+      <img src="https://img.shields.io/badge/Line%20coverage%20gate-%E2%89%A596%25-blue" alt="行覆盖率门槛至少 96%，实际结果见 Actions 报告" />
     </a>
     <a href="https://spring.io/projects/spring-boot">
-      <img src="https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
+      <img src="https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
     </a>
     <a href="https://vuejs.org/">
       <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white" alt="Vue 3" />
@@ -87,7 +84,7 @@
 - 🤖 **AI 助手与离线语音识别**
   - **通义千问企业 Agent**：集成 DashScope 大模型，提供实验室调度、报修指引与规则问答。
   - **Vosk 离线语音引擎**：内置轻量级中文声学模型，无需外网即可快速语音指令交互。
-  - **WebSocket 全双工通信**：打字机流式回答，响应延迟低至毫秒级。
+  - **WebSocket 全双工通信**：打字机流式回答，支持流式问答与语音消息交互。
 - 📊 **运营数据统计与指标分析**
   - 空间利用率、设备故障频次、耗材损耗率多维度 ECharts 图表透视，辅助管理决策。
 
@@ -105,7 +102,7 @@ flowchart TD
         StudentClient["机房学生端守护进程 (Tauri 2 / Rust)"]
     end
 
-    subgraph 网关与应用服务 [业务中台 (Spring Boot 3)]
+    subgraph 网关与应用服务 [业务中台 (Spring Boot 4)]
         APIGateway["RESTful API & JWT 安全过滤"]
         WSHandler["WebSocket 流式推送服务"]
         CoreService["核心业务域\n(资源 / 排课 / 预约 / 报修 / 耗材)"]
@@ -152,10 +149,10 @@ flowchart TD
 
 | 领域 | 核心技术 / 框架 | 版本 / 说明 |
 | :--- | :--- | :--- |
-| **后端核心** | Spring Boot | `3.x` (MVC + 自动化配置) |
+| **后端核心** | Spring Boot | `4.0.6` (MVC + 自动化配置) |
 | **ORM / 数据存储** | MyBatis / HikariCP / MySQL | `MySQL 8.0+`，驼峰下划线智能映射 |
-| **认证与安全** | JWT / BCrypt / Filter 过滤 | 无状态 Token 授权，接口细粒度鉴权与 XSS 防御 |
-| **前端管理平台** | Vue 3 + Vite + Element Plus | Composition API、UnoCSS、响应式液态玻璃 UI |
+| **认证与安全** | JWT / PBKDF2 / Filter 过滤 | 无状态 Token 授权，接口细粒度鉴权与 XSS 防御 |
+| **前端管理平台** | Vue 3 + Vite + Element Plus | Composition API、CSS Variables、响应式液态玻璃 UI |
 | **数据可视化** | ECharts | 空间利用率、耗材消耗与设备生命周期统计 |
 | **桌面客户端** | Tauri 2 + Rust + Naive UI | 一仓双端架构（教师控制端 + 学生端托盘守护） |
 | **AI 与语音识别** | 通义千问 Agent + Vosk | DashScope 企业级大模型 + Vosk 离线轻量级中文语音模型 |
@@ -172,7 +169,7 @@ classjob/
 ├── .github/                     # GitHub Actions CI 工作流与测试汇总脚本
 │   ├── workflows/ci.yml         # 前后端 96% 覆盖率验证门禁
 │   └── scripts/coverage-summary.py
-├── Backend/                     # 后端工程 (Spring Boot 3 + MyBatis)
+├── Backend/                     # 后端工程 (Spring Boot 4 + MyBatis)
 │   ├── src/main/java/org/example/backend/
 │   │   ├── config/              # Swagger、全局异常处理、IoT 配置等
 │   │   ├── controller/          # 实验室、设备、预约、工单等 19+ 控制器
@@ -216,10 +213,10 @@ classjob/
 | 工具 / 运行时 | 推荐版本 | 用途 |
 | :--- | :--- | :--- |
 | **JDK** | `Java 17` 或更高 (如 Temurin 17) | 后端 Spring Boot 运行与编译 |
-| **Node.js** | `Node.js 18.x` ~ `24.x` | Web 前端与桌面客户端构建 |
-| **包管理工具** | `npm 9+` 或 `pnpm 9+` | 前端依赖管理 |
+| **Node.js** | `Node.js 24`（CI 使用版本；Web 要求至少 20.19） | Web 前端与桌面客户端构建 |
+| **包管理工具** | Web 使用 npm；桌面端使用 `pnpm 10.30.3` | 前端依赖管理 |
 | **MySQL** | `MySQL 8.0` 或更高版本 | 业务持久化数据库 |
-| **Rust** *(可选)* | `Rust 1.75+` (带 Cargo) | 仅在重新编译 Tauri 桌面端时需要 |
+| **Rust** *(可选)* | 兼容当前 Tauri 依赖的稳定版 Rust（带 Cargo） | 仅在重新编译 Tauri 桌面端时需要 |
 | **Python** *(可选)* | `Python 3.10+` | 仅在运行课表抓取爬虫时需要 |
 | **Docker** *(可选)* | Docker Desktop (支持 Compose v2) | 运行 Prometheus + Grafana 监控服务 |
 
@@ -240,7 +237,7 @@ cd classjob
    ```sql
    CREATE DATABASE IF NOT EXISTS smart_lab_basic DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. 执行位于 `Backend` 或 `docs/` 下的初始化建表与数据脚本（自动建表并灌入演示数据）。
+2. 将 [核心库表结构](Backend/database/smart_lab_basic.sql) 导入该空数据库。此文件仅包含表结构，不含业务数据、角色或用户。已有数据库不要重复导入。恢复与迁移流程见 [数据库恢复说明](Backend/database/recovery/README.md)，其中的历史恢复账号不能作为生产初始账号。
 
 ### 3. 启动后端服务 (Backend)
 
@@ -265,16 +262,11 @@ npm run dev
 
 启动完成后，浏览器访问 `http://127.0.0.1:5173`。
 
-### 5. 默认演示账号
+### 5. 登录账号与验证码
 
-系统预设了四种角色的典型用户以供快速体验：
+仓库的核心库 SQL 不提供通用演示账号或默认密码。使用已初始化数据库中的有效账号；新环境需要先初始化角色和管理员，并为账号设置独立密码。
 
-| 角色类别 | 登录账号 | 默认密码 | 可操作核心模块 |
-| :--- | :--- | :--- | :--- |
-| **系统管理员** | `sysadmin` | `123456` | 全平台最高权限、用户管理、系统设置 |
-| **实验室管理员** | `labadmin` | `123456` | 空间资产、设备调拨盘点、耗材、预约审批、环境维护 |
-| **授课教师** | `teacher1` | `123456` | 课表查看、实验空间预约、课程环境提报、调课申请 |
-| **维修人员** | `repair1` | `123456` | 故障工单接单、现场处理归档、维修记录上报 |
+当前后端停用 teacher 与 maintenance 角色；有效管理角色为 systemAdmin、labAdmin 和 academic。不要使用旧文档中的 teacher1/repair1 或默认口令作为验收依据。Web 登录必须填写图片验证码，验证码单次有效，5 分钟过期，可点击图片刷新。
 
 ---
 
@@ -392,17 +384,17 @@ HTTP Controller  -->  Service Interface  -->  ServiceImpl  -->  MyBatis Mapper (
 
 ## 质量检查与代码规范
 
-本项目在持续集成中设定了极高标准的质量门禁（**全量代码行覆盖率要求达到 96% 以上**）：
+CI 对前后端分别执行测试和行覆盖率检查，**每个模块的门槛均为至少 96%**。门槛是配置要求，实际结果以对应提交的 Actions 报告为准：
 
 ### 1. 后端测试与覆盖率检查
 
 ```powershell
 cd Backend
-# 执行单元测试、集成测试并生成 JaCoCo 覆盖率报告
+# 执行默认测试并生成 JaCoCo 覆盖率报告
 mvn -Pcoverage verify
 ```
 
-测试报告生成路径：`Backend/target/site/jacoco/index.html`。
+测试报告生成路径：`Backend/target/site/jacoco/index.html`。本地命令默认不启用需要 MySQL 的专项集成测试；CI 会启用 `reservation.mysql.it` 与 `core.schema.mysql.it` 并连接临时 MySQL，具体参数见 [工作流](.github/workflows/ci.yml)。
 
 ### 2. 前端测试与覆盖率检查
 
@@ -419,8 +411,8 @@ npm run test:coverage
 
 ### 3. 安全防御与校验
 
-- **XSS 防御**：富文本与动态内容通过 DOMPurify 清洗，严格隔离恶意脚本。
-- **输入校验**：前端统一封装 `requestValidation.js`，后端配置全局验证拦截，杜绝 SQL 注入与越权访问。
+- **XSS 防御**：AI 消息解析为受控排版节点，通过 Vue 文本节点显示；打印模板转义动态内容，图片地址使用白名单，并配置 CSP。详见 [HTML 注入与 XSS 修复说明](docs/HTML注入与XSS修复说明.md)。
+- **输入校验**：前后端检查字段类型、长度、数值范围和请求结构。SQL 参数绑定与业务授权仍需独立执行；输入校验不能替代权限检查。详见 [输入校验规则](docs/输入校验规则与验证说明.md)。
 
 ---
 
@@ -429,7 +421,7 @@ npm run test:coverage
 ### HTTP RESTful 规范
 
 - 采用标准 HTTP 谓词：`GET`（查询）、`POST`（创建）、`PUT`（更新）、`DELETE`（删除）。
-- 鉴权机制：除登录与公开监控端口外，所有请求头需携带 Bearer Token：
+- 鉴权机制：受保护的业务接口请求头需携带 Bearer Token；登录、验证码、公开扫码预约等匿名入口以服务端白名单为准：
   ```http
   Authorization: Bearer <your_jwt_token>
   ```
@@ -454,10 +446,10 @@ npm run test:coverage
 
 | 模块 | 变量名 | 默认值 | 作用说明 |
 | :--- | :--- | :--- | :--- |
-| **Backend** | `SMART_LAB_DB_URL` | `jdbc:mysql://localhost:3306/smart_lab_basic` | MySQL 连接串 |
-| **Backend** | `SMART_LAB_DB_USERNAME` | `root` | 数据库用户名 |
-| **Backend** | `SMART_LAB_DB_PASSWORD` | *(空)* | 数据库密码 |
-| **Backend** | `SMART_LAB_JWT_SECRET` | *(内部默认密钥)* | JWT 签名密钥（生产环境请务必修改） |
+| **Backend** | `SMART_LAB_DB_URL` | 必填；本地脚本可提供开发值 | MySQL 连接串 |
+| **Backend** | `SMART_LAB_DB_USERNAME` | 必填；本地脚本默认 root | 数据库用户名 |
+| **Backend** | `SMART_LAB_DB_PASSWORD` | 按实际数据库配置 | 数据库密码 |
+| **Backend** | `SMART_LAB_JWT_SECRET` | 无通用默认值 | JWT 签名密钥；本地启动脚本可生成，生产环境必须独立配置 |
 | **Backend** | `DASHSCOPE_API_KEY` | *(空)* | 阿里通义千问 API 密钥 |
 | **Web** | `VITE_API_MODE` | `server` | 接口模式（`server` 真实联调 / `mock` 假数据） |
 | **Web** | `VITE_API_PROXY_TARGET` | `http://127.0.0.1:8080` | 开发环境后端代理目标地址 |
@@ -496,7 +488,7 @@ server {
     }
 
     location /ws/ {
-        proxy_pass http://127.0.0.1:8080/;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
@@ -535,7 +527,9 @@ flowchart LR
 ```
 
 - **容器级服务集成**：后端 CI 自动启动临时 MySQL 8.4 容器执行真实数据流集成测试。
-- **全量无缝验证**：任一模块测试失败或覆盖率未达标将直接中断合并流程，确保主干分支代码健壮可靠。
+- **状态汇总**：Required checks 任务仅在前后端任务都成功时通过。是否强制阻止合并还取决于 GitHub 分支保护设置，工作流本身不等于已启用分支保护。
+- **覆盖率徽章**：顶部蓝色徽章仅标示配置门槛，不是实时覆盖率，也未接入 Codecov。整体 CI 徽章显示 main 分支工作流状态。
+- **查看真实结果**：打开 [main 分支 Actions](https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain)，选择对应提交的运行，在 Summary 中查看 backend/frontend 的覆盖行数、总行数、百分比及门槛结果。Artifacts 中可下载 backend-test-reports 与 frontend-test-reports；报告保留 14 天。缺失报告或失败运行不能视为覆盖率达标。
 
 ---
 
@@ -543,11 +537,11 @@ flowchart LR
 
 - 🌐 **Web 管理平台开发入口**：`http://localhost:5173`
 - 📡 **后端业务 API 地址**：`http://localhost:8080`
-- 📑 **Swagger / OpenAPI 接口文档**：`http://localhost:8080/swagger-ui.html`
+- 📑 **Swagger / OpenAPI 接口文档**：默认关闭；本地显式设置 `SMART_LAB_OPENAPI_ENABLED=true` 和 `SMART_LAB_SWAGGER_UI_ENABLED=true` 后访问 `http://localhost:8080/swagger-ui.html`
 - 📈 **Prometheus 采集看板**：`http://localhost:9090`
 - 📊 **Grafana 综合监控面板**：`http://localhost:3000/d/zhiyun-backend`
 - 📖 **架构设计详述文档**：[项目架构说明.md](项目架构说明.md)
-- 🎨 **界面与交互设计规范**：[DESIGN.md](DESIGN.md)
+- 🎨 **界面与交互设计规范**：[RDESIGN.md](RDESIGN.md)
 - 📦 **产品定义与用户定位**：[PRODUCT.md](PRODUCT.md)
 - 🗂️ **快速文件检索与资产指南**：[文件索引-快速查找指南.md](文件索引-快速查找指南.md)
 
