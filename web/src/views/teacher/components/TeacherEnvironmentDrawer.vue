@@ -38,7 +38,7 @@ const visible = computed({
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="课程环境详情" size="520px">
+  <el-dialog align-center append-to-body v-model="visible" title="课程环境详情" width="min(520px, calc(100vw - 32px))">
     <template v-if="environment">
       <el-descriptions :column="1" border class="environment-descriptions">
         <el-descriptions-item label="课程">{{ environment.course }}</el-descriptions-item>
@@ -84,7 +84,7 @@ const visible = computed({
         <el-button v-if="environment.status !== '已确认'" type="primary" @click="$emit('confirm', environment)">确认环境</el-button>
       </div>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <style scoped>

@@ -138,6 +138,7 @@ const labOptions = ref([])
 const softwareRecords = ref([])
 const templateRecords = ref([])
 const selectedEnvironmentRecord = ref(null)
+const environmentDetailVisible = ref(false)
 
 /**
  * 获取课程名称。
@@ -591,6 +592,7 @@ const checklistItems = computed(/** 计算派生状态。 */ () => {
  * 入参：record（记录）。
  */
 const selectEnvironmentRecord = (record) => {
+  environmentDetailVisible.value = Boolean(record)
   selectedEnvironmentRecord.value = record || null
 }
 
@@ -827,52 +829,54 @@ watch(
         @selection-change="business.handleSelectionChange"
       />
 
-      <el-card class="environment-detail-card" shadow="never">
-        <template v-if="selectedEnvironmentRecord">
-          <div class="detail-heading">
-            <div>
-              <h2>{{ detailTitle }}</h2>
+      <el-dialog v-model="environmentDetailVisible" title="环境记录详情" width="min(760px, calc(100vw - 32px))" align-center append-to-body>
+        <el-card class="environment-detail-card" shadow="never">
+          <template v-if="selectedEnvironmentRecord">
+            <div class="detail-heading">
+              <div>
+                <h2>{{ detailTitle }}</h2>
+              </div>
+
+              <el-tag v-if="detailStatus" :type="business.getRowTagType(selectedEnvironmentRecord)" effect="light">
+                {{ detailStatus }}
+              </el-tag>
             </div>
 
-            <el-tag v-if="detailStatus" :type="business.getRowTagType(selectedEnvironmentRecord)" effect="light">
-              {{ detailStatus }}
-            </el-tag>
-          </div>
-
-          <div class="detail-actions">
-            <el-button size="small" type="primary" @click="business.openEditDialog(selectedEnvironmentRecord)">
-              编辑
-            </el-button>
-            <el-button size="small" type="danger" plain @click="handleDeleteRecord(selectedEnvironmentRecord)">
-              删除
-            </el-button>
-          </div>
-
-          <div class="detail-highlight-grid">
-            <div v-for="item in detailHighlights" :key="item.label" class="detail-highlight">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
+            <div class="detail-actions">
+              <el-button size="small" type="primary" @click="business.openEditDialog(selectedEnvironmentRecord)">
+                编辑
+              </el-button>
+              <el-button size="small" type="danger" plain @click="handleDeleteRecord(selectedEnvironmentRecord)">
+                删除
+              </el-button>
             </div>
-          </div>
 
-          <h3>配置核验</h3>
-          <div class="checklist">
-            <div v-for="item in checklistItems" :key="item.label" class="check-item" :class="{ 'is-done': item.done }">
-              <span>{{ item.done ? '已完成' : '待完善' }}</span>
-              <strong>{{ item.label }}</strong>
+            <div class="detail-highlight-grid">
+              <div v-for="item in detailHighlights" :key="item.label" class="detail-highlight">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
             </div>
-          </div>
 
-          <h3>详细信息</h3>
-          <el-descriptions :column="1" class="detail-descriptions">
-            <el-descriptions-item v-for="field in detailFields" :key="field.prop" :label="field.label">
-              {{ selectedEnvironmentRecord[field.prop] || '-' }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </template>
+            <h3>配置核验</h3>
+            <div class="checklist">
+              <div v-for="item in checklistItems" :key="item.label" class="check-item" :class="{ 'is-done': item.done }">
+                <span>{{ item.done ? '已完成' : '待完善' }}</span>
+                <strong>{{ item.label }}</strong>
+              </div>
+            </div>
 
-        <el-empty v-else description="点击左侧任意记录查看详细信息" />
-      </el-card>
+            <h3>详细信息</h3>
+            <el-descriptions :column="1" class="detail-descriptions">
+              <el-descriptions-item v-for="field in detailFields" :key="field.prop" :label="field.label">
+                {{ selectedEnvironmentRecord[field.prop] || '-' }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </template>
+
+          <el-empty v-else description="点击左侧任意记录查看详细信息" />
+        </el-card>
+      </el-dialog>
     </div>
 
     <SoftwareEnvironmentDialog
@@ -1189,7 +1193,7 @@ watch(
 
 .environment-workbench {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -1247,8 +1251,7 @@ watch(
 }
 
 .environment-detail-card {
-  position: sticky;
-  top: 14px;
+  position: relative;
   min-width: 0;
   max-height: calc(100vh - 108px);
 }

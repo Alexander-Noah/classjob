@@ -31,7 +31,7 @@ const visible = computed({
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="维护记录详情" size="min(540px, 100%)">
+  <el-dialog align-center append-to-body v-model="visible" title="维护记录详情" width="min(540px, calc(100vw - 32px))">
     <el-descriptions v-if="record" :column="1" border>
       <el-descriptions-item label="记录编号">{{ record.recordNo }}</el-descriptions-item>
       <el-descriptions-item label="实验室">{{ record.lab }}</el-descriptions-item>
@@ -48,5 +48,5 @@ const visible = computed({
       <el-button @click="visible = false">关闭</el-button>
       <el-button v-if="record && editable" type="primary" @click="emit('edit', record)">编辑记录</el-button>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>

@@ -233,6 +233,7 @@ const teacherName = ref('')
 const currentWeek = ref(1)
 
 const scheduleRecords = ref(DEFAULT_SCHEDULE_RECORDS.map(/** 将当前条目转换为目标结果。 入参：item、index。 */ (item, index) => normalizePortalCourse(item, index)))
+const courseDetailVisible = ref(false)
 const selectedCourse = ref(scheduleRecords.value[0] || null)
 
 const weekStartDate = computed(/** 计算派生状态。 */ () => {
@@ -279,6 +280,7 @@ const visibleCourses = computed(/** 计算派生状态。 */ () =>
  * 入参：course（课程）。
  */
 const selectCourse = (course) => {
+  courseDetailVisible.value = true
   selectedCourse.value = course
 }
 
@@ -405,7 +407,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
     </el-card>
 
     <el-row :gutter="18">
-      <el-col :xs="24" :xl="16">
+      <el-col :span="24">
         <TeacherScheduleBoard
           :active-id="selectedCourse?.id || ''"
           :courses="visibleCourses"
@@ -414,13 +416,13 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
         />
       </el-col>
 
-      <el-col :xs="24" :xl="8">
+      <el-dialog v-model="courseDetailVisible" title="课程详情" width="min(680px, calc(100vw - 32px))" align-center append-to-body>
         <el-card class="detail-card" shadow="never">
           <template #header>
             <div class="section-title">
               <div>
                 <h2>当前课程详情</h2>
-                <span>首页直接展示当前课表项，减少来回切页面。</span>
+                <span>查看所选课程的授课安排。</span>
               </div>
             </div>
           </template>
@@ -439,7 +441,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
 
           <el-empty v-else description="本周暂无课表数据" :image-size="88" />
         </el-card>
-      </el-col>
+      </el-dialog>
     </el-row>
   </section>
 </template>

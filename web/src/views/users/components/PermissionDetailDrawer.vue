@@ -40,7 +40,7 @@ const permissionScopes = computed(/** 计算派生状态。 */ () => props.user?
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="用户详情" size="520px">
+  <el-dialog align-center append-to-body v-model="visible" title="用户详情" width="min(520px, calc(100vw - 32px))">
     <template v-if="user">
       <section class="drawer-section">
         <h3>基本信息</h3>
@@ -97,7 +97,7 @@ const permissionScopes = computed(/** 计算派生状态。 */ () => props.user?
         </el-timeline>
       </section>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <style scoped>

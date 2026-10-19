@@ -103,6 +103,7 @@ const requestList = ref(DEFAULT_REQUESTS.map(/** 将当前条目转换为目标�
 const isLoading = ref(false)
 
 const activeStatus = ref('全部')
+const requestDetailVisible = ref(false)
 const selectedRequest = ref(requestList.value[0] || null)
 const dialogVisible = ref(false)
 const adjustmentPrefill = ref(null)
@@ -348,7 +349,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
     <MetricGrid :metrics="metrics" />
 
     <el-row :gutter="18">
-      <el-col :xs="24" :xl="15">
+      <el-col :span="24">
         <el-card class="list-card" shadow="never">
           <template #header>
             <div class="section-title section-title-inline">
@@ -362,7 +363,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
             </div>
           </template>
 
-          <el-table v-loading="isLoading" :data="pagedRequests" empty-text="暂无调课申请" @row-click="selectedRequest = $event">
+          <el-table v-loading="isLoading" :data="pagedRequests" empty-text="暂无调课申请" @row-click="selectedRequest = $event; requestDetailVisible = true">
             <el-table-column prop="course" label="课程" min-width="150" />
             <el-table-column prop="originalTime" label="原时间" min-width="140" />
             <el-table-column prop="targetTime" label="目标时间" min-width="140" />
@@ -396,7 +397,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :xl="9">
+      <el-dialog v-model="requestDetailVisible" title="调课审批详情" width="min(680px, calc(100vw - 32px))" align-center append-to-body>
         <el-card class="detail-card" shadow="never">
           <template #header>
             <div class="section-title">
@@ -429,7 +430,7 @@ onMounted(/** 在组件挂载后初始化相关状态。 */ async () => {
             </div>
           </template>
         </el-card>
-      </el-col>
+      </el-dialog>
     </el-row>
 
     <TeacherAdjustmentDialog

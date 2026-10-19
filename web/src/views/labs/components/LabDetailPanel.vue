@@ -24,8 +24,8 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
 </script>
 
 <template>
-  <el-card v-if="lab" class="detail-card" shadow="never">
-    <template #header>
+  <section v-if="lab" class="detail-card">
+    <header class="detail-summary">
       <div class="detail-header">
         <div>
           <h2>{{ lab.name }}</h2>
@@ -33,7 +33,7 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
         </div>
         <el-tag :type="lab.tagType" effect="dark">{{ lab.status }}</el-tag>
       </div>
-    </template>
+    </header>
 
     <div class="detail-actions">
       <el-button size="small" type="primary" :icon="FolderOpened" @click="$emit('view-assets', lab)">
@@ -43,14 +43,14 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
         预约码
       </el-button>
       <el-button size="small" plain :icon="Edit" @click="$emit('edit', lab)">编辑</el-button>
-      <el-button size="small" plain @click="$emit('status', '开放')">设为开放</el-button>
-      <el-button size="small" plain type="warning" @click="$emit('status', '使用中')">设为使用中</el-button>
-      <el-button size="small" plain @click="$emit('status', '维护中')">设为维护中</el-button>
+      <el-button :disabled="lab.status === '开放'" size="small" plain @click="$emit('status', '开放')">设为开放</el-button>
+      <el-button :disabled="lab.status === '使用中'" size="small" plain type="warning" @click="$emit('status', '使用中')">设为使用中</el-button>
+      <el-button :disabled="lab.status === '维护中'" size="small" plain @click="$emit('status', '维护中')">设为维护中</el-button>
       <el-button size="small" plain type="danger" :icon="Delete" @click="$emit('delete', lab)">删除</el-button>
     </div>
 
     <div class="detail-hint">
-      <span>已登记设备 {{ assetRecordCount }} 条，点击“设备信息”可在当前页直接查看。</span>
+      <span>已登记 {{ assetRecordCount }} 台设备，可通过“设备信息”查看资产明细。</span>
     </div>
 
     <div class="detail-kpis">
@@ -88,7 +88,8 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
 
     <div class="detail-section">
       <h3>今日安排</h3>
-      <div class="schedule-list">
+      <p v-if="!lab.schedule?.length" class="detail-hint">今日暂无课程安排</p>
+      <div v-else class="schedule-list">
         <div v-for="item in lab.schedule" :key="item">
           <el-icon aria-hidden="true">
             <Timer />
@@ -97,28 +98,18 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
         </div>
       </div>
     </div>
-  </el-card>
+  </section>
 </template>
 
 <style scoped>
 .detail-card {
-  position: sticky;
-  top: 84px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 8px;
-  background: var(--surface-color);
-  overflow: hidden;
+  min-width: 0;
 }
 
-.detail-card :deep(.el-card__header) {
-  min-height: 64px;
-  padding: 15px 18px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-}
-
-.detail-card :deep(.el-card__body) {
-  padding: 16px 18px 18px;
+.detail-summary {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5eaf2;
+  margin-bottom: 18px;
 }
 
 .detail-header,
@@ -137,7 +128,7 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
 .detail-section h3 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -151,10 +142,7 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
-  padding: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 8px;
-  background: #f8fafc;
+  padding: 0;
 }
 
 .detail-actions .el-button + .el-button {
@@ -199,13 +187,14 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
 }
 
 .detail-section {
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .detail-section dl {
   display: grid;
-  gap: 10px;
-  margin: 12px 0 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 28px;
+  margin: 16px 0 0;
 }
 
 .detail-section dl div {
@@ -255,9 +244,9 @@ defineEmits(['delete', 'edit', 'reservation-qr', 'status', 'view-assets'])
   color: #64748b;
 }
 
-@media (max-width: 1180px) {
-  .detail-card {
-    position: static;
-  }
+@media (max-width: 540px) {
+  .detail-section dl { grid-template-columns: 1fr; }
+  .detail-header { align-items: flex-start; }
+  .detail-header h2 { font-size: 16px; }
 }
 </style>

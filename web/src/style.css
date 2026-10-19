@@ -33,6 +33,17 @@ html {
   width: 100%;
 }
 
+@supports (scrollbar-gutter: stable) {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /* 根节点已保留滚动条空间，弹窗锁屏时无需再扣减 body 宽度。 */
+  body.el-popup-parent--hidden {
+    width: 100% !important;
+  }
+}
+
 body {
   width: 100%;
   min-width: 320px;

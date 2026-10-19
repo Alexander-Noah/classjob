@@ -186,10 +186,13 @@ const loadLabAssets = async (lab) => {
   }
 }
 
+const labDetailVisible = ref(false)
+
 /**
  * 点击实验室行时触发
  */
 const handleSelectLab = async (lab) => {
+  labDetailVisible.value = true
   selectLab(lab)
   await loadLabAssets(lab)
 }
@@ -343,15 +346,17 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
         />
       </el-card>
 
-      <LabDetailPanel
-          :asset-record-count="labAssets.length"
-          :lab="selectedLab"
-          @delete="deleteLab"
-          @edit="openEditDialog"
-          @reservation-qr="handleOpenReservationQr"
-          @status="changeLabStatus"
-          @view-assets="handleViewLabAssets"
-      />
+      <el-dialog v-model="labDetailVisible" class="lab-detail-dialog" title="实验室详情" width="min(780px, calc(100vw - 32px))" align-center append-to-body>
+        <LabDetailPanel
+            :asset-record-count="labAssets.length"
+            :lab="selectedLab"
+            @delete="deleteLab"
+            @edit="openEditDialog"
+            @reservation-qr="handleOpenReservationQr"
+            @status="changeLabStatus"
+            @view-assets="handleViewLabAssets"
+        />
+      </el-dialog>
     </div>
 
     <LabEditorDialog
@@ -400,7 +405,7 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
 
 .lab-workbench {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }

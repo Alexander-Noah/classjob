@@ -70,9 +70,21 @@ body #app .el-table tr.el-table__row--striped td.el-table__cell { background: rg
 body #app .el-table tr:hover > td.el-table__cell { background: rgba(219, 234, 254, 0.36); }
 body #app .el-table tr.current-row > td.el-table__cell { background: rgba(219, 234, 254, 0.42); }
 
-/* 固定列会盖住横向滚动内容，保留较厚底色，防止两层文字重叠。 */
-body #app .el-table :is(td, th).el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
-  background: rgba(245, 249, 255, 0.94);
+/* 固定列覆盖横向滚动内容，所有行状态都使用不透明底色，避免文字透叠。 */
+body #app .el-table tr > :is(td, th).el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
+  background: #f5f9ff;
+}
+
+body #app .el-table tr.el-table__row--striped > td.el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
+  background: #eff5fd;
+}
+
+body #app .el-table tr:hover > td.el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
+  background: #e6effd;
+}
+
+body #app .el-table tr.current-row > td.el-table__cell:is(.is-fixed-column--left, .is-fixed-column--right) {
+  background: #e1ecfc;
 }
 
 body :is(.el-input__wrapper, .el-select__wrapper, .el-textarea__inner,
@@ -97,11 +109,43 @@ body .el-input-number :is(.el-input-number__increase, .el-input-number__decrease
 body .el-input-number .el-input__wrapper { box-shadow: none; background: transparent; }
 
 body :is(.el-dialog, .el-message-box, .el-drawer) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(244, 248, 255, 0.42));
+  background: linear-gradient(135deg, #ffffff, #f4f8ff);
   border: 1px solid var(--glass-edge);
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18), inset 0 1px 0 #fff;
   -webkit-backdrop-filter: blur(14px) saturate(1.12);
   backdrop-filter: blur(14px) saturate(1.12);
+}
+
+/* 弹窗正文保持独立滚动，避免长详情挤出视口。 */
+body .el-dialog {
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+}
+
+body .el-dialog .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body .el-dialog :is(.el-dialog__header, .el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+body .el-dialog.lab-detail-dialog {
+  padding: 24px 28px;
+}
+
+body .lab-detail-dialog .el-dialog__header {
+  padding: 0 32px 16px 0;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+body .lab-detail-dialog .el-dialog__body {
+  padding: 0 4px 0 0;
 }
 
 body :is(.el-dialog__header, .el-dialog__body, .el-dialog__footer,

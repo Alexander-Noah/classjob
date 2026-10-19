@@ -1066,7 +1066,7 @@ onMounted(reloadAll)
       </el-dialog>
 
 
-    <el-drawer v-model="deviceDrawerVisible" size="760px" class="activation-device-drawer" title="绑定设备详情">
+    <el-dialog align-center append-to-body v-model="deviceDrawerVisible" width="min(760px, calc(100vw - 32px))" class="activation-device-drawer" title="绑定设备详情">
       <template #default>
         <div v-if="selectedCode" class="drawer-summary">
           <strong>{{ selectedCode.maskedCode || maskActivationCode(selectedCode) }}</strong>
@@ -1108,7 +1108,7 @@ onMounted(reloadAll)
           </template>
         </el-table>
       </template>
-    </el-drawer>
+    </el-dialog>
 
     <el-dialog v-model="remoteBindDialogVisible" title="远程绑定设备" width="520px">
       <el-form ref="remoteBindFormRef" :model="remoteBindForm" :rules="remoteBindRules" label-position="top">
