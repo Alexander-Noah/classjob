@@ -7,7 +7,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 
-def summarize(module):
+def read_coverage(module):
     """读取全量源码报告，避免把测试通过率当作代码覆盖率。"""
     if module == "backend":
         report = Path("Backend/target/site/jacoco/jacoco.xml")
@@ -22,8 +22,13 @@ def summarize(module):
         covered, total = lines["covered"], lines["total"]
     else:
         raise ValueError(f"Unknown module: {module}")
-    if total <= 0:
-        raise ValueError("Coverage report contains no executable source lines")
+    if total <= 0 or covered < 0 or covered > total:
+        raise ValueError("Coverage report contains invalid source line counts")
+    return covered, total
+
+
+def summarize(module):
+    covered, total = read_coverage(module)
     percentage = covered / total * 100
     passed = covered * 100 >= total * 96
     text = (

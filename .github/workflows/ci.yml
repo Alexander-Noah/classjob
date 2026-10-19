@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
+    branches-ignore: [coverage-badges]
   pull_request:
   workflow_dispatch:
 
-# PR 测试只需读取代码，不授予发布或写入仓库权限。
+# 默认只读；只有 main 成功后的徽章发布任务授予内容写权限。
 permissions:
   contents: read
 
@@ -116,3 +117,63 @@ jobs:
           BACKEND_RESULT: ${{ needs.backend.result }}
           FRONTEND_RESULT: ${{ needs.frontend.result }}
         run: test "$BACKEND_RESULT" = success && test "$FRONTEND_RESULT" = success
+
+  coverage_badge:
+    name: Publish actual coverage badge
+    needs: [backend, frontend]
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: backend-test-reports
+          path: Backend/target
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-test-reports
+          path: web/coverage
+      - name: Calculate combined source line coverage
+        run: |
+          python3 -m unittest discover -s .github/scripts -p 'test_coverage_badge.py'
+          python3 .github/scripts/coverage-badge.py
+      - name: Publish report to badge branch
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const branch = 'coverage-badges';
+            const { owner, repo } = context.repo;
+            // A queued older run must not overwrite a newer main result.
+            const main = await github.rest.git.getRef({ owner, repo, ref: 'heads/main' });
+            if (main.data.object.sha !== context.sha) {
+              core.notice('main has advanced; leaving the latest badge unchanged.');
+              return;
+            }
+            let parent;
+            try {
+              parent = (await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` })).data.object.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            const tree = await github.rest.git.createTree({ owner, repo,
+              tree: ['coverage.json', 'report.json'].map(path => ({
+                path, mode: '100644', type: 'blob',
+                content: fs.readFileSync(`coverage-badge/${path}`, 'utf8'),
+              })),
+            });
+            const commit = await github.rest.git.createCommit({ owner, repo,
+              message: `Update coverage for ${context.sha}`, tree: tree.data.sha,
+              parents: parent ? [parent] : [],
+            });
+            if (parent) {
+              await github.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: commit.data.sha, force: false });
+            } else {
+              await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${branch}`, sha: commit.data.sha });
+            }

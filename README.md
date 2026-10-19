@@ -2,7 +2,7 @@
 
   <img src="image/login-brand-transparent.png" alt="智云实验室 Logo" width="180" />
 
-  # 智云实验室 (Zhiyun Laboratory)
+  <h1>智云实验室 (Zhiyun Laboratory)</h1>
 
   <p><strong>基于数据驱动的智慧实验室全流程协同管控平台</strong></p>
   <p>连接空间资源、教学排课、环境准备、设备运维与物联感知，实现全生命周期业务闭环。</p>
@@ -10,15 +10,15 @@
   <p><em>数智协同，全域感知，运维如流。</em></p>
 
   <p>
-    <b>中文</b> | <a href="#-zhiyun-laboratory-overview">English</a>
+    <b>中文</b> | <a href="README.en.md">English</a>
   </p>
 
   <p>
     <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain">
       <img src="https://img.shields.io/github/actions/workflow/status/Alexander-Noah/classjob/ci.yml?branch=main&amp;label=CI&amp;logo=github" alt="main 分支整体 CI 状态" />
     </a>
-    <a href="#ci-与自动化质量保障">
-      <img src="https://img.shields.io/badge/Line%20coverage%20gate-%E2%89%A596%25-blue" alt="行覆盖率门槛至少 96%，实际结果见 Actions 报告" />
+    <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain">
+      <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FAlexander-Noah%2Fclassjob%2Fcoverage-badges%2Fcoverage.json&amp;logo=github" alt="最近一次成功 main CI 的实际行覆盖率" />
     </a>
     <a href="https://spring.io/projects/spring-boot">
       <img src="https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
@@ -69,11 +69,11 @@
   - **耗材库存预警**：出入库双向追踪，低库存自动标记与补给提醒。
 - 📅 **教学预约与排课协同**
   - **课表智能采集导入**：内置 Python 爬虫与课表解析器，自动化同步教务排课数据。
-  - **冲突检测与预约审批**：实验室空闲档期可视化呈现，支持教师/学生预约申请与多级审批流转。
+  - **冲突检测与预约审批**：实验室空闲档期可视化呈现，支持预约申请、公开扫码预约和审批处理；教师角色当前停用。
   - **调课联动处理**：智能关联课程调整与实验场地重分配，避免教学冲突。
 - 🧪 **实验环境与物联感知**
-  - **课程环境预配置**：教师在线提报课程软件依赖与配置需求，管理员一键部署核验。
-  - **环境模板库沉淀**：典型课程环境打包为模板，跨实验室与学期极速复用。
+  - **课程环境预配置**：维护课程环境需求与准备状态；教师提报页面保留，教师角色当前停用。
+  - **环境模板库沉淀**：维护课程环境模板与所需软件清单，供后续准备复用。
   - **IoT 物联感知控制**：联动智能灯光、空调温控、智能门禁、环境传感器与监控摄像头，支持一键场景切换。
 - 🛠️ **故障报修与闭环运维**
   - **全链路工单流转**：异常一键上报 → 管理员智能派单 → 维修人员现场核验修复 → 闭环验收归档。
@@ -96,29 +96,29 @@
 
 ```mermaid
 flowchart TD
-    subgraph 接入层 [多端交互接入]
+    subgraph clients["多端交互接入"]
         WebClient["Web 管理工作台 (Vue 3 + Element Plus)"]
         TeacherClient["机房教师端 (Tauri 2 + Vue 3)"]
         StudentClient["机房学生端守护进程 (Tauri 2 / Rust)"]
     end
 
-    subgraph 网关与应用服务 [业务中台 (Spring Boot 4)]
+    subgraph backend["业务中台 (Spring Boot 4)"]
         APIGateway["RESTful API & JWT 安全过滤"]
         WSHandler["WebSocket 流式推送服务"]
-        CoreService["核心业务域\n(资源 / 排课 / 预约 / 报修 / 耗材)"]
-        AIEngine["AI 助手服务\n(通义千问 Agent + Vosk 语音)"]
+        CoreService["核心业务域<br/>(资源 / 排课 / 预约 / 报修 / 耗材)"]
+        AIEngine["AI 助手服务<br/>(通义千问 Agent + Vosk 语音)"]
     end
 
-    subgraph 数据与感知层 [底层支撑]
-        MySQL[(MySQL 8.0 核心业务库)]
-        IoTGateway["IoT 硬件网关\n(灯光 / 空调 / 门禁 / 传感器)"]
+    subgraph infrastructure["数据与感知层"]
+        MySQL[("MySQL 核心业务库")]
+        IoTGateway["IoT 硬件网关<br/>(灯光 / 空调 / 门禁 / 传感器)"]
         Prometheus["Prometheus + Grafana 监控体系"]
     end
 
     WebClient -->|HTTP / JSON| APIGateway
     WebClient <-->|WebSocket| WSHandler
-    TeacherClient -->|HTTP 5000 状态上报| APIGateway
-    StudentClient <-->|UDP 8888 广播发现 / HTTP 5001 指令控制| TeacherClient
+    TeacherClient -->|HTTP 8080 业务 API| APIGateway
+    StudentClient <-->|UDP 8888 发现 / HTTP 5000 与 5001| TeacherClient
     StudentClient -->|定时性能数据| TeacherClient
     APIGateway --> CoreService
     WSHandler <--> AIEngine
@@ -187,14 +187,16 @@ classjob/
 │   │   ├── components/          # 液态玻璃风格组件、通用业务表格/弹窗
 │   │   ├── composables/         # 设备、实验室组合式逻辑 Hooks
 │   │   ├── views/               # 工作台、实验室、设备、报修、AI助手等页面
-│   │   └── utils/               # Excel 导入导出、二维码生成、XSS 清洗
+│   │   └── utils/               # 表格导入导出、二维码生成、地址校验
 │   ├── package.json             # 前端依赖配置
 │   └── vite.config.js           # Vite 代理与构建配置
 ├── TvTa-ui-main/                # 桌面客户端工程 (Tauri 2 + Rust + Vue 3)
 │   ├── src/                     # 教师端 UI 页面 (Naive UI)
 │   ├── src-tauri/               # Rust 核心（教师端 UDP 网关 + 学生端后台托盘）
 │   └── package.json             # 客户端打包与构建脚本
-├── Python/                      # 教务课表爬虫与解析导入脚本
+├── zhiyun-student-client/       # 独立学生端工程
+├── shared/                      # 共用输入与地址校验
+├── Python/                      # 教务课表工具脚本
 ├── vosk-model-small-cn-0.22/    # Vosk 中文轻量级离线语音识别模型
 ├── monitoring/                  # Prometheus + Grafana 容器化监控编排
 │   ├── compose.yaml             # Docker Compose 配置文件
@@ -237,36 +239,39 @@ cd classjob
    ```sql
    CREATE DATABASE IF NOT EXISTS smart_lab_basic DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. 将 [核心库表结构](Backend/database/smart_lab_basic.sql) 导入该空数据库。此文件仅包含表结构，不含业务数据、角色或用户。已有数据库不要重复导入。恢复与迁移流程见 [数据库恢复说明](Backend/database/recovery/README.md)，其中的历史恢复账号不能作为生产初始账号。
+2. 将 [核心库表结构](Backend/database/smart_lab_basic.sql) 导入该空数据库。此文件仅包含表结构，不含业务数据、角色或用户。脚本含 `DROP TABLE`，只能导入确认可重建的空库，不能覆盖现有业务数据库。恢复与迁移流程见 [数据库恢复说明](Backend/database/recovery/README.md)，其中的历史恢复账号不能作为生产初始账号。
 
 ### 3. 启动后端服务 (Backend)
 
+从仓库根目录打开终端，按实际数据库设置环境变量。本地脚本会生成 JWT 和教务凭据密钥到被 Git 忽略的配置文件。
+
 ```powershell
 cd Backend
-# 方式 A：使用内置脚本启动
+# 使用实际开发数据库凭据，不使用文档中的通用口令
+$env:SMART_LAB_DB_USERNAME = "你的数据库用户"
+$env:SMART_LAB_DB_PASSWORD = "你的数据库密码"
 ./start-local.ps1
-
-# 方式 B：使用 Maven 命令行启动
-mvn clean spring-boot:run
 ```
 
-后端服务将在 `http://127.0.0.1:8080` 启动，健康检查与监控管理端口位于 `http://127.0.0.1:8081`。
+后端服务将在 `http://127.0.0.1:8080` 启动，健康检查使用管理端口 `http://127.0.0.1:8081/actuator/health`。
 
 ### 4. 启动 Web 管理平台 (Web)
 
+另开终端，从仓库根目录执行：
+
 ```bash
 cd web
-npm install
+npm ci
 npm run dev
 ```
 
-启动完成后，浏览器访问 `http://127.0.0.1:5173`。
+启动完成后，访问 Vite 打印的地址，通常为 `http://127.0.0.1:5173`；端口被占用时可能顺延。
 
 ### 5. 登录账号与验证码
 
 仓库的核心库 SQL 不提供通用演示账号或默认密码。使用已初始化数据库中的有效账号；新环境需要先初始化角色和管理员，并为账号设置独立密码。
 
-当前后端停用 teacher 与 maintenance 角色；有效管理角色为 systemAdmin、labAdmin 和 academic。不要使用旧文档中的 teacher1/repair1 或默认口令作为验收依据。Web 登录必须填写图片验证码，验证码单次有效，5 分钟过期，可点击图片刷新。
+当前后端停用 teacher 与 maintenance 角色；有效管理角色为 systemAdmin、labAdmin 和 academic。不要使用旧文档中的 teacher1/repair1 或默认口令作为验收依据。Web 登录必须填写图片验证码，验证码单次有效，5 分钟过期，可点击图片刷新。验证码保存在单个后端 JVM 内，多实例部署需要共享存储或会话保持。
 
 ---
 
@@ -276,14 +281,14 @@ Web 管理前端通过内置的 Vite 反向代理平滑连通后端接口，桌�
 
 ### 1. Web 端连接后端
 
-在开发环境中，`web/vite.config.js` 默认配置了 `/api` 代理规则：
+在开发环境中，`web/vite.config.js` 通过 `loadEnv` 读取环境变量，并配置 `/api` 代理。下例是行为示意，不是完整配置：
 
 ```javascript
 server: {
   port: 5173,
   proxy: {
     '/api': {
-      target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8080',
+      target: proxyTarget // 来自 loadEnv；默认 http://127.0.0.1:8080,
       changeOrigin: true,
       rewrite: (path) => path.replace(/^\/api/, '')
     }
@@ -311,12 +316,12 @@ sequenceDiagram
     Student->>Student: 启动并常驻 Windows 系统托盘
     Student->>Teacher: UDP 广播 "WHO_IS_TEACHER" (端口 8888)
     Teacher-->>Student: 响应 "I_AM_TEACHER" (携带教师端 IP)
-    loop 每隔 15 秒心跳上报
-        Student->>Teacher: POST http://教师端IP:5000/api/collect\n(上报 CPU、内存、网络、IP、主机名)
+    loop 默认每隔 3 秒上报（HTTP 守护模式）
+        Student->>Teacher: POST http://教师端IP:5000/api/collect<br/>上报 CPU、内存、网络、IP、主机名
     end
-    Teacher->>Cloud: 汇总机房终端在线指标并同步
+    Note over Teacher,Cloud: 业务 API 使用后端 8080；HTTP 5000 是教师端局域网接收端口
     alt 教师执行批量控制 (例如锁屏/关机)
-        Teacher->>Student: POST http://学生端IP:5001/api/action\n{"action": "lock", "message": "上课集中注意力"}
+        Teacher->>Student: POST http://学生端IP:5001/api/action: {"action": "lock", "message": "上课集中注意力"}
         Student-->>Teacher: {"ok": true, "message": "accepted"}
     end
 ```
@@ -325,12 +330,14 @@ sequenceDiagram
 
 - **教师端（控制台）**：
   - `UDP 8888`：监听并响应局域网学生端的自动发现广播。
-  - `HTTP 5000`：接收所有学生端主动上报的运行指标。
+  - `HTTP 5000`：接收学生端 HTTP 守护模式上报的运行指标。
+  - `WebSocket 8765`：另一种 LAN 学生连接模式，协议与 HTTP 守护模式不同。
 - **学生端（静默守护）**：
   - `HTTP 5001`：提供控制指令接口，支持 `refresh`（刷新）、`message`（弹窗提醒）、`lock`（锁屏）、`reboot`（重启）、`shutdown`（关机）。
 - **运行方式**：
-  - 启动教师端：`cd TvTa-ui-main && pnpm tauri dev`
-  - 独立运行学生端：`TvTa-ui-main/src-tauri/target/release/zhiyun-student-client.exe`
+  - 首次运行先在 `TvTa-ui-main` 执行 `pnpm install --frozen-lockfile`，再执行 `pnpm tauri dev`。
+  - 学生端先在 `TvTa-ui-main` 执行 `pnpm build:student`，再运行 `src-tauri/target/release/zhiyun-student-client.exe`。
+  - 独立学生工程及其配置见 [学生端说明](zhiyun-student-client/README.md)。本节说明源码模式，不表示当前环境已经打包客户端。
 
 ---
 
@@ -340,21 +347,21 @@ sequenceDiagram
 
 ### 1. 配置阿里通义千问 API Key
 
-在 `Backend/src/main/resources/application.yaml` 或系统环境变量中配置 DashScope Key：
+通过环境变量 `DASHSCOPE_API_KEY` 注入密钥；不要将真实密钥写入仓库。对应的配置层级为：
 
 ```yaml
-smart-lab:
-  ai:
-    dashscope:
-      api-key: ${DASHSCOPE_API_KEY:your_actual_api_key}
-      model: qwen-plus
+tongyi:
+  agent:
+    enabled: true
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: qwen-plus
 ```
 
 ### 2. 离线中文语音识别 (Vosk)
 
-项目根目录已集成轻量级中文声学模型 `vosk-model-small-cn-0.22/`：
-- 后端启动时自动加载本地模型权重文件。
-- 前端通过 Web Audio API 采集音频分片，经由 WebSocket 流式传送到后端 Vosk 引擎进行实时转文字，无需联网即可高精度识别指令。
+离线识别使用轻量级中文声学模型 `vosk-model-small-cn-0.22/`：
+- 默认模型路径为 `../vosk-model-small-cn-0.22/vosk-model-small-cn-0.22`，相对于后端工作目录；也可通过 `VOSK_MODEL_PATH` 指定已安装的模型目录。
+- 前端通过 Web Audio API 采集音频分片，经由 WebSocket 流式传送到后端 Vosk 引擎进行实时转文字，音频识别可离线运行；大模型问答仍需要对应模型服务。
 
 ### 3. WebSocket 交互地址
 
@@ -365,7 +372,7 @@ smart-lab:
 
 ## 本机开发后端
 
-后端基于标准 DDD 与 MVC 分层设计，代码调用链清晰可循：
+后端采用 Controller、Service 与 Mapper 分层，代码调用链清晰可循：
 
 ```text
 HTTP Controller  -->  Service Interface  -->  ServiceImpl  -->  MyBatis Mapper (XML)  -->  MySQL
@@ -373,12 +380,12 @@ HTTP Controller  -->  Service Interface  -->  ServiceImpl  -->  MyBatis Mapper (
 
 ### 核心开发规范
 
-1. **统一返回封装**：所有 Controller 接口必须返回 `Result<T>` 实体：
+1. **统一返回封装**：普通业务 JSON 接口使用非泛型 `Result`；文件下载、代理和流式响应使用各自的 HTTP 响应类型：
    - 成功：`return Result.success("操作成功", data);`
    - 失败：`return Result.error("业务异常信息");`
 2. **字段自动映射**：开启了 `map-underscore-to-camel-case: true`，数据库 `device_code` 会自动对应实体类中的 `deviceCode`。
 3. **事务强一致性**：涉及资产流转、出入库、审批多表更新的操作，在 Service 方法上标注 `@Transactional`。
-4. **日志追踪**：内置 `RequestLoggingFilter` 统一生成 `requestId`，自动记录每笔请求的方法、URI、处理耗时与异常堆栈。
+4. **日志追踪**：内置 `RequestLoggingFilter` 统一生成 `requestId`，自动记录请求的方法、URI 与处理耗时，异常由统一异常处理器记录。
 
 ---
 
@@ -430,7 +437,7 @@ npm run test:coverage
   {
     "code": 200,
     "message": "list devices success",
-    "data": [ ... ]
+    "data": []
   }
   ```
 
@@ -463,13 +470,16 @@ npm run test:coverage
 
 ```bash
 # 1. 打包后端 Jar
-cd Backend && mvn clean package -DskipTests
+cd Backend
+mvn clean package
 
 # 2. 构建前端静态资源
-cd ../web && npm run build
+cd ../web
+npm ci
+npm run build
 ```
 
-前端生成的 `dist/` 目录配合 Nginx 托管，示例配置：
+前端生成的 `dist/` 目录配合 Nginx 托管，下面仅示范路由；生产域名、TLS 与部署路径需独立配置。WebSocket 代理保留 `/ws/ai-assistant`，API 代理移除前端 `/api/` 前缀。
 
 ```nginx
 server {
@@ -503,7 +513,7 @@ server {
 ```powershell
 cd monitoring
 Copy-Item .env.example .env
-# 启动监控容器组
+# 先编辑 .env，替换 GRAFANA_ADMIN_PASSWORD，再启动监控容器组
 docker compose up -d
 ```
 
@@ -528,7 +538,8 @@ flowchart LR
 
 - **容器级服务集成**：后端 CI 自动启动临时 MySQL 8.4 容器执行真实数据流集成测试。
 - **状态汇总**：Required checks 任务仅在前后端任务都成功时通过。是否强制阻止合并还取决于 GitHub 分支保护设置，工作流本身不等于已启用分支保护。
-- **覆盖率徽章**：顶部蓝色徽章仅标示配置门槛，不是实时覆盖率，也未接入 Codecov。整体 CI 徽章显示 main 分支工作流状态。
+- **动态覆盖率徽章**：main 的前后端测试均成功后，CI 从 JaCoCo XML 与 Vitest JSON 读取实际行数，将 `(后端已覆盖行 + 前端已覆盖行) / (后端总行 + 前端总行)` 发布到专用 `coverage-badges` 分支。顶部徽章通过 Shields endpoint 读取该结果，不需要 Codecov 账号或令牌。两个模块仍分别执行 96% 门槛，合并值不能掩盖单个模块未达标。
+- **更新与限制**：徽章表示最近一次成功 main 运行的结果；失败运行不发布新值，需同时查看 CI 状态。首次成功发布前可能显示不可用，发布后有数分钟缓存。分支只存放生成的覆盖率数据，不是开发分支。PR 无写权限；如果仓库策略禁止 Actions 写入，发布任务会失败，不会回填固定百分比。
 - **查看真实结果**：打开 [main 分支 Actions](https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain)，选择对应提交的运行，在 Summary 中查看 backend/frontend 的覆盖行数、总行数、百分比及门槛结果。Artifacts 中可下载 backend-test-reports 与 frontend-test-reports；报告保留 14 天。缺失报告或失败运行不能视为覆盖率达标。
 
 ---
@@ -547,19 +558,6 @@ flowchart LR
 
 ---
 
-## 🌐 Zhiyun Laboratory Overview
+## English documentation
 
-**Zhiyun Laboratory** is a modern, data-driven collaborative operations platform tailored for university and research laboratories. It unifies space resources, curriculum timetables, course software environments, device lifecycle operations, and IoT environmental sensing into a unified closed-loop platform.
-
-### Key Highlights
-- **Full Lifecycle Asset Management**: Equipment inventory, transfer tracking, asset QR code generation, and consumable stock threshold alarms.
-- **Academic Timetable & Booking Synergy**: Python-based automatic timetable scraper and multi-level lab reservation workflow.
-- **Dual-Client Desktop Monitoring (Tauri 2 + Rust)**: Teacher console for batch control (broadcast notifications, lock screen, shutdown) & Student background system-tray daemon with automatic LAN UDP discovery.
-- **AI Agent & Offline Speech Recognition**: Integrated Alibaba DashScope LLM agent and offline Vosk Chinese speech recognition via real-time WebSocket.
-- **High-Standard CI/CD Guardrails**: Enforcing strict 96% line coverage on both backend (Spring Boot + JaCoCo) and frontend (Vue 3 + Vitest) alongside Prometheus/Grafana observability.
-
----
-
-<div align="center">
-  <sub>智云实验室 (Zhiyun Laboratory) &copy; 2026. Made with ❤️ for Smart Campus & Laboratory Management.</sub>
-</div>
+完整英文说明见 [README.en.md](README.en.md)，包括安装、配置、终端通信、测试、部署和覆盖率徽章。
