@@ -222,9 +222,15 @@ public class IotHardwareController {
     @GetMapping("/iot/cameras/{code}/snapshot")
     public ResponseEntity<byte[]> getCameraSnapshot(@PathVariable String code) {
         IotHardwareService.CameraSnapshot snapshot = iotHardwareService.getCameraSnapshot(code);
+        MediaType mediaType = org.example.backend.security.SafeRasterMediaType.parse(
+                snapshot.contentType() == null ? MediaType.IMAGE_JPEG_VALUE : snapshot.contentType());
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
-                .header(HttpHeaders.CONTENT_TYPE, snapshot.contentType() == null ? MediaType.IMAGE_JPEG_VALUE : snapshot.contentType())
+                .contentType(mediaType)
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Security-Policy", "default-src 'none'; sandbox")
+                .header("Content-Disposition", MediaType.APPLICATION_OCTET_STREAM.equals(mediaType)
+                        ? "attachment; filename=\"snapshot.bin\"" : "inline")
                 .body(snapshot.bytes());
     }
 

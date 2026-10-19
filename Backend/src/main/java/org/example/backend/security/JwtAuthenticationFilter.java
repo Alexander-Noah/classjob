@@ -31,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/auth/login",
+            "/auth/captcha",
             "/auth/logout",
             "/ai-assistant/ws",
             "/ws/ai-assistant",

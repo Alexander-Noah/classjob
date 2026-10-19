@@ -5,6 +5,7 @@
 import { API_BASE_URL } from '../config'
 import { API_ENDPOINTS } from '../endpoints'
 import http from '../http'
+import { safeHttpUrl } from '../../../../shared/safeUrl'
 
 /**
  * unwrap载荷的处理逻辑。
@@ -154,11 +155,12 @@ export async function getLabEnvironment(labId, requestOptions = {}) {
  * @returns 由当前表达式或分支生成的处理结果。
  */
 export function toBackendUrl(path) {
+  path = safeHttpUrl(path)
   if (!path) return ''
-  if (/^https?:\/\//.test(path)) return path
+  if (/^https?:\/\//i.test(path)) return path
   const baseUrl = API_BASE_URL.replace(/\/$/, '')
   const nextPath = String(path).startsWith('/') ? path : `/${path}`
-  return `${baseUrl}${nextPath}`
+  return safeHttpUrl(`${baseUrl}${nextPath}`)
 }
 
 export const iotService = {

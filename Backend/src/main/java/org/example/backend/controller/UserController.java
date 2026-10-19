@@ -11,6 +11,8 @@ import org.example.backend.result.Result;
 import org.example.backend.security.JwtAuthenticationFilter;
 import org.example.backend.security.JwtService;
 import org.example.backend.security.LoginAttemptLimiter;
+import org.example.backend.security.LoginCaptchaService;
+import org.example.backend.security.AccountInputValidation;
 import org.example.backend.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,7 @@ public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
     private final LoginAttemptLimiter loginAttemptLimiter;
+    private final LoginCaptchaService captchaService;
 
     /**
      * 构造 UserController，初始化当前实例。
@@ -32,10 +35,17 @@ public class UserController {
      * @param jwtService JWT服务参数。
      * @param loginAttemptLimiter 登录尝试Limiter参数。
      */
-    public UserController(UserService userService, JwtService jwtService, LoginAttemptLimiter loginAttemptLimiter) {
+    public UserController(UserService userService, JwtService jwtService, LoginAttemptLimiter loginAttemptLimiter, LoginCaptchaService captchaService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.loginAttemptLimiter = loginAttemptLimiter;
+        this.captchaService = captchaService;
+    }
+
+    @GetMapping("/auth/captcha")
+    public Result captcha(jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store");
+        return Result.success(captchaService.create());
     }
 
     /**
@@ -48,7 +58,15 @@ public class UserController {
     public Result login(@RequestBody(required = false) Map<String, String> params, HttpServletRequest request) {
         String username = params == null ? "" : params.get("username");
         String password = params == null ? "" : params.get("password");
+        AccountInputValidation.login(username, password);
+        AccountInputValidation.text("验证码标识", params.get("captchaId"), 36, false);
+        AccountInputValidation.text("验证码", params.get("captchaCode"), 4, false);
+        username = username.trim();
         loginAttemptLimiter.assertAllowed(username, request);
+        if (!captchaService.verify(params == null ? null : params.get("captchaId"), params == null ? null : params.get("captchaCode"))) {
+            loginAttemptLimiter.recordFailure(username, request);
+            return Result.error("验证码错误或已过期，请重新输入");
+        }
         UserEntity user = userService.login(username, password);
         if (user == null) {
             loginAttemptLimiter.recordFailure(username, request);
@@ -272,8 +290,9 @@ public class UserController {
     private List<Integer> extractIds(Map<String, Object> payload) {
         Object rawIds = payload == null ? null : payload.get("ids");
         if (!(rawIds instanceof List<?> ids)) {
-            return List.of();
+            throw new IllegalArgumentException("请选择用户并提交编号数组");
         }
+        if (ids.isEmpty() || ids.size() > 1000) throw new IllegalArgumentException("请选择 1 至 1000 个用户");
 
         return ids.stream()
                 .map(this::toInteger)
@@ -288,17 +307,10 @@ public class UserController {
      * @return Integer 类型的处理结果。
      */
     private Integer toInteger(Object value) {
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        if (value instanceof String text && !text.isBlank()) {
-            try {
-                return Integer.valueOf(text);
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
+        String text = value == null ? "" : value.toString();
+        if (!text.matches("[1-9][0-9]{0,9}")) throw new IllegalArgumentException("用户编号必须为正整数");
+        try { return Integer.valueOf(text); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("用户编号超出范围"); }
     }
 
     /**

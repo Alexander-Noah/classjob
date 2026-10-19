@@ -51,7 +51,7 @@ afterEach(async () => {
 })
 async function setup(render = false) {
   const names = ['button','icon','input','switch','dialog','form','form-item','select','option','alert','tag','tooltip','empty','avatar','link']
-  const wrapper = shallowMount(Assistant, { global: { stubs: render ? formStubs() : Object.fromEntries(names.map(name => [`el-${name}`, true])) } })
+  const wrapper = shallowMount(Assistant, { global: { stubs: { ...(render ? formStubs() : Object.fromEntries(names.map(name => [`el-${name}`, true]))), SafeMessageContent: false } } })
   wrappers.push(wrapper); await flushPromises(); return wrapper.vm
 }
 

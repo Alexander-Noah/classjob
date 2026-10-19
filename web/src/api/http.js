@@ -4,6 +4,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { API_BASE_URL, API_TIMEOUT } from './config'
+import { validateRequestData } from '../utils/requestValidation'
 import {
   AUTH_ROLE_STORAGE_KEY,
   AUTH_STORAGE_KEY,
@@ -18,6 +19,8 @@ const http = axios.create({
 })
 
 http.interceptors.request.use(/** 处理 use 调用中的回调逻辑。 入参：config。 */ (config) => {
+  try { validateRequestData(config.data) }
+  catch (error) { error.__inputValidation = true; error.config = config; throw error }
   // “记住我”使用 localStorage，临时登录使用 sessionStorage，两种会话均可携带令牌。
   const token =
     typeof window !== 'undefined'
@@ -58,6 +61,11 @@ http.interceptors.response.use(
    * 入参：error。
    */
   (error) => {
+    if (error?.__inputValidation) {
+      if (!error.config?.skipErrorMessage) ElMessage.error(error.message)
+      error.__handled = true
+      return Promise.reject(error)
+    }
     if (error?.response?.status === 401 && typeof window !== 'undefined') {
       // 同时清空两种存储，防止旧令牌被另一种存储恢复；回跳地址保留当前查询参数。
       const clearSessionStorage = (storage) => {

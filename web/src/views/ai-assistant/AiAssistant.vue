@@ -5,7 +5,7 @@
 import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, shallowRef, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatDotRound, CopyDocument, Delete, Microphone, Promotion, Setting } from '@element-plus/icons-vue'
-import { formatMessageContent } from '../../modules/ai-assistant/formatMessage'
+import SafeMessageContent from './components/SafeMessageContent.vue'
 import { getAuthToken, getStoredUser } from '../../api/services/auth'
 import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 import {
@@ -1225,11 +1225,11 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
               <span>{{ message.time }}</span>
             </div>
             <div class="message-bubble">
-              <div
+              <SafeMessageContent
                 v-if="message.content"
                 class="message-content"
-                v-html="formatMessageContent(message.content)"
-              ></div>
+                :content="message.content"
+              />
               <div v-if="message.pendingAction" class="business-action-card">
                 <strong>{{ message.pendingAction.module }} · {{ { DELETE: '删除', PUT: '修改', PATCH: '修改', POST: '新增／执行' }[message.pendingAction.method] }}待确认</strong>
                 <p>{{ message.pendingAction.summary }}</p>

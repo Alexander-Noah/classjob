@@ -11,6 +11,16 @@ const storage = () => {
   const values = new Map()
   return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) }
 }
+it('invalid form data never reaches the adapter and preserves its validation error', async () => {
+  const adapter = vi.fn()
+  await expect(http.post('/users', { username: 'x'.repeat(101) }, { adapter })).rejects.toMatchObject({ __inputValidation: true, __handled: true })
+  expect(adapter).not.toHaveBeenCalled()
+  expect(ElMessage.error).toHaveBeenCalledWith(expect.stringContaining('100'))
+  ElMessage.error.mockClear()
+  await expect(http.post('/users', { password: 'x'.repeat(129) }, { adapter, skipErrorMessage: true })).rejects.toMatchObject({ __inputValidation: true })
+  expect(adapter).not.toHaveBeenCalled()
+  expect(ElMessage.error).not.toHaveBeenCalled()
+})
 beforeEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
 
 it('requests outside a browser preserve existing headers', () => {

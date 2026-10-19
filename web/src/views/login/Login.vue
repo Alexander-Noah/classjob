@@ -3,7 +3,9 @@
   业务状态复用：../../composables/useLiquidGlass。
 -->
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import http from '../../api/http'
+import { safeImageUrl } from '../../../../shared/safeUrl'
 import { useRouter } from 'vue-router'
 import { useLiquidGlass } from '../../composables/useLiquidGlass'
 import { ElMessage } from 'element-plus'
@@ -36,6 +38,32 @@ const errors = reactive({
 const isSubmitting = ref(false)
 const showPassword = ref(false)
 const router = useRouter()
+const captchaCode = ref('')
+const captchaId = ref('')
+const captchaImage = ref('')
+const captchaLoading = ref(false)
+const captchaError = ref('')
+const refreshCaptcha = async () => {
+  if (captchaLoading.value) return
+  captchaLoading.value = true
+  captchaId.value = ''
+  captchaImage.value = ''
+  captchaCode.value = ''
+  captchaError.value = ''
+  try {
+    const { data } = await http.get('/auth/captcha')
+    if (!data?.data?.captchaId || !data?.data?.image) throw new Error('验证码加载失败')
+    captchaId.value = data.data.captchaId
+    captchaImage.value = safeImageUrl(data.data.image)
+    if (!captchaImage.value) throw new Error('验证码图片格式不正确')
+  } catch {
+    captchaId.value = ''
+    captchaImage.value = ''
+    captchaError.value = '验证码加载失败，点击图片区域重试'
+  }
+  finally { captchaLoading.value = false }
+}
+onMounted(refreshCaptcha)
 
 const passwordInputType = computed(/** 计算派生状态。 */ () => (showPassword.value ? 'text' : 'password'))
 
@@ -45,11 +73,11 @@ const passwordInputType = computed(/** 计算派生状态。 */ () => (showPassw
  */
 const validateField = (field) => {
   if (field === 'username') {
-    errors.username = form.username.trim() ? '' : '请输入用户名'
+    errors.username = !form.username.trim() ? '请输入用户名' : form.username.length > 100 ? '账号不能超过 100 个字符' : /[\u0000-\u001f\u007f-\u009f]/.test(form.username) ? '账号不能包含控制字符' : ''
   }
 
   if (field === 'password') {
-    errors.password = form.password ? '' : '请输入密码'
+    errors.password = !form.password ? '请输入密码' : form.password.length > 128 ? '密码不能超过 128 个字符' : /[\u0000-\u001f\u007f-\u009f]/.test(form.password) ? '密码不能包含控制字符' : ''
   }
 }
 
@@ -76,7 +104,12 @@ const getRedirectPath = (role = DEFAULT_AUTH_ROLE) => {
  * 处理登录。
  */
 const handleLogin = async () => {
+  if (isSubmitting.value) return
   if (!validateForm()) return
+  if (!captchaId.value || !/^[a-z0-9]{4}$/i.test(captchaCode.value.trim())) {
+    captchaError.value = '请输入四位图片验证码'
+    return
+  }
 
   isSubmitting.value = true
 
@@ -85,6 +118,8 @@ const handleLogin = async () => {
     const session = await loginByPassword({
       username,
       password: form.password,
+      captchaId: captchaId.value,
+      captchaCode: captchaCode.value.trim(),
       remember: form.remember,
     })
 
@@ -97,6 +132,7 @@ const handleLogin = async () => {
     ElMessage.success('登录成功')
     router.replace(getRedirectPath(session.role))
   } catch (error) {
+    await refreshCaptcha()
     isSubmitting.value = false
     if (!error?.__handled) {
       ElMessage.error(error?.message || '登录失败')
@@ -129,17 +165,30 @@ const handleLogin = async () => {
           <div class="field-group">
             <label class="input-wrap" :class="{ invalid: errors.username }">
               <User class="field-icon" />
-              <input v-model.trim="form.username" aria-label="账号" :aria-invalid="!!errors.username" autocomplete="username" placeholder="请输入账号" @blur="validateField('username')" @input="errors.username && validateField('username')" />
+              <input v-model.trim="form.username" aria-label="账号" :aria-invalid="!!errors.username" autocomplete="username" maxlength="100" placeholder="请输入账号" @blur="validateField('username')" @input="errors.username && validateField('username')" />
             </label>
             <span v-if="errors.username" class="error-text">{{ errors.username }}</span>
           </div>
           <div class="field-group">
             <label class="input-wrap" :class="{ invalid: errors.password }">
               <Lock class="field-icon" />
-              <input v-model="form.password" aria-label="密码" :aria-invalid="!!errors.password" :type="passwordInputType" autocomplete="current-password" placeholder="请输入密码" @blur="validateField('password')" @input="errors.password && validateField('password')" />
+              <input v-model="form.password" aria-label="密码" :aria-invalid="!!errors.password" :type="passwordInputType" autocomplete="current-password" maxlength="128" placeholder="请输入密码" @blur="validateField('password')" @input="errors.password && validateField('password')" />
               <button class="ghost-icon" type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" @click="showPassword = !showPassword"><View v-if="showPassword" /><Hide v-else /></button>
             </label>
             <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+          </div>
+          <div class="field-group">
+            <div class="captcha-row">
+              <label class="input-wrap">
+                <Lock class="field-icon" />
+                <input v-model="captchaCode" aria-label="图片验证码" :aria-invalid="!!captchaError" autocomplete="off" spellcheck="false" maxlength="4" placeholder="图片验证码" @input="captchaError = ''" />
+              </label>
+              <button type="button" class="captcha-refresh" :disabled="captchaLoading || isSubmitting" aria-label="刷新图片验证码" title="看不清？点击换一张" @click="refreshCaptcha">
+                <img v-if="captchaImage" :src="captchaImage" alt="验证码，点击换一张" />
+                <span v-else>{{ captchaLoading ? '加载中…' : '点击重试' }}</span>
+              </button>
+            </div>
+            <span v-if="captchaError" class="error-text" role="alert">{{ captchaError }}</span>
           </div>
           <div class="form-tools">
             <label class="remember-me"><input v-model="form.remember" type="checkbox" /><span>记住我</span></label>
@@ -190,6 +239,10 @@ h2 { margin: 31px 0 8px; font-size: 28px; line-height: 1.4; font-weight: 700; te
 .ghost-icon svg { width: 20px; height: 20px; }
 .error-text { font-size: 12px; color: #bd3860; display: block; margin: 3px 8px -10px; }
 .form-tools { display: flex; align-items: center; justify-content: space-between; margin: 21px 0; font-size: 17px; }
+.captcha-row { display: flex; gap: 12px; }
+.captcha-row .input-wrap { flex: 1; min-width: 0; }
+.captcha-refresh { flex: 0 0 130px; height: 56px; padding: 0; overflow: hidden; border: 1px solid rgba(239,232,244,.9); border-radius: 14px; background: #f2f4ff; color: #61649a; cursor: pointer; }
+.captcha-refresh img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .remember-me { display: flex; align-items: center; gap: 11px; cursor: pointer; }
 .remember-me input { width: 23px; height: 23px; margin: 0 0 0 3px; accent-color: #2e7fff; cursor: pointer; }
 .forgot-link { border: 0; padding: 0; background: transparent; font: inherit; color: #397fff; cursor: pointer; }

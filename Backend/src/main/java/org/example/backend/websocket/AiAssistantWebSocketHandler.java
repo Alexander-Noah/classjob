@@ -78,6 +78,11 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        try { org.example.backend.security.RequestInputValidation.websocketText(message.getPayload()); }
+        catch (IllegalArgumentException e) {
+            sendJson(session, Map.of("type", "error", "text", e.getMessage()));
+            return;
+        }
         Map<String, Object> payload = readMessage(message.getPayload());
         String type = asString(payload.get("type"));
         String state = asString(payload.get("state"));

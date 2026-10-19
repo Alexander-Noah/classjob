@@ -7,6 +7,7 @@ package org.example.backend.service.impl;
 import org.example.backend.entity.UserEntity;
 import org.example.backend.mapper.UserMapper;
 import org.example.backend.security.PasswordService;
+import org.example.backend.security.AccountInputValidation;
 import org.example.backend.security.RetiredRoles;
 import org.example.backend.service.BusinessLoopService;
 import org.example.backend.service.UserService;
@@ -44,6 +45,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserEntity login(String username, String password) {
+        AccountInputValidation.login(username, password);
         UserEntity user = userMapper.login(username);
         if (user != null && passwordService.matches(password, user.getPassword()) && Integer.valueOf(1).equals(user.getStatus())) {
             assertRoleActive(user.getRoleCode(), user.getRoleName());
@@ -81,6 +83,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserEntity updateProfile(String username, UserEntity profile) {
+        AccountInputValidation.profile(profile);
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("登录状态无效");
         }
@@ -144,6 +147,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserEntity updateUser(Integer id, UserEntity user) {
+        if (id == null || id <= 0) throw new IllegalArgumentException("用户编号必须为正整数");
+        AccountInputValidation.profile(user);
         UserEntity existingUser = userMapper.getUser(id);
         if (existingUser == null) {
             throw new IllegalArgumentException("未知用户");
@@ -165,7 +170,7 @@ public class UserServiceImpl implements UserService {
             user.setAvatarUrl(existingUser.getAvatarUrl());
         }
         normalizeUser(user, false, hasNewPassword);
-        if (hasNewPassword && !passwordService.isEncoded(user.getPassword())) {
+        if (hasNewPassword) {
             user.setPassword(passwordService.encode(user.getPassword()));
         }
         int updatedCount = userMapper.updateUser(id, user);
@@ -186,6 +191,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserEntity updateUserStatus(Integer id, Integer status) {
+        if (id == null || id <= 0) throw new IllegalArgumentException("用户编号必须为正整数");
+        AccountInputValidation.status(status);
         int updatedCount = userMapper.updateUserStatus(id, status == null ? 1 : status);
         if (updatedCount == 0) {
             throw new IllegalArgumentException("未知用户");
@@ -249,6 +256,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public List<UserEntity> batchUpdateStatus(List<Integer> ids, Integer status) {
+        AccountInputValidation.status(status);
         return normalizeIds(ids).stream()
                 .map(/** 将当前条目转换为目标结果。 入参：id。 */ id -> updateUserStatus(id, status))
                 .filter(Objects::nonNull)
@@ -288,6 +296,7 @@ public class UserServiceImpl implements UserService {
     public List<UserEntity> batchUpdateRole(List<Integer> ids, String roleName, String roleCode) {
         String nextRoleCode = roleCode == null || roleCode.isBlank() ? resolveRoleCode(roleName) : roleCode;
         assertRoleActive(nextRoleCode, roleName);
+        AccountInputValidation.role(nextRoleCode);
         if (nextRoleCode == null || nextRoleCode.isBlank()) {
             throw new IllegalArgumentException("请选择角色");
         }
@@ -319,6 +328,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public List<UserEntity> batchUpdateDepartment(List<Integer> ids, String department) {
+        AccountInputValidation.text("部门", department, 160, false);
         String nextDepartment = department == null || department.isBlank() ? "未设置" : department;
         return normalizeIds(ids).stream()
                 .map(/** 将当前条目转换为目标结果。 入参：id。 */ id -> {
@@ -356,6 +366,8 @@ public class UserServiceImpl implements UserService {
         if (ids == null || ids.isEmpty()) {
             throw new IllegalArgumentException("请选择用户");
         }
+        if (ids.size() > 1000 || ids.stream().anyMatch(id -> id == null || id <= 0))
+            throw new IllegalArgumentException("用户编号必须为正整数，单次最多 1000 项");
         return ids.stream().filter(Objects::nonNull).distinct().toList();
     }
 
@@ -433,12 +445,18 @@ public class UserServiceImpl implements UserService {
      * @param hasNewPassword hasNew密码参数。
      */
     private void normalizeUser(UserEntity user, boolean creating, boolean hasNewPassword) {
+        AccountInputValidation.profile(user);
         if (user == null) {
             throw new IllegalArgumentException("请填写账号信息");
         }
         if (user.getUsername() == null || user.getUsername().isBlank()) {
-            user.setUsername("user" + System.currentTimeMillis());
+            throw new IllegalArgumentException("请填写账号");
         }
+        user.setUsername(user.getUsername().trim());
+        AccountInputValidation.text("账号", user.getUsername(), AccountInputValidation.USERNAME_MAX, true);
+        if (user.getUsername().codePoints().anyMatch(Character::isWhitespace))
+            throw new IllegalArgumentException("账号不能包含空白字符");
+        AccountInputValidation.status(user.getStatus());
         if (user.getRealName() == null || user.getRealName().isBlank()) {
             user.setRealName(user.getUsername());
         }
@@ -455,6 +473,7 @@ public class UserServiceImpl implements UserService {
             user.setRoleCode(resolveRoleCode(user.getRoleName()));
         }
         assertRoleActive(user.getRoleCode(), user.getRoleName());
+        AccountInputValidation.role(user.getRoleCode());
         if (user.getRoleCode() == null || user.getRoleCode().isBlank()) {
             throw new IllegalArgumentException("请选择角色");
         }
@@ -465,6 +484,7 @@ public class UserServiceImpl implements UserService {
      * @param password 密码参数。
      */
     private void validatePassword(String password) {
+        AccountInputValidation.text("密码", password, AccountInputValidation.PASSWORD_MAX, true);
         if (password == null || password.length() < 8) {
             throw new IllegalArgumentException("密码至少 8 位，并包含字母和数字");
         }
@@ -482,6 +502,7 @@ public class UserServiceImpl implements UserService {
      * @param roleCode 角色编码参数。
      */
     private void saveRole(Integer userId, String roleCode) {
+        AccountInputValidation.role(roleCode);
         assertRoleActive(roleCode, null);
         if (roleCode == null || roleCode.isBlank()) {
             throw new IllegalArgumentException("请选择角色");

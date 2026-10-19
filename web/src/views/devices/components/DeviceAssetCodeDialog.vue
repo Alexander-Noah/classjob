@@ -144,7 +144,7 @@ const printLabel = () => {
               <h1>${escapeHtml(device.name)}</h1>
               <div class="code">${escapeHtml(device.code)} · ${escapeHtml(device.category)}</div>
             </div>
-            <img src="${getQrCodeUrl(device)}" alt="设备二维码" />
+            <img src="${escapeHtml(getQrCodeUrl(device))}" alt="设备二维码" />
           </div>
           <dl>
             <dt>状态</dt><dd>${escapeHtml(device.status)}</dd>
@@ -165,6 +165,7 @@ const printLabel = () => {
     <html lang="zh-CN">
       <head>
         <meta charset="UTF-8" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'" />
         <title>设备资产标签</title>
         <style>
           * { box-sizing: border-box; }
@@ -184,15 +185,10 @@ const printLabel = () => {
       </head>
       <body>
         ${labelsHtml}
-        <script>
-          window.onload = () => {
-            window.focus();
-            window.print();
-          };
-        <\/script>
       </body>
     </html>
   `)
+  printWindow.onload = () => { printWindow.focus(); printWindow.print() }
   printWindow.document.close()
 }
 </script>

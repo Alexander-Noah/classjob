@@ -4,7 +4,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const chunkLimitBytes = 450 * 1024
+// Keep interdependent library modules together to avoid initialization cycles.
 /**
  * nodeModule的处理逻辑。
  * 入参：name（名称）。
@@ -17,13 +17,11 @@ const buildChunkGroups = [
     name: 'echarts',
     test: /node_modules[\\/](echarts|zrender)[\\/]/,
     priority: 50,
-    maxSize: chunkLimitBytes,
   },
   {
     name: 'element-plus',
     test: /node_modules[\\/](element-plus|@element-plus)[\\/]/,
     priority: 40,
-    maxSize: chunkLimitBytes,
   },
   {
     name: 'vue-core',
@@ -39,25 +37,21 @@ const buildChunkGroups = [
     name: 'management-modules',
     test: /src[\\/]constants[\\/]managementModules\.js$/,
     priority: 30,
-    maxSize: chunkLimitBytes,
   },
   {
     name: 'statistics-page',
     test: /src[\\/]views[\\/]statistics[\\/]/,
     priority: 25,
-    maxSize: chunkLimitBytes,
   },
   {
     name: 'app-api',
     test: /src[\\/]api[\\/]/,
     priority: 20,
-    maxSize: chunkLimitBytes,
   },
   {
     name: 'vendor',
     test: /node_modules[\\/]/,
     priority: 10,
-    maxSize: chunkLimitBytes,
   },
 ]
 
@@ -74,7 +68,6 @@ export default defineConfig(/** 处理 defineConfig 调用中的回调逻辑。 
         output: {
           codeSplitting: {
             minSize: 0,
-            maxSize: chunkLimitBytes,
             groups: buildChunkGroups,
           },
         },
@@ -100,3 +93,4 @@ export default defineConfig(/** 处理 defineConfig 调用中的回调逻辑。 
     },
   }
 })
+

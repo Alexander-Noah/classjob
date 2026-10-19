@@ -62,7 +62,8 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         response.setHeader("X-Frame-Options", "SAMEORIGIN");
         response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         response.setHeader("Permissions-Policy", "camera=(), geolocation=(), microphone=(self)");
-        response.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
+        if (response.getHeader("Content-Security-Policy") == null)
+            response.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
 
         String uri = request.getRequestURI();
         if (uri != null && (uri.startsWith("/auth/") || uri.startsWith("/admin/") || uri.startsWith("/users"))) {

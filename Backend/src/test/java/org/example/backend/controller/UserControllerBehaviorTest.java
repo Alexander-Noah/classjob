@@ -16,7 +16,9 @@ class UserControllerBehaviorTest {
     final UserService users=mock(UserService.class);
     final JwtService jwt=mock(JwtService.class);
     final LoginAttemptLimiter limiter=mock(LoginAttemptLimiter.class);
-    final UserController controller=new UserController(users,jwt,limiter);
+    final org.example.backend.security.LoginCaptchaService captcha=mock(org.example.backend.security.LoginCaptchaService.class);
+    { when(captcha.verify(any(),any())).thenReturn(true); }
+    final UserController controller=new UserController(users,jwt,limiter,captcha);
     UserEntity user(){UserEntity user=new UserEntity();user.setId(7);user.setUsername("teacher");user.setPassword("secret-hash");user.setRoleCode("teacher");user.setRealName("教师");user.setRoleName("任课教师");user.setDepartment("计算机");user.setStatus(1);return user;}
     MockHttpServletRequest request(String username,String role){MockHttpServletRequest request=new MockHttpServletRequest();if(username!=null)request.setAttribute(JwtAuthenticationFilter.AUTH_USERNAME_ATTRIBUTE,username);if(role!=null)request.setAttribute(JwtAuthenticationFilter.AUTH_ROLE_ATTRIBUTE,role);return request;}
     @Test void successfulLoginClearsFailuresAndReturnsTokenWithoutPassword(){
@@ -25,8 +27,15 @@ class UserControllerBehaviorTest {
         assertEquals(200,result.getCode());Map<?,?> data=(Map<?,?>)result.getData();assertEquals("signed-token",data.get("token"));assertEquals("teacher",data.get("role"));assertNull(((UserEntity)data.get("user")).getPassword());
         var order=inOrder(limiter,users,jwt);order.verify(limiter).assertAllowed("teacher",request);order.verify(users).login("teacher","pw");order.verify(limiter).recordSuccess("teacher",request);order.verify(jwt).generateToken(user);
     }
+    @Test void invalidCaptchaNeverChecksPasswordOrIssuesToken(){
+        when(captcha.verify(any(),any())).thenReturn(false);
+        MockHttpServletRequest request=request(null,null);
+        assertEquals(-1,controller.login(Map.of("username","teacher","password","pw"),request).getCode());
+        verifyNoInteractions(users,jwt);
+        verify(limiter).recordFailure("teacher",request);
+    }
     @Test void failedAndMissingLoginPayloadsRecordFailuresWithoutIssuingToken(){
-        MockHttpServletRequest request=request(null,null);assertEquals(-1,controller.login(null,request).getCode());verify(users).login("","");verify(limiter).recordFailure("",request);verifyNoInteractions(jwt);
+        MockHttpServletRequest request=request(null,null);assertThrows(IllegalArgumentException.class,()->controller.login(null,request));verifyNoInteractions(users,limiter,jwt);
         doThrow(new IllegalArgumentException("locked")).when(limiter).assertAllowed("locked",request);
         assertThrows(IllegalArgumentException.class,()->controller.login(Map.of("username","locked","password","pw"),request));verify(users,never()).login("locked","pw");
     }
@@ -55,10 +64,10 @@ class UserControllerBehaviorTest {
         when(users.listUsers()).thenReturn(null);assertNull(controller.listUsers().getData());
     }
     @Test void batchPayloadsDeduplicateValidIdentifiersAndHandleMissingFields(){
-        List<Integer> ids=List.of(7,8);Map<String,Object> payload=new HashMap<>();payload.put("ids",Arrays.asList(7,"8",7L,"bad","",null,new Object()));payload.put("role","教师");payload.put("roleCode","teacher");payload.put("department",42);
+        List<Integer> ids=List.of(7,8);Map<String,Object> payload=new HashMap<>();payload.put("ids",Arrays.asList(7,"8",7L));payload.put("role","教师");payload.put("roleCode","teacher");payload.put("department",42);
         when(users.batchUpdateStatus(anyList(),anyInt())).thenAnswer(call->List.of(user()));when(users.batchDeleteUsers(anyList())).thenAnswer(call->List.of(user()));when(users.batchUpdateRole(anyList(),anyString(),anyString())).thenAnswer(call->List.of(user()));when(users.batchUpdateDepartment(anyList(),anyString())).thenAnswer(call->List.of(user()));
         for(Result result:List.of(controller.batchEnableUsers(payload),controller.batchDisableUsers(payload),controller.batchDeleteUsers(payload),controller.batchUpdateRole(payload),controller.batchUpdateDepartment(payload)))assertNull(((UserEntity)((List<?>)result.getData()).get(0)).getPassword());
         verify(users).batchUpdateStatus(ids,1);verify(users).batchUpdateStatus(ids,0);verify(users).batchDeleteUsers(ids);verify(users).batchUpdateRole(ids,"教师","teacher");verify(users).batchUpdateDepartment(ids,"42");
-        controller.batchUpdateRole(null);verify(users).batchUpdateRole(List.of(),"","");controller.batchDeleteUsers(Map.of("ids","invalid"));verify(users).batchDeleteUsers(List.of());
+        assertThrows(IllegalArgumentException.class,()->controller.batchUpdateRole(null));assertThrows(IllegalArgumentException.class,()->controller.batchDeleteUsers(Map.of("ids","invalid")));
     }
 }

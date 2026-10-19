@@ -315,8 +315,11 @@ export function generateQrSvg(value, options = {}) {
   const errorCorrectionCodewords = createErrorCorrectionCodewords(dataCodewords, config.ecCodewords)
   const matrix = createMatrix(config, [...dataCodewords, ...errorCorrectionCodewords])
   const border = options.border ?? 4
+  if (!Number.isInteger(border) || border < 0 || border > 64) throw new Error('二维码边距必须为 0 至 64 的整数')
   const foreground = options.foreground || '#0f172a'
   const background = options.background || '#ffffff'
+  if (![foreground, background].every(color => typeof color === 'string' && /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(color)))
+    throw new Error('二维码颜色必须为十六进制颜色值')
   const size = matrix.length + border * 2
   const paths = []
 

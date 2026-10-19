@@ -51,8 +51,13 @@ public class FileUploadController {
     @GetMapping("/files/avatar-proxy")
     public ResponseEntity<byte[]> getAvatar(@RequestParam("objectKey") String objectKey) {
         AvatarObject avatarObject = aliyunOssService.downloadAvatar(objectKey);
+        MediaType mediaType = parseMediaType(avatarObject.contentType());
         return ResponseEntity.ok()
-                .contentType(parseMediaType(avatarObject.contentType()))
+                .contentType(mediaType)
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Security-Policy", "default-src 'none'; sandbox")
+                .header("Content-Disposition", MediaType.APPLICATION_OCTET_STREAM.equals(mediaType)
+                        ? "attachment; filename=\"avatar.bin\"" : "inline")
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
                 .body(avatarObject.content());
     }
@@ -63,10 +68,6 @@ public class FileUploadController {
      * @return MediaType 类型的处理结果。
      */
     private MediaType parseMediaType(String contentType) {
-        try {
-            return MediaType.parseMediaType(contentType);
-        } catch (Exception e) {
-            return MediaType.APPLICATION_OCTET_STREAM;
-        }
+        return org.example.backend.security.SafeRasterMediaType.parse(contentType);
     }
 }
