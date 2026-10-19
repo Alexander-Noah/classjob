@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "label": "Coverage",
+  "message": "96.01%",
+  "color": "brightgreen",
+  "cacheSeconds": 300,
+  "covered": 20094,
+  "total": 20930,
+  "modules": {
+    "backend": {
+      "covered": 8964,
+      "total": 9337,
+      "percent": 96.00514083752812
+    },
+    "frontend": {
+      "covered": 11130,
+      "total": 11593,
+      "percent": 96.00621064435435
+    }
+  },
+  "commit": "dd0a88029cffc330f3fac799a97cfca4f1a8cb7f",
+  "runUrl": "https://github.com/Alexander-Noah/classjob/actions/runs/39236359945"
+}
