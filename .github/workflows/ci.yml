@@ -105,6 +105,48 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  codecov:
+    name: Upload coverage to Codecov
+    needs: [backend, frontend]
+    # Fork PRs and Dependabot do not have access to GitHub OIDC credentials.
+    if: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: backend-test-reports
+          path: Backend/target
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-test-reports
+          path: web/coverage
+      - name: Upload JaCoCo report
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
+          files: Backend/target/site/jacoco/jacoco.xml
+          flags: backend
+          name: backend-jacoco
+          disable_search: true
+          fail_ci_if_error: true
+      - name: Upload Vitest report
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
+          files: web/coverage/lcov.info
+          flags: frontend
+          name: frontend-vitest
+          disable_search: true
+          fail_ci_if_error: true
+
   required:
     name: Required checks
     if: ${{ always() }}
