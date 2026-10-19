@@ -16,10 +16,10 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "@wxperia/liquid-glass-vue": "1.0.9",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "echarts": "^6.1.0",
     "element-plus": "^2.13.7",
-    "vue": "^3.5.32",
+    "vue": "^3.5.44",
     "vue-router": "^5.0.4"
   },
   "overrides": {
@@ -30,7 +30,7 @@
     "@vitest/coverage-v8": "5.0.5",
     "@vue/test-utils": "2.5.1",
     "happy-dom": "21.0.3",
-    "vite": "^8.0.9",
+    "vite": "^8.3.4",
     "vitest": "5.0.5"
   }
 }
