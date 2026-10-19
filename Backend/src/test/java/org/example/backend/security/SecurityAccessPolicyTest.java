@@ -88,13 +88,15 @@ class SecurityAccessPolicyTest {
     }
 
     /**
-     * 教师KeepsIts预期SurfaceAndRetired维护角色HasNone的处理逻辑。
+     * 已暂停角色不能访问历史业务接口或公共认证接口。
      */
     @Test
-    void teacherKeepsItsExpectedSurfaceAndRetiredMaintenanceRoleHasNone() {
-        assertTrue(isAllowed("GET", "/class-timetables", "teacher"));
-        assertTrue(isAllowed("POST", "/course-environment-requests", "teacher"));
+    void retiredTeacherAndMaintenanceRolesHaveNoAccess() {
+        assertFalse(isAllowed("GET", "/class-timetables", "teacher"));
+        assertFalse(isAllowed("POST", "/course-environment-requests", "teacher"));
         assertFalse(isAllowed("POST", "/class-timetables/crawl", "teacher"));
+        assertFalse(isAllowed("GET", "/auth/profile", "teacher"));
+        assertFalse(isAllowed("GET", "/dashboard", "teacher"));
 
         assertFalse(isAllowed("GET", "/repairs", "maintenance"));
         assertFalse(isAllowed("POST", "/repairs/RO-2026/complete", "maintenance"));

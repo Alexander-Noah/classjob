@@ -1,0 +1,6 @@
+import { expect,it } from 'vitest'
+import { readSpreadsheetRows } from '../../src/utils/importExcel'
+const file=(text,extra={})=>({name:'stock.csv',text:async()=>text,...extra})
+it('parses quoted commas, escaped quotes, embedded newlines and CRLF boundaries',async()=>{expect(await readSpreadsheetRows(file('\ufeff 名称 ,备注,数量\r\n"网线,蓝色","含""双引号""",2\r\n电池,"第一行\n第二行",3\n\n'))).toEqual([{名称:'网线,蓝色',备注:'含"双引号"',数量:'2'},{名称:'电池',备注:'第一行\n第二行',数量:'3'}])})
+it('ignores blank headers and blank rows while retaining numeric zero and missing cells',async()=>{expect(await readSpreadsheetRows(file('名称,,数量,位置\n网线,忽略,0\n,, ,\n电池,x,2,A101'))).toEqual([{名称:'网线',数量:'0',位置:''},{名称:'电池',数量:'2',位置:'A101'}]);expect(await readSpreadsheetRows(file(''))).toEqual([])})
+it('accepts CSV MIME or case-insensitive trimmed extension and rejects unsupported files',async()=>{expect(await readSpreadsheetRows(file('A\nB',{name:' STOCK.CSV '}))).toEqual([{A:'B'}]);expect(await readSpreadsheetRows(file('A\nB',{name:'upload',type:'text/csv'}))).toEqual([{A:'B'}]);await expect(readSpreadsheetRows(file('data',{name:'stock.xlsx'}))).rejects.toThrow('仅支持 .csv');await expect(readSpreadsheetRows(null)).rejects.toThrow('仅支持 .csv')})

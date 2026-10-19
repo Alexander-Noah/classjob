@@ -172,10 +172,11 @@ h1 { margin: 0; font-family: 'STZhongsong', 'SimSun', serif; font-size: clamp(46
 .login-card { position: relative; margin-left: 36.54%; margin-top: 19.77vh; width: 446px; min-height: 506px; padding: 34px 36px 42px; border: 1px solid rgba(255,255,255,.85); border-radius: 24px; background: transparent; box-shadow: 0 12px 36px rgba(106,78,125,.12); }
 .liquid-glass { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: rgba(255,250,255,.24); -webkit-backdrop-filter: var(--glass-backdrop, blur(12px)); backdrop-filter: var(--glass-backdrop, blur(12px)); box-shadow: inset 0 1px 1px rgba(255,255,255,.95), inset 1px 0 2px rgba(255,255,255,.65), inset 0 -8px 22px rgba(121,100,158,.12); }
 .login-card > :not(.liquid-glass) { position: relative; }
-.tabs { display: flex; justify-content: center; gap: 75px; width: 218px; margin: 0 auto; border-bottom: 1px solid rgba(124,116,163,.12); }
-.tabs button { position: relative; padding: 0 10px 12px; border: 0; background: transparent; font: inherit; font-size: 21px; color: #5d6091; cursor: pointer; white-space: nowrap; }
+/* 页签共用完整轨道，避免下划线导航与全局玻璃按钮皮肤叠加。 */
+.tabs { display: flex; gap: 8px; width: 100%; margin: 0 auto; padding: 5px; }
+.tabs button { --liquid-radius: 10px; position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0; height: 42px; padding: 0 16px; border: 1px solid transparent; border-radius: 10px; background: transparent; font: inherit; font-size: 18px; line-height: 1; color: #5d6091; cursor: pointer; white-space: nowrap; }
 .tabs button.active { color: #287aff; font-weight: 700; }
-.tabs button.active::after { content: ''; position: absolute; height: 2px; background: #287aff; bottom: -1px; left: 0; right: 0; }
+.tabs button:focus-visible { outline-offset: 1px; }
 h2 { margin: 31px 0 8px; font-size: 28px; line-height: 1.4; font-weight: 700; text-align: center; color: #15216f; }
 .card-subtitle { margin: 0 0 30px; text-align: center; white-space: nowrap; font-size: 18px; color: #61649a; }
 .field-group { position: relative; margin-bottom: 16px; }

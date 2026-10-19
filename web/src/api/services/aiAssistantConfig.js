@@ -93,7 +93,7 @@ export const testAiAssistantUserConfig = async (config) => {
  * 请求AIAssistantAnswer的处理逻辑。
  * @returns 由当前表达式或分支生成的处理结果。
  */
-export const requestAiAssistantAnswer = async ({ question, history = [] }) => {
+export const requestAiAssistantAnswer = async ({ question, history = [], conversationId }) => {
   // 如果未登录，抛出友好错误
   if (!isAuthenticated()) {
     throw new Error('请先登录后再使用AI助手')
@@ -101,6 +101,11 @@ export const requestAiAssistantAnswer = async ({ question, history = [] }) => {
   
   return requestJson(API_ENDPOINTS.aiAssistant.chat, {
     method: 'POST',
-    body: JSON.stringify({ question, history }),
+    body: JSON.stringify({ question, history, conversationId }),
   })
 }
+
+export const decideAiAssistantAction = (id, conversationId, confirmed) =>
+  requestJson(`/ai-assistant/actions/${encodeURIComponent(id)}/decision`, {
+    method: 'POST', body: JSON.stringify({ conversationId, confirmed }),
+  })

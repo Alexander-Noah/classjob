@@ -7,6 +7,7 @@ package org.example.backend.service.impl;
 import org.example.backend.entity.UserEntity;
 import org.example.backend.mapper.UserMapper;
 import org.example.backend.security.PasswordService;
+import org.example.backend.security.RetiredRoles;
 import org.example.backend.service.BusinessLoopService;
 import org.example.backend.service.UserService;
 import org.springframework.stereotype.Service;
@@ -288,7 +289,7 @@ public class UserServiceImpl implements UserService {
         String nextRoleCode = roleCode == null || roleCode.isBlank() ? resolveRoleCode(roleName) : roleCode;
         assertRoleActive(nextRoleCode, roleName);
         if (nextRoleCode == null || nextRoleCode.isBlank()) {
-            nextRoleCode = "teacher";
+            throw new IllegalArgumentException("请选择角色");
         }
         String permissions = defaultPermissions(nextRoleCode);
         String finalRoleCode = nextRoleCode;
@@ -455,7 +456,7 @@ public class UserServiceImpl implements UserService {
         }
         assertRoleActive(user.getRoleCode(), user.getRoleName());
         if (user.getRoleCode() == null || user.getRoleCode().isBlank()) {
-            user.setRoleCode("teacher");
+            throw new IllegalArgumentException("请选择角色");
         }
     }
 
@@ -482,8 +483,11 @@ public class UserServiceImpl implements UserService {
      */
     private void saveRole(Integer userId, String roleCode) {
         assertRoleActive(roleCode, null);
+        if (roleCode == null || roleCode.isBlank()) {
+            throw new IllegalArgumentException("请选择角色");
+        }
         userMapper.deleteUserRoles(userId);
-        userMapper.insertUserRole(userId, roleCode == null || roleCode.isBlank() ? "teacher" : roleCode);
+        userMapper.insertUserRole(userId, roleCode);
     }
 
     /**
@@ -525,7 +529,7 @@ public class UserServiceImpl implements UserService {
      * @param roleName 角色名称参数。
      */
     private void assertRoleActive(String roleCode, String roleName) {
-        if ("maintenance".equals(roleCode) || "维修人员".equals(roleName)) {
+        if (RetiredRoles.contains(roleCode) || RetiredRoles.contains(roleName)) {
             throw new IllegalArgumentException(RETIRED_ROLE_MESSAGE);
         }
     }

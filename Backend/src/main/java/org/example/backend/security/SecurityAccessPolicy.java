@@ -29,7 +29,7 @@ public class SecurityAccessPolicy {
         String normalizedMethod = normalizeMethod(method);
         String normalizedRole = normalizeRole(roleCode);
 
-        if ("maintenance".equals(normalizedRole)) {
+        if (RetiredRoles.contains(normalizedRole)) {
             return false;
         }
         if (isCommonAuthenticatedPath(normalizedPath)) {

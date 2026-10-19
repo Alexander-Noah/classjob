@@ -14,6 +14,7 @@ import {
   AUTH_USER_STORAGE_KEY,
   ADMIN_USERS_STORAGE_KEY,
   DEFAULT_AUTH_ROLE,
+  isRetiredRole,
 } from '../../constants/auth'
 
 // 路由与页面共用会话适配器；缓存仅用于显示和导航，最终接口权限由后端判断。
@@ -96,7 +97,7 @@ const RETIRED_MOCK_USERNAMES = new Set(['repair', 'repair01', 'maintenance'])
  * 入参：value（值）。
  * @returns 由当前表达式或分支生成的处理结果。
  */
-const isRetiredRoleValue = (value) => value === 'maintenance' || value === '维修人员'
+const isRetiredRoleValue = (value) => isRetiredRole(value)
 
 /**
  * 断言活动会话角色。

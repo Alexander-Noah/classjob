@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# PR 测试只需读取代码，不授予发布或写入仓库权限。
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests and coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Backend
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # 仅供临时 CI 容器使用，与应用配置及生产凭据无关。
+          MYSQL_ROOT_PASSWORD: ci-disposable-password
+          MYSQL_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-disposable-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: Backend/pom.xml
+      - name: Test, package and enforce 96% line coverage
+        run: >-
+          mvn --batch-mode --no-transfer-progress -Pcoverage verify
+          -Dreservation.mysql.it=true
+          -Dreservation.mysql.url=jdbc:mysql://127.0.0.1:3306/
+          -Dreservation.mysql.password=ci-disposable-password
+          -Dcore.schema.mysql.it=true
+          -Dcore.schema.mysql.url=jdbc:mysql://127.0.0.1:3306/
+          -Dcore.schema.mysql.password=ci-disposable-password
+      - name: Summarize coverage
+        if: ${{ always() && !cancelled() }}
+        working-directory: .
+        run: python3 .github/scripts/coverage-summary.py backend
+      - name: Upload backend test reports
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-reports
+          path: |
+            Backend/target/surefire-reports/
+            Backend/target/site/jacoco/
+          if-no-files-found: error
+          retention-days: 14
+
+  frontend:
+    name: Web tests and coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build production bundle
+        run: npm run build
+      - name: Test and enforce 96% line coverage
+        run: npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=coverage/junit.xml
+      - name: Summarize coverage
+        if: ${{ always() && !cancelled() }}
+        working-directory: .
+        run: python3 .github/scripts/coverage-summary.py frontend
+      - name: Upload frontend test reports
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-test-reports
+          path: web/coverage/
+          if-no-files-found: error
+          retention-days: 14
+
+  required:
+    name: Required checks
+    if: ${{ always() }}
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require both jobs to pass
+        env:
+          BACKEND_RESULT: ${{ needs.backend.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+        run: test "$BACKEND_RESULT" = success && test "$FRONTEND_RESULT" = success

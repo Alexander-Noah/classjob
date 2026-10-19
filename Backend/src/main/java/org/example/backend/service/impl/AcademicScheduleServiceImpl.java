@@ -229,7 +229,7 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
      * @return PeriodInfo 类型的处理结果。
      */
     private PeriodInfo parsePeriod(String cellHtml) {
-        String text = cleanText(cellHtml).replace(" ", "");
+        String text = cleanText(cellHtml).replaceAll("\\s+", "");
         Matcher matcher = PERIOD_PATTERN.matcher(text);
         if (!matcher.find()) {
             return null;

@@ -20,7 +20,7 @@ import {
   APP_DOCUMENT_TITLE,
   DEFAULT_ROUTE_PATH,
   ROLE_DEFAULT_PATHS,
-  ROUTE_MODULES,
+  ACTIVE_ROUTE_MODULES,
   ROUTE_MODULE_MAP,
   getRoleHomeModule,
 } from '../constants/routeModules'
@@ -242,12 +242,13 @@ const routes = [
       requiresAuth: true,
     },
     children: [
-      ...ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => ({
+      ...ACTIVE_ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => ({
         path: routeModule.routePath,
         name: routeModule.name,
         component: routeComponentMap[routeModule.name],
         meta: buildRouteMeta(routeModule),
       })),
+      { path: 'teacher/:pathMatch(.*)*', redirect: '/forbidden' },
       {
         path: 'lab-admin/device-bindings',
         redirect: '/lab-admin/device-status',

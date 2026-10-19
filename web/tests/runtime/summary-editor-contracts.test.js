@@ -1,0 +1,19 @@
+// @vitest-environment happy-dom
+import { afterEach,it,expect,vi } from 'vitest'
+import { shallowMount } from '@vue/test-utils'
+import { panelStubs } from '../support/formStubs'
+import DeviceDetail from '../../src/views/devices/components/DeviceDetailPanel.vue'
+import Filters from '../../src/views/maintenance-records/components/MaintenanceRecordFilters.vue'
+import Summary from '../../src/components/business-management/BusinessStatusSummary.vue'
+import Drawer from '../../src/components/business-management/BusinessRecordDrawer.vue'
+import Course from '../../src/views/environments/components/CourseEnvironmentDialog.vue'
+import Template from '../../src/views/environments/components/EnvironmentTemplateDialog.vue'
+import Software from '../../src/views/environments/components/SoftwareEnvironmentDialog.vue'
+const wrappers=[]
+function mount(component,props={}){const w=shallowMount(component,{props,global:{stubs:panelStubs()}});wrappers.push(w);return w}
+afterEach(()=>wrappers.splice(0).forEach(w=>w.unmount()))
+it('device detail formats all fields and emits close without mutating asset data',async()=>{const device={assetNo:'PC1',deviceName:'教学电脑',category:'终端',quantity:2,status:'正常'};const w=mount(DeviceDetail,{modelValue:true,device});expect(w.text()).toContain('教学电脑');expect(w.text()).toContain('未填写');expect(w.findAll('[data-element="descriptions-item"]')).toHaveLength(12);await w.get('button').trigger('click');expect(w.emitted('update:modelValue')[0]).toEqual([false]);await w.setProps({device:null});expect(w.text()).not.toContain('教学电脑')})
+it('maintenance filters bind all available dimensions and date range',async()=>{const filters={};const w=mount(Filters,{filters,options:{labs:['甲机房'],devices:['电脑甲'],types:['巡检'],maintainers:['管理员甲']}});await w.get('input').setValue('检查网络');for(const select of w.findAll('select'))await select.setValue(select.get('option').element.value);w.findComponent({name:'Testdate-picker'}).vm.$emit('update:modelValue',['2026-10-01','2026-10-19']);expect(filters).toEqual({keyword:'检查网络',lab:'甲机房',device:'电脑甲',maintenanceType:'巡检',maintainer:'管理员甲',dateRange:['2026-10-01','2026-10-19']});await w.get('button').trigger('click');expect(w.emitted('reset')).toHaveLength(1)})
+it('status summary reports count, percentage and active filter selection',async()=>{const w=mount(Summary,{statusFilter:'待处理',statusSummary:[{label:'待处理',type:'warning',count:3,percentage:75},{label:'已处理',count:1,percentage:25}]});expect(w.text()).toContain('3 条');expect(w.findAll('button')[0].classes()).toContain('active');await w.findAll('button')[1].trigger('click');expect(w.emitted('update:statusFilter')[0]).toEqual(['已处理'])})
+it('record drawer renders tagged and text columns and forwards visibility',async()=>{const getRowTagType=vi.fn(()=> 'warning');const w=mount(Drawer,{modelValue:true,activeRecord:{name:'通知甲',status:'待处理'},tableColumns:[{prop:'name',label:'名称'},{prop:'status',label:'状态',type:'tag'}],getRowTagType});expect(w.text()).toContain('通知甲');expect(w.text()).toContain('待处理');expect(getRowTagType).toHaveBeenCalled();w.findComponent({name:'Testdrawer'}).vm.$emit('update:modelValue',false);expect(w.emitted('update:modelValue')[0]).toEqual([false]);await w.setProps({activeRecord:null});expect(w.find('.detail-list').exists()).toBe(false)})
+it.each([Course,Template,Software])('environment editor preserves business form props and relays save and close',component=>{const formModel={name:'课程甲'},columns=[{prop:'name',label:'名称'}];const w=mount(component,{modelValue:true,dialogTitle:'环境编辑',formModel,editableColumns:columns,fieldOptions:{name:['课程甲']}});const editor=w.findComponent({name:'BusinessRecordDialog'});expect(editor.props()).toMatchObject({modelValue:true,dialogTitle:'环境编辑',formModel,editableColumns:columns});editor.vm.$emit('submit');expect(w.emitted('submit')).toHaveLength(1);editor.vm.$emit('update:modelValue',false);expect(w.emitted('update:modelValue')[0]).toEqual([false])})

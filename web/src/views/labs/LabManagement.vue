@@ -375,6 +375,7 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
     <el-dialog
         v-model="assetDialogVisible"
         align-center
+        append-to-body
         class="lab-asset-dialog"
         destroy-on-close
         :title="assetDialogLab ? `${assetDialogLab.name} 设备信息` : '设备信息'"
@@ -444,20 +445,22 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
   padding-top: 12px;
 }
 
-.lab-management-page :deep(.lab-asset-dialog) {
+:global(body .el-dialog.lab-asset-dialog) {
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 12vh);
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  margin-bottom: 0;
+  margin: auto;
+  background: #f8fbff;
+  --el-dialog-bg-color: #f8fbff;
 }
 
-.lab-management-page :deep(.lab-asset-dialog .el-dialog__header) {
+:global(body .lab-asset-dialog .el-dialog__header) {
   flex: 0 0 auto;
   padding: 16px 18px 12px;
 }
 
-.lab-management-page :deep(.lab-asset-dialog .el-dialog__body) {
+:global(body .lab-asset-dialog .el-dialog__body) {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;

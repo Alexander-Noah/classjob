@@ -97,8 +97,16 @@ const rules = computed(/** 计算派生状态。 */ () => ({
     : [],
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   phone: [{ validator: validatePhone, trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  role: [
+    { required: true, message: '请选择角色', trigger: 'change' },
+    { validator: validateAssignableRole, trigger: 'change' },
+  ],
 }))
+
+/** 编辑历史账号时，要求管理员明确选择当前可分配的角色。 */
+function validateAssignableRole(_rule, value, callback) {
+  callback(props.roleOptions.includes(value) ? undefined : new Error('该角色已停用，请重新选择角色'))
+}
 
 /**
  * 重置Form。

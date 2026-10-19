@@ -411,8 +411,7 @@ const isRecordForLab = (record = {}, labName, labMeta = {}) => {
  * 入参：record（记录）；dateText（日期文本）。
  * @returns 由当前表达式或分支生成的处理结果。
  */
-const isRecordForDate = (record = {}, dateText) => {
-  const week = getAcademicWeek(dateText)
+const isRecordForDate = (record = {}, dateText, week) => {
   const weekday = getWeekday(dateText)
   const weeks = getRecordWeeks(record)
 
@@ -586,7 +585,7 @@ export function useReservationManagement() {
 
     const timetableConflicts = timetableRows.value
       .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForLab(record, formModel.lab, selectedLabMeta.value))
-      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, formModel.date))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, formModel.date, getAcademicWeek(formModel.date)))
       .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => rangesOverlap(getRecordTimeRange(record), timeRange))
 
     const capacityExceeded = capacity > 0 && Number(formModel.attendees || 0) > capacity
@@ -633,7 +632,7 @@ export function useReservationManagement() {
 
     const timetableConflicts = timetableRows.value
       .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForLab(record, reservation.lab, labMeta))
-      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, reservation.date))
+      .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => isRecordForDate(record, reservation.date, getAcademicWeek(reservation.date)))
       .filter(/** 判断当前条目是否符合筛选条件。 入参：record。 */ (record) => rangesOverlap(getRecordTimeRange(record), timeRange))
 
     const capacityExceeded = capacity > 0 && Number(reservation.attendees || 0) > capacity

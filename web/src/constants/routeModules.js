@@ -3,6 +3,7 @@
  * 主要导出：DEFAULT_ROUTE_PATH、APP_DOCUMENT_TITLE、ROLE_DEFAULT_PATHS、ROUTE_MODULES、ROUTE_MODULE_MAP 等。
  */
 import { markRaw } from 'vue'
+import { isRetiredRole } from './auth'
 import {
   Bell,
   Calendar,
@@ -322,13 +323,16 @@ export const ROUTE_MODULE_MAP = Object.fromEntries(
   ROUTE_MODULES.map(/** 将当前条目转换为目标结果。 入参：routeModule。 */ (routeModule) => [routeModule.name, routeModule]),
 )
 
+// 保留教师模块定义以便恢复；运行时不注册或展示暂停角色的模块。
+export const ACTIVE_ROUTE_MODULES = ROUTE_MODULES.filter(/** 排除暂停角色的路由。 */ (module) => !isRetiredRole(module.roleScope))
+
 /**
  * 获取RouteModulesBy角色。
  * 入参：roleScope（角色Scope）。
  * @returns 由当前表达式或分支生成的处理结果。
  */
 export const getRouteModulesByRole = (roleScope) =>
-  ROUTE_MODULES.filter(/** 判断当前条目是否符合筛选条件。 入参：routeModule。 */ (routeModule) => routeModule.roleScope === roleScope && routeModule.showInMenu)
+  ACTIVE_ROUTE_MODULES.filter(/** 判断当前条目是否符合筛选条件。 入参：routeModule。 */ (routeModule) => routeModule.roleScope === roleScope && routeModule.showInMenu)
 
 /**
  * 获取角色HomeModule。

@@ -63,6 +63,7 @@ const keyword = ref('')
 const statusFilter = ref('all')
 const expireStatusFilter = ref('all')
 
+const createDialogVisible = ref(false)
 const deviceDrawerVisible = ref(false)
 const remoteBindDialogVisible = ref(false)
 const remoteUnbindDialogVisible = ref(false)
@@ -388,6 +389,7 @@ const handleGenerate = async () => {
       quantity: createForm.quantity,
     })
     generatedCodes.value = result.codes || (result.record ? [result.record] : [])
+    createDialogVisible.value = false
     resetCreateForm()
     await reloadAll()
     ElMessage.success(`已生成 ${generatedCodes.value.length || 1} 个激活码，完整码仅本次显示`)
@@ -798,7 +800,7 @@ const handleHeroAction = (action) => {
     return
   }
   if (action.command === 'generate') {
-    handleGenerate()
+    createDialogVisible.value = true
   }
 }
 
@@ -869,46 +871,16 @@ onMounted(reloadAll)
     </section>
 
     <div class="activation-workbench activation-layout">
-      <el-card class="activation-card generate-card is-primary" shadow="never">
+      <el-card class="activation-card management-card is-expanded" shadow="never">
         <template #header>
-          <div class="section-title">
-            <h2>生成激活码</h2>
-            <span>完整激活码仅在生成成功后展示一次，列表默认显示脱敏码。</span>
+          <div class="management-header">
+            <div class="section-title">
+              <h2>激活码管理</h2>
+              <span>按授权码、设备指纹、MAC、主机名或负责人筛选，并执行设备绑定运维。</span>
+            </div>
+            <el-button :icon="Download" @click="exportRows()">导出授权</el-button>
           </div>
         </template>
-
-        <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-position="top" class="activation-form">
-          <el-form-item label="可绑定设备数量" prop="deviceLimit" required>
-            <el-input-number v-model="createForm.deviceLimit" class="full-width" :min="1" :max="10000" :step="1" />
-          </el-form-item>
-          <el-form-item label="生成数量" prop="quantity" required>
-            <el-input-number v-model="createForm.quantity" class="full-width" :min="1" :max="100" :step="1" />
-          </el-form-item>
-          <el-form-item label="授权负责人">
-            <el-input v-model="createForm.ownerName" clearable placeholder="例如 陈老师" />
-          </el-form-item>
-          <el-form-item label="到期时间">
-            <el-date-picker
-              v-model="createForm.expireAt"
-              class="full-width"
-              format="YYYY-MM-DD HH:mm"
-              placeholder="长期有效可不填"
-              type="datetime"
-              value-format="YYYY-MM-DDTHH:mm:ss"
-            />
-          </el-form-item>
-          <el-form-item label="生成后立即启用">
-            <el-switch v-model="createForm.enabled" active-text="启用" inactive-text="停用" />
-          </el-form-item>
-          <el-form-item label="授权用途 / 机房说明 / 备注" class="full-span">
-            <el-input v-model="createForm.remark" :rows="3" placeholder="例如 软件部署实训室客户端授权" type="textarea" />
-          </el-form-item>
-        </el-form>
-
-        <div class="form-actions">
-          <el-button :icon="Refresh" @click="resetCreateForm">重置</el-button>
-          <el-button type="primary" :icon="Key" :loading="isGenerating" @click="handleGenerate">生成激活码</el-button>
-        </div>
 
         <div v-if="generatedCodes.length" class="generated-panel">
           <div class="generated-panel__head">
@@ -922,18 +894,6 @@ onMounted(reloadAll)
             </el-button>
           </div>
         </div>
-      </el-card>
-
-      <el-card class="activation-card management-card is-expanded" shadow="never">
-        <template #header>
-          <div class="management-header">
-            <div class="section-title">
-              <h2>激活码管理</h2>
-              <span>按授权码、设备指纹、MAC、主机名或负责人筛选，并执行设备绑定运维。</span>
-            </div>
-            <el-button :icon="Download" @click="exportRows()">导出授权</el-button>
-          </div>
-        </template>
 
         <div class="filter-bar">
           <el-input v-model="keyword" clearable placeholder="搜索激活码 / MAC / 设备指纹 / 主机名 / 负责人" @keyup.enter="loadActivationCodes">
@@ -1012,7 +972,7 @@ onMounted(reloadAll)
             <el-table-column label="最近校验" min-width="150">
               <template #default="{ row }">{{ formatDateTime(row.lastCheckAt) }}</template>
             </el-table-column>
-            <el-table-column label="操作" fixed="right" width="236" align="center">
+            <el-table-column label="操作" width="280" align="center">
               <template #default="{ row }">
                 <div class="row-actions">
                   <el-button :icon="View" link type="primary" @click="openDeviceDrawer(row)">查看设备</el-button>
@@ -1066,6 +1026,45 @@ onMounted(reloadAll)
         <el-table-column label="结果" width="90" prop="result" />
       </el-table>
     </el-card>
+
+      <el-dialog v-model="createDialogVisible" title="生成激活码" width="600px" class="generate-dialog" append-to-body :close-on-click-modal="false">
+        <p class="generate-description">完整激活码仅在生成成功后展示一次，请及时复制保存。</p>
+
+        <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-position="top" class="activation-form">
+          <el-form-item label="可绑定设备数量" prop="deviceLimit" required>
+            <el-input-number v-model="createForm.deviceLimit" class="full-width" :min="1" :max="10000" :step="1" />
+          </el-form-item>
+          <el-form-item label="生成数量" prop="quantity" required>
+            <el-input-number v-model="createForm.quantity" class="full-width" :min="1" :max="100" :step="1" />
+          </el-form-item>
+          <el-form-item label="授权负责人">
+            <el-input v-model="createForm.ownerName" clearable placeholder="例如 陈老师" />
+          </el-form-item>
+          <el-form-item label="到期时间">
+            <el-date-picker
+              v-model="createForm.expireAt"
+              class="full-width"
+              format="YYYY-MM-DD HH:mm"
+              placeholder="长期有效可不填"
+              type="datetime"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
+          </el-form-item>
+          <el-form-item label="生成后立即启用">
+            <el-switch v-model="createForm.enabled" active-text="启用" inactive-text="停用" />
+          </el-form-item>
+          <el-form-item label="授权用途 / 机房说明 / 备注" class="full-span">
+            <el-input v-model="createForm.remark" :rows="3" placeholder="例如 软件部署实训室客户端授权" type="textarea" />
+          </el-form-item>
+        </el-form>
+
+        <div class="form-actions">
+          <el-button :icon="Refresh" @click="resetCreateForm">重置</el-button>
+          <el-button type="primary" :icon="Key" :loading="isGenerating" @click="handleGenerate">生成激活码</el-button>
+        </div>
+
+      </el-dialog>
+
 
     <el-drawer v-model="deviceDrawerVisible" size="760px" class="activation-device-drawer" title="绑定设备详情">
       <template #default>
@@ -1400,7 +1399,7 @@ onMounted(reloadAll)
 
 .activation-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -1409,9 +1408,26 @@ onMounted(reloadAll)
   min-width: 0;
 }
 
-.generate-card.is-primary {
-  position: sticky;
-  top: 84px;
+.generate-description {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.generate-dialog :deep(.el-date-editor.el-input) {
+  width: 100%;
+  min-width: 0;
+}
+
+.generated-code code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.generated-panel {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .management-card.is-expanded {
@@ -1535,6 +1551,7 @@ onMounted(reloadAll)
 }
 
 .batch-bar {
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
@@ -1612,6 +1629,7 @@ onMounted(reloadAll)
 }
 
 .row-actions {
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   white-space: nowrap;

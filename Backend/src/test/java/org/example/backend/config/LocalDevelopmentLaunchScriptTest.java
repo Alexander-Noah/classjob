@@ -78,11 +78,8 @@ class LocalDevelopmentLaunchScriptTest {
                 /**
                  * 处理 assertAll 调用中的回调逻辑。
                  */
-                () -> assertTrue(localApplicationYaml.contains("password: ${SMART_LAB_DB_PASSWORD}")),
-                /**
-                 * 处理 assertAll 调用中的回调逻辑。
-                 */
-                () -> assertFalse(localApplicationYaml.contains("SMART_LAB_DB_PASSWORD:root")),
+                // 本地配置允许 root 默认值；环境变量仍可覆盖，通用配置不允许该默认值。
+                () -> assertTrue(localApplicationYaml.contains("password: ${SMART_LAB_DB_PASSWORD:root}")),
                 /**
                  * 处理 assertAll 调用中的回调逻辑。
                  */

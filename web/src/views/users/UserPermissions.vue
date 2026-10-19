@@ -25,6 +25,7 @@ import {
   updateUserStatus,
 } from '../../api/services/users'
 import { getStoredUser, updateStoredUser } from '../../api/services/auth'
+import { isRetiredRole } from '../../constants/auth'
 import PermissionDetailDrawer from './components/PermissionDetailDrawer.vue'
 import PermissionUserDialog from './components/PermissionUserDialog.vue'
 
@@ -32,7 +33,10 @@ defineOptions({
   name: 'UserManagement',
 })
 
-const ROLE_OPTIONS = ['系统管理员', '实验室管理员', '教师', '教务人员']
+const ROLE_OPTIONS = ['系统管理员', '实验室管理员', '教师', '教务人员'].filter(isActiveRole)
+
+/** 历史教师账号可查看和重新分配角色，但不能新建或继续分配暂停角色。 */
+function isActiveRole(role) { return !isRetiredRole(role) }
 const DEPARTMENT_OPTIONS = ['信息中心', '实验中心', '软件学院', '信息工程学院', '运维组', '教务处']
 
 const ROLE_CODE_MAP = {
@@ -82,7 +86,7 @@ const parsePermissions = (permissions, role) => {
     // 使用默认角色权限兜底。
   }
 
-  return PERMISSIONS_BY_ROLE[role] || PERMISSIONS_BY_ROLE.教师
+  return PERMISSIONS_BY_ROLE[role] || []
 }
 
 /**
@@ -90,7 +94,7 @@ const parsePermissions = (permissions, role) => {
  * 入参：role（角色）。
  * @returns 由当前表达式或分支生成的处理结果。
  */
-const serializePermissions = (role) => JSON.stringify(PERMISSIONS_BY_ROLE[role] || PERMISSIONS_BY_ROLE.教师)
+const serializePermissions = (role) => JSON.stringify(PERMISSIONS_BY_ROLE[role] || [])
 
 /**
  * 归一化用户记录。
@@ -98,7 +102,7 @@ const serializePermissions = (role) => JSON.stringify(PERMISSIONS_BY_ROLE[role] 
  * @returns 组装的键值对象。
  */
 const normalizeUserRecord = (record = {}) => {
-  const role = record.roleName || ROLE_NAME_MAP[record.roleCode] || record.role || '教师'
+  const role = record.roleName || ROLE_NAME_MAP[record.roleCode] || record.role || '未分配角色'
   const username = record.username || record.account || record.employeeNo || ''
   const employeeNo = record.employeeNo || record.jobNo || username
   const enabled = Number(record.status ?? (record.enabled === false ? 0 : 1)) === 1
@@ -121,9 +125,9 @@ const normalizeUserRecord = (record = {}) => {
     phone: record.phone || '',
     remark: record.remark || '',
     role,
-    roleCode: ROLE_CODE_MAP[role] || record.roleCode || 'teacher',
-    statusText: enabled ? '启用' : '停用',
-    tagType: enabled ? 'success' : 'info',
+    roleCode: ROLE_CODE_MAP[role] || record.roleCode || '',
+    statusText: isRetiredRole(record.roleCode) || isRetiredRole(role) ? '角色已停用' : enabled ? '启用' : '停用',
+    tagType: enabled && !isRetiredRole(record.roleCode) && !isRetiredRole(role) ? 'success' : 'info',
     username,
   }
 }
@@ -141,7 +145,7 @@ const buildUserPayload = (formModel) => ({
   phone: String(formModel.phone || '').trim(),
   email: String(formModel.email || '').trim(),
   roleName: formModel.role,
-  roleCode: ROLE_CODE_MAP[formModel.role] || 'teacher',
+  roleCode: ROLE_CODE_MAP[formModel.role] || '',
   department: formModel.department,
   permissions: serializePermissions(formModel.role),
   status: formModel.enabled ? 1 : 0,
@@ -192,7 +196,7 @@ const currentUser = computed(/** 计算派生状态。 */ () => getStoredUser())
 const systemAdminCount = computed(/** 计算派生状态。 */ () => userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.role === '系统管理员').length)
 
 const metrics = computed(/** 计算派生状态。 */ () => {
-  const enabledCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.enabled).length
+  const enabledCount = userList.value.filter(/** 排除角色已暂停的账号。 */ (item) => item.enabled && !isRetiredRole(item.roleCode) && !isRetiredRole(item.role)).length
   const disabledCount = userList.value.length - enabledCount
   const teacherCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => item.role === '教师').length
   const adminCount = userList.value.filter(/** 判断当前条目是否符合筛选条件。 入参：item。 */ (item) => ['系统管理员', '实验室管理员'].includes(item.role)).length
@@ -200,7 +204,7 @@ const metrics = computed(/** 计算派生状态。 */ () => {
   return [
     { label: '用户总数', value: String(userList.value.length), trend: '覆盖平台全部角色' },
     { label: '启用账号', value: String(enabledCount), trend: '可正常登录系统' },
-    { label: '教师账号', value: String(teacherCount), trend: '教学侧账号规模' },
+    { label: '暂停角色账号', value: String(teacherCount), trend: '保留数据，可重新分配角色' },
     { label: '管理员账号', value: String(adminCount), trend: '系统与实验室管理' },
     { label: '禁用账号', value: String(disabledCount), trend: '需复核或归档账号' },
   ]

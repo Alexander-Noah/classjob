@@ -11,6 +11,7 @@ import { normalizeAvatarUrl } from '../../utils/avatarUrl'
 import {
   getAiAssistantUserConfig,
   requestAiAssistantAnswer,
+  decideAiAssistantAction,
   saveAiAssistantUserConfig,
   testAiAssistantUserConfig,
 } from '../../api/services/aiAssistantConfig'
@@ -250,6 +251,9 @@ const normalizeConversation = (conversation = {}) => {
       role: message.role === 'user' ? 'user' : 'assistant',
       content: message.content || '',
       time: message.time || '',
+      pendingAction: message.pendingAction || null,
+      actionStatus: message.actionStatus || '',
+      actionResult: message.actionResult || null,
     })),
   }
 }
@@ -845,16 +849,82 @@ const testBackendAiConfig = async () => {
  * 入参：question（question）；history（历史）。
  * @returns answer 的当前值。
  */
-const requestBackendAiAnswer = async (question, history) => {
+const requestBackendAiAnswer = async (question, history, conversationId) => {
   const payload = await requestAiAssistantAnswer({
     question,
     history,
+    conversationId,
   })
   const answer = String(payload?.answer || '').trim()
   if (!answer) {
     throw new Error('AI 接口未返回可展示内容')
   }
-  return answer
+  return { ...payload, answer }
+}
+
+const actionFieldLabels = {
+  labId: '实验室编号', labName: '实验室名称', applicantName: '申请人', applicant: '申请人',
+  department: '部门', contact: '联系方式', reservationDate: '预约日期', date: '日期', timeRange: '使用时段',
+  attendeeCount: '人数', attendees: '人数', scene: '使用场景', reason: '用途／原因', id: '记录编号',
+  name: '名称', code: '编号', capacity: '容量', building: '楼栋', room: '房间', floor: '楼层',
+  openStatus: '开放状态', status: '状态', managerUserId: '负责人账号', manager: '负责人',
+  labType: '实验室类型', type: '类型', title: '标题', content: '内容', remark: '备注',
+  reviewRemark: '审核意见', quantity: '数量', stock: '库存', unit: '单位', category: '分类',
+  location: '位置', owner: '责任人', deviceName: '设备名称', deviceCode: '设备编号',
+  userId: '用户编号', username: '用户名', realName: '姓名', role: '角色', roleCode: '角色',
+  startTime: '开始时间', endTime: '结束时间', description: '说明', records: '记录',
+}
+const actionDetails = (action) => {
+  const rows = []
+  const visit = (value, path, previous) => {
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value)
+      if (!entries.length) rows.push({ label: path, value: Array.isArray(value) ? '空列表' : '空对象' })
+      entries.forEach(([key, item]) => visit(item, [path, actionFieldLabels[key] || key].filter(Boolean).join(' · '), previous?.[key]))
+    } else rows.push({ label: path, value: value === null ? '清空' : String(value), previous: previous === undefined ? null : String(previous) })
+  }
+  if (Object.keys(action.body || {}).length) visit(action.body, '', action.before?.data)
+  if (Object.keys(action.query || {}).length) visit(action.query, '操作参数')
+  return rows
+}
+const actionExpired = (action) => Date.parse(action.expiresAt) <= Date.now()
+const decideAction = async (message, confirmed) => {
+  if (isDirectAiLoading.value || message.actionStatus) return
+  const conversationId = activeConversationId.value
+  const action = message.pendingAction
+  if (actionExpired(action)) {
+    message.actionStatus = '已过期，请重新生成'
+    persistCurrentConversation()
+    return
+  }
+  isDirectAiLoading.value = true
+  message.actionStatus = '处理中'
+  try {
+    const result = await decideAiAssistantAction(action.id, conversationId, confirmed)
+    message.actionResult = result
+    message.actionStatus = confirmed ? '已执行' : '已取消'
+    const text = confirmed ? `操作结果：${result?.message || '操作成功'}。` : '已取消本次操作，未更改业务数据。'
+    // Keep completion in its originating conversation even if the user switched chats.
+    if (activeConversationId.value === conversationId) await appendAssistantText(text)
+    else {
+      const conversation = conversationHistories.value.find(item => item.id === conversationId)
+      conversation?.messages.push({ id: `${Date.now()}-${Math.random()}`, role: 'assistant', content: text, time: formatTime() })
+      saveConversations()
+    }
+  } catch (error) {
+    message.actionStatus = '未确认成功，请核实业务记录'
+    ElMessage.error(error?.message || '操作未确认成功，请到业务列表核实')
+  } finally {
+    isDirectAiLoading.value = false
+    const origin = conversationHistories.value.find(item => item.id === conversationId)
+    const originalMessage = origin?.messages.find(item => item.id === message.id)
+    if (originalMessage) {
+      originalMessage.actionStatus = message.actionStatus
+      originalMessage.actionResult = message.actionResult
+    }
+    if (activeConversationId.value === conversationId) persistCurrentConversation()
+    else saveConversations()
+  }
 }
 
 /**
@@ -881,18 +951,28 @@ const submitQuestion = async (text, onSubmitted) => {
   }
 
   const conversationId = activeConversationId.value
-  const history = messages.value.slice(-12).map(/** 将当前条目转换为目标结果。 */ ({ role, content }) => ({ role, content }))
+  const history = messages.value.slice(-32).map(({ role, content, pendingAction, actionStatus, actionResult }) => ({
+    role, content: pendingAction ? `${content}\n状态：${actionStatus || '等待用户点击确认，尚未执行'}\n执行结果：${JSON.stringify(actionResult || null)}\n操作草稿：${JSON.stringify({ module: pendingAction.module, target: pendingAction.target, body: pendingAction.body, query: pendingAction.query, summary: pendingAction.summary })}` : content,
+  }))
+  messages.value.forEach(message => {
+    if (message.pendingAction && !message.actionStatus) message.actionStatus = '已被后续对话替代'
+  })
   isDirectAiLoading.value = true
   await appendMessage('user', question)
   onSubmitted?.()
   try {
-    const answer = await requestBackendAiAnswer(question, history)
+    const { answer, pendingAction } = await requestBackendAiAnswer(question, history, conversationId)
     if (activeConversationId.value === conversationId) {
       await appendAssistantText(answer)
+      if (pendingAction) {
+        messages.value[messages.value.length - 1].pendingAction = pendingAction
+        persistCurrentConversation()
+        await scrollToBottom()
+      }
     } else {
       const conversation = conversationHistories.value.find(/** 判断当前条目是否为查找目标。 入参：item。 */ item => item.id === conversationId)
       if (conversation) {
-        conversation.messages.push({ id: `${Date.now()}-${Math.random()}`, role: 'assistant', content: answer, time: formatTime() })
+        conversation.messages.push({ id: `${Date.now()}-${Math.random()}`, role: 'assistant', content: answer, time: formatTime(), pendingAction })
         conversation.preview = getMessagePreview(conversation.messages)
         conversation.updatedAt = Date.now()
         saveConversations()
@@ -1101,7 +1181,7 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
           <span class="chat-subtitle">
             <i class="status-dot" :class="connectionStatus"></i>
             {{ currentServiceStatusText }}
-            <span class="data-context" title="数据范围不含设备资产">平台业务数据已接入</span>
+            <span class="data-context" title="按当前账号权限查询业务；新增、修改、删除等操作需点击确认">业务查询与操作已接入</span>
             <span class="message-count">{{ messages.length }} 条消息</span>
           </span>
         </div>
@@ -1150,6 +1230,23 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
                 class="message-content"
                 v-html="formatMessageContent(message.content)"
               ></div>
+              <div v-if="message.pendingAction" class="business-action-card">
+                <strong>{{ message.pendingAction.module }} · {{ { DELETE: '删除', PUT: '修改', PATCH: '修改', POST: '新增／执行' }[message.pendingAction.method] }}待确认</strong>
+                <p>{{ message.pendingAction.summary }}</p>
+                <p class="action-target">目标：{{ message.pendingAction.target }}</p>
+                <dl>
+                  <template v-for="(field, index) in actionDetails(message.pendingAction)" :key="index">
+                    <dt>{{ field.label }}</dt><dd><template v-if="field.previous != null && field.previous !== field.value">{{ field.previous }} → </template>{{ field.value }}</dd>
+                  </template>
+                </dl>
+                <p class="action-warning">{{ message.pendingAction.warning }}</p>
+                <span v-if="message.actionStatus">{{ message.actionStatus }}</span>
+                <div v-else class="action-buttons">
+                  <el-button :disabled="isDirectAiLoading" @click="decideAction(message, false)">取消</el-button>
+                  <el-button :type="message.pendingAction.method === 'DELETE' ? 'danger' : 'primary'" :disabled="isDirectAiLoading" @click="decideAction(message, true)">{{ message.pendingAction.method === 'DELETE' ? '确认删除' : '确认执行' }}</el-button>
+                  <small>10 分钟内有效；继续对话可修改草稿</small>
+                </div>
+              </div>
             </div>
             <div v-if="message.role === 'assistant' && message.content" class="message-actions">
               <el-button text size="small" :icon="CopyDocument" aria-label="复制回答" @click="copyMessage(message.content)">复制</el-button>
@@ -1263,6 +1360,15 @@ onUnmounted(/** 在组件卸载后完成清理。 */ () => {
 </template>
 
 <style scoped>
+.business-action-card { margin-top: 16px; padding: 16px; border: 1px solid #bfdbfe; border-radius: 12px; background: #f8fbff; }
+.business-action-card p { margin: 10px 0; }
+.business-action-card dl { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 3fr); gap: 8px 16px; margin: 14px 0; }
+.business-action-card dt { color: #64748b; overflow-wrap: anywhere; }
+.business-action-card dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.action-target { color: #64748b; overflow-wrap: anywhere; }
+.action-warning { color: #92400e; }
+.action-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.action-buttons small { color: #64748b; }
 .assistant-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);

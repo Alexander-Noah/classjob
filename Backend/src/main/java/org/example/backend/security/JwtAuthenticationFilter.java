@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             JwtService.JwtClaims claims = jwtService.validateToken(token);
-            if ("maintenance".equals(claims.roleCode())) {
+            if (RetiredRoles.contains(claims.roleCode())) {
                 writeUnauthorized(response, RETIRED_ROLE_MESSAGE);
                 return;
             }

@@ -118,7 +118,8 @@ public class AiAssistantConfigController {
     @PostMapping("/ai-assistant/chat")
     public Result chat(
             @RequestAttribute(value = JwtAuthenticationFilter.AUTH_USER_ID_ATTRIBUTE, required = false) Integer userId,
-            @RequestBody(required = false) Map<String, Object> payload
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpServletRequest servletRequest
     ) {
         Map<String, Object> request = payload == null ? Collections.emptyMap() : payload;
         String question = String.valueOf(request.getOrDefault("question", ""));
@@ -131,6 +132,7 @@ public class AiAssistantConfigController {
                 }
             }
         }
-        return Result.success("AI 回答成功", platformChatService.chat(userId, question, history));
+        String conversationId = String.valueOf(request.getOrDefault("conversationId", ""));
+        return Result.success("AI 回答成功", platformChatService.chat(userId, question, history, conversationId, servletRequest));
     }
 }

@@ -40,6 +40,8 @@ monitoring/.env
 **/__pycache__/
 *.py[cod]
 *.tmp
+**/coverage/
+.coverage*
 ~$*
 
 # Source archives are local backups and exceed GitHub's normal file limit

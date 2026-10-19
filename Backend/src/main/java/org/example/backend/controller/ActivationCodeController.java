@@ -419,12 +419,15 @@ public class ActivationCodeController {
 
         Map<String, Object> conflictRecord = null;
         Map<String, Object> conflictBinding = null;
+        List<Map<String, Object>> conflictBindings = null;
         for (Map<String, Object> record : records) {
             if (sameRecord(record, target)) continue;
-            Map<String, Object> binding = findActiveBinding(boundDevices(record), machineCode, macAddress);
+            List<Map<String, Object>> candidateBindings = boundDevices(record);
+            Map<String, Object> binding = findActiveBinding(candidateBindings, machineCode, macAddress);
             if (binding != null) {
                 conflictRecord = record;
                 conflictBinding = binding;
+                conflictBindings = candidateBindings;
                 break;
             }
         }
@@ -441,7 +444,7 @@ public class ActivationCodeController {
 
         if (conflictRecord != null && conflictBinding != null) {
             markBindingUnbound(conflictBinding, BINDING_REMOTE_UNBOUND, "管理员迁移绑定", now);
-            conflictRecord.put("boundDevices", boundDevices(conflictRecord));
+            conflictRecord.put("boundDevices", conflictBindings);
             refreshRecordCounts(conflictRecord);
             recordAudit("远程解绑", stringValue(conflictRecord.get("code")), stringValue(conflictBinding.get("machineCode")), "管理员迁移绑定", "成功", Map.of("migratedTo", target.get("code")));
         }

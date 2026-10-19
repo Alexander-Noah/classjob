@@ -4,12 +4,12 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Bell, Delete, Edit, Message, Position, Refresh, View } from '@element-plus/icons-vue'
+import { Bell, Clock, User, DocumentChecked, Delete, Edit, Message, Position, Refresh, View } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PageHero from '../../components/common/PageHero.vue'
 import MetricGrid from '../../components/common/MetricGrid.vue'
 import { AUTH_ROLE_DEFAULT_PATH, DEFAULT_AUTH_ROLE } from '../../constants/auth'
-import { getStoredRole } from '../../api/services/auth'
+import { getStoredRole, getStoredUser } from '../../api/services/auth'
 import { noticeService } from '../../api/services/notices'
 
 defineOptions({
@@ -122,6 +122,16 @@ const normalizeNotice = (notice = {}) => ({
   recipientCount: Number(notice.recipientCount || 0),
   readCount: Number(notice.readCount || 0),
   unreadCount: Number(notice.unreadCount || 0),
+})
+
+const publisherLabel = computed(() => {
+  const notice = selectedNotice.value || {}
+  if (notice.publisherName || notice.createdByName) return notice.publisherName || notice.createdByName
+  const user = getStoredUser()
+  if (notice.createdBy != null && user?.id != null && String(notice.createdBy) === String(user.id)) {
+    return user.realName || user.name || user.username
+  }
+  return notice.createdBy != null ? '用户 ' + notice.createdBy : '未记录'
 })
 
 const filteredNotices = computed(/** 计算派生状态。 */ () => {
@@ -425,11 +435,18 @@ const readMyNotice = async (notice) => {
   selectedNotice.value = notice
   detailVisible.value = true
   recipients.value = []
-  if (notice.readStatus !== '未读') return
+}
 
+const markSelectedRead = async () => {
+  const notice = selectedNotice.value
+  if (!notice || notice.readStatus !== '未读' || submitting.value) return
+  submitting.value = true
+  try {
   await noticeService.markRead(notice.noticeId)
+  selectedNotice.value = { ...notice, readStatus: '已读' }
   ElMessage.success('已标记为已读')
   await loadData()
+  } finally { submitting.value = false }
 }
 
 /**
@@ -552,71 +569,35 @@ onMounted(loadData)
         </el-table>
       </el-card>
 
-      <el-card class="notice-detail-card" shadow="never">
-        <template #header>
-          <div class="section-header">
-            <div>
-              <h2>通知详情</h2>
-            </div>
-          </div>
-        </template>
 
-        <el-empty v-if="!selectedNotice" description="选择一条通知查看详情" />
-        <div v-else class="detail-stack">
-          <div class="detail-title">
-            <strong>{{ selectedNotice.title }}</strong>
-            <el-tag :type="getStatusType(selectedNotice.status)" effect="light">{{ selectedNotice.status }}</el-tag>
-          </div>
-          <p class="notice-content">{{ selectedNotice.content || '暂无内容' }}</p>
-          <div class="detail-grid">
-            <div>
-              <span>通知对象</span>
-              <strong>{{ getTargetLabel(selectedNotice.targetRole) }}</strong>
-            </div>
-            <div>
-              <span>通知类型</span>
-              <strong>{{ selectedNotice.noticeType }}</strong>
-            </div>
-            <div>
-              <span>优先级</span>
-              <strong>{{ selectedNotice.priority }}</strong>
-            </div>
-            <div>
-              <span>发布时间</span>
-              <strong>{{ selectedNotice.publishTimeText }}</strong>
-            </div>
-          </div>
-
-          <div class="read-summary">
-            <div>
-              <span>触达</span>
-              <strong>{{ selectedNotice.recipientCount || recipients.length }}</strong>
-            </div>
-            <div>
-              <span>已读</span>
-              <strong>{{ selectedNotice.readCount }}</strong>
-            </div>
-            <div>
-              <span>未读</span>
-              <strong>{{ selectedNotice.unreadCount }}</strong>
-            </div>
-          </div>
-
-          <el-table v-if="recipients.length" :data="recipients" size="small" max-height="260">
-            <el-table-column prop="realName" label="接收人" min-width="90" />
-            <el-table-column prop="roleCode" label="角色" min-width="90" />
-            <el-table-column label="状态" min-width="80">
-              <template #default="{ row }">
-                <el-tag :type="getReadType(row.readStatus)" effect="light" size="small">{{ row.readStatus }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="已读时间" min-width="120">
-              <template #default="{ row }">{{ normalizeDateTime(row.readTime) }}</template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </el-card>
     </div>
+
+    <el-dialog v-model="detailVisible" title="通知详情" width="min(540px, calc(100vw - 32px))" align-center class="notice-detail-dialog" append-to-body>
+      <template #header><div class="notice-dialog-heading"><el-icon><Position /></el-icon><span>通知详情</span></div></template>
+      <article v-if="selectedNotice" class="notice-letter">
+        <h2>{{ selectedNotice.title }}</h2>
+        <el-tag size="small" type="primary" effect="light">{{ selectedNotice.noticeType }}</el-tag>
+        <div class="letter-meta">
+          <div><el-icon><Clock /></el-icon><div><span>发布时间</span><strong>{{ selectedNotice.publishTimeText || '尚未发布' }}</strong></div></div>
+          <div><el-icon><User /></el-icon><div><span>发布人</span><strong>{{ publisherLabel }}</strong></div></div>
+          <div><el-icon><DocumentChecked /></el-icon><div><span>{{ activeTab === 'manage' ? '发布状态' : '阅读状态' }}</span><el-tag size="small" :type="activeTab === 'manage' ? getStatusType(selectedNotice.status) : getReadType(selectedNotice.readStatus)">{{ activeTab === 'manage' ? selectedNotice.status : selectedNotice.readStatus }}</el-tag></div></div>
+        </div>
+        <div class="letter-content">{{ selectedNotice.content || '暂无内容' }}</div>
+        <el-collapse v-if="activeTab === 'manage' && recipients.length" class="letter-recipients">
+          <el-collapse-item :title="'阅读记录（' + recipients.length + '）'" name="recipients">
+            <el-table :data="recipients" size="small" max-height="180">
+              <el-table-column prop="realName" label="接收人" min-width="90" />
+              <el-table-column prop="readStatus" label="状态" width="80" />
+              <el-table-column label="已读时间" min-width="140"><template #default="{ row }">{{ normalizeDateTime(row.readTime) }}</template></el-table-column>
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
+      </article>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button v-if="activeTab !== 'manage' && selectedNotice?.readStatus === '未读'" type="primary" :loading="submitting" @click="markSelectedRead">标记为已读</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="dialogVisible"
@@ -749,7 +730,7 @@ onMounted(loadData)
 
 .notice-workbench {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -757,18 +738,6 @@ onMounted(loadData)
 .notice-list-card,
 .notice-detail-card {
   min-width: 0;
-}
-
-.notice-detail-card {
-  position: sticky;
-  top: 14px;
-  max-height: calc(100vh - 108px);
-}
-
-.notice-detail-card :deep(.el-card__body) {
-  max-height: calc(100vh - 176px);
-  overflow: auto;
-  padding: 16px;
 }
 
 .notice-list-card :deep(.el-card__body) {
@@ -833,8 +802,17 @@ onMounted(loadData)
 
 .detail-stack {
   display: grid;
-  gap: 16px;
+  gap: 22px;
 }
+
+.detail-section h3 {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.detail-title .el-tag { flex-shrink: 0; }
 
 .detail-title {
   display: flex;
@@ -845,20 +823,19 @@ onMounted(loadData)
 
 .detail-title strong {
   color: var(--text-primary);
-  font-size: 17px;
+  font-size: 22px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .notice-content {
   margin: 0;
-  padding: 12px;
-  border: 1px solid #dbe7f5;
-  border-radius: 8px;
+  padding: 0;
   color: var(--text-primary);
-  background: #f8fbff;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.9;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .detail-grid,
@@ -883,30 +860,113 @@ onMounted(loadData)
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.detail-grid {
+  padding: 18px 0;
+  border-top: 1px solid #edf0f5;
+  border-bottom: 1px solid #edf0f5;
+  gap: 18px 16px;
+}
+
+.detail-grid > div {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.detail-grid strong {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.read-summary > div {
+  gap: 8px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #f4f7fb;
+}
+
+.read-summary > div:nth-child(2) { background: #f0f9f4; }
+.read-summary > div:nth-child(3) { background: #fff8ed; }
+.read-summary > div strong { font-size: 24px; line-height: 1.2; }
+
 .detail-grid strong,
 .read-summary strong {
   color: var(--text-primary);
   font-size: 15px;
 }
 
-.notice-detail-card :deep(.el-table) {
+.notice-detail-dialog :deep(.el-table) {
   --el-table-border-color: #e5edf6;
 }
 
-.notice-page :deep(.el-dialog) {
+/* Teleport 弹窗独立覆盖全局玻璃材质，保持小尺寸下的阅读清晰度。 */
+:global(body .el-dialog.notice-detail-dialog) {
+  padding: 0;
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  background: #fff;
+  backdrop-filter: none;
+  box-shadow: 0 20px 64px rgba(15, 23, 42, .16);
+}
+
+.notice-detail-dialog :deep(.el-dialog__header) {
+  margin: 0;
+  padding: 16px 48px 16px 22px;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.notice-detail-dialog :deep(.el-dialog__body) {
+  max-height: calc(80svh - 72px);
+  overflow-y: auto;
+  padding: 18px 22px 0;
+}
+
+.notice-detail-dialog .detail-stack { gap: 14px; }
+.notice-detail-dialog .detail-title strong { font-size: 19px; }
+.notice-detail-dialog .detail-section h3 { margin-bottom: 6px; }
+.notice-detail-dialog .detail-grid { padding: 12px 0; gap: 10px 16px; }
+.notice-detail-dialog .detail-grid > div { gap: 3px; }
+.notice-detail-dialog .detail-grid span,
+.notice-detail-dialog .read-summary span { margin-top: 0; font-size: 12px; }
+.notice-detail-dialog .read-summary { gap: 8px; }
+.notice-detail-dialog .read-summary > div { padding: 8px 12px; gap: 4px; }
+.notice-detail-dialog .read-summary > div strong { font-size: 20px; }
+
+.notice-dialog-heading { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #263449; }
+.notice-dialog-heading .el-icon { color: #287aff; font-size: 20px; }
+.notice-letter h2 { margin: 0 0 8px; font-size: 19px; line-height: 1.5; color: #1e293b; overflow-wrap: anywhere; }
+.letter-meta { display: grid; grid-template-columns: 1.15fr 1fr .8fr; margin: 16px 0; }
+.letter-meta > div { display: flex; gap: 10px; align-items: center; padding: 0 12px; min-width: 0; border-left: 1px solid #e9edf5; }
+.letter-meta > div:first-child { border: 0; padding-left: 0; }
+.letter-meta .el-icon { color: #7182a0; font-size: 20px; flex-shrink: 0; }
+.letter-meta span { display: block; color: #8190a5; font-size: 11px; margin-bottom: 4px; }
+.letter-meta strong { display: block; font-size: 11px; font-weight: 500; color: #334155; overflow-wrap: anywhere; }
+.letter-meta .el-tag { display: inline-flex; margin: 0; }
+.letter-content { padding: 16px; border-radius: 8px; background: #f4f7fc; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.9; color: #334155; }
+.letter-recipients { margin-top: 12px; border: 0; }
+.letter-recipients :deep(.el-collapse-item__header) { min-height: 36px; height: auto; font-size: 12px; border: 0; background: transparent; }
+.letter-recipients :deep(.el-collapse-item__wrap) { border: 0; }
+.letter-recipients :deep(.el-collapse-item__content) { padding-bottom: 8px; }
+.notice-detail-dialog :deep(.el-dialog__footer) { padding: 16px 22px; border-top: 0; }
+@media (max-width: 480px) { .letter-meta { grid-template-columns: 1fr; gap: 12px; } .letter-meta > div { padding: 0; border: 0; } }
+
+.notice-page :deep(.el-dialog:not(.notice-detail-dialog)) {
   border-radius: 8px;
 }
 
-.notice-page :deep(.el-dialog__header) {
+.notice-page :deep(.el-dialog:not(.notice-detail-dialog) .el-dialog__header) {
   padding: 18px 20px;
   border-bottom: 1px solid #e5edf6;
 }
 
-.notice-page :deep(.el-dialog__body) {
+.notice-page :deep(.el-dialog:not(.notice-detail-dialog) .el-dialog__body) {
   padding: 18px 20px;
 }
 
-.notice-page :deep(.el-dialog__footer) {
+.notice-page :deep(.el-dialog:not(.notice-detail-dialog) .el-dialog__footer) {
   padding: 14px 20px 18px;
   border-top: 1px solid #e5edf6;
 }
@@ -921,15 +981,6 @@ onMounted(loadData)
 @media (max-width: 1180px) {
   .notice-workbench {
     grid-template-columns: 1fr;
-  }
-
-  .notice-detail-card {
-    position: static;
-    max-height: none;
-  }
-
-  .notice-detail-card :deep(.el-card__body) {
-    max-height: none;
   }
 
   .notice-toolbar :deep(.el-card__body) {

@@ -13,6 +13,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class AiPlatformChatServiceTest {
+    @Test void businessApiFailuresBecomeModelContextAndInvalidDraftDoesNotWrite(){setup(true);AiBusinessOperationService operations=mock(AiBusinessOperationService.class);chat.setOperations(operations);when(operations.modules(7)).thenReturn(List.of());when(operations.catalog(7,"labs")).thenReturn(List.of(Map.of("operationId","GET /labs")));when(operations.read(eq(7),anyMap(),any())).thenThrow(new IllegalArgumentException("无权查询"));when(config.chatWithContext(eq(7),anyString(),anyString())).thenReturn("{\"operations\":\"labs\"}","{\"apiQueries\":[{\"operationId\":\"GET /labs\"},42]}","权限不足");var request=new org.springframework.mock.web.MockHttpServletRequest();assertEquals("权限不足",chat.chat(7,"查询实验室",List.of(),"chat",request).get("answer"));verify(operations).catalog(7,"labs");verify(operations).read(eq(7),anyMap(),eq(request));doReturn("{\"action\":{\"operationId\":\"POST /labs\"}}").when(config).chatWithContext(eq(7),anyString(),anyString());when(operations.prepare(eq(7),eq("chat"),anyMap(),eq(request))).thenThrow(new IllegalArgumentException("缺少实验室名称"));assertEquals("缺少实验室名称",chat.chat(7,"新增实验室",List.of(),"chat",request).get("answer"));}
+    @Test void largeQueryResultsBoundGroupsAndRowsBeforeSendingToProvider(){setup(true);for(boolean groupedList:List.of(true,false)){Map<String,Object> result=new LinkedHashMap<>();result.put("dataset","consumables");result.put("source","库存");result.put("status","ok");result.put("records",java.util.stream.IntStream.range(0,80).mapToObj(i->Map.of("name","item"+i,"remark","x".repeat(500))).toList());result.put("offset",10);if(groupedList)result.put("groups",java.util.stream.IntStream.range(0,120).boxed().toList());else{Map<String,Integer> groups=new LinkedHashMap<>();for(int i=0;i<120;i++)groups.put("group"+i,i);result.put("groups",groups);}when(data.query(eq(actor),anyMap())).thenReturn(result);doReturn("{\"queries\":[{\"dataset\":\"consumables\"}]}","数据已截断").when(config).chatWithContext(eq(7),anyString(),anyString());assertTrue(chat.chat(7,"库存详情",List.of()).get("answer").toString().contains("数据已截断"));}var instruction=org.mockito.ArgumentCaptor.forClass(String.class);verify(config,times(4)).chatWithContext(eq(7),anyString(),instruction.capture());assertTrue(instruction.getAllValues().stream().anyMatch(text->text.contains("groupsTruncated")&&text.contains("truncated")));}
     private final AiBusinessDataService data = mock(AiBusinessDataService.class);
     private final AiAssistantUserConfigService config = mock(AiAssistantUserConfigService.class);
     private final TongyiAgentService tongyi = mock(TongyiAgentService.class);
@@ -59,6 +61,70 @@ class AiPlatformChatServiceTest {
         Map<String, Object> result = chat.chat(7, "查一下耗材", List.of());
         assertEquals(true, result.get("dataConnected"));
         verify(data).query(actor, Map.of("dataset", "consumables"));
+        verify(config, never()).chatWithContext(any(), anyString(), anyString());
+    }
+
+    @Test void borrowingGuidanceSeparatesToolCapabilityFromAccountPermissionsForBothProviders() {
+        for (boolean custom : List.of(true, false)) {
+            reset(data, config, tongyi);
+            setup(custom);
+            String reply = "请补充借用日期、开始及结束时间、人数和用途。";
+            when(config.chatWithContext(eq(7), anyString(), anyString())).thenReturn(reply);
+            when(tongyi.callAgent(anyString(), anyString())).thenReturn(reply);
+            var instruction = org.mockito.ArgumentCaptor.forClass(String.class);
+            List<Map<String, Object>> history = List.of(Map.of("role", "assistant", "content", "当前账号只有只读权限"));
+
+            assertEquals(reply, chat.chat(7, "我想借用204", history).get("answer"));
+            if (custom) {
+                verify(config).chatWithContext(eq(7), instruction.capture(), contains("当前账号只有只读权限"));
+            } else {
+                verify(tongyi).callAgent(instruction.capture(), eq("platform-data-7"));
+            }
+            String rules = instruction.getValue();
+            assertTrue(rules.contains("不代表当前账号只有只读权限"));
+            assertTrue(rules.contains("必须由用户点击操作卡片确认后执行"));
+            assertTrue(rules.contains("先询问缺少的信息"));
+            assertTrue(rules.contains("不得自行补造时间、用途或实验室编号"));
+            assertTrue(rules.contains("应按当前工具能力纠正"));
+            verify(data, never()).query(any(), anyMap());
+        }
+    }
+
+    @Test void discoversBusinessEndpointsQueriesAndPreparesAnActionWithoutExecutingIt() {
+        setup(true);
+        AiBusinessOperationService operations = mock(AiBusinessOperationService.class);
+        chat.setOperations(operations);
+        var request = new org.springframework.mock.web.MockHttpServletRequest();
+        when(operations.modules(7)).thenReturn(List.of(Map.of("module", "reservations", "name", "预约")));
+        when(operations.catalog(7, "reservations")).thenReturn(List.of(Map.of("operationId", "POST /reservations")));
+        when(operations.read(eq(7), anyMap(), eq(request))).thenReturn(Map.of("data", List.of(Map.of("id", 99))));
+        when(operations.prepare(eq(7), eq("chat-a"), anyMap(), eq(request))).thenReturn(Map.of("id", "confirmation-token"));
+        when(config.chatWithContext(eq(7), anyString(), anyString())).thenReturn(
+                "{\"operations\":\"reservations\"}",
+                "{\"apiQueries\":[{\"operationId\":\"GET /reservations\"}]}",
+                "{\"action\":{\"operationId\":\"POST /reservations\",\"body\":{\"labId\":204,\"attendeeCount\":20}}}");
+        Map<String, Object> result = chat.chat(7, "人数改成20，其余不变", List.of(
+                Map.of("role", "user", "content", "借用204，明天14点到16点，考试，30人")), "chat-a", request);
+        assertEquals(Map.of("id", "confirmation-token"), result.get("pendingAction"));
+        verify(operations).invalidate(7, "chat-a");
+        verify(operations).prepare(eq(7), eq("chat-a"), argThat(action ->
+                ((Map<?, ?>) action.get("body")).get("attendeeCount").equals(20)), eq(request));
+        verify(operations, never()).decide(any(), anyString(), anyString(), anyBoolean(), any());
+        verify(config, times(3)).chatWithContext(eq(7), contains("点击操作卡片确认"), contains("借用204，明天14点到16点，考试，30人"));
+    }
+
+    @Test void defaultProviderAlsoReturnsConfirmationCardsRatherThanExecutingWritesFromChatText() {
+        setup(false);
+        AiBusinessOperationService operations = mock(AiBusinessOperationService.class);
+        chat.setOperations(operations);
+        var request = new org.springframework.mock.web.MockHttpServletRequest();
+        when(operations.modules(7)).thenReturn(List.of());
+        when(operations.prepare(eq(7), eq("chat-a"), anyMap(), eq(request))).thenReturn(Map.of("id", "pending-delete"));
+        when(tongyi.callAgent(anyString(), anyString())).thenReturn(
+                "{\"action\":{\"operationId\":\"DELETE /labs/{id}\",\"pathValues\":{\"id\":1}}}");
+        Map<String, Object> result = chat.chat(7, "确认删除它", List.of(), "chat-a", request);
+        assertTrue(result.containsKey("pendingAction"));
+        verify(operations, never()).decide(any(), anyString(), anyString(), anyBoolean(), any());
         verify(config, never()).chatWithContext(any(), anyString(), anyString());
     }
 

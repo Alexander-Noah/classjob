@@ -1,0 +1,20 @@
+package org.example.backend.service;
+import org.example.backend.entity.*;
+import org.example.backend.mapper.*;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ConsumableLoanWorkflowBehaviorTest {
+    final ConsumableLoanMapper loans=mock(ConsumableLoanMapper.class);final ConsumableMapper items=mock(ConsumableMapper.class);final ConsumableService stock=mock(ConsumableService.class);final ConsumableLoanService service=new ConsumableLoanService(loans,items,stock);
+    ConsumableLoanService.BorrowRequest request(){return new ConsumableLoanService.BorrowRequest(1L," 教师甲 "," 123 ",BigDecimal.valueOf(2)," 教学 ",LocalDate.now().plusDays(1)," 备注 ",UUID.randomUUID().toString());}
+    @Test void successfulBorrowAndPartialReturnWriteMatchingInventoryMovements(){ConsumableEntity item=new ConsumableEntity();item.setId(1L);item.setName("网线");item.setUnit("条");item.setStock(5);when(items.getConsumableForUpdate(1L)).thenReturn(item);ConsumableLoanEntity saved=new ConsumableLoanEntity();saved.setId(7L);saved.setConsumableId(1L);saved.setBorrower("教师甲");saved.setRemainingQuantity(2);when(loans.get(7L)).thenReturn(saved);doAnswer(call->{((ConsumableLoanEntity)call.getArgument(0)).setId(7L);return 1;}).when(loans).insert(any());assertSame(saved,service.borrow(request(),"管理员"));var loan=ArgumentCaptor.forClass(ConsumableLoanEntity.class);verify(loans).insert(loan.capture());assertEquals("教师甲",loan.getValue().getBorrower());assertEquals("教学",loan.getValue().getPurpose());verify(stock).recordConsumableMovement(eq(1L),argThat(record->"出库".equals(record.getType())&&record.getQuantity()==2&&"借用#7".equals(record.getSource())));when(loans.lock(7L)).thenReturn(saved);when(loans.addReturned(7L,1)).thenReturn(1);assertSame(saved,service.returnItems(7L,new ConsumableLoanService.ReturnRequest(BigDecimal.ONE," 完好 ",UUID.randomUUID().toString()),"管理员"));verify(stock).recordConsumableMovement(eq(1L),argThat(record->"入库".equals(record.getType())&&record.getQuantity()==1&&"完好".equals(record.getRemark())));when(loans.list()).thenReturn(List.of(saved));assertEquals(List.of(saved),service.list());}
+    @Test void invalidRequestsMissingStockAndStaleReturnsNeverMoveInventory(){assertThrows(IllegalArgumentException.class,()->service.borrow(null,"admin"));assertThrows(IllegalArgumentException.class,()->service.returnItems(7L,null,"admin"));assertThrows(ResponseStatusException.class,()->service.get(7L));assertThrows(ResponseStatusException.class,()->service.borrow(request(),"admin"));ConsumableEntity item=new ConsumableEntity();item.setStock(0);when(items.getConsumableForUpdate(1L)).thenReturn(item);assertThrows(IllegalArgumentException.class,()->service.borrow(request(),"admin"));ConsumableLoanEntity loan=new ConsumableLoanEntity();loan.setRemainingQuantity(2);when(loans.lock(7L)).thenReturn(loan);assertThrows(ResponseStatusException.class,()->service.returnItems(7L,new ConsumableLoanService.ReturnRequest(BigDecimal.ONE,"",UUID.randomUUID().toString()),"admin"));verifyNoInteractions(stock);}
+    @Test void reusedBorrowOrReturnRequestCannotBeAppliedToDifferentPayload(){ConsumableEntity item=new ConsumableEntity();item.setStock(5);when(items.getConsumableForUpdate(1L)).thenReturn(item);var request=request();when(loans.byRequest(request.requestId())).thenReturn(new ConsumableLoanEntity());assertThrows(ResponseStatusException.class,()->service.borrow(request,"admin"));ConsumableLoanEntity loan=new ConsumableLoanEntity();loan.setConsumableId(1L);when(loans.lock(7L)).thenReturn(loan);ConsumableStockRecordEntity previous=new ConsumableStockRecordEntity();previous.setQuantity(2);when(items.getStockRecordBySource(any())).thenReturn(previous);assertThrows(ResponseStatusException.class,()->service.returnItems(7L,new ConsumableLoanService.ReturnRequest(BigDecimal.ONE,"",UUID.randomUUID().toString()),"admin"));verifyNoInteractions(stock);}
+}
+
