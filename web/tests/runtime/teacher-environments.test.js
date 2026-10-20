@@ -7,16 +7,17 @@ import http from '../../src/api/http'
 import { API_ENDPOINTS } from '../../src/api/endpoints'
 import { exportTableToExcel } from '../../src/utils/exportExcel'
 import { ElMessage } from 'element-plus'
+const auth=vi.hoisted(()=>({role:'teacher',user:{id:7,realName:'教师甲'}}))
 const route=vi.hoisted(()=>({query:{}}));const router=vi.hoisted(()=>({push:vi.fn()}))
 vi.mock('vue-router',()=>({useRoute:()=>route,useRouter:()=>router}))
-vi.mock('../../src/api/services/auth',()=>({getStoredRole:()=> 'teacher',getStoredUser:()=>({id:7,realName:'教师甲'})}))
+vi.mock('../../src/api/services/auth',()=>({getStoredRole:()=>auth.role,getStoredUser:()=>auth.user}))
 vi.mock('../../src/api/http',()=>({default:{get:vi.fn(),post:vi.fn(),put:vi.fn()}}))
 vi.mock('../../src/utils/exportExcel',()=>({exportTableToExcel:vi.fn(options=>options.rows.length)}))
 vi.mock('element-plus',()=>({ElMessage:{success:vi.fn(),warning:vi.fn(),error:vi.fn()}}))
 const wrappers=[]
 it('rendered environment cards expose delivered software and return form actions',async()=>{const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('程序设计');expect(w.text()).toContain('IDEA');await w.get('input[placeholder="搜索课程、实验室或软件环境"]').setValue('IDEA');expect(vm.keyword).toBe('IDEA');await w.findAll('button').find(b=>b.text()==='查看详情').trigger('click');expect(vm.drawerVisible).toBe(true);await w.findAll('button').find(b=>b.text()==='退回调整').trigger('click');await flushPromises();await w.get('textarea').setValue('版本不匹配');expect(vm.returnForm.reason).toBe('版本不匹配');await w.findAll('button').find(b=>b.text()==='提交退回').trigger('click');await flushPromises();expect(http.put).toHaveBeenCalled();const drawer=w.findComponent({name:'TeacherEnvironmentDrawer'});drawer.vm.$emit('update:modelValue',false);expect(vm.drawerVisible).toBe(false);w.findComponent({name:'TeacherEnvironmentRequestDialog'}).vm.$emit('update:modelValue',true);expect(vm.requestDialogVisible).toBe(true)})
 const record={id:1,courseName:'程序设计',softwareRequirements:'IDEA',assignedLabId:1,assignedLabCode:'A101',assignedLabName:'机房',useTime:'周一上午',status:'待确认'}
-beforeEach(()=>{vi.clearAllMocks();route.query={};http.get.mockResolvedValue({data:{data:[record]}});http.post.mockResolvedValue({data:{data:{...record,status:'已确认',confirmStatus:'已确认'}}});http.put.mockImplementation(async(url,payload)=>({data:{data:payload}}))})
+beforeEach(()=>{vi.clearAllMocks();auth.role='teacher';auth.user={id:7,realName:'教师甲'};route.query={};http.get.mockResolvedValue({data:{data:[record]}});http.post.mockResolvedValue({data:{data:{...record,status:'已确认',confirmStatus:'已确认'}}});http.put.mockImplementation(async(url,payload)=>({data:{data:payload}}))})
 afterEach(()=>wrappers.splice(0).forEach(wrapper=>wrapper.unmount()))
 async function setup(render=false){const wrapper=shallowMount(Page,{global:{directives:{loading:{}},stubs:render?panelStubs():Object.fromEntries(['button','icon','card','input','table','table-column','tag','dialog','form','form-item','radio-group','radio-button','empty'].map(name=>[`el-${name}`,true]))}});wrappers.push(wrapper);await flushPromises();return wrapper.vm}
 it('normalizes backend delivery fields and computes metrics and combined filters',async()=>{
@@ -49,3 +50,35 @@ it('response wrappers and invalid save responses fall back to the submitted reco
   const vm=await setup();expect(vm.normalizeListResponse([record])).toEqual([record]);expect(vm.normalizeListResponse({data:[record]})).toEqual([record]);expect(vm.normalizeListResponse({})).toEqual([]);for(const data of [{code:200},[],null])expect(vm.normalizeRecordResponse(data,record)).toEqual(record);expect(vm.normalizeRecordResponse({data:record},{})).toEqual(record);expect(vm.normalizeRecordResponse(record,{})).toEqual(record)
 })
 
+
+it.each([
+ [{id:'not-an-id',name:'历史教师'},undefined,'历史教师'],
+ [{id:8,username:'teacher8'},8,'teacher8'],
+ [null,undefined,'任课教师'],
+])('legacy or missing session identity maps safely into a course environment request',async(user,id,name)=>{
+ auth.user=user;http.post.mockResolvedValue({data:{code:200}})
+ const vm=await setup();await vm.submitEnvironmentRequest({courseName:'新课程'})
+ expect(http.post).toHaveBeenLastCalledWith(API_ENDPOINTS.courseEnvironmentRequests.list,expect.objectContaining({teacherUserId:id,teacherName:name,teacher:name}))
+ expect(vm.selectedEnvironment.course).toBe('新课程')
+})
+it('sparse course links prefill only available context and return feedback retains its default',async()=>{
+ route.query={course:'新课程'};auth.role='legacy-role'
+ const vm=await setup();expect(vm.requestPrefill).toEqual({courseName:'新课程',className:'',useTime:'',labType:'',softwareRequirements:'',specialRequirements:''})
+ vm.handleBack();expect(router.push).toHaveBeenLastCalledWith('/teacher')
+ vm.replaceEnvironmentRecord({...record,id:2,courseName:'另一课程'})
+ vm.replaceEnvironmentRecord({...record,courseName:'更新课程'})
+ expect(vm.environmentRecords.map(item=>item.course)).toEqual(['另一课程','更新课程'])
+ expect(vm.normalizeEnvironmentRecord({status:'退回'}).reminder).toBe('教师已退回环境，请管理员按意见调整')
+ vm.handleReturn({id:1,course:'新课程',software:'IDEA',schedule:'周一'})
+ await vm.submitReturn();expect(http.put).toHaveBeenLastCalledWith(expect.any(String),expect.objectContaining({specialRequirements:'教师退回环境，请按意见调整'}))
+})
+it('nonstandard transport errors keep course request and adjustment dialogs actionable',async()=>{
+ const vm=await setup();http.get.mockRejectedValueOnce({});await vm.loadEnvironmentRecords()
+ expect(ElMessage.warning).toHaveBeenLastCalledWith('后端课程环境列表暂不可用，已保留当前页面数据')
+ http.post.mockRejectedValueOnce({});await vm.submitEnvironmentRequest({courseName:'新课程'})
+ expect(ElMessage.error).toHaveBeenLastCalledWith('课程环境需求提交失败')
+ vm.drawerVisible=true;http.post.mockRejectedValueOnce({});await vm.handleConfirm(vm.selectedEnvironment)
+ expect(ElMessage.error).toHaveBeenLastCalledWith('课程环境确认失败');expect(vm.drawerVisible).toBe(true)
+ vm.handleReturn(vm.selectedEnvironment);http.put.mockRejectedValueOnce({});await vm.submitReturn()
+ expect(ElMessage.error).toHaveBeenLastCalledWith('退回课程环境失败');expect(vm.returnDialogVisible).toBe(true)
+})

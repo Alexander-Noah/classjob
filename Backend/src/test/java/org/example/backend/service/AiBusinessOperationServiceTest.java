@@ -22,11 +22,45 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AiBusinessOperationServiceTest {
+    @Test void interruptedReadsPreserveCancellationAndDoNotReportAFalseSuccessfulResult() {
+        try {
+            Thread.currentThread().interrupt();
+            assertTrue(assertThrows(IllegalArgumentException.class,()->service.read(7,Map.of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1")),request)).getMessage().contains("请求中断"));
+            assertTrue(Thread.currentThread().isInterrupted());
+            assertEquals(0,writes.get());
+        } finally { Thread.interrupted(); }
+    }
+    @Test @SuppressWarnings("unchecked") void discoveryDescribesRealQueryParametersAndOmitsUploadsAndNonControllerHandlers() throws Exception {
+        when(data.actor(7)).thenReturn(new AiDataActor(7,"systemAdmin","管理员",Set.of()));
+        var mapping=mock(RequestMappingHandlerMapping.class);
+        Map<RequestMappingInfo,HandlerMethod> routes=new LinkedHashMap<>();
+        var activation=mock(org.example.backend.controller.ActivationCodeController.class);
+        routes.put(RequestMappingInfo.paths("/activation-codes").methods(RequestMethod.GET,RequestMethod.OPTIONS).build(),new HandlerMethod(activation,org.example.backend.controller.ActivationCodeController.class.getMethod("listActivationCodes",Map.class)));
+        routes.put(RequestMappingInfo.paths("/activation-codes").methods(RequestMethod.POST).build(),new HandlerMethod(activation,org.example.backend.controller.ActivationCodeController.class.getMethod("createActivationCodes",Map.class)));
+        var approvals=mock(org.example.backend.controller.ApprovalCountersignController.class);
+        routes.put(RequestMappingInfo.paths("/approval-countersigns").methods(RequestMethod.GET).build(),new HandlerMethod(approvals,org.example.backend.controller.ApprovalCountersignController.class.getMethod("listCountersigns",String.class,String.class,String.class,String.class)));
+        var devices=mock(org.example.backend.controller.DevicesController.class);
+        routes.put(RequestMappingInfo.paths("/devices/import").methods(RequestMethod.POST).build(),new HandlerMethod(devices,org.example.backend.controller.DevicesController.class.getMethod("importDevices",org.springframework.web.multipart.MultipartFile.class)));
+        routes.put(RequestMappingInfo.paths("/labs").methods(RequestMethod.GET).build(),new HandlerMethod("outside",String.class.getMethod("isEmpty")));
+        when(mapping.getHandlerMethods()).thenReturn(routes);
+        ObjectProvider<RequestMappingHandlerMapping> provider=mock(ObjectProvider.class);when(provider.getObject()).thenReturn(mapping);
+        var discover=new AiBusinessOperationService(provider,data);
+        var activationCatalog=discover.catalog(7,"activation-codes");
+        assertEquals(2,activationCatalog.size());
+        assertTrue(activationCatalog.stream().anyMatch(item->!((Map<?,?>)item.get("query")).isEmpty()));
+        assertTrue(activationCatalog.stream().anyMatch(item->item.getOrDefault("body","").toString().contains("object")));
+        var approvalCatalog=discover.catalog(7,"approval-countersigns");
+        assertEquals(1,approvalCatalog.size());
+        assertTrue(((Map<?,?>)approvalCatalog.get(0).get("query")).containsKey("businessType"));
+        assertTrue(discover.catalog(7,"devices").isEmpty());assertTrue(discover.catalog(7,"labs").isEmpty());
+        assertEquals(0,reads.get());assertEquals(0,writes.get());
+    }
     @Test void catalogDescribesAllowedBodyFieldsAndModulesWithoutCallingBackend(){assertTrue(service.modules(7).stream().anyMatch(module->"labs".equals(module.get("module"))));List<Map<String,Object>> catalog=service.catalog(7,"labs");assertTrue(catalog.stream().anyMatch(operation->operation.containsKey("body")&&operation.get("body").toString().contains("labName")));assertEquals(0,reads.get());assertEquals(0,writes.get());}
     @Test void readForwardsRepeatedQueryValuesAndReportsMalformedBackendResponse(){Object result=service.read(7,Map.of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1"),"query",Map.of("status",List.of("online","offline"))),request);assertNotNull(result);assertEquals(1,reads.get());record="not-json";assertTrue(assertThrows(IllegalArgumentException.class,()->service.read(7,Map.of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1")),request)).getMessage().contains("核实"));request.removeHeader("Authorization");assertTrue(assertThrows(IllegalArgumentException.class,()->service.read(7,Map.of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1")),request)).getMessage().contains("登录"));}
     private HttpServer server;
     private final AtomicInteger writes = new AtomicInteger();
     private final AtomicInteger reads = new AtomicInteger();
+    private int responseStatus=200;
     private String record = "{\"code\":200,\"message\":\"查询成功\",\"data\":{\"id\":1,\"labName\":\"204\",\"password\":\"hidden\"}}";
     private AiBusinessOperationService service;
     private AiBusinessDataService data;
@@ -59,7 +93,7 @@ class AiBusinessOperationServiceTest {
             if (exchange.getRequestMethod().equals("GET")) { reads.incrementAndGet(); response = record; }
             else { writes.incrementAndGet(); response = "{\"code\":200,\"message\":\"保存成功\",\"data\":{\"id\":1}}"; }
             byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, bytes.length);
+            exchange.sendResponseHeaders(responseStatus, bytes.length);
             exchange.getResponseBody().write(bytes); exchange.close();
         });
         server.start();
@@ -71,6 +105,11 @@ class AiBusinessOperationServiceTest {
     private Map<String, Object> action(String method) {
         return Map.of("operationId", method + " /labs/{id:\\d+}", "pathValues", Map.of("id", "1"),
                 "body", Map.of("labName", "新名称"), "summary", "修改204实验室名称");
+    }
+    @Test void transportFailureCannotBeTreatedAsSuccessEvenWhenJsonCodeSaysSuccess() {
+        responseStatus=503;
+        assertThrows(IllegalArgumentException.class,()->service.read(7,Map.of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1")),request));
+        assertEquals(1,reads.get());assertEquals(0,writes.get());
     }
     private String prepare() { return (String) service.prepare(7, "chat-a", action("PUT"), request).get("id"); }
 

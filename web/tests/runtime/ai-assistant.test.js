@@ -407,3 +407,28 @@ it('query errors after a chat switch are reported without appending into the new
  const vm=await setup();let reject;configApi.requestAiAssistantAnswer.mockImplementationOnce(()=>new Promise((_,fail)=>{reject=fail}));const pending=vm.submitQuestion('延迟失败');await flushPromises();await vm.startNewConversation();reject({});await pending;expect(ElMessage.error).toHaveBeenCalledWith('AI 查询失败，请重试');expect(vm.messages).toHaveLength(1)
  configApi.requestAiAssistantAnswer.mockRejectedValueOnce({});await vm.submitQuestion('当前失败');expect(vm.messages.at(-1).content).toContain('请检查 AI 配置或稍后重试。');vm.toggleSpeech(true);expect(localStorage.getItem('smart-lab:ai-tts-enabled')).toBe('true')
 })
+
+it('custom API mode suppresses platform socket failures and keeps status accurate while loading',async()=>{
+ const vm=await setup();vm.applyBackendAiConfig({enabled:true,apiKeyConfigured:true,baseUrl:'https://api.example.com/v1',model:'chat-model'})
+ vm.isDirectAiLoading=false;expect(vm.currentServiceStatusText).toBe('自定义 API 已启用')
+ vm.isDirectAiLoading=true;expect(vm.currentServiceStatusText).toBe('正在查询平台数据')
+ ElMessage.error.mockClear();instances.socket.options.onError()
+ expect(ElMessage.error).not.toHaveBeenCalled()
+ fetch.mockRejectedValueOnce({});await vm.fetchConfigAndConnect()
+ expect(ElMessage.error).not.toHaveBeenCalled()
+})
+it('sparse history previews and query-only action proposals retain usable content',async()=>{
+ const vm=await setup();expect(vm.getMessagePreview([{}])).toBe('暂无对话内容')
+ expect(vm.formatConversationTime(null)).toMatch(/\d\d:\d\d/)
+ expect(vm.actionDetails({query:{id:7}})).toEqual([{label:'操作参数 · 记录编号',value:'7',previous:null}])
+ const merged=vm.mergeConversationLists([{id:'a',messages:[],updatedAt:0}],[{id:'a',messages:[],updatedAt:0}],[{id:'b',messages:[]}])
+ expect(merged.map(item=>item.id).sort()).toEqual(['a','b'])
+})
+it('unchanged endpoint edits preserve a stored credential and unstructured microphone failures clear capture',async()=>{
+ const vm=await setup();vm.directAiConfig.apiKey='existing-key';vm.directAiConfig.apiKeyConfigured=true
+ vm.addressChanged();expect(vm.directAiConfig.apiKey).toBe('existing-key');expect(vm.directAiConfig.apiKeyConfigured).toBe(true)
+ instances.audio.startCapture.mockRejectedValueOnce({});await vm.startVoiceCapture()
+ expect(ElMessage.error).toHaveBeenLastCalledWith('无法启动麦克风');expect(vm.isCapturingVoice).toBe(false)
+ vm.isCapturingVoice=true;vm.voiceMode='';await vm.stopVoiceCapture()
+ expect(vm.isCapturingVoice).toBe(false);expect(instances.audio.stopCapture).toHaveBeenCalled()
+})

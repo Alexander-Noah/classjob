@@ -19,6 +19,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ClassTimetableBehaviorTest {
+    @Test void scheduledRunImportsOnlyNamedCoursesAndRetainsPreviousSemesters() throws Exception {
+        scripts();config.put("scheduleEnabled",true);service.initializeCrawlerScheduler();
+        var scheduled=ArgumentCaptor.forClass(Runnable.class);verify(scheduler).schedule(scheduled.capture(),any(Trigger.class));
+        Path csv=Files.createDirectories(temp.resolve("课表导出结果")).resolve("班级课表标准数据.csv");
+        Files.writeString(csv,"学年学期,班级,课程名称\n2026秋,班级,有效课程\n2026春,班级,\n");
+        Process process=mock(Process.class);when(process.waitFor(anyLong(),any(TimeUnit.class))).thenReturn(true);when(process.exitValue()).thenReturn(0);
+        try(var construction=mockConstruction(ProcessBuilder.class,(builder,context)->{
+            when(builder.environment()).thenReturn(new HashMap<>());when(builder.start()).thenReturn(process);
+        })) {assertDoesNotThrow(()->scheduled.getValue().run());}
+        verify(mapper).deleteBySemester("2026秋");verify(mapper,never()).deleteBySemester("2026春");
+        verify(mapper).insertTimetable(argThat(row->"有效课程".equals(row.getCourseName())));
+        verify(mapper).updateCrawlerTask(argThat(row->"success".equals(row.get("status"))&&Integer.valueOf(1).equals(row.get("updatedCount"))));
+    }
+    @Test void malformedCsvEncodingReportsFailureBeforeAnySemesterReplacement() throws Exception {
+        scripts();Path csv=Files.createDirectories(temp.resolve("课表导出结果")).resolve("班级课表标准数据.csv");
+        Files.write(csv,new byte[]{(byte)0xc3,0x28});
+        Process process=mock(Process.class);when(process.waitFor(anyLong(),any(TimeUnit.class))).thenReturn(true);when(process.exitValue()).thenReturn(0);
+        try(var construction=mockConstruction(ProcessBuilder.class,(builder,context)->{
+            when(builder.environment()).thenReturn(new HashMap<>());when(builder.start()).thenReturn(process);
+        })) {assertTrue(assertThrows(IllegalStateException.class,service::triggerCrawler).getMessage().contains("读取标准 CSV 失败"));}
+        verify(mapper,never()).deleteBySemester(anyString());verify(mapper,never()).insertTimetable(any());
+        assertEquals(false,service.getCrawlerConfig().get("running"));
+    }
     @Test void weakCredentialEncryptionKeysCannotStartTheService() {
         for (String secret : Arrays.asList(null, " ", "change-me-".repeat(5), "short")) {
             assertThrows(IllegalStateException.class, () -> new ClassTimetableServiceImpl(mapper, teaching, environment, scheduler, secret));

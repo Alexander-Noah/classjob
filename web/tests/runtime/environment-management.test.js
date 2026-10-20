@@ -83,3 +83,25 @@ it('submits environment changes, deletes selected details and reloads empty link
  vm.selectEnvironmentRecord(vm.business.records.value[0]);await vm.handleDeleteRecord(vm.selectedEnvironmentRecord);await flushPromises();expect(collection.remove).toHaveBeenCalled();vm.selectEnvironmentRecord(null);expect(vm.detailTitle).toBeTruthy();expect(vm.checklistItems.some(i=>!i.done)).toBe(true)
  vm.labOptions=[];vm.softwareRecords=[];vm.templateRecords=[];route.query.tab='template';await flushPromises();vm.business.openCreateDialog();await flushPromises();expect(vm.labOptions).toHaveLength(1);expect(vm.softwareRecords).toHaveLength(1);vm.business.formModel.course='程序设计';await flushPromises();expect(vm.business.formModel.os).toBeTruthy()
 })
+
+it('course checklist and legacy software room names expose missing configuration accurately',async()=>{
+ const vm=await setup(true),w=wrappers.at(-1)
+ vm.business.records.value=[{...software,labId:'',lab:'历史机房'}]
+ expect(vm.metrics[0].trend).toBe('覆盖 1 间实验室')
+ route.query.tab='course';await flushPromises()
+ vm.selectEnvironmentRecord({course:'程序设计',teacher:'教师甲',className:'一班',labType:'机房',software:'IDEA',status:'已确认'})
+ expect(vm.checklistItems.every(item=>item.done)).toBe(true)
+ vm.selectEnvironmentRecord({course:'程序设计',teacher:'教师甲'})
+ expect(vm.checklistItems[0].done).toBe(false)
+ vm.business.formModel.name='后台切换';await flushPromises();expect(vm.business.dialogVisible.value).toBe(false)
+ vm.business.openCreateDialog();await vm.handleSubmitRecord()
+ expect(vm.business.dialogVisible.value).toBe(true);expect(collection.create).not.toHaveBeenCalled()
+ const different={_recordId:'different',course:'其他课程'};vm.selectEnvironmentRecord(different)
+ vm.handleDeleteRecord({_recordId:'missing'});expect(vm.selectedEnvironmentRecord).toEqual(different)
+ await flushPromises();expect(vm.selectedEnvironmentRecord).toBeTruthy()
+})
+it('raw linked-list responses are accepted and an absent tab defaults to software',async()=>{
+ delete route.query.tab;http.get.mockImplementation(async url=>url==='/lab-software'?[software]:url==='/environment-templates'?[template]:[])
+ const vm=await setup();await vm.loadLinkedEnvironmentRecords()
+ expect(vm.activeTab).toBe('software');expect(vm.softwareRecords).toEqual([software])
+})

@@ -37,4 +37,22 @@ it('calendar failures stop initial schedule loading',async()=>{
 it('hero synchronization/export use current rows and back returns to teacher home',async()=>{
   const vm=await setup();await vm.handleHeroAction({command:'sync'});expect(listClassTimetables).toHaveBeenCalledTimes(2);await vm.handleHeroAction({command:'export'});expect(exportTableToExcel).toHaveBeenCalledWith(expect.objectContaining({filename:'教师甲第7周课表',rows}));vm.rows=[];vm.exportTeacherSchedule();expect(ElMessage.warning).toHaveBeenCalledWith('暂无可导出的教师课表');vm.handleBack();expect(router.push).toHaveBeenCalledWith('/teacher')
 })
+it('missing active semester uses the server list and malformed section boundaries normalize consistently', async () => {
+  loadTeachingCalendar.mockResolvedValueOnce({semester:''})
+  const vm=await setup()
+  expect(vm.filters.semester).toBe('2026秋')
+  for(const [row,expected] of [[{startSection:3},3],[{startSection:4},3],[{sectionText:'4-5节'},3],[{sectionText:'3-4节'},3]])expect(vm.normalizeCourse(row).periodStart).toBe(expected)
+  vm.filters.week=0;vm.filters.semester=''
+  await vm.loadTeacherSchedule()
+  expect(listClassTimetables).toHaveBeenLastCalledWith(expect.objectContaining({semester:undefined,week:undefined}))
+  listClassTimetables.mockRejectedValueOnce({})
+  await vm.loadTeacherSchedule()
+  expect(ElMessage.error).toHaveBeenCalledWith('教师课表加载失败')
+})
+it('calendar errors without messages report the default initialization failure', async () => {
+  loadTeachingCalendar.mockRejectedValueOnce({})
+  await setup()
+  expect(ElMessage.error).toHaveBeenCalledWith('教学日历加载失败')
+  expect(listClassTimetables).not.toHaveBeenCalled()
+})
 

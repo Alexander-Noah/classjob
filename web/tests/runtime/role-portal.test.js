@@ -53,3 +53,24 @@ it('accepts legacy lab, device and reservation payload names with token-safe mat
 it('normalizes malformed primary data and uses configured lab defaults with device totals',async()=>{
  labResourceService.list.mockResolvedValue({});deviceAssetService.list.mockResolvedValue({});const vm=await setup({digitalTwin:{labs:[{code:'C303',name:'配置机房',deviceCount:5}],events:[],summary:[],sceneTags:[]}});expect(vm.liveLabs).toEqual([]);expect(vm.liveDevices).toEqual([]);expect(vm.liveLabNodes[0].usage).toBe(30);expect(vm.selectedLab.code).toBe('C303')
 })
+
+it('rendered digital twin supports pointer and keyboard selection and module actions',async()=>{
+  const config={digitalTwinOnly:true,actions:[{title:'资产模块',tag:'资产'}],digitalTwin:{labs:[],events:[],summary:[],sceneTags:['系统总览','设备'],scenarios:['排课场景']}}
+  const w=shallowMount(Page,{props:{config},global:{stubs:panelStubs()}});wrappers.push(w);await flushPromises()
+  await w.findAll('.lab-node')[1].trigger('click');expect(w.vm.selectedLab.code).toBe('B202')
+  await w.findAll('.lab-node')[0].trigger('keyup.enter');expect(w.vm.selectedLab.code).toBe('A101')
+  await w.findAll('.scene-toolbar button')[1].trigger('click');expect(w.vm.activeModule).toBe('设备')
+  await w.get('.system-card button').trigger('click');expect(w.vm.activeModule).toBe('排课场景')
+  await w.get('.twin-dock button').trigger('click');expect(w.vm.activeModule).toBe('资产模块')
+  expect(w.text()).toContain('教学主机');expect(w.text()).toContain('运行事件')
+})
+it('configured labs without live assets retain zero summaries and empty selection records',async()=>{
+  labResourceService.list.mockResolvedValue([]);deviceAssetService.list.mockResolvedValue([]);reservationResourceService.list.mockResolvedValue([])
+  listMaintenanceRecords.mockResolvedValue([]);listClassTimetables.mockResolvedValue([])
+  const vm=await setup({digitalTwin:{labs:[{code:'L1',devices:0,capacity:0}],events:[],summary:[],sceneTags:[]}})
+  expect(vm.liveLabNodes).toHaveLength(1);expect(vm.liveSummary).toEqual([])
+  vm.liveDevices=[{lab:'different',status:'offline'}]
+  expect(vm.liveSummary.map(x=>x.value)).toEqual(['0','1','0','0'])
+  expect(vm.selectedLabReservations).toEqual([]);expect(vm.selectedLabMaintenanceRecords).toEqual([])
+  expect(vm.hasLabToken(null,'L1')).toBe(false)
+})

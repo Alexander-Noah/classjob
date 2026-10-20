@@ -248,3 +248,26 @@ it('load failure clears busy state and handled errors do not show duplicate toas
   vm.handleRowCommand('delete', vm.userList[1]); await flushPromises()
   expect(api.deleteUser).toHaveBeenCalledWith(2)
 })
+
+it('legacy sparse user records preserve account identities and permission labels without inventing privileges',async()=>{
+ api.listUsers.mockResolvedValue([
+  {account:'oldaccount',role:'自定义角色',name:'历史用户',enabled:false,permissions:[{label:'旧组',items:['用户权限']},{}]},
+  {employeeNo:'E-7',jobNo:'J-7'},
+  {jobNo:'J-8'},
+  {},
+ ])
+ getStoredUser.mockReturnValue(null)
+ const vm=await setup();expect(vm.userList[0]).toMatchObject({id:'oldaccount',account:'oldaccount',name:'历史用户',enabled:false,roleCode:'',permissions:[{group:'旧组',items:['用户管理']},{group:'权限范围',items:[]}]})
+ expect(vm.userList[1]).toMatchObject({username:'E-7',account:'E-7'})
+ expect(vm.userList[2]).toMatchObject({account:'J-8',name:'未命名账号'})
+ expect(vm.userList[3]).toMatchObject({name:'未命名账号',role:'未分配角色',permissions:[]})
+ expect(vm.isCurrentUser(vm.userList[0])).toBe(false)
+})
+it('server validation remains authoritative for incomplete legacy user edits',async()=>{
+ const vm=await setup();vm.handleOpenCreate()
+ api.createUser.mockRejectedValueOnce({userMessage:'账号与姓名不能为空'})
+ await vm.handleSaveUser({enabled:false,role:'自定义角色'})
+ expect(api.createUser).toHaveBeenLastCalledWith(expect.objectContaining({username:'',employeeNo:'',realName:'',password:undefined,roleCode:'',permissions:'[]',status:0}))
+ expect(ElMessage.error).toHaveBeenLastCalledWith('账号与姓名不能为空')
+ expect(vm.userDialogVisible).toBe(true)
+})

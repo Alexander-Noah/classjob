@@ -11,6 +11,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class DeviceLifecycleBehaviorTest {
+    @Test void deviceAndAuditListingsReturnPersistedRowsAndPreserveNullDatabaseFallbacks() {
+        var device=device();var inventory=new DeviceInventoryRecordEntity();var transfer=new DeviceTransferRecordEntity();
+        when(mapper.getDevicesByLabId(7)).thenReturn(List.of(device));
+        assertEquals(List.of(device),service.getDevicesByLabId(7));
+        when(mapper.pageDevices(anyInt(),anyInt(),any(),any(),any(),any(),any())).thenReturn(List.of(device));
+        assertEquals(List.of(device),service.pageDevices(null).getRecords());
+        when(events.listInventoryEvents(1L)).thenReturn(List.of(inventory));
+        when(events.listTransferEvents(1L)).thenReturn(List.of(transfer));
+        assertEquals(List.of(inventory),service.listInventoryRecords(1L));
+        assertEquals(List.of(transfer),service.listTransferRecords(1L));
+        assertEquals(List.of(inventory),service.recordDeviceInventory(1L,inventory).getRecords());
+        assertEquals(List.of(transfer),service.transferDevice(1L,transfer).getRecords());
+        when(mapper.getDevicesByLabId(7)).thenReturn(null);when(events.listInventoryEvents(1L)).thenReturn(null);when(events.listTransferEvents(1L)).thenReturn(null);
+        assertEquals(List.of(),service.getDevicesByLabId(7));assertEquals(List.of(),service.listInventoryRecords(1L));assertEquals(List.of(),service.listTransferRecords(1L));
+    }
     final DevicesMapper mapper=mock(DevicesMapper.class);
     final DeviceEventMapper events=mock(DeviceEventMapper.class);
     final LabMapper labs=mock(LabMapper.class);

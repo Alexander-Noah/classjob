@@ -35,4 +35,22 @@ it('clock refreshes statuses and is released on unmount',async()=>{
 it('stock response envelopes and safety bounds preserve category aggregates',async()=>{
   const vm=await setup();for(const payload of [[1],{data:[1]},{records:[1]},{data:{records:[1]}}])expect(vm.getResponseData(payload)).toEqual([1]);expect(vm.getResponseData({})).toEqual([]);expect(vm.normalizeConsumable({stock:-10})).toMatchObject({stock:0,status:'待补货'});vm.consumableRecords=Array.from({length:6},(_,index)=>vm.normalizeConsumable({id:index,category:`分类${index}`,stock:index}));expect(vm.visibleConsumableCategoryRows).toHaveLength(4);expect(vm.hiddenConsumableCategoryCount).toBe(2);expect(vm.consumableSummary.totalStock).toBe(15)
 })
+it('renders overflow links for large reminder and schedule lists and hidden stock categories', async () => {
+  const input=overview()
+  input.todaySchedules=Array.from({length:10},(_,index)=>({...input.todaySchedules[0],id:index,lab:`A${index}`,time:'09:30-10:30'}))
+  input.doorAlerts=Array.from({length:10},(_,index)=>({...input.doorAlerts[0],id:index,lab:`B${index}`}))
+  input.recentActivities=null
+  fetchDashboardOverview.mockResolvedValueOnce(input)
+  http.get.mockResolvedValueOnce({data:Array.from({length:6},(_,id)=>({id,category:`分类${id}`,stock:10}))})
+  const vm=await setup(true),w=wrappers.at(-1)
+  expect(vm.scheduleView.hasMore).toBe(true);expect(vm.doorReminderView.hasMore).toBe(true)
+  expect(w.find('.inventory-more').exists()).toBe(true)
+  for(const button of w.findAll('.card-actions.is-compact button, .card-footer button')) await button.trigger('click')
+  expect(router.push).toHaveBeenCalledWith('/lab-admin/class-timetable-data')
+  expect(vm.recentActivities.length).toBeGreaterThan(0)
+  expect(vm.normalizeConsumable({stock:'--',warnThreshold:'--'})).toMatchObject({stock:0,warnThreshold:5})
+  expect(vm.normalizeActivity({type:'success'}).typeLabel).toBe('动态')
+  expect(vm.normalizeActivity({type:'业务标签'}).typeLabel).toBe('业务标签')
+  expect(vm.normalizeActivityType(null)).toBe('info')
+})
 

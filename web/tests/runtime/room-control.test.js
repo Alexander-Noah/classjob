@@ -279,3 +279,56 @@ it('room without devices warns for unsupported operations and retains current vi
   expect(ElMessage.warning).toHaveBeenCalledWith('实验室资源加载失败，已保留当前物联控制页面')
   expect(state.selectedLab.value.name).toBe('机房')
 })
+
+it.each([
+ [{response:{data:{message:'网关权限不足'}}},'网关权限不足'],
+ [{},'门禁网关指令执行失败'],
+])('access transport failures preserve the server reason or a usable fallback',async(error,message)=>{
+ const state=await setup();iotService.controlIotDevice.mockRejectedValueOnce(error)
+ await state.handleAccessCommand('远程开门')
+ expect(ElMessage.error).toHaveBeenLastCalledWith(message)
+ expect(state.filteredRecords.value[0]).toMatchObject({status:'失败',tagType:'danger'})
+})
+it.each([{success:false,status:'拒绝'}, {success:false}])('rejected device commands reset pending state and never claim success',async(result)=>{
+ const state=await setup(),control=state.selectedLabControls.value[0]
+ state.controlState[control.id].value=12
+ iotService.controlIotDevice.mockResolvedValueOnce(result)
+ await state.handleControlChange(control)
+ expect(state.controlState[control.id].value).toBe(80)
+ expect(ElMessage.error).toHaveBeenLastCalledWith(result.status||'网关返回执行失败')
+ expect(ElMessage.success).not.toHaveBeenCalled()
+})
+it('missing hardware identifiers stop both direct and scene controls before any command',async()=>{
+ iotService.listLabIotDevices.mockResolvedValue({devices:[{id:4,deviceType:'light',iotName:'无编号灯光',online:true}]})
+ const state=await setup(),control=state.selectedLabControls.value[0]
+ state.controlState[control.id].value=12;await state.handleControlChange(control)
+ expect(ElMessage.error).toHaveBeenCalledWith('无编号灯光未绑定硬件设备编号，无法下发控制指令')
+ expect(state.controlState[control.id].value).toBe(80)
+ await state.applyScenePreset('energy')
+ expect(ElMessage.error).toHaveBeenLastCalledWith('无编号灯光未绑定硬件设备编号')
+ expect(iotService.controlIotDevice).not.toHaveBeenCalled()
+})
+it('empty enrollment results omit credential fields while enrollment failures retain useful messages',async()=>{
+ const state=await setup();ElMessageBox.prompt.mockResolvedValueOnce({})
+ await state.handleAccessCredential('card-enroll')
+ expect(iotService.controlIotDevice).toHaveBeenLastCalledWith(expect.objectContaining({payload:expect.objectContaining({credentialValue:''})}))
+ expect(iotService.controlIotDevice.mock.calls.at(-1)[0].payload).not.toHaveProperty('cardNo')
+ for(const error of [{response:{data:{message:'录入权限不足'}}},{}]){
+  iotService.controlIotDevice.mockRejectedValueOnce(error);await state.handleAccessCredential('card-enroll')
+  expect(ElMessage.error).toHaveBeenLastCalledWith(error.response?.data.message||'卡片录入失败')
+ }
+ for(const result of [{success:false,response:'录卡失败'},{success:false}]){
+  iotService.controlIotDevice.mockResolvedValueOnce(result);await state.handleAccessCredential('card-enroll')
+  expect(ElMessage.error).toHaveBeenLastCalledWith(result.response||'网关返回执行失败')
+ }
+})
+it('camera and sensor failures without an Error object use contextual messages',async()=>{
+ const state=await setup();iotService.toBackendUrl.mockImplementationOnce(()=>{throw {response:{data:{message:'视频访问受限'}}}})
+ await state.handleCameraView();expect(ElMessage.error).toHaveBeenLastCalledWith('视频访问受限')
+ iotService.toBackendUrl.mockImplementationOnce(()=>{throw {}})
+ await state.handleCameraView();expect(ElMessage.error).toHaveBeenLastCalledWith('摄像头连接失败')
+ for(const error of [{response:{data:{message:'网关认证失效'}}},{}]){
+  iotService.listLabIotDevices.mockRejectedValueOnce(error);await state.handleSensorCheck()
+  expect(ElMessage.error).toHaveBeenLastCalledWith(error.response?.data.message||'网关状态读取失败')
+ }
+})

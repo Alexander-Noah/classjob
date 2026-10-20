@@ -9,6 +9,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ReadModelBehaviorTest {
+    @Test void usageImportRetainsExplicitTimeAndNormalizesBlankStatus() {
+        UsageRecordMapper mapper=mock(UsageRecordMapper.class);BusinessLoopService loop=mock(BusinessLoopService.class);
+        UsageRecordService service=new UsageRecordServiceImpl(mapper,loop);
+        var record=new UsageRecordEntity();var time=LocalDateTime.of(2027,1,4,10,0);
+        record.setUseTime(time);record.setStatus(" ");when(mapper.listUsageRecords()).thenReturn(List.of(record));
+        assertEquals(List.of(record),service.replaceUsageRecords(List.of(record)));
+        assertEquals(time,record.getUseTime());assertEquals("正常",record.getStatus());
+        verify(loop,never()).createRepairAfterUsageAbnormal(any());
+    }
     @Test void teachingScheduleSearchTrimsFiltersClampsLimitAndReturnsImmutableResults(){TeachingScheduleReadService read=mock(TeachingScheduleReadService.class);TeachingScheduleQuery query=new DefaultTeachingScheduleQuery(read);when(read.search(any())).thenReturn(null);assertEquals(List.of(),query.search(new ScheduleSearchCriteria(" 2026秋 "," 教师甲 "," ",null," 数据库 "," 查找 ",3,99999)));verify(read).search(new ScheduleSearchCriteria("2026秋","教师甲",null,null,"数据库","查找",3,5000));query.search(new ScheduleSearchCriteria(null,null,null,null,null,null,null,0));verify(read).search(new ScheduleSearchCriteria(null,null,null,null,null,null,null,500));when(read.listSemesters()).thenReturn(new ArrayList<>(List.of("2026秋")));List<String> semesters=query.listSemesters();assertThrows(UnsupportedOperationException.class,()->semesters.add("2026春"));}
     @Test void teachingSummaryDefaultsMissingCountsButRetainsSemesterOptions(){TeachingScheduleReadService read=mock(TeachingScheduleReadService.class);TeachingScheduleQuery query=new DefaultTeachingScheduleQuery(read);when(read.listSemesters()).thenReturn(List.of("2026秋"));assertEquals(0,query.summary().total());assertEquals(List.of("2026秋"),query.summary().semesters());LocalDateTime updated=LocalDateTime.of(2026,10,18,10,0);when(read.summary()).thenReturn(new ScheduleSummaryData(10,2,3,4,updated));assertEquals(new ScheduleSummaryView(10,2,3,4,updated,List.of("2026秋")),query.summary());when(read.listSemesters()).thenReturn(null);assertEquals(List.of(),query.listSemesters());}
     @Test void labAvailabilityRequiresEligibleStatusAndSufficientCapacity(){LabRecordReadService read=mock(LabRecordReadService.class);LabAvailabilityQuery query=new DefaultLabAvailabilityQuery(read);Instant start=Instant.parse("2027-01-04T00:00:00Z"),end=start.plusSeconds(3600);assertFalse(query.check(1L,20,start,end).value().available());for(String status:List.of("开放","预约中","使用中","维护中","停用","未知")){when(read.findById(1,null)).thenReturn(new LabRecord(1L,"A101","机房",null,null,null,null,30,null,status,null,null,null));assertEquals(List.of("开放","预约中","使用中").contains(status),query.check(1L,20,start,end).value().available());assertFalse(query.check(1L,31,start,end).value().available());}}

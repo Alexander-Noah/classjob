@@ -21,6 +21,39 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AiBusinessDataServiceTest {
+    @Test void unidentifiableBoundLabsCannotFallBackToUnscopedTimetableReads() {
+        LabRecordReadService labs=mock(LabRecordReadService.class);
+        when(beans.getBean(LabRecordReadService.class)).thenReturn(labs);
+        when(labs.findAll(7L)).thenReturn(List.of(new LabRecord(1L," ","",null,null," ",null,null,7L,null,null,null,null)));
+        Map<String,Object> result=service.query(admin,Map.of("dataset","timetable"));
+        assertEquals("unavailable",result.get("status"));
+        assertTrue(result.get("message").toString().contains("教室编号"));
+        verify(beans,never()).getBean(AiScheduleReadMapper.class);
+    }
+    @Test void legacyRoomAliasesAndInvalidSectionBoundsRemainSafeReadableScheduleData() {
+        LabRecordReadService labs=mock(LabRecordReadService.class);
+        when(beans.getBean(LabRecordReadService.class)).thenReturn(labs);
+        when(labs.findAll(7L)).thenReturn(List.of(
+                new LabRecord(1L,"","",null,null,"3-202",null,null,7L,null,null,null,null),
+                new LabRecord(2L,"LAB-X","实验室乙","教学楼",null,"203",null,null,7L,null,null,null,null),
+                new LabRecord(3L,"LAB-Y","实验室丙","4号楼",null,"204",null,null,7L,null,null,null,null)));
+        AiScheduleReadMapper mapper=mock(AiScheduleReadMapper.class);
+        when(beans.getBean(AiScheduleReadMapper.class)).thenReturn(mapper);
+        List<ScheduleEntryView> rows=new ArrayList<>();
+        for(Integer[] bounds:List.of(new Integer[]{null,2},new Integer[]{1,null},new Integer[]{0,2},new Integer[]{1,13}))
+            rows.add(new ScheduleEntryView((long)rows.size()+1,"2026秋","一班","一班","星期五","","历史节次",bounds[0],bounds[1],"课程","老师","1","1","1","3-202",null));
+        when(mapper.count(any())).thenReturn(8L);when(mapper.search(any())).thenReturn(rows);
+        Map<String,Object> result=service.query(admin,Map.of("dataset","timetable","teacher"," "));
+        assertEquals("ok",result.get("status"));assertEquals(true,result.get("hasMore"));assertEquals(4L,result.get("nextOffset"));
+        List<?> records=(List<?>)result.get("records");assertEquals(4,records.size());
+        for(Object row:records)assertFalse(((Map<?,?>)row).containsKey("timeRange"));
+        ArgumentCaptor<Map<String,Object>> capture=ArgumentCaptor.forClass(Map.class);verify(mapper).search(capture.capture());
+        assertNull(capture.getValue().get("teacher"));
+        List<String> patterns=(List<String>)capture.getValue().get("labPatterns");
+        assertTrue(patterns.stream().anyMatch(pattern->java.util.regex.Pattern.compile(pattern).matcher("4-204M").find()));
+        assertTrue(patterns.stream().anyMatch(pattern->java.util.regex.Pattern.compile(pattern).matcher("3-202").find()));
+        assertFalse(patterns.stream().anyMatch(pattern->java.util.regex.Pattern.compile(pattern).matcher("1203").find()));
+    }
     @Test void timetableGroupingMergesOnlyBoundLabAliasesAndRejectsUnsupportedDimensions(){bindLab();AiScheduleReadMapper mapper=mock(AiScheduleReadMapper.class);when(beans.getBean(AiScheduleReadMapper.class)).thenReturn(mapper);when(mapper.search(any())).thenReturn(List.of());when(mapper.aggregate(any())).thenReturn(List.of(Map.of("label","2-206M","count",2),Map.of("label","2-206","count",3),Map.of("label","9-301","count",9)));Map<String,Object> result=service.query(admin,Map.of("dataset","timetable","labId",1,"groupBy","classroom"));assertEquals("ok",result.get("status"));assertEquals(Map.of("移动互联实训室",5L),result.get("groups"));assertEquals("ok",service.query(admin,Map.of("dataset","timetable","groupBy","teacher")).get("status"));assertEquals("unavailable",service.query(admin,Map.of("dataset","timetable","groupBy","password")).get("status"));assertEquals(0,service.query(admin,Map.of("dataset","timetable","labId",99)).get("total"));}
     @Test void datesBeforeSemesterAndOutsideTeachingHoursCannotBeReportedAsCurrentClasses(){bindLab();TeachingScheduleReadService calendar=mock(TeachingScheduleReadService.class);when(beans.getBean(TeachingScheduleReadService.class)).thenReturn(calendar);when(calendar.findActiveCalendar()).thenReturn(new ScheduleCalendarData("2026秋","2026-09-07"));assertTrue(service.query(admin,Map.of("dataset","timetable","date","2026-09-01")).get("message").toString().contains("早于"));AiBusinessDataService midday=new AiBusinessDataService(beans,Clock.fixed(Instant.parse("2026-10-16T05:00:00Z"),ZoneOffset.UTC));assertTrue(midday.query(admin,Map.of("dataset","timetable","mode","now")).get("message").toString().contains("授课时段"));verify(beans,never()).getBean(AiScheduleReadMapper.class);}
     private final ApplicationContext beans = mock(ApplicationContext.class);

@@ -10,6 +10,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ResourceCrudBehaviorTest {
+    @Test void labCreationReturnsDatabaseCanonicalRecordAndManagerListsPreserveResults() {
+        LabMapper mapper=mock(LabMapper.class);BusinessLoopService loop=mock(BusinessLoopService.class);
+        LabService service=new LabServiceImpl(mapper,loop);
+        LabEntity input=new LabEntity();input.setId(9);input.setLabName("原名称");input.setOpenStatus(" ");
+        LabEntity saved=new LabEntity();saved.setId(9);saved.setLabName("规范名称");saved.setOpenStatus("维护中");saved.setCapacity(30);
+        when(mapper.getLabById(9)).thenReturn(saved);when(mapper.getLabsByManagerUserId(7)).thenReturn(List.of(saved));
+        assertSame(saved,service.addLab(input));assertEquals("开放",input.getOpenStatus());
+        verify(loop).recordEvent("lab","create","规范名称","维护中",Map.of("labId",9,"capacity",30));
+        assertEquals(List.of(saved),service.getLabs(7));
+        input.setOpenStatus("停用");service.addLab(input);assertEquals("停用",input.getOpenStatus());
+    }
     final BusinessLoopService loop=mock(BusinessLoopService.class);
     @Test void environmentTemplatesNormalizeStatusesAndRecordCreateUpdateDelete(){EnvironmentTemplateMapper mapper=mock(EnvironmentTemplateMapper.class);EnvironmentTemplateService service=new EnvironmentTemplateServiceImpl(mapper,loop);when(mapper.insertTemplate(any())).thenAnswer(call->{((EnvironmentTemplateEntity)call.getArgument(0)).setId(1L);return 1;});EnvironmentTemplateEntity saved=new EnvironmentTemplateEntity();saved.setId(1L);saved.setName("课程模板");saved.setCourse("程序设计");saved.setStatus("可复用");when(mapper.getTemplate(1L)).thenReturn(saved);when(mapper.listTemplates()).thenReturn(List.of(saved));assertSame(saved,service.createTemplate(null));var input=ArgumentCaptor.forClass(EnvironmentTemplateEntity.class);verify(mapper).insertTemplate(input.capture());assertEquals("新环境模板",input.getValue().getName());assertEquals("通用课程",input.getValue().getCourse());assertEquals("试运行",input.getValue().getStatus());assertEquals("primary",input.getValue().getTagType());service.updateTemplate(1L,saved);assertEquals("success",saved.getTagType());saved.setStatus("待更新");saved.setTagType(null);service.updateTemplate(1L,saved);assertEquals("warning",saved.getTagType());assertEquals(List.of(saved),service.deleteTemplate(1L));assertEquals(List.of(saved),service.listTemplates());assertNull(service.updateTemplate(99L,new EnvironmentTemplateEntity()));service.listTeachers();verify(mapper).listTeachers();}
     @Test void environmentBatchReplaceAndResetPreserveFullDefaultTemplates(){EnvironmentTemplateMapper mapper=mock(EnvironmentTemplateMapper.class);EnvironmentTemplateService service=new EnvironmentTemplateServiceImpl(mapper,loop);service.replaceTemplates(null);verify(mapper,never()).insertTemplate(any());service.replaceTemplates(Collections.singletonList(null));verify(mapper).insertTemplate(argThat(template->"新环境模板".equals(template.getName())));clearInvocations(mapper);service.resetTemplates();var input=ArgumentCaptor.forClass(EnvironmentTemplateEntity.class);verify(mapper,times(3)).insertTemplate(input.capture());assertEquals(List.of("Java Web 标准环境","网络攻防隔离环境","AI GPU 训练环境"),input.getAllValues().stream().map(EnvironmentTemplateEntity::getName).toList());assertTrue(input.getAllValues().stream().allMatch(template->template.getOs()!=null&&template.getSoftwareList()!=null&&template.getLabs()!=null));}

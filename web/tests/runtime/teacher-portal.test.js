@@ -7,9 +7,10 @@ import http from '../../src/api/http'
 import { getClassTimetableSemesters,listClassTimetables } from '../../src/api/services/classTimetable'
 import { loadTeachingCalendar } from '../../src/modules/teaching-calendar/teachingCalendar'
 import { ElMessage } from 'element-plus'
+import { getStoredUser } from '../../src/api/services/auth'
 const router=vi.hoisted(()=>({push:vi.fn()}))
 vi.mock('vue-router',()=>({useRouter:()=>router}))
-vi.mock('../../src/api/services/auth',()=>({getStoredUser:()=>({id:7,realName:'教师甲',permissions:['课表数据']})}))
+vi.mock('../../src/api/services/auth',()=>({getStoredUser:vi.fn(()=>({id:7,realName:'教师甲',permissions:['课表数据']}))}))
 vi.mock('../../src/api/http',()=>({default:{get:vi.fn()}}))
 vi.mock('../../src/api/services/classTimetable',()=>({getClassTimetableSemesters:vi.fn(),listClassTimetables:vi.fn()}))
 vi.mock('../../src/modules/teaching-calendar/teachingCalendar',()=>({loadTeachingCalendar:vi.fn(),getAcademicWeek:()=>7,getTeachingWeekStartDate:()=>new Date(2026,9,19)}))
@@ -37,5 +38,27 @@ it('failed synchronization retains current data and can stay silent on initial l
 })
 it('calendar failure prevents schedule loading and navigation opens teacher routes',async()=>{
   loadTeachingCalendar.mockRejectedValueOnce(new Error('calendar offline'));const vm=await setup();expect(listClassTimetables).not.toHaveBeenCalled();expect(ElMessage.error).toHaveBeenCalledWith('calendar offline');vm.goToSchedule();expect(router.push).toHaveBeenLastCalledWith('/teacher/schedule');vm.goToTimetableData();expect(router.push).toHaveBeenLastCalledWith('/teacher/class-timetable-data')
+})
+
+it('legacy teacher identity selects a stable binding key and semester fallback',async()=>{
+  loadTeachingCalendar.mockResolvedValueOnce({semester:''})
+  getStoredUser.mockReturnValueOnce({username:'legacy',name:'旧教师'})
+  localStorage.setItem('teacher-schedule-binding:legacy','绑定教师')
+  const vm=await setup();expect(vm.teacherName).toBe('绑定教师');expect(vm.semester).toBe('2026秋')
+  expect(vm.resolvePeriodStart({startSection:3})).toBe(3)
+  expect(vm.resolveCourseTimeText({})).toBe('待确认')
+  vm.environmentRecords=[{title:'程序设计',confirmStatus:'已完成'}]
+  expect(vm.normalizePortalCourse(records[0]).title).toBe('程序设计')
+})
+it('absent teacher identity and empty semester do not send placeholder filters',async()=>{
+  getStoredUser.mockReturnValueOnce(null);loadTeachingCalendar.mockResolvedValueOnce({semester:''});getClassTimetableSemesters.mockResolvedValueOnce([])
+  listClassTimetables.mockResolvedValue([])
+  const vm=await setup();expect(vm.teacherName).toBe('');expect(vm.bindingStorageKey).toBe('teacher-schedule-binding:default')
+  expect(listClassTimetables).toHaveBeenCalledWith(expect.objectContaining({teacher:undefined,semester:undefined}))
+  await vm.syncTeacherData();expect(ElMessage.warning).toHaveBeenCalledWith('未匹配到第 7 周课表')
+  listClassTimetables.mockRejectedValueOnce({});await vm.syncTeacherData();expect(ElMessage.warning).toHaveBeenCalledWith('教师工作台同步失败，已保留当前数据')
+})
+it('calendar rejection without an Error still presents a useful message',async()=>{
+  loadTeachingCalendar.mockRejectedValueOnce({});await setup();expect(ElMessage.error).toHaveBeenCalledWith('教学日历加载失败')
 })
 

@@ -11,6 +11,28 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LoginAttemptLimiterTest {
+    @Test
+    void unknownUserAndProxyAddressNormalizationKeepLimitsScoped() {
+        var limiter = new LoginAttemptLimiter(3, 60);
+        var forwarded = request("127.0.0.1");
+        forwarded.addHeader("X-Forwarded-For", " 192.0.2.1, 192.0.2.2 ");
+        forwarded.addHeader("X-Real-IP", "192.0.2.3");
+        for (int i = 0; i < 3; i++) limiter.recordFailure(null, forwarded);
+        var direct = request("192.0.2.1");
+        assertThrows(IllegalArgumentException.class, () -> limiter.assertAllowed(" ", direct));
+        assertDoesNotThrow(() -> limiter.assertAllowed("named", direct));
+        var realIp = request("127.0.0.1");
+        realIp.addHeader("X-Forwarded-For", " ");
+        realIp.addHeader("X-Real-IP", " 192.0.2.1 ");
+        assertThrows(IllegalArgumentException.class, () -> limiter.assertAllowed(null, realIp));
+        limiter.recordSuccess("", realIp);
+        assertDoesNotThrow(() -> limiter.assertAllowed(null, forwarded));
+        var blankHeaders = request("192.0.2.1");
+        blankHeaders.addHeader("X-Forwarded-For", "");
+        blankHeaders.addHeader("X-Real-IP", " ");
+        for (int i = 0; i < 3; i++) limiter.recordFailure("", blankHeaders);
+        assertThrows(IllegalArgumentException.class, () -> limiter.assertAllowed(null, direct));
+    }
     /**
      * repeated失败LockTheSameAccountAnd客户端的处理逻辑。
      */

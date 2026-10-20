@@ -231,11 +231,13 @@ class ReservationWorkflowBehaviorTest {
         request=reservation();request.setStatus("已通过");service.insertReservation(request);assertEquals("已通过",request.getStatus());assertTrue(request.getConflict());
     }
     @Test void failedApprovalAndRejectionUpdatesDoNotReportSuccess() {
-        when(mapper.getApproved(anyInt(),any())).thenReturn(0);
-        assertThrows(IllegalArgumentException.class,()->service.getApproved(1,new ReservationsEntity()));
-        when(mapper.getRejected(anyInt(),any())).thenReturn(0);
+        doReturn(0).when(mapper).getApproved(anyInt(),any());
+        assertEquals("预约记录不存在",assertThrows(IllegalArgumentException.class,()->service.getApproved(1,new ReservationsEntity())).getMessage());
+        verify(mapper).getApproved(eq(1),any());
+        doReturn(0).when(mapper).getRejected(anyInt(),any());
         var rejection=new ReservationsEntity();rejection.setReviewRemark("预约材料不完整");
-        assertThrows(IllegalArgumentException.class,()->service.getRejected(1,rejection));
+        assertEquals("预约记录不存在",assertThrows(IllegalArgumentException.class,()->service.getRejected(1,rejection)).getMessage());
+        verify(mapper).getRejected(eq(1),eq(rejection));
         verify(events,never()).syncUsageRecordAfterReservationApproved(any());
     }
     @Test void historicalMalformedTimesAreReadableWithoutAutoExpiringThem() {
@@ -265,6 +267,28 @@ class ReservationWorkflowBehaviorTest {
         saved=reservation();saved.setStatus("已通过");saved.setReservationDate(LocalDate.now().minusDays(1));when(mapper.getReservation(1)).thenReturn(saved);
         var cancellation=reservation();cancellation.setStatus("已取消");cancellation.setReviewRemark("教学安排已调整");
         assertThrows(IllegalArgumentException.class,()->service.updateReservation(1,cancellation));
+    }
+    @Test void historicalMissingLabsDoNotBreakDeletionAndBlankReviewersReceiveDefault() {
+        saved.setLabId(null);service.deleteReservation(1);
+        verify(labs,never()).updateLabOpenStatus(anyInt(),anyString());
+        saved.setLabId(7L);when(labs.getLabById(7)).thenReturn(null);
+        service.deleteReservation(1);verify(labs).updateLabOpenStatus(7,"开放");
+        when(labs.getLabById(7)).thenReturn(lab);
+        var request=reservation();request.setReviewerName(" ");request.setContact("班主任张老师");
+        service.insertReservation(request);assertEquals("待审核",request.getReviewerName());
+        assertEquals("班主任张老师",request.getContact());
+    }
+    @Test void shortNonPhoneContactsAreRejectedByHistoricalImportWithoutWrites() {
+        for(String contact:List.of("a","1","12")) {
+            var request=reservation();request.setContact(contact);
+            assertTrue(assertThrows(IllegalArgumentException.class,()->service.insertReservation(request)).getMessage().contains("联系人"));
+        }
+        verify(mapper,never()).insertReservation(any());
+    }
+    @Test void approvalTreatsNullCapacityAsUnboundedAndRetainsDefaultAttendeeCount() {
+        lab.setCapacity(null);saved.setAttendeeCount(null);
+        assertSame(saved,service.getApproved(1,new ReservationsEntity()));
+        verify(events).syncUsageRecordAfterReservationApproved(saved);
     }
     private ReservationsEntity reservation() {
         // Future dates keep workflow assertions independent of the wall-clock hour.

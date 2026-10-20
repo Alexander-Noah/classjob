@@ -173,6 +173,14 @@ class AcademicScheduleBehaviorTest {
         }
         verify(credentials,never()).saveCredential(any());
     }
+    @Test void fullWeekTablesIgnoreExtraColumnsAndPreserveMetadataOnlyLegacyTitles() {
+        var request=request();request.setHtml("<table><tr><td>第1节 08:30~10:00</td>"+
+                "<td>第1周<br>教师：张老师</td>"+"<td>程序设计</td>".repeat(6)+"<td>越界课程</td></tr></table>");
+        var courses=service.parseSchedule(request);assertEquals(7,courses.size());
+        assertEquals("第1周",courses.get(0).getCourseName());assertEquals("张老师",courses.get(0).getTeacherName());
+        assertEquals("周日",courses.get(6).getDayLabel());
+        assertTrue(courses.stream().noneMatch(course->"越界课程".equals(course.getCourseName())));
+    }
     private AcademicScheduleImportRequest request() { var value = new AcademicScheduleImportRequest(); value.setBaseUrl("https://jw.hniu.cn"); return value; }
     private HttpResponse<String> response(int status, String body) {
         return new HttpResponse<>() {

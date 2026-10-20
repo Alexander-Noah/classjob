@@ -13,6 +13,18 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class AiPlatformChatServiceTest {
+    @Test void aSingleOversizedRecordIsOmittedWithoutInventingANumericOffset() {
+        setup(true);
+        when(data.query(eq(actor),anyMap())).thenReturn(Map.of("dataset","consumables","source","库存","records",List.of(Map.of("remark","x".repeat(15000))),"offset","legacy","groups",Map.of("分类",1)));
+        when(config.chatWithContext(eq(7),anyString(),anyString())).thenReturn("{\"queries\":[{\"dataset\":\"consumables\"}]}","结果过长，请缩小范围");
+        Map<String,Object> result=chat.chat(7,"查询详细备注",List.of());
+        assertTrue(result.get("answer").toString().startsWith("结果过长"));
+        var context=org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(config,times(2)).chatWithContext(eq(7),anyString(),context.capture());
+        String last=context.getAllValues().get(1);
+        assertTrue(last.contains("\"records\":[]"));assertTrue(last.contains("\"nextOffset\":0"));assertTrue(last.contains("\"truncated\":true"));
+        assertFalse(last.contains("x".repeat(15000)));
+    }
     @Test void repeatedReadOnlyQueriesRequestClarificationInsteadOfLoopingOrFabricatingFacts() {
         setup(true);
         when(data.query(eq(actor),anyMap())).thenReturn(Map.of("dataset","consumables","records",List.of()));

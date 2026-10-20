@@ -17,6 +17,24 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class ActivationCodeBehaviorTest {
+    @Test void legacyLabBindingsIncludeCodeOrNameWithoutIdsAndHideDeletedEntries() {
+        var byCode=code("code-only");byCode.put("labCode","A101");
+        var byName=code("name-only");byName.put("labName","旧机房");
+        var deleted=code("deleted");deleted.put("labName","已删除");deleted.put("deleted",true);
+        put(byCode,byName,deleted);
+        assertEquals(2,maps(controller.listLabActivationBindings().getData()).size());
+        var target=code("target");put(target,byName);
+        assertError(controller.bindActivationCodeToLab(Map.of("code","target","labId","7","labName","旧机房")));
+        assertEquals(200,controller.bindActivationCodeToLab(Map.of("code","target","labId","7","labName","新机房")).getCode());
+    }
+    @Test void inactiveLegacyBindingCanBeReboundAndOldMacOnlyBindingsRemainVisible() {
+        var target=code("target");var old=binding("legacy-machine","UNBOUND");old.put("deviceId","old-device");old.put("macAddress","001122334455");
+        target.put("boundDevices",List.of(old));var unrelated=code("other");unrelated.put("boundDevices",List.of(binding("unrelated","ACTIVE")));put(target,unrelated);
+        assertEquals(200,controller.remoteBindActivationDevice("target",Map.of("machineCode","old-device","macAddress","001122334455")).getCode());
+        assertEquals(1,maps(controller.listActivationCodeBindings("target").getData()).stream().filter(row->"ACTIVE".equals(row.get("status"))).count());
+        var macOnly=new LinkedHashMap<String,Object>();macOnly.put("macAddress","AABBCCDDEEFF");macOnly.put("status","UNBOUND");target.put("boundDevices",List.of(macOnly));
+        assertEquals(1,maps(controller.listActivationCodeBindings("target").getData()).size());
+    }
     private final Map<String, List<Map<String, Object>>> store = new HashMap<>();
     private final ModuleRecordService records = mock(ModuleRecordService.class);
     private final BusinessLoopService events = mock(BusinessLoopService.class);

@@ -286,3 +286,33 @@ it('export uses filtered records and reset honors cancel before restoring initia
   expect(state.keyword.value).toBe('')
   expect(state.reservations.value).toEqual([])
 })
+
+it('missing lab metadata falls back to usable choices and incomplete edits remain visible',async()=>{
+ labResourceService.list.mockRejectedValueOnce({})
+ service.list.mockResolvedValueOnce([record({date:'',timeRange:'',scene:''})])
+ const state=await setup();expect(state.labOptions.value.length).toBeGreaterThan(0)
+ state.openEditDialog(state.reservations.value[0])
+ expect(state.formModel).toMatchObject({date:'',timeRange:'',scene:''})
+ expect(state.dialogVisible.value).toBe(true)
+})
+it('invalid backend list and reset responses recover to the declared starter records',async()=>{
+ service.list.mockResolvedValueOnce({records:[]});labResourceService.list.mockResolvedValueOnce([])
+ const state=await setup();expect(state.labOptions.value.length).toBeGreaterThan(0)
+ expect(Array.isArray(state.reservations.value)).toBe(true)
+ service.reset.mockResolvedValueOnce(undefined);await state.resetReservations()
+ expect(state.reservations.value.length).toBeGreaterThan(0);expect(state.keyword.value).toBe('')
+})
+it.each([
+ ['approve','通过预约失败'],['reject','驳回预约失败'],['cancel','取消预约失败'],['delete','删除预约失败'],
+])('unstructured %s failures retain records and surface the operation-specific reason',async(action,message)=>{
+ const state=await setup(),previous=state.reservations.value.map(row=>({...row}))
+ const serviceMethod={approve:'approve',reject:'reject',cancel:'update',delete:'remove'}[action]
+ service[serviceMethod].mockRejectedValueOnce({})
+ await state[`${action}Reservation`](state.reservations.value[0])
+ expect(ElMessage.error).toHaveBeenLastCalledWith(message)
+ expect(state.reservations.value).toEqual(previous)
+})
+it('over-capacity form values are clamped when a smaller lab is selected',async()=>{
+ const state=await setup();state.openCreateDialog();fill(state)
+ state.formModel.attendees=80;await nextTick();expect(state.formModel.attendees).toBe(40)
+})

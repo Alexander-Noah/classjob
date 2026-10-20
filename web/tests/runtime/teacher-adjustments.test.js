@@ -38,4 +38,33 @@ it('sync failures retain current records and release loading state',async()=>{
 it('hero commands open blank dialog, sync, export filtered rows and navigate home',async()=>{
   const vm=await setup();await vm.handleHeroAction({command:'create'});expect(vm.dialogVisible).toBe(true);expect(vm.adjustmentPrefill).toBeNull();await vm.handleHeroAction({command:'sync'});expect(api.listScheduleAdjustments).toHaveBeenCalledTimes(2);vm.activeStatus='审核中';await vm.handleHeroAction({command:'export'});expect(exportTableToExcel).toHaveBeenCalledWith(expect.objectContaining({rows:[vm.requestList[0]],filename:'调课申请'}));vm.activeStatus='missing';vm.exportAdjustmentRequests();expect(ElMessage.warning).toHaveBeenCalledWith('暂无可导出的调课申请');vm.handleBack();expect(router.push).toHaveBeenCalledWith('/teacher')
 })
+it('empty route drafts remain closed and missing error messages use actionable fallbacks', async () => {
+  route.query={action:'create',course:' '}
+  const vm=await setup();expect(vm.dialogVisible).toBe(false)
+  api.listScheduleAdjustments.mockRejectedValueOnce(null)
+  await vm.syncAdjustments()
+  expect(ElMessage.warning).toHaveBeenCalledWith('调课申请加载失败，已保留当前列表')
+  expect(ElMessage.success).not.toHaveBeenCalled()
+  api.updateScheduleAdjustment.mockRejectedValueOnce({})
+  await vm.withdrawAdjustment()
+  expect(ElMessage.error).toHaveBeenCalledWith('调课申请撤回失败')
+  api.createScheduleAdjustment.mockRejectedValueOnce({})
+  await vm.handleSave({course:'失败'})
+  expect(ElMessage.error).toHaveBeenCalledWith('调课申请提交失败')
+  await vm.handleHeroAction({command:'unknown'})
+  expect(vm.requestList).toHaveLength(3)
+})
+it('route drafts need no lab or time and withdrawing a nonselected row keeps the selected request', async () => {
+  route.query={action:'create',course:'数据库'}
+  const vm=await setup(true),w=wrappers.at(-1)
+  expect(vm.adjustmentPrefill).toMatchObject({originalTime:'',reason:''})
+  vm.requestList.push(vm.normalizeAdjustment({id:8,course:'新课程',status:'审核中'}))
+  vm.selectedRequest=vm.requestList[1]
+  await flushPromises()
+  const buttons=w.findAll('button').filter(button=>button.text()==='撤回')
+  expect(buttons.length).toBeGreaterThan(0)
+  await buttons.at(-1).trigger('click');await flushPromises()
+  expect(api.updateScheduleAdjustment).toHaveBeenCalledWith(8,expect.objectContaining({status:'已取消'}))
+  expect(vm.selectedRequest.id).toBe(2)
+})
 

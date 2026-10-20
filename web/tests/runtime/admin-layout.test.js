@@ -9,17 +9,17 @@ import { uploadUserAvatar } from '../../src/api/services/users'
 import { ElMessage } from 'element-plus'
 const navigation=vi.hoisted(()=>({push:vi.fn(),replace:vi.fn()}));let route
 vi.mock('vue-router',()=>({useRoute:()=>route,useRouter:()=>navigation}))
-vi.mock('../../src/api/services/auth',()=>({getStoredRole:()=> 'teacher',getStoredUser:()=>({id:7,username:'teacher',realName:'教师甲',roleName:'教师',department:'计算机',avatarUrl:''}),logout:vi.fn(),updateCurrentUserProfile:vi.fn(),updateStoredUser:vi.fn(user=>user)}))
+vi.mock('../../src/api/services/auth',()=>({getStoredRole:vi.fn(()=> 'teacher'),getStoredUser:vi.fn(()=>({id:7,username:'teacher',realName:'教师甲',roleName:'教师',department:'计算机',avatarUrl:''})),logout:vi.fn(),updateCurrentUserProfile:vi.fn(),updateStoredUser:vi.fn(user=>user)}))
 vi.mock('../../src/api/services/users',()=>({uploadUserAvatar:vi.fn()}))
 vi.mock('../../src/composables/useAdminGlass',()=>({useAdminGlass:()=>({glassRoot:ref(null)})}))
 vi.mock('../../src/composables/useCurrentTime',()=>({useCurrentTime:()=>({currentTime:ref('2026-10-18')})}))
 vi.mock('element-plus',()=>({ElImageViewer:{template:'<div />'},ElMessage:{success:vi.fn(),error:vi.fn(),warning:vi.fn()}}))
 const wrappers=[]
-function layoutStubs(){const stubs=formStubs();for(const name of ['container','aside','header','main','menu','sub-menu','menu-item','breadcrumb','breadcrumb-item','avatar','upload'])stubs[`el-${name}`]=defineComponent({setup(_,{slots}){return()=>h('section',[slots.default?.(),slots.title?.(),slots.dropdown?.(),slots.trigger?.()])}});return stubs}
+function layoutStubs(){const stubs=formStubs();for(const name of ['dropdown','container','aside','header','main','menu','sub-menu','menu-item','breadcrumb','breadcrumb-item','avatar','upload'])stubs[`el-${name}`]=defineComponent({setup(_,{slots}){return()=>h('section',[slots.default?.(),slots.title?.(),slots.dropdown?.(),slots.trigger?.()])}});return stubs}
 it('rendered navigation and profile editor bind changes and sidebar controls',async()=>{route.meta.roleScope='labAdmin';const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('教师甲');expect(w.get('.brand-lockup').attributes('src')).toBe('/login-brand-transparent.png');await w.get('[aria-label="切换菜单"]').trigger('click');expect(vm.isSidebarCollapsed).toBe(true);window.innerWidth=600;await w.get('[aria-label="切换菜单"]').trigger('click');expect(w.find('.sidebar-mask').exists()).toBe(true);await w.get('.sidebar-mask').trigger('click');expect(vm.isMobileMenuOpen).toBe(false);vm.openProfileDialog();await flushPromises();for(const input of w.findAll('input').filter(x=>!x.element.disabled))await input.setValue('修改值');expect(vm.profileForm.realName).toBe('修改值');expect(vm.profileForm.department).toBe('修改值');vm.profileForm.avatarUrl='data:image/png;base64,a';await flushPromises();expect(w.find('.profile-panel').exists()).toBe(true)})
 beforeEach(()=>{vi.clearAllMocks();route=reactive({path:'/teacher',meta:{roleScope:'teacher'},matched:[{meta:{title:'教师工作台'}}]});auth.updateCurrentUserProfile.mockImplementation(async user=>user);uploadUserAvatar.mockResolvedValue({objectKey:'avatars/7.png'});vi.spyOn(URL,'createObjectURL').mockReturnValue('blob:preview');vi.spyOn(URL,'revokeObjectURL').mockImplementation(()=>{});Object.defineProperty(window,'innerWidth',{value:1200,writable:true,configurable:true})})
 afterEach(()=>{wrappers.splice(0).forEach(wrapper=>wrapper.unmount());vi.restoreAllMocks()})
-async function setup(render=false){const wrapper=shallowMount(Layout,{global:{stubs:render?layoutStubs():Object.fromEntries(['container','aside','header','main','menu','sub-menu','menu-item','menu-item-group','icon','button','breadcrumb','breadcrumb-item','dropdown','dropdown-menu','dropdown-item','avatar','dialog','form','form-item','input','upload','scrollbar','tooltip','router-view','router-link'].map(name=>[name.startsWith('router')?name:`el-${name}`,true]))}});wrappers.push(wrapper);await flushPromises();return wrapper.vm}
+async function setup(render=false){const wrapper=shallowMount(Layout,{global:{stubs:render?layoutStubs():Object.fromEntries(['dropdown','container','aside','header','main','menu','sub-menu','menu-item','menu-item-group','icon','button','breadcrumb','breadcrumb-item','dropdown','dropdown-menu','dropdown-item','avatar','dialog','form','form-item','input','upload','scrollbar','tooltip','router-view','router-link'].map(name=>[name.startsWith('router')?name:`el-${name}`,true]))}});wrappers.push(wrapper);await flushPromises();return wrapper.vm}
 it('uses session identity, role menus and route breadcrumbs',async()=>{
   const vm=await setup();expect(vm.currentUserName).toBe('教师甲');expect(vm.currentUserRole).toBe('教师');route.meta.roleScope='labAdmin';expect(vm.navMenus.length).toBeGreaterThan(0);expect(vm.sidebarWidth).toBe('236px');expect(vm.activeMenu).toBe('/teacher');expect(vm.breadcrumbItems).toEqual([{title:'教师工作台',to:undefined}]);route.meta.breadcrumb=[{title:'首页',path:'/teacher'},{title:'课程'}];expect(vm.breadcrumbItems).toEqual([{title:'首页',to:{path:'/teacher'}},{title:'课程',to:undefined}]);route.meta.activeMenu='/teacher/schedule';expect(vm.activeMenu).toBe('/teacher/schedule')
 })
@@ -45,3 +45,29 @@ it('user commands open profile or clear authentication and replace the login rou
   const vm=await setup();await vm.handleUserCommand('profile');expect(vm.profileDialogVisible).toBe(true);await vm.handleUserCommand('unknown');expect(auth.logout).not.toHaveBeenCalled();await vm.handleUserCommand('logout');expect(auth.logout).toHaveBeenCalled();expect(navigation.replace).toHaveBeenCalledWith('/login')
 })
 
+it('legacy and absent session identities retain usable profile defaults',async()=>{
+  for(const user of [{name:'旧姓名',role:'实验室管理员'}, {username:'account'}, null]) {
+    auth.getStoredUser.mockReturnValueOnce(user)
+    const vm=await setup();vm.openProfileDialog()
+    expect(vm.currentUserName).toBeTruthy();expect(vm.currentUserRole).toBeTruthy()
+    expect(vm.profileForm.username).toBe(user?.username||'')
+    expect(vm.profileForm.realName).toBe(user?.name||'')
+    expect(vm.profileForm.department).toBe('')
+    vm.openAvatarViewer('');expect(vm.avatarViewerUrl).toBe('')
+  }
+})
+it('profile fallback errors keep the editor open and preserve the entered name',async()=>{
+  const vm=await setup();vm.openProfileDialog();vm.profileForm.realName='修改待保存'
+  for(const error of [new Error('服务器离线'), {}]) {
+    auth.updateCurrentUserProfile.mockRejectedValueOnce(error);await vm.saveProfile()
+    expect(vm.profileDialogVisible).toBe(true);expect(vm.profileForm.realName).toBe('修改待保存')
+    expect(ElMessage.error).toHaveBeenLastCalledWith(error.message||'保存个人信息失败')
+  }
+})
+it('rendered account menu and avatar preview expose the expected controls',async()=>{
+  const vm=await setup(true),w=wrappers.at(-1)
+  expect(w.text()).toContain('个人中心');expect(w.text()).toContain('退出登录')
+  vm.openAvatarViewer('data:image/png;base64,a');await flushPromises()
+  expect(vm.avatarViewerUrl).toBe('data:image/png;base64,a')
+  vm.closeAvatarViewer();await flushPromises();expect(vm.avatarViewerUrl).toBe('')
+})

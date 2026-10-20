@@ -77,6 +77,17 @@ class JwtTokenBehaviorTest {
         assertTrue(minimum.validateToken(minimum.generateToken(user)).expiresAt() >= now + 300);
     }
 
+    @Test void signedTruncatedClaimsStillFailValidationAndWhitespaceDelimitedNumbersRemainValid() throws Exception {
+        long future=Instant.now().getEpochSecond()+1000;
+        var valid=service.validateToken(token("{\"iss\" : \"smart-lab\",\"exp\" : "+future+",\"sub\" : \"admin\"}"));
+        assertEquals("admin",valid.username());
+        for(String broken:new String[]{"{\"iss\"}","{\"iss\":   ",
+                "{\"iss\":\"smart-lab\",\"exp\":true}",
+                "{\"iss\":\"smart-lab\",\"exp\":"+future+",\"sub\":\"unterminated",
+                "{\"iss\":\"smart-lab\",\"exp\":"+future+",\"sub\":\""+"\\u1"}) {
+            assertThrows(IllegalArgumentException.class,()->service.validateToken(token(broken)),broken);
+        }
+    }
     private String payload(String subject, long expires) {
         return "{\"sub\":\"" + subject + "\",\"iss\":\"smart-lab\",\"exp\":" + expires + "}";
     }

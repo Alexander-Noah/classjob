@@ -9,6 +9,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MaintenanceRecordAccessTest {
+    @Test
+    void optionalLegacyPermissionsAndExplicitReadOnlyGroupsRemainDistinct() {
+        for (String permissions : new String[]{null, "", "  ", "[]"})
+            assertTrue(MaintenanceRecordAccess.canWrite("labAdmin", permissions));
+        for (String permissions : new String[]{"null", "{}", "true", "[1,null,{}, {\"items\":null}, {\"items\":\"故障报修\"}]", "[\"维护记录查看\"]"})
+            assertFalse(MaintenanceRecordAccess.canWrite("labAdmin", permissions), String.valueOf(permissions));
+        assertTrue(MaintenanceRecordAccess.canWrite("labAdmin", "[{}, {\"items\":[\"维护记录查看\",\"故障报修\"]}]"));
+        assertTrue(MaintenanceRecordAccess.canWrite("systemAdmin", "broken-json"));
+        assertFalse(MaintenanceRecordAccess.canWrite(null, null));
+        assertFalse(MaintenanceRecordAccess.canWrite("academic", "[\"故障报修\"]"));
+    }
     /**
      * legacyWrite权限WorkButReadOnly权限DoNot的处理逻辑。
      */
