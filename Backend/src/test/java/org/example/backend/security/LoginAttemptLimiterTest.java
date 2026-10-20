@@ -12,6 +12,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LoginAttemptLimiterTest {
     @Test
+    void expiredLockStartsANewFailureWindowInsteadOfReusingOldAttempts() {
+        var start=java.time.Instant.ofEpochSecond(1000);
+        var expired=java.time.Instant.ofEpochSecond(1061);
+        var limiter=new LoginAttemptLimiter(3,60);var request=request("192.0.2.1");
+        try(var clock=org.mockito.Mockito.mockStatic(java.time.Instant.class)) {
+            clock.when(java.time.Instant::now).thenReturn(start);
+            for(int i=0;i<3;i++)limiter.recordFailure("Alice",request);
+            assertThrows(IllegalArgumentException.class,()->limiter.assertAllowed("Alice",request));
+            clock.when(java.time.Instant::now).thenReturn(expired);
+            assertDoesNotThrow(()->limiter.assertAllowed("Alice",request));
+            limiter.recordFailure("Alice",request);limiter.recordFailure("Alice",request);
+            assertDoesNotThrow(()->limiter.assertAllowed("Alice",request));
+            limiter.recordFailure("Alice",request);
+            assertThrows(IllegalArgumentException.class,()->limiter.assertAllowed("Alice",request));
+        }
+    }
+    @Test
     void unknownUserAndProxyAddressNormalizationKeepLimitsScoped() {
         var limiter = new LoginAttemptLimiter(3, 60);
         var forwarded = request("127.0.0.1");

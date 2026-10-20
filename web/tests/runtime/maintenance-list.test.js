@@ -45,3 +45,30 @@ it('legacy edit entry opens selected record and server errors release action loc
 })
 
 
+
+it('failed older loads never replace a newer result with a stale error',async()=>{
+ const vm=await setup();let rejectOld
+ api.listMaintenanceRecords.mockImplementationOnce(()=>new Promise((_resolve,reject)=>rejectOld=reject)).mockResolvedValueOnce([records[1]])
+ const old=vm.loadRecords();await vm.loadRecords();rejectOld({});await old
+ expect(vm.records).toEqual([records[1]]);expect(vm.loadError).toBe('');expect(vm.loading).toBe(false)
+})
+it('legacy create opens a clean editor and closing an untouched form needs no confirmation',async()=>{
+ route.query={create:'1'};const vm=await setup()
+ expect(vm.editorVisible).toBe(true);expect(vm.editorRecord).toEqual({})
+ vm.editorRef={isDirty:()=>false};await vm.closeEditor();expect(vm.editorVisible).toBe(false)
+ expect(ElMessageBox.confirm).not.toHaveBeenCalled()
+ api.getMaintenanceRecord.mockRejectedValueOnce({});await vm.editRecord({recordNo:'LEGACY-7'})
+ expect(api.getMaintenanceRecord).toHaveBeenLastCalledWith('LEGACY-7')
+ expect(ElMessage.error).toHaveBeenLastCalledWith('维护记录加载失败');expect(vm.actionId).toBe('')
+})
+it('deleting another record preserves the currently displayed detail',async()=>{
+ const vm=await setup();await vm.openDetail(records[1]);api.listMaintenanceRecords.mockResolvedValueOnce([records[1]])
+ await vm.removeRecord(records[0]);expect(vm.detailVisible).toBe(true);expect(vm.selectedRecord.id).toBe(2)
+})
+it('rendered load failures retry through the visible action and read-only columns omit writes',async()=>{
+ session.user={roleCode:'academic'};api.listMaintenanceRecords.mockRejectedValueOnce({})
+ const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('维护记录加载失败，请重新加载')
+ await w.findAll('button').find(b=>b.text()==='重新加载').trigger('click');await flushPromises()
+ expect(vm.loadError).toBe('');expect(w.text()).toContain('MR1')
+ expect(w.findAll('button').some(b=>b.text()==='编辑')).toBe(false)
+})

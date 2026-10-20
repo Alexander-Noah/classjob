@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { shallowMount, flushPromises } from '@vue/test-utils'
+import { defineComponent,h } from 'vue'
 import NoticeCenter from '../../src/views/notices/NoticeCenter.vue'
 import { noticeService as api } from '../../src/api/services/notices'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -22,7 +23,9 @@ beforeEach(() => {
 afterEach(() => { wrappers.splice(0).forEach(wrapper => wrapper.unmount()) })
 async function setup(render = false) {
   const names = ['button','card','tabs','tab-pane','input','select','option','table','table-column','tag','dialog','drawer','form','form-item','radio-group','radio-button','empty','icon','alert']
-  const wrapper = shallowMount(NoticeCenter, { global: { directives: { loading: {} }, stubs: render ? tableStubs() : Object.fromEntries(names.map(name => [`el-${name}`, true])) } }); wrappers.push(wrapper); await flushPromises(); return wrapper.vm
+  const stubs=render ? tableStubs() : Object.fromEntries(names.map(name => [`el-${name}`, true]))
+  if(render)stubs['el-dialog']=defineComponent({setup(_,{slots}){return()=>h('section',[slots.header?.(),slots.default?.(),slots.footer?.()])}})
+  const wrapper = shallowMount(NoticeCenter, { global: { directives: { loading: {} }, stubs } }); wrappers.push(wrapper); await flushPromises(); return wrapper.vm
 }
 it('rendered notice editor binds title and content and saves a draft through its footer',async()=>{
   const vm=await setup(true),wrapper=wrappers.at(-1)
@@ -78,6 +81,17 @@ it('optional source failures return empty data without leaving loading state', a
   api.list.mockRejectedValueOnce(new Error('offline')); api.stats.mockRejectedValueOnce(new Error('offline')); api.userNotices.mockRejectedValueOnce(new Error('offline'))
   const vm = await setup(); expect(vm.notices).toEqual([]); expect(vm.myNotices).toEqual([]); expect(vm.loading).toBe(false)
   await vm.loadRecipients(null); expect(vm.recipients).toEqual([]); warn.mockRestore()
+})
+it('management detail shows recipients and missing publication content, then switches to personal read status',async()=>{
+  route.meta={roleScope:'systemAdmin'}
+  api.recipients.mockResolvedValue([{realName:'教师甲',readTime:'2026-10-20T09:00:00'}])
+  const vm=await setup(true),w=wrappers.at(-1)
+  vm.activeTab='manage';await vm.viewNotice({id:2,title:'通知',status:'草稿',content:'',publishTimeText:''});await flushPromises()
+  expect(w.text()).toContain('通知详情');expect(w.text()).toContain('尚未发布');expect(w.text()).toContain('暂无内容')
+  expect(w.text()).toContain('教师甲');expect(w.text()).toContain('2026-10-20 09:00')
+  vm.activeTab='my';await vm.readMyNotice({id:3,noticeId:3,title:'个人通知',readStatus:'未读',content:'正文'});await flushPromises()
+  expect(w.text()).toContain('阅读状态');expect(w.text()).toContain('正文');expect(vm.detailVisible).toBe(true)
+  vm.handleHeroAction({command:'unknown'});expect(api.syncBusinessReminders).not.toHaveBeenCalled()
 })
 
 

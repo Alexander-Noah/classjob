@@ -7,14 +7,15 @@ import * as api from '../../src/api/services/scheduleAdjustments'
 import { exportTableToExcel } from '../../src/utils/exportExcel'
 import { ElMessage } from 'element-plus'
 const route=vi.hoisted(()=>({query:{}}));const router=vi.hoisted(()=>({push:vi.fn()}))
+const identity=vi.hoisted(()=>({role:'teacher'}))
 vi.mock('vue-router',()=>({useRoute:()=>route,useRouter:()=>router}))
-vi.mock('../../src/api/services/auth',()=>({getStoredRole:()=> 'teacher'}))
+vi.mock('../../src/api/services/auth',()=>({getStoredRole:()=>identity.role}))
 vi.mock('../../src/api/services/scheduleAdjustments',()=>({createScheduleAdjustment:vi.fn(),listScheduleAdjustments:vi.fn(),updateScheduleAdjustment:vi.fn()}))
 vi.mock('../../src/utils/exportExcel',()=>({exportTableToExcel:vi.fn(options=>options.rows.length)}))
 vi.mock('element-plus',()=>({ElMessage:{warning:vi.fn(),success:vi.fn(),error:vi.fn()}}))
 const wrappers=[];const records=[{id:1,course:'数据库',originalTime:'周一',targetTime:'周二',status:'审核中'},{id:2,course:'程序设计',status:'已通过'},{id:3,course:'人工智能',status:'已调整'}]
 it('rendered adjustment table updates selection and dispatches withdrawal',async()=>{const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('数据库');expect(w.text()).toContain('程序设计');const table=w.findComponent({name:'TestTable'});table.vm.$emit('row-click',vm.requestList[1]);await flushPromises();expect(vm.selectedRequest.course).toBe('程序设计');table.vm.$emit('row-click',vm.requestList[0]);await flushPromises();await w.findAll('button').find(b=>b.text()==='撤回申请').trigger('click');await flushPromises();expect(api.updateScheduleAdjustment).toHaveBeenCalledWith(1,expect.objectContaining({status:'已取消'}));w.findComponent({name:'TeacherAdjustmentDialog'}).vm.$emit('update:modelValue',true);expect(vm.dialogVisible).toBe(true)})
-beforeEach(()=>{vi.clearAllMocks();route.query={};api.listScheduleAdjustments.mockResolvedValue(records);api.updateScheduleAdjustment.mockImplementation(async(id,payload)=>payload);api.createScheduleAdjustment.mockImplementation(async payload=>({...payload,id:4}))})
+beforeEach(()=>{identity.role='teacher';vi.clearAllMocks();route.query={};api.listScheduleAdjustments.mockResolvedValue(records);api.updateScheduleAdjustment.mockImplementation(async(id,payload)=>payload);api.createScheduleAdjustment.mockImplementation(async payload=>({...payload,id:4}))})
 afterEach(()=>wrappers.splice(0).forEach(wrapper=>wrapper.unmount()))
 async function setup(render=false){const wrapper=shallowMount(Page,{global:{directives:{loading:{}},stubs:render?panelStubs():Object.fromEntries(['button','icon','card','tag','empty','table','table-column','radio-group','radio-button','steps','step'].map(name=>[`el-${name}`,true]))}});wrappers.push(wrapper);await flushPromises();return wrapper.vm}
 it('loads and normalizes workflow metadata with filter metrics and pagination',async()=>{
@@ -66,5 +67,13 @@ it('route drafts need no lab or time and withdrawing a nonselected row keeps the
   await buttons.at(-1).trigger('click');await flushPromises()
   expect(api.updateScheduleAdjustment).toHaveBeenCalledWith(8,expect.objectContaining({status:'已取消'}))
   expect(vm.selectedRequest.id).toBe(2)
+})
+it('missing route course is ignored and unknown stored roles retain a safe home destination',async()=>{
+  route.query={action:'create'};identity.role='unknown'
+  const vm=await setup();expect(vm.dialogVisible).toBe(false)
+  vm.handleBack();expect(router.push).toHaveBeenCalledWith('/teacher')
+  vm.selectedRequest=null
+  vm.replaceAdjustment({...vm.requestList[0],status:'已取消'})
+  expect(vm.selectedRequest).toBeNull();expect(vm.requestList[0].status).toBe('已取消')
 })
 

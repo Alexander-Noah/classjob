@@ -50,3 +50,23 @@ it('load, detail and return failures remain recoverable',async()=>{
 })
 
 
+
+it('missing stock or selected loan fails quantity validation and invalid returns never write',async()=>{
+ const {vm}=await setup();vm.openBorrow();const done=vi.fn()
+ vm.borrowRules.quantity[0].validator({},1,done);expect(done.mock.calls.at(-1)[0]).toBeInstanceOf(Error)
+ vm.returnRules.quantity[0].validator({},1,done);expect(done.mock.calls.at(-1)[0]).toBeInstanceOf(Error)
+ vm.returnRef={validate:vi.fn().mockRejectedValue('invalid')};await vm.saveReturn();expect(http.post).not.toHaveBeenCalled()
+ vm.returnRef.validate.mockResolvedValue(true);vm.saving=true;await vm.saveReturn();expect(http.post).not.toHaveBeenCalled()
+})
+it('empty loan responses and nonstandard failures leave the loan panel recoverable',async()=>{
+ http.get.mockResolvedValueOnce({});const {vm}=await setup();expect(vm.rows).toEqual([])
+ http.get.mockRejectedValueOnce({});await vm.openReturn(loans[0]);expect(ElMessage.error).toHaveBeenLastCalledWith('借用详情加载失败')
+ vm.openBorrow({id:7});vm.borrowRef={validate:vi.fn().mockResolvedValue(true)};http.post.mockRejectedValueOnce({})
+ await vm.saveBorrow();expect(ElMessage.error).toHaveBeenLastCalledWith('借用登记失败');expect(vm.borrowVisible).toBe(true)
+ await vm.openReturn(loans[0]);vm.returnRef={validate:vi.fn().mockResolvedValue(true)};http.post.mockRejectedValueOnce({})
+ await vm.saveReturn();expect(ElMessage.error).toHaveBeenLastCalledWith('归还登记失败');expect(vm.returnVisible).toBe(true)
+})
+it('loan details show a missing contact explicitly rather than an empty identity line',async()=>{
+ const {vm,wrapper}=await setup(true);http.get.mockResolvedValueOnce({data:{data:loans[1]}})
+ await vm.openDetail(loans[1]);await flushPromises();expect(wrapper.text()).toContain('教师乙 / 未填写')
+})

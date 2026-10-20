@@ -8,15 +8,16 @@ import { loadTeachingCalendar } from '../../src/modules/teaching-calendar/teachi
 import { exportTableToExcel } from '../../src/utils/exportExcel'
 import { ElMessage } from 'element-plus'
 const router=vi.hoisted(()=>({push:vi.fn()}))
+const identity=vi.hoisted(()=>({user:{id:7,realName:'教师甲'},role:'teacher',missingWeekStart:false}))
 vi.mock('vue-router',()=>({useRouter:()=>router}))
-vi.mock('../../src/api/services/auth',()=>({getStoredUser:()=>({id:7,realName:'教师甲'}),getStoredRole:()=> 'teacher'}))
+vi.mock('../../src/api/services/auth',()=>({getStoredUser:()=>identity.user,getStoredRole:()=>identity.role}))
 vi.mock('../../src/api/services/classTimetable',()=>({getClassTimetableSemesters:vi.fn(),listClassTimetables:vi.fn()}))
-vi.mock('../../src/modules/teaching-calendar/teachingCalendar',()=>({loadTeachingCalendar:vi.fn(),getAcademicWeek:()=>7,getTeachingWeekStartDate:(calendar,week)=>new Date(2026,8,7+(week-1)*7)}))
+vi.mock('../../src/modules/teaching-calendar/teachingCalendar',()=>({loadTeachingCalendar:vi.fn(),getAcademicWeek:()=>7,getTeachingWeekStartDate:(calendar,week)=>identity.missingWeekStart?null:new Date(2026,8,7+(week-1)*7)}))
 vi.mock('../../src/utils/exportExcel',()=>({exportTableToExcel:vi.fn(options=>options.rows.length)}))
 vi.mock('element-plus',()=>({ElMessage:{warning:vi.fn(),error:vi.fn(),success:vi.fn()}}))
 const wrappers=[];const rows=[{id:1,teacher:'教师甲',courseName:'程序设计',weekday:'星期一',startSection:2,endSection:2,className:'软件一班',classroom:'A101'},{id:2,courseName:'数据库',weekday:'周三',sectionText:'3-4节',rowClassName:'软件二班',classroom:'A101'}]
 it('renders weekly courses and supports teacher binding, keyword search and week navigation',async()=>{const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('程序设计');expect(w.text()).toContain('数据库');await w.get('input[placeholder="教师姓名，例如：张明"]').setValue('教师丙');await w.get('input[placeholder="关键词搜索"]').setValue('程序');expect(vm.filters).toMatchObject({teacherName:'教师丙',keyword:'程序'});for(const label of ['保存绑定','查询','重置','刷新','导出','下一周','上一周']){await w.findAll('button').find(b=>b.text()===label).trigger('click');await flushPromises()}expect(localStorage.getItem('teacher-schedule-binding:7')).toBe('教师丙');expect(exportTableToExcel).toHaveBeenCalled();await w.findAll('select')[0].setValue('2026秋');await w.findAll('select')[1].setValue('8');expect(String(vm.filters.week)).toBe('8')})
-beforeEach(()=>{vi.clearAllMocks();localStorage.clear();loadTeachingCalendar.mockResolvedValue({semester:'2026秋'});getClassTimetableSemesters.mockResolvedValue(['2026秋']);listClassTimetables.mockResolvedValue(rows)})
+beforeEach(()=>{identity.user={id:7,realName:'教师甲'};identity.role='teacher';identity.missingWeekStart=false;vi.clearAllMocks();localStorage.clear();loadTeachingCalendar.mockResolvedValue({semester:'2026秋'});getClassTimetableSemesters.mockResolvedValue(['2026秋']);listClassTimetables.mockResolvedValue(rows)})
 afterEach(()=>wrappers.splice(0).forEach(wrapper=>wrapper.unmount()))
 async function setup(render=false){const wrapper=shallowMount(Page,{global:{directives:{loading:{}},stubs:render?panelStubs():Object.fromEntries(['button','icon','card','input','select','option','table','table-column','pagination','tag','empty','tooltip'].map(name=>[`el-${name}`,true]))}});wrappers.push(wrapper);await flushPromises();return wrapper.vm}
 it('loads calendar, binds current teacher and maps courses to weekday/period cells',async()=>{
@@ -54,5 +55,16 @@ it('calendar errors without messages report the default initialization failure',
   await setup()
   expect(ElMessage.error).toHaveBeenCalledWith('教学日历加载失败')
   expect(listClassTimetables).not.toHaveBeenCalled()
+})
+it.each([[{name:'姓名教师',username:'legacy'},'姓名教师','legacy'],[{username:'账号教师'},'账号教师','账号教师'],[null,'','default']])('legacy identity %s keeps its own binding key and safe display name',async(user,teacher,key)=>{
+  identity.user=user;identity.role='unknown';identity.missingWeekStart=true
+  const vm=await setup()
+  expect(vm.filters.teacherName).toBe(teacher)
+  vm.handleBack();expect(router.push).toHaveBeenCalledWith('/teacher')
+  vm.filters.teacherName='绑定教师';await vm.saveTeacherBinding()
+  expect(localStorage.getItem(`teacher-schedule-binding:${key}`)).toBe('绑定教师')
+  expect(vm.weekDays).toHaveLength(7)
+  vm.filters.teacherName='';vm.rows=rows;vm.exportTeacherSchedule()
+  expect(exportTableToExcel).toHaveBeenLastCalledWith(expect.objectContaining({filename:'教师第7周课表'}))
 })
 

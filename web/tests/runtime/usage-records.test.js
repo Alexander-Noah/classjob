@@ -109,3 +109,13 @@ it('abnormal-only filtering excludes healthy rows and optional search fields tol
   const validate = ElMessageBox.prompt.mock.calls[0][2].inputValidator
   expect(validate(null)).toBe('异常原因不能为空')
 })
+it('server rendering can load and review records without browser patch storage', async () => {
+  vi.stubGlobal('window',undefined)
+  try {
+    const state=await setup()
+    expect(state.records.value).toHaveLength(3)
+    state.markReviewed(state.records.value[0]);await flushPromises()
+    expect(state.records.value[0].status).toBe('正常')
+    expect(api.action).toHaveBeenCalledWith('1','review',expect.any(Object))
+  } finally { vi.unstubAllGlobals() }
+})

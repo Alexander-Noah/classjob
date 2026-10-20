@@ -7,6 +7,25 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class IotGatewayCommandBehaviorTest {
+    @Test void legacyConfigurationFlagsSelectRealOrUnconfiguredAdaptersConsistently() {
+        var point=Map.<String,Object>of("pointId",3L,"protocolType","http");
+        var service=new IotGatewayCommandService(jdbc(point),registry);
+        when(registry.resolve(eq("http"),anyBoolean())).thenReturn(adapter);
+        when(adapter.sendCommand(any())).thenAnswer(call->GatewayCommandResult.mockSuccess(call.getArgument(0),Map.of()));
+        for(Object flag:List.of(1,0,"true","1","yes","false","no")) {
+            clearInvocations(registry);
+            service.execute(Map.of("id",1L,"labId",2L,"configured",flag),Map.of("action","on"));
+            verify(registry).resolve("http",List.of(1,"true","1","yes").contains(flag));
+        }
+    }
+    @Test void normalizedDuplicatePayloadKeysUseTheLastValueWithoutLosingCommandAudit() {
+        var service=new IotGatewayCommandService(jdbc(Map.of()),registry);
+        when(registry.resolve("mock",false)).thenReturn(adapter);
+        when(adapter.sendCommand(any())).thenAnswer(call->GatewayCommandResult.mockSuccess(call.getArgument(0),Map.of()));
+        Map<Object,Object> payload=new LinkedHashMap<>();payload.put(7,"legacy");payload.put("7","current");
+        assertEquals(log,service.execute(Map.of("labId",2L),Map.of("action","on","payload",payload)));
+        verify(adapter).sendCommand(argThat(command->command.payload().equals(Map.of("7","current"))));
+    }
     final GatewayAdapterRegistry registry=mock(GatewayAdapterRegistry.class);
     final GatewayAdapter adapter=mock(GatewayAdapter.class);
     final Map<String,Object> log=Map.of("id",9,"resultStatus","mock_success");

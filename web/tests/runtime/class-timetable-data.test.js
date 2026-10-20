@@ -49,4 +49,22 @@ it('releases loading state and preserves existing data after request failure',as
   const vm=await setup();listClassTimetables.mockRejectedValue(new Error('offline'));await vm.loadRows();expect(vm.rows).toEqual(rows);expect(vm.isLoading).toBe(false);expect(ElMessage.error).toHaveBeenCalledWith('offline')
   getClassTimetableSemesters.mockRejectedValue(new Error('offline'));await vm.loadSemesters();expect(vm.semesters).toEqual([])
 })
+it('one-sided ranges select a single boundary and never include rows missing a section',async()=>{
+  const vm=await setup()
+  Object.assign(vm.filters,{weekStart:3,weekEnd:undefined});expect(vm.filteredRows.map(x=>x.id)).toEqual([1,2,3])
+  Object.assign(vm.filters,{weekStart:undefined,weekdayStart:'星期二',weekdayEnd:undefined});expect(vm.filteredRows.map(x=>x.id)).toEqual([1])
+  Object.assign(vm.filters,{weekdayStart:'',sectionStart:3,sectionEnd:undefined});expect(vm.filteredRows.map(x=>x.id)).toEqual([1])
+  Object.assign(vm.filters,{sectionStart:undefined,sectionEnd:3});expect(vm.filteredRows.map(x=>x.id)).toEqual([1])
+})
+it('sorting sparse legacy rows remains deterministic and absent semester is omitted from requests',async()=>{
+  getClassTimetableSemesters.mockResolvedValueOnce([])
+  const vm=await setup();expect(listClassTimetables).toHaveBeenLastCalledWith(expect.objectContaining({semester:undefined}))
+  vm.rows=[{id:1,weekday:'unknown',startSection:3,className:'乙',courseName:'乙'},
+    {id:2,weekday:'unknown',startSection:1,className:'甲',courseName:'甲'},
+    {id:3,weekday:'unknown',startSection:1,className:'甲'},
+    {id:4,weekday:'unknown',startSection:1,className:'乙'}]
+  expect(vm.sortedRows.map(x=>x.id)).toEqual([3,2,4,1])
+  expect(vm.getClassName({})).toBe('')
+  listClassTimetables.mockRejectedValueOnce({});await vm.loadRows();expect(ElMessage.error).toHaveBeenCalledWith('校园课表加载失败')
+})
 

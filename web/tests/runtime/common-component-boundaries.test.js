@@ -7,6 +7,7 @@ import PageHero from '../../src/components/common/PageHero.vue'
 import MetricGrid from '../../src/components/common/MetricGrid.vue'
 import LabHeader from '../../src/views/labs/components/LabManagementHeader.vue'
 import DevicePanel from '../../src/views/room-control/components/DeviceControlPanel.vue'
+import LabEditor from '../../src/views/labs/components/LabEditorDialog.vue'
 const wrappers=[]
 const mount=(page,props={})=>{const w=shallowMount(page,{props,global:{stubs:panelStubs()}});wrappers.push(w);return w}
 afterEach(()=>wrappers.splice(0).forEach(w=>w.unmount()))
@@ -42,4 +43,12 @@ it('hardware capability changes carry the originating device and preserve distin
   expect(state['1::power']).toEqual({enabled:true,value:''})
   expect(w.emitted('capability')[0]).toEqual([device,capabilities[0]])
   await w.setProps({devices:[],loading:true});expect(w.findAll('.device-control-card')).toHaveLength(0)
+})
+it('lab manager choices display legacy usernames and missing role labels without losing selection',async()=>{
+  const stubs=panelStubs()
+  stubs['el-option']=defineComponent({props:['value','label'],setup(props,{slots}){return()=>h('option',{value:props.value},slots.default?slots.default():props.label)}})
+  const form={managerUserId:1};const w=shallowMount(LabEditor,{props:{title:'新增实验室',modelValue:true,formModel:form,
+    managerOptions:[{id:1,username:'legacy'},{id:2,username:'admin',realName:'管理员',roleName:'实验室管理员'}]},global:{stubs}})
+  wrappers.push(w);expect(w.text()).toContain('legacy · 未分配角色');expect(w.text()).toContain('admin · 实验室管理员')
+  await w.get('select[aria-label="请选择负责人"]').setValue('2');expect(String(form.managerUserId)).toBe('2')
 })

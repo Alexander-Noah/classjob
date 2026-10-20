@@ -12,6 +12,16 @@ import static org.mockito.Mockito.*;
 import jakarta.servlet.FilterChain;
 
 class HttpFilterBehaviorTest {
+    @Test void blankForwardingHeadersFallBackToRemoteAddressAndGenerateARequestId() throws Exception {
+        Logger logger=(Logger)LoggerFactory.getLogger(RequestLoggingFilter.class);var appender=new ListAppender<ILoggingEvent>();appender.start();logger.addAppender(appender);
+        try {
+            var request=new MockHttpServletRequest("GET","/health");request.setRemoteAddr("192.0.2.7");request.setQueryString(" ");
+            request.addHeader("X-Request-Id"," ");request.addHeader("X-Forwarded-For"," ");request.addHeader("X-Real-IP"," ");
+            var response=new MockHttpServletResponse();new RequestLoggingFilter().doFilter(request,response,(req,res)->assertNotNull(MDC.get("requestId")));
+            assertTrue(response.getHeader("X-Request-Id").matches("[0-9a-f]{32}"));assertNull(MDC.get("requestId"));
+            assertTrue(appender.list.get(0).getFormattedMessage().contains("ip=192.0.2.7"));
+        } finally {logger.detachAppender(appender);appender.stop();}
+    }
     @Test void securityHeadersAreAppliedAfterDownstreamAndSensitiveResponsesDisableCaching() throws Exception{
         for(String uri:new String[]{"/auth/profile","/admin/users","/users","/labs"}){
             MockHttpServletRequest request=new MockHttpServletRequest("GET",uri);MockHttpServletResponse response=new MockHttpServletResponse();

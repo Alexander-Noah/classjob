@@ -8,6 +8,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ReservationCommandBehaviorTest {
+    @Test void corruptStoredAvailabilityNeverApprovesOrPersistsAReview() {
+        var corrupt=new ReservationView(9L,7L,"教师甲","学院","123",1L,date,"not-a-time","教学",20,"实验",ReservationStatus.PENDING,false,null,null,null,null,"机房","A101");
+        when(catalog.findById(eq(9L),any())).thenReturn(corrupt);
+        var failure=assertThrows(IllegalStateException.class,()->review.approve(new ReviewReservationCommand(9L,"同意"),ReservationActor.systemAdministrator(7,"审批人")));
+        assertEquals("Reservation contains invalid availability data",failure.getMessage());
+        assertInstanceOf(IllegalArgumentException.class,failure.getCause());verifyNoInteractions(persistence,availability);
+    }
+    @Test void reviewReadbackMustMatchStatusConflictReviewerAndRemark() {
+        var actor=ReservationActor.systemAdministrator(7,"审批人");
+        var conflicted=new ReservationView(9L,7L,"教师甲","学院","123",1L,date,"08:30-10:00","教学",20,"实验",ReservationStatus.APPROVED,true,"审批人","通过",null,null,"机房","A101");
+        for(ReservationView observed:Arrays.asList(null,conflicted,view(ReservationStatus.APPROVED,"其他人","通过"),view(ReservationStatus.APPROVED,"审批人","其他说明"))) {
+            when(catalog.findById(eq(9L),any())).thenReturn(view(ReservationStatus.PENDING,null,null),observed);
+            when(persistence.updateReview(any())).thenReturn(true);
+            assertEquals("Reservation review result could not be authoritatively verified",assertThrows(IllegalStateException.class,()->review.approve(new ReviewReservationCommand(9L," "),actor)).getMessage());
+        }
+        verify(persistence,times(4)).updateReview(argThat(update->"通过".equals(update.reviewRemark())));
+    }
+    @Test void reviewRejectsNullAndNonPositiveIdsBeforeReadingOrWriting() {
+        for(Long id:Arrays.asList(null,0L,-1L)) {
+            assertThrows(IllegalArgumentException.class,()->review.reject(new ReviewReservationCommand(id,"理由"),ReservationActor.systemAdministrator(7,"审批人")));
+        }
+        verifyNoInteractions(catalog,persistence,availability);
+    }
     final ReservationPersistenceService persistence=mock(ReservationPersistenceService.class);
     final ReservationCatalogQuery catalog=mock(ReservationCatalogQuery.class);
     final ReservationLabService labs=mock(ReservationLabService.class);
