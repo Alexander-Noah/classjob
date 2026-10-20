@@ -26,5 +26,34 @@ class AiUserConfigTransportBehaviorTest {
     @Test void connectionTestsTruncatePreviewAndSupportDraftConfiguration(){answer("x".repeat(90));Map<String,Object> result=service.testConnection(1);assertEquals(true,result.get("connected"));assertEquals(80,result.get("responsePreview").toString().length());assertEquals("https://api.test/v1",result.get("baseUrl"));answer("OK");assertEquals("new",service.testConnection(1,Map.of("model","new")).get("model"));verify(mapper,never()).upsertConfig(any());}
     @Test void structuredContentConcatenatesTextAndIgnoresUnsupportedEntries(){answer(List.of(Map.of("text","甲"),"ignored",Map.of("content","乙"),Map.of("text"," ")));assertEquals("甲\n乙",service.chat(1,null));for(Map<?,?> payload:List.of(Map.of(),Map.of("choices",List.of()),Map.of("choices",List.of(Map.of("message",Map.of()))))){when(response.body(Map.class)).thenReturn(payload);assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题"));}when(response.body(Map.class)).thenReturn(null);assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题"));}
     @Test void remoteErrorsUseProviderMessageAndTruncateVerboseResponses(){for(String body:List.of("{\"message\":\"wrong key\"}","{\"msg\":\"model missing\"}","x".repeat(300),"")){doThrow(new RestClientResponseException("bad",400,"Bad Request",HttpHeaders.EMPTY,body.getBytes(StandardCharsets.UTF_8),StandardCharsets.UTF_8)).when(response).body(Map.class);String message=assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题")).getMessage();assertFalse(message.isBlank());assertTrue(message.length()<=240);if(body.contains("wrong key"))assertEquals("wrong key",message);if(body.contains("model missing"))assertEquals("model missing",message);}doThrow(new RestClientException("offline")).when(response).body(Map.class);assertTrue(assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题")).getMessage().contains("offline"));}
-}
-
+    @Test void endpointValidationRejectsAllUnsafeUrlComponentsBeforeNetworkAccess(){
+      for(String endpoint:List.of("ftp://example.test","https:/missing-host","https://user:pass@example.test","https://example.test?token=x","https://example.test#fragment")) {
+        assertThrows(IllegalArgumentException.class,()->service.saveConfig(1,Map.of("enabled",true,"baseUrl",endpoint,"apiKey","new-key")));
+      }
+      verifyNoInteractions(client);verify(mapper,never()).upsertConfig(any());
+    }
+    @Test void missingKeysAndMalformedProviderStructuresDoNotProduceSuccessfulAnswers(){
+      for(Map<?,?> payload:List.of(Map.of("choices",List.of("wrong-shape")),Map.of("choices",List.of(Map.of("message","wrong-shape"))))) {
+        when(response.body(Map.class)).thenReturn(payload);assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题"));
+      }
+      var config=mapper.getByUserId(1);config.setApiKey(" ");assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题"));
+    }
+    @Test void nullDraftRetainsExistingConfigurationAndBooleanAliasesAreExplicit(){
+      service.saveConfig(1,null);
+      verify(mapper).upsertConfig(argThat(value->Boolean.TRUE.equals(value.getEnabled())&&"test-key".equals(value.getApiKey())));
+      service.saveConfig(1,Map.of("enabled","1","apiKey","******"));
+      verify(mapper,times(2)).upsertConfig(argThat(value->Boolean.TRUE.equals(value.getEnabled())&&"test-key".equals(value.getApiKey())));
+      service.saveConfig(1,Map.of("enabled","TRUE"));service.saveConfig(1,Map.of("enabled","false"));
+      verify(mapper).upsertConfig(argThat(value->Boolean.FALSE.equals(value.getEnabled())));
+    }
+    @Test void invalidSavedEndpointCannotLendItsKeyToAnUnparseableDraft(){
+      mapper.getByUserId(1).setBaseUrl("https://[");
+      service.saveConfig(1,Map.of("enabled",false,"baseUrl","https://also["));
+      verify(mapper).upsertConfig(argThat(value->value.getApiKey().isEmpty()));
+    }
+    @Test void malformedAndEscapedProviderErrorStringsRemainDiagnostic(){
+      for(String body:List.of("{\"message\":\"unterminated","{\"message\":\"quote \\\"inner\\\"\\nnext\"}")) {
+        doThrow(new RestClientResponseException("bad",400,"Bad Request",HttpHeaders.EMPTY,body.getBytes(StandardCharsets.UTF_8),StandardCharsets.UTF_8)).when(response).body(Map.class);
+        String message=assertThrows(IllegalArgumentException.class,()->service.chat(1,"问题")).getMessage();assertFalse(message.isBlank());
+      }
+    }}

@@ -20,7 +20,7 @@ const software={id:1,name:'IDEA',version:'2026',type:'开发工具',license:'教
 const template={id:2,name:'程序设计模板',course:'程序设计',os:'Windows',softwareList:'IDEA',labs:'机房',status:'可复用'}
 beforeEach(()=>{
   vi.clearAllMocks(); route=reactive({name:'lab-admin-environments',path:'/environments',query:{tab:'software'}})
-  collection.list.mockResolvedValue([software]); collection.replace.mockImplementation(async rows=>rows); collection.create.mockResolvedValue({...software,id:3})
+  collection.list.mockResolvedValue([software]); collection.remove.mockResolvedValue([]); collection.replace.mockImplementation(async rows=>rows); collection.create.mockResolvedValue({...software,id:3})
   http.get.mockImplementation(async url=>({data:{data:url==='/labs'?[{id:7,labCode:'A101',labName:'机房'}]:url==='/class-timetables'?[{courseName:'程序设计',teacher:'教师甲',className:'软件一班'}]:url==='/lab-software'?[software]:[template]}}))
 })
 afterEach(()=>wrappers.splice(0).forEach(wrapper=>wrapper.unmount()))
@@ -73,3 +73,13 @@ it('option response wrappers normalize consistently and load errors preserve a u
   expect(vm.courseOptions).toEqual([]);expect(vm.softwareRecords).toEqual([]);expect(vm.templateRecords).toEqual([]);error.mockRestore()
 })
 
+
+it('loads legacy timetable identities, filters empty names and preserves nonnumeric lab keys',async()=>{
+ const vm=await setup();http.get.mockImplementation(async url=>url==='/class-timetables'?[{course:'课程甲',teacherName:'教师甲',rowClassName:'甲班'},{name:'课程乙',realName:'教师乙',class_name:'乙班'},{subjectName:'课程丙',username:'教师丙',row_class_name:'丙班'},{lessonName:'课程丁',clazz:'丁班'},{class:'戊班'},{}]:[{labId:'lab-alpha',location:'西楼机房'},{}]);await vm.loadCourseEnvironmentOptions();expect(vm.courseOptions.map(o=>o.value)).toEqual(expect.arrayContaining(['课程丁','课程丙','课程乙','课程甲']));expect(vm.allClassOptions).toHaveLength(5);await vm.loadLabOptions();expect(vm.labOptions[0].value).toBe('lab-alpha')
+ expect(vm.getTeacherName({})).toBe('');expect(vm.getClassName({})).toBe('');vm.softwareRecords=[{softwareName:'备用软件',softwareVersion:'1.2',licenseInfo:'免费',lab:'西楼机房'}];expect(vm.softwareNameOptions[0].value).toBe('备用软件');expect(vm.softwareVersionOptions[0].value).toBe('1.2');vm.business.openCreateDialog();vm.applySoftwareLinkage('备用软件',{overwrite:true});expect(vm.business.formModel).toMatchObject({version:'1.2',license:'免费',lab:'西楼机房'});vm.applyTemplateLinkage(null);vm.applyCourseTemplateSuggestion('不存在课程');vm.setIfPresent('version','');expect(vm.business.formModel.version).toBe('1.2')
+})
+it('submits environment changes, deletes selected details and reloads empty linked options',async()=>{
+ const vm=await setup(true);vm.business.openCreateDialog();Object.assign(vm.business.formModel,{...software,name:'新软件'});await vm.handleSubmitRecord();expect(collection.create).toHaveBeenCalled();expect(vm.business.dialogVisible.value).toBe(false)
+ vm.selectEnvironmentRecord(vm.business.records.value[0]);await vm.handleDeleteRecord(vm.selectedEnvironmentRecord);await flushPromises();expect(collection.remove).toHaveBeenCalled();vm.selectEnvironmentRecord(null);expect(vm.detailTitle).toBeTruthy();expect(vm.checklistItems.some(i=>!i.done)).toBe(true)
+ vm.labOptions=[];vm.softwareRecords=[];vm.templateRecords=[];route.query.tab='template';await flushPromises();vm.business.openCreateDialog();await flushPromises();expect(vm.labOptions).toHaveLength(1);expect(vm.softwareRecords).toHaveLength(1);vm.business.formModel.course='程序设计';await flushPromises();expect(vm.business.formModel.os).toBeTruthy()
+})

@@ -8,6 +8,27 @@ import { panelStubs as tableStubs } from '../support/formStubs'
 vi.mock('../../src/api/services/classTimetable',()=>Object.fromEntries(['clearClassTimetableCrawlerTasks','deleteClassTimetableCrawlerCredential','getClassTimetableCrawlerCredential','getClassTimetableCrawlerConfig','getClassTimetableSummary','listClassTimetableCrawlerTasks','saveClassTimetableCrawlerConfig','saveClassTimetableCrawlerCredential','triggerClassTimetableCrawler'].map(name=>[name,vi.fn()])))
 vi.mock('element-plus',()=>({ElMessage:{warning:vi.fn(),error:vi.fn(),success:vi.fn()},ElMessageBox:{confirm:vi.fn()}}))
 const wrappers=[]
+it('empty optional records preserve account fallback labels and safe schedule defaults',async()=>{
+ api.getClassTimetableCrawlerCredential.mockResolvedValueOnce({configured:true,usable:true,updatedAt:'2026-10-20'})
+ api.getClassTimetableCrawlerConfig.mockResolvedValueOnce(null);api.getClassTimetableSummary.mockResolvedValueOnce(null);api.listClassTimetableCrawlerTasks.mockResolvedValueOnce(null)
+ const vm=await setup();vm.credentialForm.remark=''
+ expect(vm.accountRows[0]).toMatchObject({username:'已配置账号',remark:'课表采集账号',latestSuccessAt:'2026-10-20',latestError:''})
+ expect(vm.taskRecords).toEqual([]);vm.credential.updatedAt='';expect(vm.accountRows[0].latestSuccessAt).toBe('')
+ vm.configForm.frequency='weekly';vm.configForm.weeklyDay='invalid';expect(vm.scheduleSummary).toContain('周一')
+ vm.parseCronToForm(null);expect(vm.configForm.frequency).toBe('interval')
+ expect(vm.parseTime(null)).toBe('02:00')
+})
+it('message-less backend failures release all settings operation flags',async()=>{
+ const vm=await setup()
+ api.saveClassTimetableCrawlerConfig.mockRejectedValueOnce({});await vm.saveConfig();expect(ElMessage.error).toHaveBeenCalledWith('课表采集配置保存失败');expect(vm.isSavingConfig).toBe(false)
+ vm.openAccountDialog();Object.assign(vm.credentialForm,{username:'teacher',password:'secret',remark:''})
+ api.saveClassTimetableCrawlerCredential.mockRejectedValueOnce({});await vm.saveCredential();expect(ElMessage.error).toHaveBeenCalledWith('教务账号保存失败');expect(vm.isSavingCredential).toBe(false)
+ await vm.saveCredential();expect(localStorage.getItem('lab-admin-class-timetable:account-remark')).toBe('课表采集账号')
+ api.deleteClassTimetableCrawlerCredential.mockRejectedValueOnce({});await vm.deleteCredential();expect(ElMessage.error).toHaveBeenCalledWith('删除教务账号失败')
+ api.triggerClassTimetableCrawler.mockResolvedValueOnce({status:'success'});await vm.handleCrawler();expect(ElMessage.success).toHaveBeenCalledWith('课表采集完成')
+ api.triggerClassTimetableCrawler.mockRejectedValueOnce({});await vm.handleCrawler();expect(ElMessage.error).toHaveBeenCalledWith('课表采集启动失败');expect(vm.isCrawling).toBe(false)
+ api.clearClassTimetableCrawlerTasks.mockRejectedValueOnce({});await vm.clearTaskRecords();expect(ElMessage.error).toHaveBeenCalledWith('清空任务记录失败')
+})
 it('rendered crawler settings bind schedule modes and account filters',async()=>{const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('保存配置');await w.get('input[type="checkbox"]').setValue(false);expect(vm.configForm.scheduleEnabled).toBe(false);await w.get('input[type="checkbox"]').setValue(true);await w.get('input[placeholder="按账号或备注搜索"]').setValue('te');expect(vm.accountFilter.keyword).toBe('te');vm.configForm.frequency='daily';await flushPromises();const picker=w.findComponent({name:'Testtime-picker'});picker.vm.$emit('update:modelValue','08:30');expect(vm.configForm.dailyTime).toBe('08:30');vm.configForm.frequency='weekly';await flushPromises();w.findComponent({name:'Testtime-picker'}).vm.$emit('update:modelValue','09:30');const selects=w.findAll('select');for(const select of selects){const option=select.findAll('option')[0];if(option)await select.setValue(option.element.value)}expect(vm.configForm.weeklyTime).toBe('09:30');const click=async label=>{await w.findAll('button').find(b=>b.text()===label).trigger('click');await flushPromises()};await click('保存配置');expect(api.saveClassTimetableCrawlerConfig).toHaveBeenCalled();await click('详情');await click('关闭');expect(vm.taskDetailVisible).toBe(false);await click('清空记录');expect(api.clearClassTimetableCrawlerTasks).toHaveBeenCalled()})
 const credential={configured:true,usable:true,usernameMasked:'te***er',updatedAt:'2026-10-18'}
 beforeEach(()=>{vi.resetAllMocks();localStorage.clear();api.getClassTimetableCrawlerCredential.mockResolvedValue({...credential});api.getClassTimetableCrawlerConfig.mockResolvedValue({cron:'0 0 */6 * * *',semester:'2026秋',semesterStartDate:'2026-09-01',nextRunAt:'2026-10-19 02:00'});api.getClassTimetableSummary.mockResolvedValue({latestSyncAt:'2026-10-18 02:00'});api.listClassTimetableCrawlerTasks.mockResolvedValue([{id:1,status:'success'},{id:2,status:'failed',error:'登录失败'}]);api.saveClassTimetableCrawlerConfig.mockImplementation(async config=>config);api.saveClassTimetableCrawlerCredential.mockResolvedValue({...credential});ElMessageBox.confirm.mockResolvedValue(true)})
@@ -57,4 +78,3 @@ it('task detail and clearing honor cancellation and backend errors',async()=>{
 it('credential load failures disable collection while preserving configuration facts',async()=>{
   api.getClassTimetableCrawlerCredential.mockRejectedValue(new Error('offline'));const vm=await setup();expect(vm.credential.status).toBe('load_failed');expect(vm.credentialState.canCollect).toBe(false);expect(vm.configForm.semester).toBe('2026秋')
 })
-

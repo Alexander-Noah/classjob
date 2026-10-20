@@ -75,3 +75,37 @@ it('exports filtered data, handles empty results and safely loads malformed loca
   state.keyword.value = 'missing'; state.exportRecords(); expect(ElMessage.warning).toHaveBeenCalledWith('暂无可导出的使用记录')
 })
 
+it.each([['历史归档','已归档'],['设备异常','异常'],['需要复核','待复核'],['正在使用','使用中'],['未知','正常']])('normalizes legacy status %s preserving assigned record numbers',async(status,expected)=>{
+api.list.mockResolvedValueOnce([{id:'UR-legacy',recordCode:'EXT-42',status,useTime:'2026-10-18T08:30:00',resource:'陌生实验室',scene:'特殊场景',remark:'现场说明'}]);const state=await setup();expect(state.records.value[0]).toMatchObject({displayId:'EXT-42',status:expected,entryTime:'10-18 08:30',lab:'陌生实验室',type:'特殊场景',note:'现场说明',readonly:true});expect(state.metrics.value).toHaveLength(4)
+})
+it('ignores absent selection without prompting or synchronizing stale records',async()=>{const state=await setup();state.markReviewed(null);await state.markAbnormal(null);await state.archiveRecord(null);state.closeUsingRecord(null);await flushPromises();expect(ElMessageBox.prompt).not.toHaveBeenCalled();expect(ElMessageBox.confirm).not.toHaveBeenCalled();expect(api.action).not.toHaveBeenCalled()})
+it.each(['null','[]','42'])('ignores invalid stored patch container %s and tolerates lab discovery outages',async(stored)=>{localStorage.setItem('smart-lab:usage-records:local-patches:v1',stored);labResourceService.list.mockRejectedValueOnce(new Error('offline'));api.list.mockResolvedValueOnce([{id:'UR-direct',status:'正常'}]);const state=await setup();expect(state.records.value[0]).toMatchObject({displayId:'UR-direct',lab:'-',entryTime:'-'});expect(state.labOptions.value).toContain('A101 云计算实验室')})
+it('filters full and blank dates and moves selection to the visible record',async()=>{api.list.mockResolvedValueOnce([{id:1,entryTime:'2026-10-17 08:00'},{id:2,entryTime:'2026-10-18 09:00'},{id:3,entryTime:'-'}]);const state=await setup();state.dateRange.value=['2026-10-18','2026-10-18'];await flushPromises();expect(state.filteredRecords.value.map(row=>row.id)).toEqual(['2']);expect(state.selectedRecordId.value).toBe('2');state.dateRange.value=[undefined,'2026-10-17'];await flushPromises();expect(state.filteredRecords.value.map(row=>row.id)).toEqual(['1','3']);state.dateRange.value=null;expect(state.filteredRecords.value).toHaveLength(3)})
+it('uses seeded records for empty fetch and reset responses',async()=>{api.list.mockResolvedValueOnce([]);labResourceService.list.mockResolvedValueOnce(null);const state=await setup();expect(state.records.value).toHaveLength(5);api.reset.mockResolvedValueOnce([]);await state.resetRecords();expect(state.records.value).toHaveLength(5);expect(ElMessage.success).toHaveBeenCalledWith('已恢复使用记录初始数据')})
+it.each([['10-18 11:00','已结束'],['2026-99-99','已结束'],['2026-10-18','10小时30分钟'],['-','已结束']])('ending usage at boundary entry %s produces %s',async(entryTime,duration)=>{api.list.mockResolvedValueOnce([{id:1,entryTime}]);const state=await setup();state.closeUsingRecord();await flushPromises();expect(state.records.value[0].duration).toBe(duration)})
+
+it('preserves unformatted legacy times and creates a stable display identity for missing server IDs', async () => {
+  api.list.mockResolvedValueOnce([{ time: '刚刚', status: '使用中' }, { id: 'legacy', time: '2026-10-18T09:45:00' }])
+  const state = await setup()
+  expect(state.records.value[0]).toMatchObject({ entryTime: '刚刚', readonly: true })
+  expect(state.records.value[0].displayId).toMatch(/^UR-/)
+  expect(state.records.value[1]).toMatchObject({ displayId: 'legacy', entryTime: '10-18 09:45' })
+  state.selectedRecordId.value = 'missing'
+  expect(state.selectedRecord.value.id).toBe(state.records.value[0].id)
+  state.records.value = []
+  expect(state.selectedRecord.value).toBeNull()
+})
+
+it('abnormal-only filtering excludes healthy rows and optional search fields tolerate null', async () => {
+  api.list.mockResolvedValueOnce([{ id: 1, status: '正常' }, { id: 2, status: '异常', person: '甲' }])
+  const state = await setup()
+  state.abnormalOnly.value = true
+  expect(state.filteredRecords.value.map(row => row.id)).toEqual(['2'])
+  state.records.value.push({ id: '3', status: '异常', person: null, resource: null, lab: null, type: null })
+  state.keyword.value = '不存在'
+  expect(state.filteredRecords.value).toEqual([])
+  state.keyword.value = ''
+  await state.markAbnormal(state.records.value[0])
+  const validate = ElMessageBox.prompt.mock.calls[0][2].inputValidator
+  expect(validate(null)).toBe('异常原因不能为空')
+})

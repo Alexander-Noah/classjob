@@ -23,6 +23,25 @@ vi.mock('../../src/modules/teaching-calendar/teachingCalendar', () => ({ loadTea
 vi.mock('../../src/utils/exportExcel', () => ({ exportTableToExcel: vi.fn(() => 1) }))
 vi.mock('element-plus', () => ({ ElMessage: { warning: vi.fn(), success: vi.fn(), error: vi.fn() }, ElMessageBox: { confirm: vi.fn(), prompt: vi.fn() } }))
 const scopes = []
+it('detects timetable occupancy from legacy lesson text and ignores incomplete reservations',async()=>{
+  listClassTimetables.mockResolvedValue([
+    {classroom:'A101',weekday:'周一',sectionText:'1-2节',weekRaw:'3',courseName:'遗留课程'},
+    {classroom:'A101',weekday:'周一',sectionCode:'3,4',weekText:'3'},
+    {classroom:'A101',weekday:'周一',sectionText:'无节次'},
+  ])
+  service.list.mockResolvedValue([record(),record({id:2,timeRange:'invalid'}),record({id:3,lab:''}),record({id:4,date:''})])
+  const state=await setup()
+  state.detectConflicts()
+  expect(state.reservations.value.find(row=>row.id===1)).toMatchObject({conflict:true,status:'冲突'})
+  for(const id of [2,3,4]) expect(state.reservations.value.find(row=>row.id===id).conflict).toBe(false)
+  expect(service.replace).not.toHaveBeenCalled()
+})
+it('keeps capacity conflicts visible and allows touching reservation intervals',async()=>{
+  service.list.mockResolvedValue([record({attendees:41}),record({id:2,timeRange:'10:00-11:00'})])
+  const state=await setup();state.detectConflicts()
+  expect(state.reservations.value[0].conflict).toBe(true)
+  expect(state.reservations.value[1].conflict).toBe(false)
+})
 const record = (overrides = {}) => ({ id: 1, applicant: '张同学', department: '信息学院', contact: '13800138000', lab: 'A101 机房', date: '2027-01-04', timeRange: '08:30-10:00', status: '待审核', attendees: 10, scene: '课程', reason: '程序设计课程', ...overrides })
 beforeEach(() => {
   vi.resetAllMocks()
@@ -267,4 +286,3 @@ it('export uses filtered records and reset honors cancel before restoring initia
   expect(state.keyword.value).toBe('')
   expect(state.reservations.value).toEqual([])
 })
-

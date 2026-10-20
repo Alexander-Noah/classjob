@@ -48,4 +48,68 @@ class UserServiceBehaviorTest {
         store.get(1).setRoleCode("systemAdmin");when(mapper.countSystemAdmins()).thenReturn(1);assertThrows(IllegalArgumentException.class,()->service.batchUpdateRole(List.of(1),"实验室管理员",""));store.get(1).setRoleCode("labAdmin");assertEquals(1,service.batchUpdateRole(List.of(1),"实验室管理员","").size());verify(mapper).updateUserPermissions(eq(1),contains("资源管理"));service.batchUpdateRole(List.of(2),"系统管理员","");verify(mapper).updateUserPermissions(eq(2),contains("平台治理"));assertThrows(IllegalArgumentException.class,()->service.batchUpdateRole(List.of(1),"",""));
     }
     @Test void listAndProfileReturnEmptyOrMissingResultsWithoutErrors(){when(mapper.listUsers()).thenReturn(null);assertEquals(List.of(),service.listUsers());when(mapper.listUsers()).thenReturn(List.of(store.get(1)));assertEquals(1,service.listUsers().size());assertNull(service.profile("missing"));when(mapper.profile("user1")).thenReturn(store.get(1));assertEquals("user1",service.profile("user1").getUsername());}
+
+    @Test void profileUpdatesCannotChangeAccountIdentityRoleOrPermissions() {
+        UserEntity existing=store.get(1);existing.setDepartment("Old");existing.setPhone("13800138000");existing.setEmail("old@example.com");
+        when(mapper.profile("user1")).thenReturn(existing);
+        UserEntity patch=new UserEntity();patch.setUsername("forged");patch.setRoleCode("systemAdmin");patch.setPermissions("forged");patch.setRealName("  New Name  ");patch.setDepartment(" New Department ");patch.setPhone("13900139000");patch.setEmail("new@example.com");patch.setAvatarUrl("/files/new.png");
+        UserEntity result=service.updateProfile("user1",patch);
+        assertEquals("user1",result.getUsername());assertEquals("labAdmin",result.getRoleCode());assertEquals("permissions",result.getPermissions());assertEquals("New Name",result.getRealName());assertEquals("New Department",result.getDepartment());assertEquals("new@example.com",result.getEmail());
+        for(String username:Arrays.asList(null,""," "))assertThrows(IllegalArgumentException.class,()->service.updateProfile(username,new UserEntity()));
+        assertThrows(IllegalArgumentException.class,()->service.updateProfile("missing",new UserEntity()));
+    }
+    @Test void profilesPreserveOmittedValuesAndUseUsernameWhenDisplayNameIsMissing() {
+        UserEntity current=store.get(1);current.setRealName(null);current.setDepartment("Department");when(mapper.profile("user1")).thenReturn(current);
+        UserEntity blank=new UserEntity();blank.setRealName(" ");blank.setDepartment("");
+        UserEntity result=service.updateProfile("user1",blank);assertEquals("user1",result.getRealName());assertEquals("",result.getDepartment());
+    }
+    @Test void invalidAndOversizedBatchIdentifiersNeverWriteAnything() {
+        for(List<Integer> ids:Arrays.asList(Arrays.asList(1,null),List.of(0),List.of(-1),Collections.nCopies(1001,1)))
+            assertThrows(IllegalArgumentException.class,()->service.batchUpdateStatus(ids,1));
+        for(Integer id:Arrays.asList(null,0,-1)){assertThrows(IllegalArgumentException.class,()->service.updateUser(id,new UserEntity()));assertThrows(IllegalArgumentException.class,()->service.updateUserStatus(id,1));}
+        verify(mapper,never()).updateUserStatus(anyInt(),anyInt());
+    }
+    @Test void allActiveRolesResolveNamesAndReceiveTheirDefaultPermissions() {
+        for(String[] role:List.of(new String[]{"系统管理员","systemAdmin"},new String[]{"实验室管理员","labAdmin"},new String[]{"教务人员","academic"})){
+            UserEntity input=user(3);input.setUsername("created"+role[1]);input.setPassword("SafePass123");input.setRoleName(role[0]);input.setRoleCode(null);input.setPermissions(null);
+            UserEntity result=service.createUser(input);assertEquals(role[1],result.getRoleCode());
+        }
+        service.batchUpdateRole(List.of(1),"教务人员","academic");verify(mapper).insertUserRole(1,"academic");verify(mapper).updateUserPermissions(eq(1),contains("教务管理"));
+        for(String role:List.of("teacher","maintenance")){UserEntity input=user(3);input.setRoleCode(role);input.setPassword("SafePass123");assertThrows(IllegalArgumentException.class,()->service.createUser(input));}
+    }
+    @Test void usernameWhitespaceAndBlankNamesCannotBypassAccountCreationRules() {
+        for(String username:Arrays.asList(null,""," ","two words")){UserEntity input=user(3);input.setUsername(username);input.setPassword("SafePass123");assertThrows(IllegalArgumentException.class,()->service.createUser(input));}
+        UserEntity input=user(3);input.setUsername("  trimmed  ");input.setRealName(" ");input.setPassword("SafePass123");assertEquals("trimmed",service.createUser(input).getRealName());
+    }
+    @Test void lastAdministratorCanRetainRoleButCanOnlyBeDowngradedOrDeletedWhenAnotherExists() {
+        UserEntity admin=store.get(1);admin.setRoleCode("systemAdmin");when(mapper.countSystemAdmins()).thenReturn(1);
+        assertEquals(1,service.batchUpdateRole(List.of(1),"系统管理员","systemAdmin").size());
+        when(mapper.countSystemAdmins()).thenReturn(2);assertEquals(1,service.batchUpdateRole(List.of(1),"教务人员","academic").size());
+        when(mapper.countSystemAdmins()).thenReturn(2);service.deleteUser(1);verify(mapper).deleteUser(1);
+    }
+    @Test void referencedUserErrorsUseSafeFallbackNamesAndLimitTheVisibleList() {
+        List<Integer> ids=new ArrayList<>();for(int i=1;i<=7;i++){ids.add(i);UserEntity u=user(i);u.setRealName(i==1?null:i==2?" ":"Name"+i);if(i==2)u.setUsername(null);store.put(i,u);when(mapper.countUserBusinessReferences(i)).thenReturn(1);}
+        String message=assertThrows(IllegalArgumentException.class,()->service.batchDeleteUsers(ids)).getMessage();assertTrue(message.contains("user1"));assertTrue(message.contains("等 7 个用户"));verify(mapper,never()).deleteUser(anyInt());
+    }
+    @Test void successfulLegacyLoginWithoutRehashAndDisabledOrRetiredAccountsNeverWritePasswords() {
+        UserEntity account=store.get(1);when(mapper.login("user1")).thenReturn(account);when(passwords.matches("valid","old-hash")).thenReturn(true);when(passwords.needsRehash("old-hash")).thenReturn(false);
+        assertSame(account,service.login("user1","valid"));verify(mapper,never()).updatePassword(anyInt(),anyString());
+        account.setStatus(null);assertNull(service.login("user1","valid"));account.setStatus(1);account.setRoleCode("teacher");assertThrows(IllegalArgumentException.class,()->service.login("user1","valid"));when(mapper.profile("user1")).thenReturn(account);assertThrows(IllegalArgumentException.class,()->service.profile("user1"));
+    }
+    @Test void concurrentAccountRemovalCannotReportSuccessfulUpdatesOrDeletions() {
+        when(mapper.updateUser(eq(1), any())).thenReturn(0);
+        UserEntity patch=user(1);patch.setPassword(null);
+        assertEquals("未知用户",assertThrows(IllegalArgumentException.class,()->service.updateUser(1,patch)).getMessage());
+        verify(mapper,never()).insertUserRole(anyInt(),anyString());
+        when(mapper.deleteUser(2)).thenReturn(0);
+        assertEquals("未知用户",assertThrows(IllegalArgumentException.class,()->service.deleteUser(2)).getMessage());
+        verify(loop,never()).recordEvent(anyString(),anyString(),anyString(),anyString(),anyMap());
+    }
+    @Test void passwordResetRetainsAuditIdentityWhenAccountDisappearsAfterWrite() {
+        UserEntity existing=store.get(1);
+        when(mapper.getUser(1)).thenReturn(existing,null);
+        assertNull(service.resetUserPassword(1));
+        verify(mapper).updatePassword(1,"encoded:Reset1234");
+        verify(loop).recordEvent(eq("user"),eq("reset-password"),eq("用户1"),eq("启用"),anyMap());
+    }
 }

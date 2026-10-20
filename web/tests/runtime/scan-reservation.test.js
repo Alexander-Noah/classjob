@@ -14,6 +14,27 @@ vi.mock('../../src/api/services/scanReservation', () => Object.fromEntries(['get
 vi.mock('../../src/modules/teaching-calendar/teachingCalendar', () => ({ loadTeachingCalendar: vi.fn(), getAcademicWeek: () => 3 }))
 vi.mock('element-plus', () => ({ ElMessage: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }))
 const wrappers = []
+it('rendered quick periods and query contact controls update the submitted request',async()=>{
+  const vm=await setup(true),w=wrappers.at(-1)
+  const period=w.findAll('.period-card')[1]
+  await period.trigger('click');expect(vm.formModel.timeRange).toBe(vm.quickSlots[1].value)
+  await w.get('input[placeholder="提交时的联系方式"]').setValue('student@example.com')
+  await w.get('input[placeholder="预约编号"]').setValue('9')
+  await vm.handleStatusLookup()
+  expect(api.getScanReservationStatus).toHaveBeenCalledWith({id:'9',contact:'student@example.com'})
+  vm.handleContinue();await flushPromises()
+  const note=w.get('textarea[placeholder="如需软件环境、设备支持或特殊安排，可在此说明"]')
+  await note.setValue('需要开发软件')
+  expect(vm.formModel.note).toBe('需要开发软件')
+})
+it('missing ticket fields and lookup failures keep the QR page usable',async()=>{
+  const vm=await setup()
+  expect(vm.submittedSummary).toEqual([])
+  vm.submittedReservation={};expect(vm.submittedSummary[0].value).toBe('-')
+  vm.submittedReservation=null;vm.formModel.timeRange='';expect(vm.timeRangeMessage).toBe('')
+  api.getScanReservationProfile.mockRejectedValueOnce({});await vm.loadLabProfile()
+  expect(vm.loadError).toBe('实验室信息加载失败');expect(vm.loading).toBe(false)
+})
 const reservation = () => ({ id: 9, status: '待审核', lab: 'A101 机房', applicant: '张同学', date: '2026-10-19', timeRange: '08:30-10:00' })
 beforeEach(() => {
   vi.resetAllMocks(); localStorage.clear(); vi.useFakeTimers({ toFake: ['setInterval','clearInterval','Date'] }); vi.setSystemTime(new Date('2026-10-18T09:00:00'))
@@ -100,3 +121,55 @@ it('restores only matching lab queries and safely handles QR/profile/calendar fa
   route.query={labId:'7'}; api.getScanReservationProfile.mockRejectedValueOnce(new Error('二维码无效')); await vm.loadLabProfile(); expect(vm.loadError).toBe('二维码无效'); expect(vm.loading).toBe(false)
 })
 
+
+it('handles incomplete profiles, malformed slots and all lab availability states', async () => {
+  getStoredUser.mockReturnValue(null); isAuthenticated.mockReturnValue(false)
+  api.getScanReservationProfile.mockResolvedValue({})
+  const vm = await setup(true)
+  expect(vm.attendeeMax).toBe(120); expect(vm.labLocation).toBe('位置待完善'); expect(vm.labStatusType).toBe('info')
+  expect(vm.formModel.applicant).toBe(''); expect(vm.labFacts.map(f=>f.value)).toContain('管理员')
+  for (const [status,type] of [['使用中','warning'],['预约中','warning'],['维护','danger'],['停用','danger'],['未知','info']]) { vm.lab={status}; expect(vm.labStatusType).toBe(type) }
+  vm.lab={openTime:'invalid',type:'竞赛机房',manager:'王老师',code:'B2'}; expect(vm.openRangeLabel).toBe('08:00-22:00'); expect(vm.labFacts[2].value).toBe('竞赛机房')
+  for(const range of ['', 'bad', '10:00-', '-11:00']){vm.formModel.timeRange=range;expect(vm.durationLabel).toBe('')}
+  vm.formModel.date='invalid'; expect(vm.selectedDateMeta).toBeNull()
+  vm.formModel.date='2026-10-19'
+  for(const [range,label] of [['10:00-11:00','1 小时'],['10:00-10:30','30 分钟'],['10:00-11:15','1 小时 15 分钟']]){vm.formModel.timeRange=range;expect(vm.durationLabel).toBe(label)}
+  const callback=vi.fn(); vm.validateTimeRange(null,'10:00-11:15',callback);expect(callback).toHaveBeenCalledWith()
+  expect(loadTeachingCalendar).not.toHaveBeenCalled()
+})
+
+it.each([
+  [{name:'备用姓名',roleName:'学生',email:'a@example.com'},'备用姓名','学生','a@example.com'],
+  [{username:'student'},'student','',''],
+])('uses available account identity fields without requiring a phone', async(user,name,department,contact)=>{
+  getStoredUser.mockReturnValue(user);const vm=await setup();expect(vm.formModel).toMatchObject({applicant:name,department,contact})
+  vm.formModel.applicant='已填写';vm.formModel.department='班级';vm.formModel.contact='manual@example.com';await vm.loadLabProfile();expect(vm.formModel.applicant).toBe('已填写')
+})
+
+it('tolerates corrupt status cache and missing calendar, reports only unhandled lookup errors', async()=>{
+  localStorage.setItem('smart-lab:scan-reservation:last-status','{')
+  loadTeachingCalendar.mockRejectedValueOnce({})
+  const vm=await setup();expect(vm.submittedReservation).toBeNull();expect(ElMessage.warning).toHaveBeenCalledWith('教学日历加载失败')
+  await vm.copyReservationId();expect(ElMessage.warning).toHaveBeenCalledWith('暂无预约编号')
+  vm.queryModel.reservationId='9';vm.queryModel.contact='a@example.com'
+  api.getScanReservationStatus.mockRejectedValueOnce({});await vm.handleStatusLookup();expect(ElMessage.error).toHaveBeenCalledWith('预约状态查询失败')
+  ElMessage.error.mockClear();api.getScanReservationStatus.mockRejectedValueOnce({__handled:true});await vm.handleStatusLookup();expect(ElMessage.error).not.toHaveBeenCalled()
+  vm.submittedReservation={id:9,contact:'a@example.com',status:'冲突'};vm.statusContact='';vm.formModel.contact=''
+  api.getScanReservationStatus.mockRejectedValueOnce({});await vm.refreshSubmittedStatus();expect(ElMessage.error).toHaveBeenCalledWith('审核状态查询失败')
+  ElMessage.error.mockClear();api.getScanReservationStatus.mockRejectedValueOnce(new Error('silent'));await vm.refreshSubmittedStatus({silent:true});expect(ElMessage.error).not.toHaveBeenCalled()
+  vm.submittedReservation=null;await vm.refreshSubmittedStatus();expect(vm.statusLoading).toBe(false)
+})
+
+it('restores only complete matching tickets and supports legacy clipboard copy',async()=>{
+  localStorage.setItem('smart-lab:scan-reservation:last-status',JSON.stringify({labId:'other',reservationId:9,contact:'a@example.com'}))
+  const vm=await setup();expect(vm.submittedReservation).toBeNull()
+  vm.submittedReservation={id:9};vm.formModel.applicant='申请人';expect(vm.submittedSummary[1].value).toBe('申请人');expect(vm.submittedStatus).toBe('待审核');expect(vm.submittedStatusType).toBe('success')
+  const saved=navigator.clipboard.writeText;navigator.clipboard.writeText=undefined;document.execCommand=vi.fn().mockReturnValue(true)
+  try{await vm.copyReservationId();expect(document.execCommand).toHaveBeenCalledWith('copy');expect(document.querySelector('textarea')).toBeNull()}finally{navigator.clipboard.writeText=saved}
+  for(const status of ['已驳回','已取消']){vm.submittedReservation={id:9,status};expect(vm.statusAlert.description).toBeTruthy()}
+  vm.formRef={validate:vi.fn().mockResolvedValue()};vm.formModel.note='特别说明';vm.formModel.attendees='';vm.lab={id:7,displayName:'完整机房名称'}
+  api.submitScanReservation.mockRejectedValueOnce({});await vm.submitForm();expect(ElMessage.error).toHaveBeenCalledWith('预约提交失败')
+  expect(api.submitScanReservation).toHaveBeenLastCalledWith(expect.objectContaining({lab:'完整机房名称',attendees:1,note:'特别说明'}))
+  ElMessage.error.mockClear();api.submitScanReservation.mockRejectedValueOnce({__handled:true});await vm.submitForm();expect(ElMessage.error).not.toHaveBeenCalled()
+  vm.lab=null;await vm.submitForm();expect(vm.submitting).toBe(false)
+})

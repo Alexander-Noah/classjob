@@ -13,6 +13,41 @@ vi.mock('../../src/utils/exportExcel',()=>({exportTableToExcel:vi.fn(options=>op
 vi.mock('../../src/utils/importExcel',()=>({readSpreadsheetRows:vi.fn()}))
 vi.mock('element-plus',()=>({ElMessage:{success:vi.fn(),warning:vi.fn()},ElMessageBox:{confirm:vi.fn()}}))
 const wrappers=[]
+it('deleting an unselected item preserves the selected record and normal stock emits no warnings',async()=>{
+ http.get.mockImplementation(async url=>({data:url===API_ENDPOINTS.consumables.records?[]:[{id:1,name:'库存甲',stock:20},{id:2,name:'库存乙',stock:30}]}))
+ const vm=await setup();expect(ElMessage.warning).not.toHaveBeenCalled();expect(vm.selectedId).toBe(1)
+ http.get.mockImplementation(async url=>({data:url===API_ENDPOINTS.consumables.records?[]:[{id:1,name:'库存甲',stock:20}]}))
+ await vm.deleteRecord(vm.records[1]);expect(vm.selectedRecord.id).toBe(1)
+ expect(vm.filteredRecords).toHaveLength(1)
+})
+it('rendered stock filters and movement editor submit an inbound transaction from real controls',async()=>{
+ const vm=await setup(true),w=wrappers.at(-1)
+ await w.get('input[placeholder="搜索名称、分类、位置"]').setValue('网线')
+ await w.get('select[aria-label="全部分类"]').setValue('网络耗材')
+ await w.get('select[aria-label="全部状态"]').setValue('库存充足')
+ expect(vm.filteredRecords.map(row=>row.id)).toEqual([1])
+ await w.get('input[placeholder="搜索经办人、原因"]').setValue('教师甲')
+ await w.get('select[aria-label="全部类型"]').setValue('出库')
+ await w.get('select[aria-label="全部耗材"]').setValue('1')
+ expect(vm.filteredStockRecords).toHaveLength(1)
+ vm.openMovementDialog('in',vm.records[0]);await flushPromises()
+ await w.get('select[aria-label="请选择耗材"]').setValue('1')
+ const fields=w.findAll('[data-element="form-item"]'),field=label=>fields.find(item=>item.find('label').text()===label)
+ await field('经办人').get('input').setValue('库管')
+ await field('来源').get('input').setValue('采购')
+ await field('原因').get('input').setValue('补充教学库存')
+ await w.findAll('button').find(button=>button.text()==='确认入库').trigger('click');await flushPromises()
+ expect(http.post).toHaveBeenCalledWith(API_ENDPOINTS.consumables.movement(1),expect.objectContaining({type:'in',operator:'库管',source:'采购',reason:'补充教学库存'}))
+ expect(vm.movementDialogVisible).toBe(false)
+})
+it('importing whitespace defaults and deleting the last selected item leave usable empty state',async()=>{
+ const vm=await setup();readSpreadsheetRows.mockResolvedValue([{name:'空白字段耗材',category:' ',unit:' ',location:' ',stock:'invalid'}])
+ await vm.handleImportFile({target:{files:[new File(['csv'],'stock.csv')],value:'chosen'}})
+ expect(http.post).toHaveBeenCalledWith(API_ENDPOINTS.consumables.list,expect.objectContaining({name:'空白字段耗材',category:'未分类',unit:'件',location:'未设置',stock:0}))
+ http.get.mockImplementation(async()=>({data:[]}));await vm.deleteRecord(vm.records[0])
+ expect(vm.selectedId).toBe('');expect(vm.selectedRecord).toBeNull()
+ vm.recordFilters.dateRange=null;expect(vm.filteredStockRecords).toEqual([])
+})
 const records=[{id:1,name:'网线',category:'网络耗材',stock:10,unit:'根',location:'A101',warnThreshold:5},{id:2,name:'电池',category:'电子元器件',stock:2,warnThreshold:5},{id:3,name:'纸张',stock:0}]
 const movements=[{id:1,consumableId:1,name:'网线',movementType:'出库',quantity:2,beforeStock:12,afterStock:10,operatorName:'教师甲',operatedAt:'2026-10-18 10:00',sourceTarget:'教学领用'}]
 beforeEach(()=>{vi.clearAllMocks();vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-10-18T10:00:00+08:00'));http.get.mockImplementation(async url=>({data:url===API_ENDPOINTS.consumables.records?movements:records}));http.post.mockResolvedValue({});http.put.mockResolvedValue({});http.delete.mockResolvedValue({});ElMessageBox.confirm.mockResolvedValue(true)})
@@ -60,4 +95,11 @@ it('imports Chinese headers, updates matching items and ignores unnamed rows',as
 })
 it('file selection and failed post-loan refresh remain usable',async()=>{
   const vm=await setup();vm.fileInputRef={click:vi.fn()};vm.pickImportFile();expect(vm.fileInputRef.click).toHaveBeenCalled();http.get.mockRejectedValue(new Error('offline'));await vm.loansChanged();expect(ElMessage.warning).toHaveBeenCalledWith(expect.stringContaining('借还已登记'))
+})
+
+it('deleting the selected inventory chooses a surviving item after the server refresh',async()=>{
+ const vm=await setup();expect(vm.selectedId).toBe(1)
+ http.get.mockImplementation(async url=>({data:url===API_ENDPOINTS.consumables.records?[]:[records[1],records[2]]}))
+ await vm.deleteRecord(vm.records[0])
+ expect(vm.selectedId).toBe(2);expect(vm.selectedRecord).toMatchObject({id:2,name:'电池'})
 })

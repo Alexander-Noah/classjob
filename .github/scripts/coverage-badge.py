@@ -20,7 +20,7 @@ def generate():
     total = sum(item["total"] for item in modules.values())
     badge = {
         "schemaVersion": 1,
-        "label": "Coverage",
+        "label": "Line coverage",
         "message": f"{covered / total * 100:.2f}%",
         "color": "brightgreen",
         "cacheSeconds": 300,

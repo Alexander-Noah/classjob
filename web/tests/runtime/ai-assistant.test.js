@@ -26,6 +26,48 @@ vi.mock('../../src/services/browserSpeechRecognition', () => ({ BrowserSpeechRec
 } }))
 vi.mock('element-plus', () => ({ ElMessage: { warning: vi.fn(), success: vi.fn(), error: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }))
 const wrappers = []
+it('deleting an inactive conversation preserves active messages and reports default failure',async()=>{
+  historyApi.listAiConversationHistories.mockResolvedValue([conversation('older',1),conversation('newer',2)])
+  const vm=await setup(),active=vm.activeConversationId
+  const inactive=vm.conversationHistories.find(item=>item.id!==active)
+  await vm.deleteConversation(inactive)
+  expect(vm.activeConversationId).toBe(active);expect(vm.conversationHistories.some(item=>item.id===inactive.id)).toBe(false)
+  historyApi.deleteAiConversationHistory.mockRejectedValueOnce({})
+  await vm.deleteConversation(vm.activeConversation)
+  expect(ElMessage.error).toHaveBeenCalledWith('删除失败，请重试')
+  expect(vm.deletingConversationId).toBe('')
+})
+it('preserves newly typed input while a send begins and ignores empty assistant content',async()=>{
+  const vm=await setup(),original=vm.messages.length
+  await vm.appendMessage('assistant',' ');await vm.appendMessage('assistant',undefined)
+  expect(vm.messages).toHaveLength(original)
+  vm.inputValue='第一条问题'
+  const pending=vm.sendMessage();vm.inputValue='正在写下一条'
+  await pending
+  expect(vm.inputValue).toBe('正在写下一条')
+  expect(configApi.requestAiAssistantAnswer).toHaveBeenCalledWith(expect.objectContaining({question:'第一条问题'}))
+})
+it('saved incomplete custom configuration blocks send before opening an API connection',async()=>{
+  configApi.getAiAssistantUserConfig.mockResolvedValueOnce({enabled:true,baseUrl:'https://api.example.com/v1',model:'model',apiKeyConfigured:false})
+  const vm=await setup()
+  expect(await vm.submitQuestion('测试问题')).toBe(false)
+  expect(ElMessage.warning).toHaveBeenCalledWith('请先完成 AI 接口配置')
+  expect(configApi.requestAiAssistantAnswer).not.toHaveBeenCalled()
+  expect(vm.aiConfigDialogVisible).toBe(true)
+  vm.isDirectAiLoading=true
+  expect(vm.currentServiceStatusText).toBe('正在查询平台数据')
+})
+it('rendered destructive proposals require the explicit delete control',async()=>{
+  const vm=await setup(true),w=wrappers.at(-1)
+  vm.messages.push({id:'delete',role:'assistant',content:'删除前核对',pendingAction:{...draftAction(),method:'DELETE',body:{id:7},before:{data:{id:6}}}})
+  await flushPromises()
+  configApi.decideAiAssistantAction.mockResolvedValueOnce({message:'记录已删除'})
+  const button=w.findAll('button').find(b=>b.text()==='确认删除')
+  expect(configApi.decideAiAssistantAction).not.toHaveBeenCalled()
+  await button.trigger('click');await flushPromises()
+  expect(configApi.decideAiAssistantAction).toHaveBeenCalledWith('single-use-confirmation',expect.any(String),true)
+  expect(w.text()).toContain('记录已删除')
+})
 it('voice fallback and configuration read failures clear capture state with actionable feedback',async()=>{const vm=await setup();vm.voiceMode='browser';vm.isCapturingVoice=true;instances.audio.startCapture.mockRejectedValueOnce(Error('denied'));instances.speech.options.onError();await flushPromises();expect(vm.isCapturingVoice).toBe(false);expect(ElMessage.error).toHaveBeenCalledWith('语音识别启动失败，请检查浏览器麦克风权限');vm.voiceMode='';instances.speech.options.onError();expect(vm.liveTranscript).toBe('');fetch.mockRejectedValueOnce(Error('offline'));await vm.fetchConfigAndConnect();expect(ElMessage.error).toHaveBeenCalledWith('AI 服务配置读取失败');getAuthToken.mockReturnValue('');expect(vm.buildWsProtocols()).toEqual([]);vm.directAiConfig.enabled=true;await vm.fetchConfigAndConnect();expect(vm.isCapturingVoice).toBe(false)})
 const conversation = (id = 'old', updatedAt = 1) => ({ id, title: '预约咨询', updatedAt, messages: [{ role: 'user', content: '如何预约' }, { role: 'assistant', content: '在预约页面申请' }] })
 beforeEach(() => {
@@ -339,3 +381,29 @@ it('speech toggle persists preferences, composition enter does not send, and cle
   vm.clearMessages(); expect(vm.messages).toHaveLength(1)
 })
 
+
+it.each([[null,'我','anonymous'],[{name:'姓名'},'姓名','anonymous'],[{username:'reader'},'reader','reader']])('handles accounts without numeric identity',async(user,label,key)=>{getStoredUser.mockReturnValue(user);const vm=await setup();expect(vm.currentUserName).toBe(label);expect(vm.getHistoryStorageKey()).toBe(`smart-lab:ai-assistant:conversations:${key}`)})
+it('normalizes incomplete histories and retains the newest duplicate conversation',async()=>{
+ const warn=vi.spyOn(console,'warn').mockImplementation(()=>{});historyApi.listAiConversationHistories.mockRejectedValueOnce(new Error('offline'));configApi.getAiAssistantUserConfig.mockRejectedValueOnce(new Error('offline'));localStorage.setItem('smart-lab:ai-assistant:conversations:7','{');const vm=await setup();expect(vm.conversationHistories).toHaveLength(1);expect(warn).toHaveBeenCalled()
+ localStorage.setItem(vm.getHistoryStorageKey(),'{}');expect(vm.readLocalConversations()).toEqual([]);const normalized=vm.normalizeConversation({messages:[{}]});expect(normalized.messages[0]).toMatchObject({role:'assistant',content:'',time:'',pendingAction:null,actionResult:null});expect(vm.normalizeConversation({messages:[]} ).messages).toHaveLength(1)
+ expect(vm.getMessagePreview([{content:' '}])).toBe('暂无对话内容');expect(vm.mergeConversationLists([conversation('same',5)],[conversation('same',1)])[0].updatedAt).toBe(5)
+ const storage=vi.spyOn(localStorage,'setItem').mockImplementation(()=>{throw new Error('quota')});vm.writeLocalConversations([]);expect(warn).toHaveBeenCalledWith('[AiAssistant] conversation storage failed',expect.any(Error));storage.mockRestore()
+ historyApi.saveAiConversationHistories.mockRejectedValueOnce(new Error('offline'));await vm.flushRemoteSave();expect(warn).toHaveBeenCalledWith('[AiAssistant] failed to save conversation history',expect.any(Error));vm.conversationHistories=[];await vm.flushRemoteSave();vm.activeConversationId='';vm.persistCurrentConversation();expect(vm.conversationHistories).toEqual([]);vm.activeConversationId='new-id';vm.messages=[{role:'user',content:'新问题'}];vm.persistCurrentConversation();expect(vm.conversationHistories[0].id).toBe('new-id')
+})
+it('busy history state blocks duplicate user actions without losing existing conversation',async()=>{
+ const vm=await setup();const original=vm.activeConversationId;vm.deletingConversationId='busy';await vm.switchConversation('missing');await vm.startNewConversation();await vm.deleteConversation(vm.activeConversation);vm.clearMessages();await vm.appendMessage('user','ignored');vm.persistCurrentConversation();expect(await vm.submitQuestion('ignored')).toBe(false);expect(vm.activeConversationId).toBe(original);vm.deletingConversationId='';expect(await vm.submitQuestion(' ')).toBe(false);vm.isDirectAiLoading=true;await vm.sendMessage();await vm.deleteConversation(vm.activeConversation);expect(historyApi.deleteAiConversationHistory).not.toHaveBeenCalled();vm.isHistoryRestoring=true;vm.queueRemoteSave([])
+})
+it('reports action execution failure and stores completed decisions in the originating conversation',async()=>{
+ const vm=await setup();expect(vm.actionDetails({body:{records:[],nested:{},reason:null},query:{id:2},before:{data:{reason:'原值'}}})).toEqual(expect.arrayContaining([{label:'记录',value:'空列表'},{label:'nested',value:'空对象'},{label:'用途／原因',value:'清空',previous:'原值'},{label:'操作参数 · 记录编号',value:'2',previous:null}]))
+ const failed={id:'failed',pendingAction:draftAction()};configApi.decideAiAssistantAction.mockRejectedValueOnce({});await vm.decideAction(failed,true);expect(failed.actionStatus).toContain('未确认成功');expect(ElMessage.error).toHaveBeenCalledWith('操作未确认成功，请到业务列表核实')
+ let resolve;const origin=vm.activeConversationId;const proposal={id:'later',role:'assistant',pendingAction:draftAction(),content:'确认'};vm.messages.push(proposal);vm.persistCurrentConversation();configApi.decideAiAssistantAction.mockImplementationOnce(()=>new Promise(done=>{resolve=done}));const pending=vm.decideAction(proposal,true);await vm.startNewConversation();resolve({});await pending;const saved=vm.conversationHistories.find(c=>c.id===origin);expect(saved.messages.find(m=>m.id==='later').actionStatus).toBe('已执行');expect(saved.messages.at(-1).content).toContain('操作成功')
+})
+it('tests default-error feedback, disabled configuration saves, and socket fallback payloads',async()=>{
+ const vm=await setup();vm.isSavingDirectAi=true;await vm.testBackendAiConfig();await vm.saveBackendAiConfig();expect(configApi.saveAiAssistantUserConfig).not.toHaveBeenCalled();vm.isSavingDirectAi=false;vm.directAiConfig.baseUrl='javascript:bad';await vm.saveBackendAiConfig();expect(ElMessage.warning).toHaveBeenCalledWith('请填写有效的 HTTP 或 HTTPS 接口基础地址');vm.resetDirectAiConfig();vm.directAiConfig.systemPrompt='';await vm.saveBackendAiConfig();expect(configApi.saveAiAssistantUserConfig).toHaveBeenCalledWith(expect.objectContaining({enabled:false,apiKey:''}))
+ Object.assign(vm.directAiConfig,{enabled:true,apiKey:'key'});configApi.testAiAssistantUserConfig.mockResolvedValueOnce({});await vm.testBackendAiConfig();expect(ElMessage.success).toHaveBeenCalledWith(expect.stringContaining('qwen-plus'));configApi.testAiAssistantUserConfig.mockRejectedValueOnce({});await vm.testBackendAiConfig();expect(ElMessage.error).toHaveBeenCalledWith('AI 接口连接测试失败，请检查 API 地址、Key、模型名称或服务器网络');await vm.testBackendAiConfig();configApi.saveAiAssistantUserConfig.mockRejectedValueOnce({});await vm.saveBackendAiConfig();expect(ElMessage.error).toHaveBeenCalledWith('AI 接口配置保存失败')
+ await instances.socket.options.onTextMessage({type:'stt',state:'error'});expect(vm.messages.at(-1).content).toContain('语音识别服务暂不可用');await instances.socket.options.onTextMessage({type:'text',text:' '});instances.socket.options.onAudioMessage(new ArrayBuffer(1));vm.directAiConfig.enabled=false;getAuthToken.mockReturnValue('');fetch.mockResolvedValueOnce({json:async()=>({})});await vm.fetchConfigAndConnect();expect(vm.wsUrl).toBe('')
+})
+it('query errors after a chat switch are reported without appending into the new chat',async()=>{
+ const vm=await setup();let reject;configApi.requestAiAssistantAnswer.mockImplementationOnce(()=>new Promise((_,fail)=>{reject=fail}));const pending=vm.submitQuestion('延迟失败');await flushPromises();await vm.startNewConversation();reject({});await pending;expect(ElMessage.error).toHaveBeenCalledWith('AI 查询失败，请重试');expect(vm.messages).toHaveLength(1)
+ configApi.requestAiAssistantAnswer.mockRejectedValueOnce({});await vm.submitQuestion('当前失败');expect(vm.messages.at(-1).content).toContain('请检查 AI 配置或稍后重试。');vm.toggleSpeech(true);expect(localStorage.getItem('smart-lab:ai-tts-enabled')).toBe('true')
+})

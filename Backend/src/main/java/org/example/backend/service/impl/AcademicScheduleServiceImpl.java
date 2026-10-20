@@ -330,8 +330,7 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
     private URI resolveScheduleUri(AcademicScheduleImportRequest request) {
         String baseUrl = firstNonBlank(request.getBaseUrl(), DEFAULT_BASE_URL);
         URI baseUri = URI.create(baseUrl);
-        String host = baseUri.getHost();
-        if (host == null || !host.toLowerCase(Locale.ROOT).endsWith("hniu.cn")) {
+        if (!isAcademicUri(baseUri)) {
             throw new IllegalArgumentException("仅允许抓取湖南信息职院教务系统域名");
         }
 
@@ -339,7 +338,11 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
         if (!schedulePath.startsWith("/")) {
             schedulePath = "/" + schedulePath;
         }
-        return baseUri.resolve(schedulePath);
+        URI scheduleUri = baseUri.resolve(schedulePath);
+        if (!isAcademicUri(scheduleUri)) {
+            throw new IllegalArgumentException("仅允许抓取湖南信息职院教务系统域名");
+        }
+        return scheduleUri;
     }
 
     /**
@@ -354,8 +357,7 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
 
         String baseUrl = firstNonBlank(request.getBaseUrl(), DEFAULT_BASE_URL);
         URI baseUri = URI.create(baseUrl);
-        String host = baseUri.getHost();
-        if (host == null || !host.toLowerCase(Locale.ROOT).endsWith("hniu.cn")) {
+        if (!isAcademicUri(baseUri)) {
             throw new IllegalArgumentException("仅允许登录湖南信息职院教务系统域名");
         }
 
@@ -407,6 +409,13 @@ public class AcademicScheduleServiceImpl implements AcademicScheduleService {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("教务系统登录被中断", exception);
         }
+    }
+
+    private boolean isAcademicUri(URI uri) {
+        String host = uri.getHost();
+        return host != null && uri.getRawUserInfo() == null
+                && ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                && ("hniu.cn".equalsIgnoreCase(host) || host.toLowerCase(Locale.ROOT).endsWith(".hniu.cn"));
     }
 
     /**

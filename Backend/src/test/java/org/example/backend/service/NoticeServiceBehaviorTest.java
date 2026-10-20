@@ -165,4 +165,21 @@ class NoticeServiceBehaviorTest {
         value.setTargetRole(target);
         return value;
     }
-}
+    @Test void missingAndUnpersistedNoticesCannotCreateRecipientsOrEvents(){
+        when(mapper.getNotice(99L)).thenReturn(null);
+        assertNull(service.publishNotice(99L));verify(mapper,never()).deleteRecipientsByNotice(99L);
+        verifyNoInteractions(events);
+        saved.setId(null);service.publishNotice(1L);verify(mapper,never()).insertRecipientsForRole(isNull(),any());
+    }
+    @Test void explicitRoleCodesAndOperationalAliasesNormalizeForInbox(){
+        for(String[] item:new String[][]{{"all","all"},{"systemAdmin","systemAdmin"},{"teacher","teacher"},{"maintenance","maintenance"},{"系统用户","systemAdmin"},{"业务使用方","teacher"},{"运维人员","maintenance"}}){
+            service.listUserNotices(7,item[0],null);verify(mapper,atLeastOnce()).syncUserRecipients(7,item[1]);
+        }
+    }
+    @Test void nullNoticeIdentifierNeverMatchesInboxRowsAndBlankDraftFieldsUseDefaults(){
+        var recipient=new NoticeRecipientEntity();recipient.setNoticeId(1L);
+        when(mapper.listUserNotices(7,null)).thenReturn(List.of(recipient));
+        assertNull(service.markRead(null,7,"labAdmin"));
+        var input=new NoticeEntity();input.setTitle(" ");input.setType(" ");input.setNoticeType(" ");input.setPriority(" ");input.setStatus(" ");input.setPublishStatus(" ");input.setContent(" ");input.setTarget(" ");input.setTargetRole(" ");
+        service.updateNotice(1L,input);assertEquals("系统提醒",input.getTitle());assertEquals("普通",input.getPriority());assertEquals("草稿",input.getStatus());
+    }}

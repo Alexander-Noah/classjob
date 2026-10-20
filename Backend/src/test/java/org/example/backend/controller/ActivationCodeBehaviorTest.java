@@ -191,6 +191,82 @@ class ActivationCodeBehaviorTest {
         assertEquals("long_term", listed(Map.of()).get(0).get("expireStatus"));
     }
 
+    @Test
+    void legacyStatusAliasesAndBooleanInputsKeepFilteringAndCreationConsistent() {
+        assertEquals(0, data(controller.listActivationCodes(Map.of())).get("total"));
+        for (Object enabled : List.of(false, "", "false", "true", "1", "yes", "enabled")) {
+            var generated = data(controller.createActivationCodes(Map.of("enabled", enabled, "deviceLimit", "2", "quantity", "1")));
+            boolean expected = !List.of(false, "", "false").contains(enabled);
+            assertEquals(expected, map(generated.get("record")).get("enabled"));
+        }
+        var legacy = code("legacy"); legacy.remove("enabled"); legacy.put("status", "active"); put(legacy);
+        for (String status : List.of("active", "enabled", "启用", "有效", "all", "")) {
+            assertEquals(1, listed(Map.of("status", status, "expireStatus", "all")).size());
+        }
+        for (String status : List.of("disabled", "deleted")) {
+            legacy.put("status", status);
+            assertEquals("disabled", verify("legacy", "host").get("status"));
+        }
+        legacy.put("status", "active"); legacy.put("deviceLimit", 0);
+        assertEquals(1, listed(Map.of("status", "enabled")).size());
+        assertEquals(0, listed(Map.of("status", "unknown")).size());
+    }
+
+    @Test
+    void labConflictsMatchCodesAndNamesAndIgnoreDeletedOrDisabledRecords() {
+        var target = code("target"); target.put("id", "record-target"); target.put("remark", "kept");
+        var other = code("other"); other.put("labId", "8"); other.put("labCode", "A101"); other.put("labName", "实验室");
+        var deleted = code("deleted"); deleted.put("deleted", true); put(target, other, deleted);
+        assertError(controller.bindActivationCodeToLab(Map.of("code", "target", "labId", "7", "labCode", "A101")));
+        assertError(controller.bindActivationCodeToLab(Map.of("code", "target", "labId", "7", "labName", "实验室")));
+        other.put("enabled", false);
+        var request = Map.<String, Object>of("code", "target", "labId", "7", "labCode", "A101", "labName", "实验室");
+        assertEquals(200, controller.bindActivationCodeToLab(request).getCode());
+        assertEquals(200, controller.bindActivationCodeToLab(request).getCode());
+        assertEquals(200, controller.updateActivationCodeRemark("target", null).getCode());
+        assertEquals("kept", target.get("remark"));
+        assertEquals(200, controller.updateActivationCodeRemark("target", Map.of("ownerName", "新管理员", "expireAt", "2035-02-01T12:00:00")).getCode());
+        assertEquals("新管理员", target.get("ownerName"));
+        target.put("maskedCode", "MASKED");
+        assertEquals(200, controller.listActivationCodeBindings("MASKED").getCode());
+        assertError(controller.listActivationCodeBindings(" "));
+        assertError(controller.bindActivationCodeToLab(Map.of("code", "deleted", "labId", "7")));
+        assertError(controller.unbindActivationCodeFromLab("deleted"));
+        assertEquals("invalid", verify("deleted", "host").get("status"));
+        assertEquals(1, data(controller.batchOperateActivationCodes(Map.of("ids", "target", "action", "ENABLE", "reason", "恢复可用"))).get("affected"));
+    }
+
+    @Test
+    void malformedStoredBindingsAreDiscardedAndRemoteUnbindAcceptsEveryPublishedIdentifier() {
+        var value = code("first");
+        var binding = binding("host", "UNBOUND"); binding.put("deviceId", "old-device"); binding.put("macAddress", "001122334455");
+        value.put("boundDevices", List.of("broken-row", Map.of(), binding)); put(value);
+        assertEquals(1, maps(controller.listActivationCodeBindings("first").getData()).size());
+        assertEquals(1, listed(Map.of("keyword", "old-device")).size());
+        for (String identifier : List.of("host", "old-device", "00:11:22:33:44:55")) {
+            assertEquals(200, controller.remoteUnbindActivationDevice("first", identifier, Map.of("reason", "设备退役")).getCode());
+        }
+        var statistics = map(data(controller.listActivationCodes(Map.of())).get("statistics"));
+        assertNotNull(statistics);
+        assertEquals("remote_unbound", data(controller.verifyActivationCode(Map.of("code", "first", "machineCode", "another", "macAddress", "001122334455"))).get("status"));
+    }
+
+    @Test
+    void splitTableFailuresDoNotLoseLegacyActivationAndClientTypesArePreserved() {
+        for (String source : List.of("probe", "student")) {
+            var value = code("first"); value.put("labId", "7"); put(value);
+            var response = data(controller.verifyActivationCode(Map.of("code", "first", "machineCode", "host", "clientSource", source)));
+            assertEquals(true, response.get("valid"));
+            assertTrue(mockingDetails(jdbc).getInvocations().stream().anyMatch(call -> call.getMethod().getName().equals("update") && call.getArguments().length > 8 && java.util.Arrays.asList(call.getArguments()).contains(source.equals("probe") ? "probe_client" : "lab_client")));
+        }
+        var value = code("fallback"); value.put("labId", "not-a-number"); put(value);
+        assertEquals(true, verify("fallback", "host").get("valid"));
+        value = code("fallback"); value.put("labId", "7"); put(value);
+        doThrow(new IllegalStateException("split tables unavailable")).when(jdbc).update(anyString(), any(Object[].class));
+        assertEquals(true, verify("fallback", "host").get("valid"));
+        assertEquals(1, maps(controller.listActivationCodeBindings("fallback").getData()).size());
+    }
+
     private Map<String, Object> code(String code) { var value = new LinkedHashMap<String, Object>(); value.put("id", code); value.put("code", code); value.put("enabled", true); value.put("deviceLimit", 2); value.put("createdAt", "2026-01-01T00:00:00"); return value; }
     private Map<String, Object> binding(String machine, String status) { return new LinkedHashMap<>(Map.of("id", "binding-" + machine, "machineCode", machine, "status", status, "boundAt", LocalDateTime.now().toString())); }
     @SafeVarargs private final void put(Map<String, Object>... values) { store.put("activation-codes", new ArrayList<>(List.of(values))); }

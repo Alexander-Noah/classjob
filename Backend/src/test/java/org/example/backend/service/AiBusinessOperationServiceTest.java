@@ -128,6 +128,41 @@ class AiBusinessOperationServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.decide(7, "chat-a", token, true, request));
         assertEquals(0, writes.get());
     }
+    @Test void creationNeedsConfirmationWithoutReadingAnUnrelatedRecord() {
+        var draft=service.prepare(7,"new-lab",Map.of("operationId","POST /labs","body",Map.of("labName","新增实验室","tags",List.of("教学","开放")),"query",Map.of("source","assistant")),request);
+        assertFalse(draft.containsKey("before"));assertEquals(0,reads.get());assertEquals(0,writes.get());
+        assertNotNull(service.decide(7,"new-lab",draft.get("id").toString(),true,request));assertEquals(1,writes.get());
+        var deletion=service.prepare(7,"delete-lab",action("DELETE"),request);
+        assertTrue(deletion.get("warning").toString().contains("关联设备"));
+    }
+    @Test void malformedObjectsOversizedBodiesAndNestedSecretQueriesNeverDispatch() {
+        assertThrows(IllegalArgumentException.class,()->service.prepare(7,"chat",Map.of("operationId","GET /labs/{id:\\d+}"),request));
+        assertThrows(IllegalArgumentException.class,()->service.prepare(7,"chat",Map.of("operationId","POST /labs","body",List.of("invalid")),request));
+        assertThrows(IllegalArgumentException.class,()->service.prepare(7,"chat",Map.of("operationId","POST /labs","body",Map.of("remark","a".repeat(24001))),request));
+        assertThrows(IllegalArgumentException.class,()->service.prepare(7,"chat",Map.of("operationId","POST /labs","query",Map.of("filters",List.of(Map.of("password","secret")))),request));
+        assertEquals(0,reads.get());assertEquals(0,writes.get());
+    }
+    @Test void invalidatingOneConversationPreservesOtherActorsAndConversations() {
+        String a=prepare();
+        String b=service.prepare(7,"chat-b",action("PUT"),request).get("id").toString();
+        when(data.actor(9)).thenReturn(new AiDataActor(9,"labAdmin","其他管理员",Set.of()));
+        String c=service.prepare(9,"chat-a",action("PUT"),request).get("id").toString();
+        service.invalidate(7,"chat-a");
+        assertThrows(IllegalArgumentException.class,()->service.decide(7,"chat-a",a,true,request));
+        service.decide(7,"chat-b",b,false,request);service.decide(9,"chat-a",c,false,request);
+        assertEquals(0,writes.get());
+        String expired=prepare();clock.now=clock.now.plusSeconds(601);service.invalidate(9,"unrelated");
+        assertThrows(IllegalArgumentException.class,()->service.decide(7,"chat-a",expired,true,request));
+    }
+    @Test void businessErrorsAreReportedAndResponsesRedactSecretsInsideLists() {
+        var query=Map.<String,Object>of("operationId","GET /labs/{id:\\d+}","pathValues",Map.of("id","1"),"query",Map.of("page",1));
+        record="{\"code\":400,\"message\":\"实验室不可用\"}";
+        assertEquals("实验室不可用",assertThrows(IllegalArgumentException.class,()->service.read(7,query,request)).getMessage());
+        record="{\"data\":[{\"labName\":\"A101\",\"password\":\"hidden\"}]}";
+        Object result=service.read(7,query,request);assertTrue(result.toString().contains("A101"));assertFalse(result.toString().contains("hidden"));
+        request.removeHeader("Authorization");request.addHeader("Authorization","Basic invalid");
+        assertThrows(IllegalArgumentException.class,()->service.read(7,query,request));
+    }
     private static class MutableClock extends Clock {
         Instant now = Instant.parse("2026-10-18T06:00:00Z");
         public ZoneId getZone() { return ZoneOffset.UTC; }

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 
 class IotHardwareBehaviorTest {
     @Test void localizedAccessActionAliasesResolveToConfiguredCommandKeys() throws Exception{var door=device("door","门禁");Map<String,HardwareCommand> commands=new java.util.HashMap<>();for(String key:List.of("card-enroll","student-enroll","face-enroll","fingerprint-enroll","status","read-environment","lock"))commands.put(key,command("POST","/"+key));door.setCommands(commands);properties.setDevices(List.of(door));ReflectionTestUtils.setField(service,"httpClient",client);when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenAnswer(call->response(200,"OK"));for(String action:List.of("卡录入","学号录入","人脸录入","指纹录入","电子锁","温湿度","关门"))assertEquals(true,service.executeDeviceCommand("door",action,Map.of()).get("success"));verify(client,times(7)).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));}
-    @Test void capabilityMetadataDescribesConfiguredCommandsRangesAndDisabledHardware(){var hardware=device("test","light");hardware.setCommands(Map.of("set",command("POST","/set"),"off",command("POST","/off"),"status",command("GET","/status"),"card-enroll",command("POST","/card")));for(String type:List.of("access-control","camera","light","air-conditioner","sensor","safety","other")){List<Map<String,Object>> capabilities=ReflectionTestUtils.invokeMethod(service,"buildCapabilities",type,hardware);assertNotNull(capabilities);assertFalse(capabilities.isEmpty());assertTrue(capabilities.stream().anyMatch(capability->"status".equals(capability.get("key"))));for(Map<String,Object> capability:capabilities){assertNotNull(capability.get("label"));assertNotNull(capability.get("command"));if("slider".equals(capability.get("type")))assertTrue(((Number)capability.get("max")).intValue()>((Number)capability.get("min")).intValue());}List<Map<String,Object>> absent=ReflectionTestUtils.invokeMethod(service,"buildCapabilities",type,null);assertTrue(absent.stream().noneMatch(capability->Boolean.TRUE.equals(capability.get("enabled"))));}List<Map<String,Object>> air=ReflectionTestUtils.invokeMethod(service,"buildCapabilities","air-conditioner",hardware);assertTrue(air.stream().anyMatch(capability->"mode".equals(capability.get("key"))&&((List<?>)capability.get("options")).contains("制冷")));}
     private final IotHardwareProperties properties = new IotHardwareProperties();
     private final BusinessLoopService events = mock(BusinessLoopService.class);
     private final IotHardwareServiceImpl service = new IotHardwareServiceImpl(properties, events);
@@ -94,7 +93,76 @@ class IotHardwareBehaviorTest {
             door.setType(pair[0]); assertEquals(pair[1],service.listHardwareDevices().get(0).get("type"));
         }
     }
+    @Test void configuredStatusAndFallbackStatusUseTheirRespectiveResponseContracts() throws Exception {
+        var hardware=device("door","door"); properties.setDevices(List.of(hardware));
+        ReflectionTestUtils.setField(service,"httpClient",client);
+        assertEquals("已配置",service.executeDeviceCommand("door","status",null).get("status"));
+        hardware.setCommands(Map.of("status",command("GET","/configured-status")));
+        when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenAnswer(call->response(200,"ready"));
+        assertEquals(true,service.getDeviceStatus("door").get("success"));
+        hardware.setCommands(Map.of()); hardware.setStatusPath("/status");
+        when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenAnswer(call->response(503,"offline"));
+        assertEquals(false,service.getDeviceStatus("door").get("online"));
+        assertEquals("离线",service.getDeviceStatus("door").get("status"));
+        hardware.setType("camera"); assertFalse(service.getLabCamera(7L).containsKey("snapshotProxyUrl"));
+    }
+
+    @Test void customSuccessStatusRangeAndDeleteRequestsHandleLowAndHighFailures() throws Exception {
+        var hardware=device("relay","relay"); hardware.setLabId(null); hardware.setUsername("admin");
+        var command=command("DELETE","http://example.test/delete"); command.setSuccessStatusMin(201);command.setSuccessStatusMax(202);
+        hardware.setCommands(Map.of("off",command)); properties.setDevices(List.of(hardware));
+        ReflectionTestUtils.setField(service,"httpClient",client);
+        for(int status:List.of(200,201,202,203)) {
+            when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenAnswer(call->response(status,"OK"));
+            assertEquals(status==201||status==202,service.executeDeviceCommand("relay","off",Map.of()).get("success"));
+        }
+        var requests=org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(client,times(4)).send(requests.capture(),any(HttpResponse.BodyHandler.class));
+        assertTrue(requests.getAllValues().stream().allMatch(request->"DELETE".equals(request.method())&&request.bodyPublisher().map(body->body.contentLength()==0).orElse(true)));
+        assertTrue(requests.getAllValues().stream().allMatch(request->request.headers().firstValue("Authorization").isEmpty()));
+    }
+
+    @Test void tcpTextEmptyPayloadChunkedResponsesAndTimeoutAcknowledgementsAreHandled() throws Exception {
+        var hardware=device("relay","relay");hardware.setProtocol("tcp");
+        var command=command("POST","/unused");command.getTcp().setHost("127.0.0.1");command.getTcp().setPort(12345);
+        hardware.setCommands(Map.of("off",command));properties.setDevices(List.of(hardware));
+        for(String payload:List.of("", "关灯")) {
+            command.getTcp().setPayload(payload);command.getTcp().setSuccessContains(null);
+            var outgoing=new ByteArrayOutputStream();
+            var incoming=mock(java.io.InputStream.class);
+            when(incoming.read(any(byte[].class))).thenThrow(new java.net.SocketTimeoutException());
+            try(var sockets=mockConstruction(Socket.class,(socket,context)->{when(socket.getOutputStream()).thenReturn(outgoing);when(socket.getInputStream()).thenReturn(incoming);})) {
+                assertEquals(true,service.executeDeviceCommand("relay","off",null).get("success"));
+                assertArrayEquals(payload.getBytes(StandardCharsets.UTF_8),outgoing.toByteArray());
+            }
+        }
+        command.getTcp().setPayload("stop");command.getTcp().setSuccessContains("ACK");
+        var incoming=mock(java.io.InputStream.class);when(incoming.available()).thenReturn(1,0);
+        when(incoming.read(any(byte[].class))).thenAnswer(call->{((byte[])call.getArgument(0))[0]='N';return 1;}).thenReturn(-1);
+        try(var sockets=mockConstruction(Socket.class,(socket,context)->{when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());when(socket.getInputStream()).thenReturn(incoming);})) {
+            assertEquals(false,service.executeDeviceCommand("relay","off",Map.of()).get("success"));
+        }
+        try(var sockets=mockConstruction(Socket.class,(socket,context)->{doThrow(new IOException("offline")).when(socket).connect(any(),anyInt());})) {
+            assertTrue(assertThrows(IllegalArgumentException.class,()->service.executeDeviceCommand("relay","off",Map.of())).getMessage().contains("offline"));
+        }
+        hardware.setBaseUrl("");command.getTcp().setHost("");
+        assertThrows(IllegalArgumentException.class,()->service.executeDeviceCommand("relay","off",Map.of()));
+    }
+
+    @Test void allDeviceTypeAliasesAreNormalizedInPublicInventory() {
+        var hardware=device("hardware","door");properties.setDevices(List.of(hardware));
+        for(String[] pair:new String[][]{{"门锁","access-control"},{"灯","light"},{"relay","light"},{"空调","air-conditioner"},{"hvac","air-conditioner"},{"传感","sensor"},{"烟感","sensor"},{"安防","safety"}}) {
+            hardware.setType(pair[0]);assertEquals(pair[1],service.listHardwareDevices().get(0).get("type"));
+        }
+    }
+
     private HardwareDevice device(String code,String type) { var value=new HardwareDevice(); value.setCode(code); value.setName(code); value.setType(type); value.setLabId(7L); value.setBaseUrl("https://example.test"); return value; }
+    @Test void descriptiveHardwareTypeNamesResolveLikeTheirCanonicalTypes() {
+        var hardware=device("hardware","door");properties.setDevices(List.of(hardware));
+        for(String[] pair:new String[][]{{"楼宇门禁控制器","access-control"},{"网络监控终端","camera"},{"智能照明系统","light"},{"network-relay-switch","light"},{"中央空调控制器","air-conditioner"},{"房间温控器","air-conditioner"},{"hvac-controller","air-conditioner"},{"智能烟感探头","sensor"},{"室内温湿度计","sensor"},{"楼宇安防系统","safety"},{"消防报警器","safety"}}) {
+            hardware.setType(pair[0]);assertEquals(pair[1],service.listHardwareDevices().get(0).get("type"));
+        }
+    }
     private HardwareCommand command(String method,String path) { var value=new HardwareCommand(); value.setMethod(method); value.setPath(path); return value; }
     @SuppressWarnings("unchecked") private HttpResponse<byte[]> response(int status,String body) { HttpResponse<byte[]> value=mock(HttpResponse.class); when(value.statusCode()).thenReturn(status); when(value.body()).thenReturn(body.getBytes(StandardCharsets.UTF_8)); when(value.headers()).thenReturn(java.net.http.HttpHeaders.of(Map.of("Content-Type",List.of("image/png")),(a,b)->true)); return value; }
 }

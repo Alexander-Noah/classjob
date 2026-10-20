@@ -12,6 +12,50 @@ vi.mock('../../src/api/services/users', () => ({ listUserOptions: vi.fn() }))
 vi.mock('../../src/utils/exportExcel', () => ({ exportTableToExcel: vi.fn(() => 2) }))
 vi.mock('element-plus', () => ({ ElMessage: { warning: vi.fn(), success: vi.fn(), error: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }))
 const scopes = []
+it('legacy timetable lesson ranges and lab names bind safely with sorted deduplicated schedules',async()=>{
+  const state=await setup()
+  const base={classroom:'机房',weekday:'周一',weekRaw:'第3周',teacher:'教师乙'}
+  state.bindLabSchedules([
+    {...base,sectionCode:'1,2',courseName:'甲课程'},
+    {...base,sectionText:'1-4节',weekText:'2~4周',courseName:'长课程'},
+    {...base,sectionText:'3-4节',weekExpanded:'3',courseName:'后续课程'},
+    {...base,sectionText:'1,2节',courseName:'乙课程'},
+    {...base,sectionText:'无节次',courseName:'损坏节次'},
+    {...base,sectionCode:'21',courseName:'自定义节次'},
+    {...base,classroom:'',sectionCode:'1'},
+    {...base,classroom:'A1010',sectionCode:'1'},
+    {...base,classroom:'A101',sectionCode:'1',weekText:'1周'},
+  ],{week:3,weekday:1,section:1,currentMinute:505})
+  expect(state.selectedLab.value.schedule).toHaveLength(3);expect(state.selectedLab.value.schedule[2]).toContain('长课程')
+  expect(state.selectedLab.value.schedule[0]).toContain('第1节')
+  expect(state.selectedLab.value.status).toBe('使用中')
+  state.bindLabSchedules([{...base,sectionCode:'21',courseName:'自定义节次'},{...base,sectionText:'无节次',courseName:'损坏节次'}],{week:3,weekday:1,currentMinute:505})
+  expect(state.selectedLab.value.schedule.find(item=>item.includes('自定义节次'))).toContain('第11节')
+  expect(state.selectedLab.value.schedule.find(item=>item.includes('损坏节次'))).not.toContain('第0节')
+  expect(state.selectedLab.value.status).toBe('开放')
+
+})
+it('approved legacy reservation identities bind by name and validated time while rejecting unrelated data',async()=>{
+  const state=await setup(),date='2027-01-04'
+  state.bindLabSchedules([], {date,currentMinute:535},[
+    {labName:'机房',reservationDate:date,timeSlot:'09:00-10:00',status:'approved',type:'竞赛',userName:'姓名甲'},
+    {labDisplayName:'A101',useDate:date,period:'08:00-09:00',status:'APPROVED',reservationType:'考试',contact:'电话乙'},
+    {roomName:'A101',startDate:date,startTime:'10:00',finishTime:'11:00',status:'已通过'},
+    {classroom:'A101',date,beginTime:'11:00',endTime:'12:00',status:'已通过'},
+    {lab:'A101',date,status:'已通过',timeRange:'invalid'},
+    {lab:'A101',date,status:'已通过',timeRange:'12:00-11:00'},
+    {lab:'A101',date,status:'已通过'},
+    {lab:'A1010',date,status:'已通过',timeRange:'09:00-10:00'},
+    {date,status:'已通过',timeRange:'09:00-10:00'},
+    {lab:'A101',date,status:'待审核',timeRange:'09:00-10:00'},
+  ])
+  expect(state.selectedLab.value.schedule).toHaveLength(6)
+  expect(state.selectedLab.value.schedule.some(item=>item.includes('姓名甲'))).toBe(true)
+  expect(state.selectedLab.value.schedule.some(item=>item.includes('电话乙'))).toBe(true)
+  expect(state.selectedLab.value.status).toBe('使用中')
+  state.bindLabSchedules([], {date:'',currentMinute:535})
+  expect(state.selectedLab.value.schedule).toEqual(['今日暂无排课'])
+})
 const labs = () => [
   { id: 7, labCode: 'A101', labName: '机房', building: '信息楼', roomNo: 'A101', capacity: '40', managerUserId: 1, features: '课程，实训', deviceCount: 5 },
   { id: 8, code: 'B102', name: '科研室', building: '科研楼', status: '维护中', manager: '教师乙', type: '科研创新', features: ['科研'] },

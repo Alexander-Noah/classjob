@@ -12,6 +12,24 @@ vi.mock('../../src/api/services/deviceStatus',()=>({listDeviceStatusEvents:vi.fn
 vi.mock('../../src/api/services/deviceActivation',()=>({bindActivationCodeToLab:vi.fn(),listLabActivationBindings:vi.fn(),unbindActivationCodeFromLab:vi.fn()}))
 vi.mock('element-plus',()=>({ElMessage:{success:vi.fn(),warning:vi.fn(),error:vi.fn()},ElMessageBox:{confirm:vi.fn()}}))
 const wrappers=[]
+it('rendered lab navigation and missing host telemetry use readable fallback identities',async()=>{
+ listLabRuntimeStatus.mockResolvedValue({devices:[{labId:1,terminalId:'TERM-1'},{labId:1,macAddress:'cc:dd'},{labId:1},{labId:2,hostName:'二号主机'}]})
+ listLabActivationBindings.mockResolvedValue([{labId:1,status:'inactive'},{status:'active'},binding()])
+ const vm=await setup(true),w=wrappers.at(-1)
+ expect(vm.currentLabDevices).toHaveLength(3)
+ await w.findAll('.lab-item')[1].trigger('click');await flushPromises()
+ expect(vm.selectedLab.id).toBe(2);expect(w.text()).toContain('二号主机')
+ expect(vm.selectedLabActivation).toBeUndefined()
+ listLabRuntimeStatus.mockResolvedValueOnce({devices:[{labId:2},{labId:2,name:'仅名称'},{labId:2,terminalId:'TERM-2'}]})
+ await vm.loadRuntimeStatus(2);await flushPromises()
+ expect(w.text()).toContain('未命名主机');expect(w.text()).toContain('TERM-2')
+})
+it('empty and unavailable lab sources never retain stale selection or loading flags',async()=>{
+ labResourceService.list.mockResolvedValueOnce([])
+ const vm=await setup();expect(vm.selectedLabId).toBe('');expect(vm.currentLabDevices).toEqual([])
+ labResourceService.list.mockRejectedValueOnce({});await vm.loadData()
+ expect(ElMessage.warning).toHaveBeenCalledWith('设备运行状态数据读取失败');expect(vm.loading).toBe(false)
+})
 it('rendered terminal view displays runtime health and binds lab activation controls',async()=>{listLabActivationBindings.mockResolvedValue([binding()]);const vm=await setup(true),w=wrappers.at(-1);expect(w.text()).toContain('主机一');expect(w.text()).toContain('待连接主机');await w.get('input[placeholder="搜索实验室名称、编号、楼层"]').setValue('A101');expect(vm.visibleLabs).toHaveLength(1);await w.get('input[placeholder="搜索主机名、IP、MAC、终端"]').setValue('PC-1');expect(vm.selectedLabDevices.length).toBeGreaterThan(0);await w.findAll('button').find(b=>b.text()==='解除实验室接入授权').trigger('click');await flushPromises();vm.activationCodes=[];await flushPromises();await w.get('input[placeholder^="输入实验室接入码"]').setValue('NEW-CODE');expect(vm.labActivationCode).toBe('NEW-CODE');const button=w.findAll('button').find(b=>b.text()==='启用当前实验室接入授权');await button.trigger('click');await flushPromises();expect(bindActivationCodeToLab).toHaveBeenCalled();await w.findAll('button').find(b=>b.text()==='解除实验室接入授权').trigger('click');await flushPromises();expect(unbindActivationCodeFromLab).toHaveBeenCalled()})
 const labs=[{id:1,labCode:'A101',labName:'机房',roomNo:'101',openStatus:'开放',capacity:'30'},{id:2,code:'B202',name:'实验室'}]
 const devices=[{id:1,labId:1,terminalId:'PC-1',hostName:'主机一',deviceCode:'DEV1',macAddress:'aa:bb',ipAddress:'10.0.0.1',runtimeStatus:'online',onlineStatus:'online',health:'good',cpuUsage:15,memoryUsage:30,diskUsage:50},{id:2,labId:1,terminalId:'PC-2',runtimeStatus:'abnormal',onlineStatus:'offline',health:'abnormal'},{id:3,labId:2,terminalId:'other',onlineStatus:'online'}]
@@ -54,3 +72,15 @@ it('normalizes response envelopes and fallback telemetry fields',async()=>{
 
 
 
+
+it('matches legacy bound-device identities and safely renders missing terminal telemetry',async()=>{
+ listLabActivationBindings.mockResolvedValue([{labId:1,status:'active',boundDevices:[{macAddress:'aa:bb'},{deviceCode:'DEV1'},{code:'DEV1'},{hostName:'主机一'},{}]}]);const vm=await setup(true)
+ expect(vm.activationDeviceStatusRows.slice(0,4).every(d=>d.online)).toBe(true);expect(vm.activationDeviceStatusRows[4].status).toBe('待上报');vm.deviceKeyword='no-match';expect(vm.displayedDeviceStatusRows).toEqual([])
+ vm.activationCodes=[{status:'active',labId:1,boundDevices:{}}];expect(vm.activationBoundDevices).toEqual([]);vm.activationCodes=[];expect(vm.activationDeviceStatusRows).toEqual([]);vm.labs=[];expect(vm.currentLabDevices).toEqual([]);expect(vm.selectedLab).toBeNull();expect(vm.selectedLabActivationQuota).toEqual({bound:0,limit:0,remaining:0})
+ expect(vm.normalizeLab({room:'R1'})).toMatchObject({code:'R1',name:'R1'});expect(vm.normalizeLab({roomNo:'R2'}).code).toBe('R2');expect(vm.normalizeLab({}).code).toBe('')
+ expect(vm.normalizeDevice({assetNo:'AS1',deviceName:'设备',online:false,runtimeStatus:'custom',health:'custom',createdAt:'2026',sourceType:'agent'})).toMatchObject({code:'AS1',name:'设备',status:'custom',health:'custom',online:false,activatedAt:'2026',source:'agent'});expect(vm.normalizeDevice({macAddress:'MAC'})).toMatchObject({code:'MAC',name:'未命名主机'});expect(vm.formatPercent(undefined)).toBe('');expect(vm.formatPercent('')).toBe('')
+})
+it('falls back on malformed optional bindings and supplies default error messages',async()=>{
+ listLabActivationBindings.mockResolvedValue({});const vm=await setup();expect(vm.activationCodes).toEqual([]);listLabRuntimeStatus.mockRejectedValueOnce({});vm.selectLab(vm.labs[0]);await flushPromises();expect(ElMessage.error).toHaveBeenCalledWith('当前实验室设备运行状态读取失败')
+ vm.labActivationCode='CODE';bindActivationCodeToLab.mockRejectedValueOnce({});await vm.bindActivationCode();expect(ElMessage.error).toHaveBeenCalledWith('实验室接入授权启用失败');vm.activationCodes=[binding()];unbindActivationCodeFromLab.mockRejectedValueOnce({});await vm.unbindActivationCode();expect(ElMessage.error).toHaveBeenCalledWith('实验室接入授权解除失败')
+})

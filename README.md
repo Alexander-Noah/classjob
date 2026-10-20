@@ -20,6 +20,7 @@
     <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain">
       <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FAlexander-Noah%2Fclassjob%2Fcoverage-badges%2Fcoverage.json&amp;logo=github" alt="最近一次成功 main CI 的实际行覆盖率" />
     </a>
+    <a href="https://app.codecov.io/github/Alexander-Noah/classjob"><img src="https://codecov.io/gh/Alexander-Noah/classjob/branch/main/graph/badge.svg" alt="Codecov coverage (including partial-line penalties)" /></a>
     <a href="https://spring.io/projects/spring-boot">
       <img src="https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
     </a>

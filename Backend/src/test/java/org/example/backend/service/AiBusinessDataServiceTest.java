@@ -214,4 +214,61 @@ class AiBusinessDataServiceTest {
         assertEquals(Map.of("成功", 2L, "失败", 1L), result.get("groups"));
         assertEquals(List.of(Map.of("id", "2", "status", "成功")), result.get("records"));
     }
+
+    @Test void actorsRejectAbsentDisabledUnknownAndMalformedPermissionConfigurations() {
+        UserMapper users=mock(UserMapper.class);when(beans.getBean(UserMapper.class)).thenReturn(users);
+        for(Integer id:Arrays.asList(null,0,-1))assertThrows(IllegalArgumentException.class,()->service.actor(id));
+        assertThrows(IllegalArgumentException.class,()->service.actor(7));
+        UserEntity user=new UserEntity();user.setUsername("fallback-name");user.setRoleCode("labAdmin");user.setStatus(1);when(users.getUser(7)).thenReturn(user);
+        for(String permissions:Arrays.asList(null,""," ","[]")){user.setPermissions(permissions);assertEquals(Set.of(),service.actor(7).permissions());assertEquals("fallback-name",service.actor(7).name());}
+        user.setPermissions("[\"课表数据\",{\"items\":[\"通知公告\",null,1,{}]}]");assertEquals(Set.of("课表数据","通知公告"),service.actor(7).permissions());
+        for(String permissions:List.of("{}","1","true","null")){user.setPermissions(permissions);assertThrows(IllegalArgumentException.class,()->service.actor(7));}
+        user.setPermissions(null);for(String role:Arrays.asList(null,"","unknown")){user.setRoleCode(role);assertThrows(IllegalArgumentException.class,()->service.actor(7));}
+        user.setRoleCode("labAdmin");user.setStatus(null);assertThrows(IllegalArgumentException.class,()->service.actor(7));
+        assertEquals("forbidden",service.query(new AiDataActor(null,"labAdmin","unknown",Set.of()),Map.of("dataset","labs")).get("status"));
+        assertEquals("forbidden",service.query(new AiDataActor(0,"labAdmin","unknown",Set.of()),Map.of("dataset","labs")).get("status"));
+    }
+    @Test void genericBusinessFiltersDoNotInterpretUnknownKeysOrLeakFailedReads() {
+        ModuleRecordService modules=mock(ModuleRecordService.class);when(beans.getBean(ModuleRecordService.class)).thenReturn(modules);
+        var first=Map.<String,Object>of("id","1","labId","7","status","ready","consumableId","3","date","2026-10-16","description","Teaching");
+        var second=Map.<String,Object>of("id","2","labId","8","status","done","consumableId","4","createdAt","2026-10-15");
+        when(modules.listModuleRecords("operation-events")).thenReturn(List.of(first,second));
+        for(var filter:Map.of("id","1","labId","7","status","ready","consumableId","3","date","2026-10-16","keyword","teaching").entrySet()){
+            assertEquals(1,service.query(admin,Map.of("dataset","operation-events",filter.getKey(),filter.getValue())).get("total"));
+            assertEquals(0,service.query(admin,Map.of("dataset","operation-events",filter.getKey(),"no-match")).get("total"));
+        }
+        assertEquals("unavailable",service.query(admin,Map.of("dataset","operation-events","groupBy","password")).get("status"));
+        when(modules.listModuleRecords("operation-events")).thenReturn(List.of(Map.of("id","1")));
+        assertEquals(Map.of("未填写",1L),service.query(admin,Map.of("dataset","operation-events","groupBy","status")).get("groups"));
+        when(modules.listModuleRecords("operation-events")).thenThrow(new RuntimeException("jdbc secret-password"));
+        var failed=service.query(admin,Map.of("dataset","operation-events"));assertEquals("unavailable",failed.get("status"));assertFalse(failed.toString().contains("secret-password"));
+    }
+    @Test void eventWindowMetadataRetainsSourceTotalsWithoutPretendingTheyAreCompleteHistory() {
+        DeviceStatusService devices=mock(DeviceStatusService.class);when(beans.getBean(DeviceStatusService.class)).thenReturn(devices);
+        when(devices.listEvents(anyMap())).thenReturn(Map.of("records",List.of(Map.of("id",1)),"total",100));
+        var result=service.query(admin,Map.of("dataset","runtime-events","limit",1));assertEquals(100,result.get("sourceTotal"));assertEquals(false,result.get("totalIsExact"));
+        when(devices.listEvents(anyMap())).thenReturn(Map.of("records",List.of(Map.of("id",1)),"total",1));assertFalse(service.query(admin,Map.of("dataset","runtime-events")).containsKey("sourceTotal"));
+        when(devices.listEvents(anyMap())).thenReturn(Map.of("records",List.of()));assertFalse(service.query(admin,Map.of("dataset","runtime-events")).containsKey("sourceTotal"));
+        when(devices.listEvents(anyMap())).thenReturn(Map.of("value","snapshot"));assertEquals(Map.of("value","snapshot"),service.query(admin,Map.of("dataset","runtime-events")).get("data"));
+    }
+    @Test void noticesFollowRoleScopeAndLabAuthorizationsExcludeDeletedOrOtherManagersRecords() {
+        NoticeService notices=mock(NoticeService.class);when(beans.getBean(NoticeService.class)).thenReturn(notices);when(notices.listNotices()).thenReturn(List.of());when(notices.listUserNotices(9,"academic",null)).thenReturn(List.of());
+        service.query(new AiDataActor(8,"systemAdmin","Admin",Set.of()),Map.of("dataset","notices"));service.query(admin,Map.of("dataset","notices"));service.query(new AiDataActor(9,"academic","Staff",Set.of()),Map.of("dataset","notices"));verify(notices,times(2)).listNotices();verify(notices).listUserNotices(9,"academic",null);
+        bindLab();ModuleRecordService modules=mock(ModuleRecordService.class);when(beans.getBean(ModuleRecordService.class)).thenReturn(modules);
+        when(modules.listModuleRecords("activation-codes")).thenReturn(List.of(Map.of("id","kept","labId",1,"deleted",false),Map.of("id","deleted","labId",1,"deleted",true),Map.of("id","other","labId",99),Map.of("id","unbound")));
+        var result=service.query(admin,Map.of("dataset","lab-authorizations"));assertEquals(1,result.get("total"));assertTrue(result.get("records").toString().contains("kept"));
+    }
+    @Test void nestedSerializedPayloadsAreSanitizedWithoutDroppingOrdinaryText() {
+        ModuleRecordService modules=mock(ModuleRecordService.class);when(beans.getBean(ModuleRecordService.class)).thenReturn(modules);
+        when(modules.listModuleRecords("operation-events")).thenReturn(List.of(Map.of("id","safe","details","{\"password\":\"secret\",\"value\":7}","note","[broken","description","x".repeat(2100)),Map.of("id","asset-row","sourceModule","asset-management")));
+        var result=service.query(admin,Map.of("dataset","operation-events"));String encoded=service.encode(result);assertFalse(encoded.contains("secret"));assertFalse(encoded.contains("asset-row"));assertTrue(encoded.contains("[broken"));assertTrue(encoded.contains("字段内容已截断"));
+        when(modules.listModuleRecords("system-settings")).thenReturn(List.of(Map.of("id","1","key","private","auth","private","value","allowed")));
+        var system=service.query(new AiDataActor(1,"systemAdmin","Admin",Set.of()),Map.of("dataset","system-settings"));assertFalse(service.encode(system).contains("private"));assertTrue(service.encode(system).contains("allowed"));
+    }
+    @Test void labScopedQueriesRejectInvalidIdsAndCalendarFieldsBeforeReadingTimetables() {
+        bindLab();for(Object id:List.of(0,-1,"invalid"))assertEquals("unavailable",service.query(admin,Map.of("dataset","runtime-status","labId",id)).get("status"));
+        var calendar=mock(TeachingScheduleReadService.class);when(beans.getBean(TeachingScheduleReadService.class)).thenReturn(calendar);
+        for(ScheduleCalendarData data:Arrays.asList(null,new ScheduleCalendarData(null,"2026-09-01"),new ScheduleCalendarData("2026秋",null),new ScheduleCalendarData(" ","2026-09-01"),new ScheduleCalendarData("2026秋"," "))){when(calendar.findActiveCalendar()).thenReturn(data);assertEquals("unavailable",service.query(admin,Map.of("dataset","timetable","date","2026-10-16")).get("status"));}
+        verify(beans,never()).getBean(AiScheduleReadMapper.class);
+    }
 }

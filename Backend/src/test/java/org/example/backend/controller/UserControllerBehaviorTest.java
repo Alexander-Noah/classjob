@@ -70,4 +70,19 @@ class UserControllerBehaviorTest {
         verify(users).batchUpdateStatus(ids,1);verify(users).batchUpdateStatus(ids,0);verify(users).batchDeleteUsers(ids);verify(users).batchUpdateRole(ids,"教师","teacher");verify(users).batchUpdateDepartment(ids,"42");
         assertThrows(IllegalArgumentException.class,()->controller.batchUpdateRole(null));assertThrows(IllegalArgumentException.class,()->controller.batchDeleteUsers(Map.of("ids","invalid")));
     }
+
+    @Test void wrongPasswordRecordsFailureAndCaptchaResponseDisablesCaching() {
+        MockHttpServletRequest request=request(null,null);
+        Result denied=controller.login(Map.of("username"," known ","password","wrong"),request);
+        assertEquals(-1,denied.getCode());verify(limiter).recordFailure("known",request);verify(jwt,never()).generateToken(any());
+        var response=new org.springframework.mock.web.MockHttpServletResponse();when(captcha.create()).thenReturn(Map.of("captchaId","id","image","data:image/png;base64,AA=="));
+        assertEquals(200,controller.captcha(response).getCode());assertEquals("no-store",response.getHeader("Cache-Control"));
+    }
+    @Test void blankSessionAndMalformedBatchIdsAreRejectedBeforeBusinessCalls() {
+        assertEquals(401,controller.profile(" ",request(" ","labAdmin")).getCode());
+        assertEquals(401,controller.updateProfile(new UserEntity(),request(" ","labAdmin")).getCode());
+        for(List<?> ids:List.of(List.of(),Collections.nCopies(1001,1),Arrays.asList(1,null),List.of(0),List.of(-1),List.of(1.5),List.of("2147483648"),List.of("not-id")))
+            assertThrows(IllegalArgumentException.class,()->controller.batchDeleteUsers(Map.of("ids",ids)));
+        verifyNoInteractions(users);
+    }
 }

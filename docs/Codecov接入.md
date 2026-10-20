@@ -19,3 +19,9 @@ OIDC 权限仅授予上传任务。外部 fork PR 和 Dependabot 运行保留测
 如果提示仓库未启用或无权访问，请在 Codecov 中启用此仓库并检查其 GitHub App 授权。
 
 官方说明：https://github.com/codecov/codecov-action#using-oidc
+
+## 验收口径
+
+仓库门槛为 Codecov 原始 project coverage 至少 96%，配置见根目录 codecov.yml。保持默认解析规则，不将部分覆盖行强制视为完整覆盖，也不排除原有业务源码。
+
+README 同时显示两个指标：Line coverage 来自 JaCoCo/Vitest 的已执行行比率；Codecov coverage 使用服务端原始统计，其中执行过但分支没有测全的行会被记为 partial。两者不能互相替代，验收以 Codecov 处理完成后的提交报告为准。

@@ -109,6 +109,53 @@ class ReservationScheduleServiceTest {
      * @param lab 实验室参数。
      * @return LabCatalogQuery 类型的处理结果。
      */
+    @Test
+    void invalidRequestsNeverQueryProviders() {
+        var service = new ReservationScheduleService(request -> { throw new AssertionError("schedule queried"); },
+                org.mockito.Mockito.mock(LabCatalogQuery.class));
+        for (Long id : new Long[]{null, 0L, -1L}) {
+            assertEquals("reservation request is malformed", service.checkConflict(id, DATE, SAME_DATE_RANGE).message());
+        }
+        assertEquals(CapabilityStatus.UNAVAILABLE, service.checkConflict(7L, null, SAME_DATE_RANGE).status());
+        for (TimeRange range : new TimeRange[]{null, new TimeRange(null, SAME_DATE_RANGE.endsAt()),
+                new TimeRange(SAME_DATE_RANGE.startsAt(), null), new TimeRange(SAME_DATE_RANGE.startsAt(), SAME_DATE_RANGE.startsAt())}) {
+            assertEquals("reservation request is malformed", service.checkConflict(7L, DATE, range).message());
+        }
+        assertEquals("reservation time must be within reservation date", service.checkConflict(7L, DATE.plusDays(1), SAME_DATE_RANGE).message());
+    }
+
+    @Test
+    void missingMismatchedOrFailedLabLookupCannotBeTreatedAsNoConflict() {
+        ScheduleOccupancyQuery schedules = request -> { throw new AssertionError("schedule queried without laboratory"); };
+        for (LabView lab : new LabView[]{null, lab(8L, "L8", "Other"), lab(7L, null, " "), lab(7L, "", null)}) {
+            var result = new ReservationScheduleService(schedules, catalog(lab)).checkConflict(7L, DATE, SAME_DATE_RANGE);
+            assertEquals(CapabilityStatus.UNAVAILABLE, result.status());
+        }
+        var broken = org.mockito.Mockito.mock(LabCatalogQuery.class);
+        org.mockito.Mockito.when(broken.findById(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new IllegalStateException("database unavailable"));
+        assertEquals("laboratory context is unavailable", new ReservationScheduleService(schedules, broken)
+                .checkConflict(7L, DATE, SAME_DATE_RANGE).message());
+    }
+
+    @Test
+    void failedOrIncompleteScheduleResponsesRemainUnavailable() {
+        for (CapabilityResult<ScheduleOccupancyView> response : java.util.Arrays.<CapabilityResult<ScheduleOccupancyView>>asList(
+                null, CapabilityResult.available(null), CapabilityResult.unavailable(null))) {
+            var result = new ReservationScheduleService(request -> response, catalog(lab(7L, "L7", null)))
+                    .checkConflict(7L, DATE, SAME_DATE_RANGE);
+            assertEquals(CapabilityStatus.UNAVAILABLE, result.status());
+            assertEquals("teaching schedule is unavailable", result.message());
+        }
+        var broken = new ReservationScheduleService(request -> { throw new IllegalStateException("offline"); }, catalog(lab(7L, null, "Name")));
+        assertEquals("teaching schedule is unavailable", broken.checkConflict(7L, DATE, SAME_DATE_RANGE).message());
+        var valid = new ReservationScheduleService(request -> {
+            assertEquals(Set.of("Name"), request.laboratoryAliases());
+            return CapabilityResult.available(new ScheduleOccupancyView(false));
+        }, catalog(lab(7L, null, " Name ")));
+        assertEquals(CapabilityResult.available(new ScheduleConflictSnapshot(7L, DATE, SAME_DATE_RANGE, false)), valid.checkConflict(7L, DATE, SAME_DATE_RANGE));
+    }
+
     private static LabCatalogQuery catalog(LabView lab) {
         return new LabCatalogQuery() {
             /**

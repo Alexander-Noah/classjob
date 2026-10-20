@@ -6,6 +6,7 @@
   <p>
     <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/Alexander-Noah/classjob/ci.yml?branch=main&amp;label=CI&amp;logo=github" alt="main CI status" /></a>
     <a href="https://github.com/Alexander-Noah/classjob/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FAlexander-Noah%2Fclassjob%2Fcoverage-badges%2Fcoverage.json&amp;logo=github" alt="Actual line coverage from the latest successful main CI run" /></a>
+    <a href="https://app.codecov.io/github/Alexander-Noah/classjob"><img src="https://codecov.io/gh/Alexander-Noah/classjob/branch/main/graph/badge.svg" alt="Codecov coverage (including partial-line penalties)" /></a>
     <img src="https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot" alt="Spring Boot 4.0.6" />
     <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs" alt="Vue 3" />
     <img src="https://img.shields.io/badge/Tauri-2.x-24C8DB?logo=tauri" alt="Tauri 2" />

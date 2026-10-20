@@ -9,6 +9,43 @@ vi.mock('../../src/api/http', () => ({ default: { get: vi.fn(), post: vi.fn(), p
 const options = { endpoints: { list: '/records', batch: '/records/batch', reset: '/records/reset' }, resourceName: '预约', storageKey: 'test-records' }
 const service = createCollectionService(options)
 const strict = createCollectionService({ ...options, serverAuthoritativeRecords: true })
+
+it('legacy mutation responses support bare objects and fallback submitted records', async () => {
+  for (const value of [null, [], { code: 200 }]) {
+    http.post.mockResolvedValueOnce({ data: value })
+    expect(await service.create({ name: 'submitted' })).toEqual({ name: 'submitted' })
+  }
+  http.post.mockResolvedValueOnce({ data: { id: 3, name: 'saved' } })
+  expect(await service.create({ name: 'submitted' })).toEqual({ id: 3, name: 'saved' })
+  http.put.mockResolvedValueOnce({ data: null })
+  expect(await service.replace()).toEqual([])
+})
+
+it('missing local records return explicit fallback values for every mock mutation', async () => {
+  mode.mock = true
+  for (const operation of [() => service.update(1, { name: 'none' }), () => service.approve(1, { reviewerName: 'reviewer' }), () => service.reject(1, { reviewRemark: 'note' }), () => service.action(1, 'submit', { value: 2 }), () => service.remove(1)]) {
+    localStorage.clear()
+    expect(await operation()).toBeDefined()
+  }
+  localStorage.clear()
+  expect((await service.create({ id: 'explicit' })).id).toBe('explicit')
+  await service.replace([{ id: 1, reviewer: 'original', note: 'old' }, { id: 2 }])
+  expect(await service.approve(1, { reviewerName: 'alias', reviewRemark: 'alias note' })).toMatchObject({ reviewer: 'alias', note: 'alias note' })
+  expect(await service.approve(1)).toMatchObject({ reviewer: 'alias', note: 'alias note' })
+  expect(await service.reject(1, { reviewerName: 'new alias', reviewRemark: 'new note' })).toMatchObject({ reviewer: 'new alias', note: 'new note' })
+  expect(await service.reject(1)).toMatchObject({ reviewer: 'new alias', note: 'new note' })
+})
+
+it('SSR mock collections operate without browser cache or writes', async () => {
+  mode.mock = true
+  vi.stubGlobal('window', undefined)
+  try {
+    expect(await service.list()).toEqual([])
+    expect(await service.replace([{ id: 1 }])).toEqual([{ id: 1 }])
+    expect(await service.reset()).toEqual([])
+    expect((await service.create({ name: 'new' })).id).toMatch(/^预约-/)
+  } finally { vi.unstubAllGlobals() }
+})
 beforeEach(() => { mode.mock = false; localStorage.clear(); vi.resetAllMocks() })
 
 it.each([

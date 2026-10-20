@@ -11,6 +11,28 @@ vi.mock('vue-router', () => ({ useRouter: () => navigation }))
 vi.mock('../../src/api/services/activationCodes', () => Object.fromEntries(['batchOperateActivationCodes', 'createActivationCodes', 'getActivationCodePage', 'listActivationAuditLogs', 'listActivationCodeBindings', 'remoteBindActivationDevice', 'remoteUnbindActivationDevice', 'updateActivationCodeRemark', 'updateActivationCodeStatus'].map(key => [key, vi.fn()])))
 vi.mock('element-plus', () => ({ ElMessage: { warning: vi.fn(), success: vi.fn(), error: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }))
 const wrappers = []
+it('rendered legacy authorizations expose safe fallback labels and executable dropdown controls',async()=>{
+  const legacy={code:'legacy-code',enabled:false,deviceLimit:0,boundCount:0}
+  api.getActivationCodePage.mockResolvedValue({records:[legacy]})
+  const vm=await setup(true),w=wrappers.at(-1)
+  expect(w.text()).toContain('0 / 0')
+  const enable=w.findAll('[data-element="dropdown-item"]').find(item=>item.text()==='启用')
+  await enable.trigger('click');await flushPromises()
+  expect(api.updateActivationCodeStatus).toHaveBeenCalledWith('legacy-code',expect.objectContaining({enabled:true}))
+  vm.generatedCodes=[{maskedCode:'just****mask'}];vm.selectedCode=legacy;vm.selectedBinding={};vm.deviceBindings=[]
+  await flushPromises();expect(w.text()).toContain('just****mask')
+  const copy=w.findAll('button').find(button=>button.text()==='复制')
+  await copy.trigger('click');await flushPromises();expect(navigator.clipboard.writeText).toHaveBeenCalledWith('just****mask')
+  vm.activationCodes=[];await flushPromises();expect(vm.activationCodes).toEqual([]);expect(w.findAll('button').some(button=>button.text()==='查看设备')).toBe(false)
+})
+it('fallback load errors provide useful feedback and device usage clamps to full capacity',async()=>{
+  api.getActivationCodePage.mockRejectedValueOnce({});api.listActivationAuditLogs.mockRejectedValueOnce({})
+  const vm=await setup()
+  expect(ElMessage.error).toHaveBeenCalledWith('激活码列表加载失败');expect(ElMessage.error).toHaveBeenCalledWith('审计日志加载失败')
+  api.listActivationCodeBindings.mockRejectedValueOnce({});await vm.openDeviceDrawer(row())
+  expect(ElMessage.error).toHaveBeenCalledWith('绑定设备加载失败')
+  expect(vm.getQuotaPercent({deviceLimit:2,boundCount:3})).toBe(100)
+})
 const row = () => ({ id: 'code-1', code: 'abcdefgh-12345678-abcdefgh', maskedCode: 'abcd****efgh', deviceLimit: 5, boundCount: 2, enabled: true, ownerName: '负责人', createdAt: '2026-10-18T09:00:00' })
 beforeEach(() => {
   vi.resetAllMocks()
@@ -213,4 +235,29 @@ it('load failures reset all busy flags and hero actions dispatch refresh, genera
   expect(vm.createDialogVisible).toBe(true)
   expect(api.createActivationCodes).not.toHaveBeenCalled()
   vm.handleBack(); expect(navigation.push).toHaveBeenCalledWith('/system-admin')
+})
+
+it('supports legacy identities and safe export fallback data',async()=>{
+ api.getActivationCodePage.mockResolvedValueOnce({});const vm=await setup();expect(vm.activationCodes).toEqual([]);expect(vm.authorizationUsage.totalLimit).toBe(0)
+ const legacy={code:'legacy-code-value',owner:'旧负责人',expiresAt:'2030-01-01',status:'disabled',remark:'带"引号'}
+ vm.activationCodes=[legacy,{}];vm.statistics={};expect(vm.authorizationUsage.percent).toBe(0);vm.selectionRows=[legacy,{}];expect(vm.selectedIds).toEqual([legacy.code])
+ expect(vm.getStatusText(legacy)).toBe('停用');expect(vm.getStatusText({statusText:'自定义'})).toBe('自定义');expect(vm.getStatusType({enabled:false})).toBe('danger');expect(vm.maskActivationCode({code:'abc'})).toBe('ab****bc');expect(vm.formatDateTime(null,'暂无')).toBe('暂无')
+ vm.copySelectedMaskedCodes();vm.copyRowSummary(legacy);await flushPromises();expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expect.stringContaining('旧负责人'))
+ vm.exportRows([legacy,{}]);expect(await URL.createObjectURL.mock.calls.at(-1)[0].text()).toContain('带""引号')
+ vm.openRemarkDialog(legacy);expect(vm.remarkForm.expireAt).toBe('2030-01-01');await vm.submitRemark();expect(api.updateActivationCodeRemark).toHaveBeenCalledWith(legacy.code,expect.objectContaining({expireAt:'2030-01-01'}))
+ vm.openRemarkDialog({});expect(vm.remarkForm.ownerName).toBe('');await vm.openDeviceDrawer(legacy);expect(api.listActivationCodeBindings).toHaveBeenLastCalledWith(legacy.code)
+ vm.openRemoteBindDialog(legacy);await vm.submitRemoteBind(true);expect(api.remoteBindActivationDevice).toHaveBeenCalledWith(legacy.code,expect.objectContaining({force:true}));vm.openRemoteUnbindDialog({machineCode:'host'});await vm.submitRemoteUnbind();expect(api.remoteUnbindActivationDevice).toHaveBeenCalledWith(legacy.code,'host',expect.any(Object));await vm.toggleStatus(legacy);await vm.deleteCode(legacy);expect(api.batchOperateActivationCodes).toHaveBeenCalledWith(expect.objectContaining({ids:[legacy.code]}))
+})
+it('generation accepts single-record and empty responses and ignores message-less failures',async()=>{
+ const vm=await setup();api.createActivationCodes.mockResolvedValueOnce({record:{code:'single'}}).mockResolvedValueOnce({});vm.createForm.expireAt='2030-01-01';await vm.handleGenerate();expect(vm.generatedCodes).toEqual([{code:'single'}]);await vm.handleGenerate();expect(vm.generatedCodes).toEqual([]);api.createActivationCodes.mockRejectedValueOnce({});ElMessage.error.mockClear();await vm.handleGenerate();expect(ElMessage.error).not.toHaveBeenCalled();expect(vm.isGenerating).toBe(false)
+})
+it('copies masked-only codes using legacy clipboard and reports denied fallback',async()=>{
+ const vm=await setup();await vm.copyText('');expect(navigator.clipboard.writeText).not.toHaveBeenCalled();vm.copyActivationCode({maskedCode:'ab****cd'});await flushPromises();expect(ElMessage.success).toHaveBeenCalledWith('已复制脱敏码，完整激活码仅生成时展示一次');vm.copyActivationCode({code:'ab****cd',maskedCode:'ab****cd'});await flushPromises()
+ const saved=navigator.clipboard.writeText;navigator.clipboard.writeText=undefined;document.execCommand=vi.fn().mockReturnValueOnce(true).mockReturnValue(false);try{await vm.copyText('available');await vm.copyText('denied');expect(ElMessage.warning).toHaveBeenCalledWith('当前浏览器不允许自动复制，请手动复制')}finally{navigator.clipboard.writeText=saved}
+})
+it('cancelled actions retain selections and message-less errors release operation state',async()=>{
+ const vm=await setup();vm.selectionRows=[row()];ElMessageBox.confirm.mockRejectedValueOnce('close');await vm.runSimpleBatch('DELETE');expect(api.batchOperateActivationCodes).not.toHaveBeenCalled();expect(vm.selectionRows).toHaveLength(1)
+ api.batchOperateActivationCodes.mockRejectedValueOnce(new Error('批量失败'));await vm.runSimpleBatch('ENABLE');expect(ElMessage.error).toHaveBeenCalledWith('批量失败');ElMessageBox.confirm.mockRejectedValueOnce('close');await vm.toggleStatus(row());ElMessageBox.confirm.mockRejectedValueOnce('close');await vm.deleteCode(row());expect(api.updateActivationCodeStatus).not.toHaveBeenCalled()
+ vm.openRemoteBindDialog(row());api.remoteBindActivationDevice.mockRejectedValueOnce('close');await vm.submitRemoteBind();expect(vm.actionLoading).toBe(false);vm.selectedBinding=null;await vm.submitRemoteUnbind();expect(api.remoteUnbindActivationDevice).not.toHaveBeenCalled()
+ for(const [apiName,handler] of [['remoteBindActivationDevice','submitRemoteBind'],['remoteUnbindActivationDevice','submitRemoteUnbind'],['updateActivationCodeRemark','submitRemark'],['updateActivationCodeStatus','toggleStatus'],['batchOperateActivationCodes','deleteCode'],['batchOperateActivationCodes','runSimpleBatch']]){vm.selectedBinding={id:'binding'};api[apiName].mockRejectedValueOnce({});ElMessage.error.mockClear();await vm[handler](handler==='runSimpleBatch'?'ENABLE':row());expect(ElMessage.error).not.toHaveBeenCalled()}
 })

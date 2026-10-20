@@ -42,3 +42,14 @@ it('empty API results retain configured digital twin defaults and allow no-lab o
 it('status appearance and capacity usage have stable bounded semantics',async()=>{
   const vm=await setup();expect(['开放','使用中','维护中','停用','未知'].map(vm.getStatusColor)).toEqual(['#22c55e','#f59e0b','#ef4444','#ef4444','#3b82f6']);expect(vm.getUsageByStatus('预约中',20,1)).toBe(64);expect(vm.getUsageByStatus('开放',100,1)).toBe(18);expect(vm.getUsageByStatus('开放',10,100)).toBe(58);expect(vm.getUsageByStatus('开放',0,0)).toBe(30)
 })
+
+it('accepts legacy lab, device and reservation payload names with token-safe matching',async()=>{
+ const vm=await setup();for(const [field,value] of [['room','R1'],['roomNo','R2']])expect(vm.getLabCode({[field]:value})).toBe(value);expect(vm.getLabCode()).toBe('');expect(vm.getLabName({roomName:'专用机房'})).toBe('专用机房');expect(vm.getLabName({room:'R1'})).toBe('R1');expect(vm.getLabStatus({openStatus:'停用'})).toBe('停用');expect(vm.getLabStatus()).toBe('开放');expect(vm.getLabCapacity()).toBe(0);expect(vm.getLabId({labId:9})).toBe(9);expect(vm.getLabId({code:'L1'})).toBe('L1')
+ for(const field of ['labName','lab','roomName','location'])expect(vm.getDeviceLabText({[field]:'A101'})).toBe('A101');expect(vm.getDeviceLabText()).toBe('');for(const field of ['lab','labName','labDisplayName','roomName','classroom'])expect(vm.getReservationLabText({[field]:'A101'})).toBe('A101');expect(vm.getReservationLabText()).toBe('');for(const field of ['date','reservationDate','useDate','startDate'])expect(vm.getReservationDate({[field]:'2026-10-18'})).toBe('2026-10-18');expect(vm.getReservationDate()).toBe('')
+ expect(vm.isDeviceOnline({onlineStatus:'offline'})).toBe(false);expect(vm.isDeviceOnline({assetStatus:'停用'})).toBe(false);expect(vm.isDeviceOnline({})).toBe(true);expect(vm.isReservationApproved({reviewStatus:'approved'})).toBe(true)
+ vm.liveDevices=[{roomName:'A101'},{location:'B202'}];expect(vm.selectedLabDevices).toHaveLength(1);vm.liveMaintenanceRecords=[{roomName:'A101'},{location:'B202'}];expect(vm.selectedLabMaintenanceRecords).toHaveLength(1)
+ labResourceService.update.mockRejectedValueOnce({});await vm.updateSelectedLabStatus('停用');expect(ElMessage.error).toHaveBeenCalledWith('状态更新失败')
+})
+it('normalizes malformed primary data and uses configured lab defaults with device totals',async()=>{
+ labResourceService.list.mockResolvedValue({});deviceAssetService.list.mockResolvedValue({});const vm=await setup({digitalTwin:{labs:[{code:'C303',name:'配置机房',deviceCount:5}],events:[],summary:[],sceneTags:[]}});expect(vm.liveLabs).toEqual([]);expect(vm.liveDevices).toEqual([]);expect(vm.liveLabNodes[0].usage).toBe(30);expect(vm.selectedLab.code).toBe('C303')
+})

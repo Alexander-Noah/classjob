@@ -235,3 +235,23 @@ it('form aliases submit separate identifiers and blank configuration remains usa
   await state.applyBatchStatus()
   expect(ElMessage.warning).toHaveBeenCalledWith('当前业务暂无可流转状态')
 })
+it('empty schemas retain generic defaults and do not invent status or primary fields',async()=>{
+ service.list.mockResolvedValueOnce([])
+ const state=await setup({primaryKey:'',recordName:'',tableColumns:[],statusOptions:[]})
+ expect(state.statusProp.value).toBe('status');expect(state.batchTargetStatus.value).toBe('');expect(state.recordName.value).toBe('记录')
+ state.openCreateDialog();expect(state.dialogTitle.value).toBe('新增记录');expect(state.formModel).toEqual({})
+ await state.submitRecord();expect(service.replace).toHaveBeenCalledWith([{}])
+})
+it('stable record IDs, nullable search fields and legacy form aliases survive editing',async()=>{
+ service.list.mockResolvedValueOnce([{id:1,_recordId:'stable-id',name:null,title:'legacy',status:'外部状态',owner:null}])
+ const state=await setup({primaryKey:'absent',tableColumns:[{prop:'title',formProp:'name',label:'标题'},{prop:'status',label:'状态'}],statusOptions:[]})
+ expect(state.records.value[0]._recordId).toBe('stable-id');expect(state.statusOptions.value).toEqual([{label:'外部状态',type:'info'}])
+ state.keyword.value='missing';expect(state.filteredRecords.value).toEqual([]);state.keyword.value=''
+ state.openEditDialog(state.records.value[0]);expect(state.formModel.name).toBe('legacy')
+ state.formModel.name='修订';await state.submitRecord();expect(state.records.value[0]).toMatchObject({id:1,name:'修订'})
+})
+it('deleting the last row on a later page clamps the page after persistence',async()=>{
+ const state=await setup();state.handlePageSizeChange(1);state.handleCurrentPageChange(2)
+ await state.deleteRecord(state.records.value[1]);await nextTick()
+ expect(state.currentPage.value).toBe(1);expect(state.pagedRecords.value[0].id).toBe(1)
+})

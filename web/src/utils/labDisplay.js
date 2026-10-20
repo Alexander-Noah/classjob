@@ -22,7 +22,7 @@ export const getLabRoomCode = (lab = {}) => {
     return lab.match(/^[A-Z]\d{3}/i)?.[0] || ''
   }
 
-  return lab.code || lab.labCode || lab.room || lab.roomNo || getLabName(lab).match(/^[A-Z]\d{3}/i)?.[0] || ''
+  return lab.code || lab.labCode || lab.room || lab.roomNo || String(getLabName(lab)).match(/^[A-Z]\d{3}/i)?.[0] || ''
 }
 
 /**

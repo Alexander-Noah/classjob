@@ -8,6 +8,48 @@ vi.mock('../../src/api/http', () => ({ default: { get: vi.fn(), post: vi.fn(), p
 vi.mock('../../src/api/config', () => ({ API_USE_MOCK: false }))
 
 const user = { id: 7, username: 'admin', roleCode: 'labAdmin', realName: '管理员' }
+
+it('partial login responses and localized roles retain safe session defaults', async () => {
+  for (const payload of [null, {}, { role: '实验室管理员' }, { role: 'unknown' }, { user: { name: '显示名', roleName: '系统管理员' } }, { user: { roleCode: 'labAdmin' } }]) {
+    auth.clearAuthSession()
+    http.post.mockResolvedValueOnce({ data: payload })
+    const result = await auth.loginByPassword({ username: 'entry' })
+    expect(result.token).toBe('')
+    if (payload?.user?.roleName === '系统管理员') expect(result.user.roleCode).toBe('systemAdmin')
+    else if (result.user) expect(result.user.roleCode).toBe('labAdmin')
+    expect(auth.isAuthenticated()).toBe(true)
+  }
+  http.post.mockResolvedValueOnce({ data: { code: 500 } })
+  await expect(auth.loginByPassword({})).rejects.toThrow('登录失败')
+  http.get.mockResolvedValueOnce({ data: { code: 500 } })
+  await expect(auth.getCurrentUser()).rejects.toThrow('获取用户信息失败')
+  http.put.mockResolvedValueOnce({ data: null })
+  expect(await auth.updateCurrentUserProfile()).toBeNull()
+})
+
+it('empty updates and remembered usernames work with either session store', () => {
+  auth.persistRememberedLogin({ remember: true })
+  expect(auth.getRememberedLogin()).toEqual({ remember: true, username: '' })
+  auth.persistAuthSession({ remember: false })
+  expect(auth.getStoredRole()).toBe('labAdmin')
+  expect(auth.getStoredUser()).toBeNull()
+  expect(auth.updateStoredUser()).toMatchObject({ roleCode: 'labAdmin', name: '实验室管理员' })
+  expect(localStorage.getItem(keys.AUTH_USER_STORAGE_KEY)).toBeNull()
+  auth.clearAuthSession()
+  expect(auth.updateStoredUser({ role: '未知角色' }, 'systemAdmin').roleCode).toBe('systemAdmin')
+})
+
+it('server rendering has no storage dependency', () => {
+  vi.stubGlobal('window', undefined)
+  try {
+    expect(auth.isAuthenticated()).toBe(false)
+    auth.persistRememberedLogin({ username: 'entry', remember: true })
+    auth.persistAuthSession({})
+    expect(auth.getStoredUser()).toBeNull()
+    expect(auth.updateStoredUser({ name: 'SSR' }).name).toBe('SSR')
+    auth.clearAuthSession()
+  } finally { vi.unstubAllGlobals() }
+})
 beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()

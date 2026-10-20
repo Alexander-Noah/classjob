@@ -216,11 +216,83 @@ class ReservationWorkflowBehaviorTest {
         }
     }
 
+    @Test void blankStatusReviewerAndNonPositiveAttendeeCountUseDefaultsAndKeepProvidedNotes() {
+        for(String status:java.util.Arrays.asList(null," ")) {
+            var request=reservation();request.setStatus(status);request.setReviewerName(" ");request.setAttendeeCount(0);
+            service.insertReservation(request);assertEquals("待审核",request.getStatus());assertEquals("待审核",request.getReviewerName());assertEquals(1,request.getAttendeeCount());
+        }
+        var request=reservation();request.setReservationDate(LocalDate.now().minusDays(1));request.setReviewRemark("保留原有审批说明");
+        service.insertReservation(request);assertEquals("保留原有审批说明",request.getReviewRemark());
+        request=reservation();request.setReviewRemark("申请人补充使用说明");service.submitScanReservation(request);
+        assertEquals("申请人补充使用说明",request.getReviewRemark());
+        when(mapper.countConflictingReservations(isNull(),any())).thenReturn(1);
+        request=reservation();request.setReviewRemark("保留原有冲突说明");service.insertReservation(request);
+        assertEquals("冲突",request.getStatus());assertEquals("保留原有冲突说明",request.getReviewRemark());
+        request=reservation();request.setStatus("已通过");service.insertReservation(request);assertEquals("已通过",request.getStatus());assertTrue(request.getConflict());
+    }
+    @Test void failedApprovalAndRejectionUpdatesDoNotReportSuccess() {
+        when(mapper.getApproved(anyInt(),any())).thenReturn(0);
+        assertThrows(IllegalArgumentException.class,()->service.getApproved(1,new ReservationsEntity()));
+        when(mapper.getRejected(anyInt(),any())).thenReturn(0);
+        var rejection=new ReservationsEntity();rejection.setReviewRemark("预约材料不完整");
+        assertThrows(IllegalArgumentException.class,()->service.getRejected(1,rejection));
+        verify(events,never()).syncUsageRecordAfterReservationApproved(any());
+    }
+    @Test void historicalMalformedTimesAreReadableWithoutAutoExpiringThem() {
+        for(Consumer<ReservationsEntity> change:List.<Consumer<ReservationsEntity>>of(value->value.setReservationDate(null),value->value.setTimeRange(null),value->value.setTimeRange("bad"),value->{value.setReservationDate(LocalDate.now());value.setTimeRange("00:00-00:01");})) {
+            var historical=reservation();change.accept(historical);when(mapper.getReservations()).thenReturn(List.of(historical));
+            assertDoesNotThrow(service::getReservations);
+            if(historical.getReservationDate()==null||historical.getTimeRange()==null||"bad".equals(historical.getTimeRange()))assertEquals("待审核",historical.getStatus());
+            else assertEquals("已过期",historical.getStatus());
+        }
+    }
+    @Test void labResolutionSupportsNameOnlyCodeOnlyAndMissingCapacity() {
+        for(String name:List.of("机房","A101 机房")) {
+            var request=reservation();request.setLabId(null);request.setLabCode(null);request.setLabName(name);service.insertReservation(request);assertEquals(7L,request.getLabId());
+        }
+        lab.setCapacity(null);var request=reservation();request.setLabId(null);request.setLabName(null);request.setLabCode("A101");service.insertReservation(request);assertEquals(7L,request.getLabId());
+        assertEquals("A101 机房",service.getScanReservationProfile(null,"A101").get("displayName"));
+        lab.setLabName(null);assertEquals("A101",service.getScanReservationProfile(7,null).get("displayName"));
+        lab.setLabName("A101实验室");assertEquals("A101实验室",service.getScanReservationProfile(7,null).get("displayName"));
+        when(timetable.getCrawlerConfig(anyString())).thenReturn(null);assertDoesNotThrow(()->service.insertReservation(reservation()));
+    }
+    @Test void cancellationSupportsApprovedConflictAndLegacyPendingButRejectsPastApproved() {
+        for(String status:List.of("已通过","冲突","加签中")) {
+            saved=reservation();saved.setStatus(status);when(mapper.getReservation(1)).thenReturn(saved);
+            var cancellation=reservation();cancellation.setStatus("已取消");cancellation.setReviewRemark("教学安排已调整");
+            assertDoesNotThrow(()->service.updateReservation(1,cancellation));
+        }
+        saved=reservation();saved.setStatus("已通过");saved.setReservationDate(LocalDate.now().minusDays(1));when(mapper.getReservation(1)).thenReturn(saved);
+        var cancellation=reservation();cancellation.setStatus("已取消");cancellation.setReviewRemark("教学安排已调整");
+        assertThrows(IllegalArgumentException.class,()->service.updateReservation(1,cancellation));
+    }
     private ReservationsEntity reservation() {
+        // Future dates keep workflow assertions independent of the wall-clock hour.
         var value = new ReservationsEntity(); value.setId(1L); value.setApplicantName("张同学");
         value.setDepartment("信息学院"); value.setContact("13800138000"); value.setLabId(7L); value.setLabCode("A101"); value.setLabName("机房");
         value.setReservationDate(LocalDate.now().plusDays(7)); value.setTimeRange("08:30-10:00");
         value.setScene("课程"); value.setAttendeeCount(10); value.setReason("程序设计课程"); value.setStatus("待审核");
         return value;
+    }
+
+    @Test void missingApplicationsAndUnidentifiedHistoricalRowsAreHandledWithoutWrites() {
+        assertThrows(IllegalArgumentException.class,()->service.insertReservation(null));
+        when(mapper.getReservation(999)).thenReturn(null);assertNull(service.getReservation(999));
+        var historical=reservation();historical.setId(null);historical.setReservationDate(LocalDate.now().minusDays(1));
+        when(mapper.getReservations()).thenReturn(List.of(historical));assertEquals(List.of(historical),service.getReservations());
+        verify(mapper,never()).updateReviewStatus(anyInt(),anyString(),anyString(),anyString());
+    }
+    @Test void labResolutionRejectsAbsentNamesAndUnknownCodesAndSupportsNameWithoutCode() {
+        var request=reservation();request.setLabId(null);request.setLabCode(null);request.setLabName(null);
+        assertThrows(IllegalArgumentException.class,()->service.insertReservation(request));
+        request.setLabCode("missing");request.setLabName("missing");assertThrows(IllegalArgumentException.class,()->service.insertReservation(request));
+        lab.setLabCode(null);request.setLabCode(null);request.setLabName("机房");assertDoesNotThrow(()->service.insertReservation(request));assertEquals(7L,request.getLabId());
+        when(timetable.getCrawlerConfig(anyString())).thenReturn(Map.of("semesterStartDate"," "));assertDoesNotThrow(()->service.insertReservation(reservation()));
+    }
+    @Test void emptyConflictExplanationAndExistingExpiredStatusRemainConsistent() {
+        var request=reservation();request.setReviewRemark(" ");when(mapper.countConflictingReservations(isNull(),any())).thenReturn(1);
+        service.insertReservation(request);assertEquals("冲突",request.getStatus());assertFalse(request.getReviewRemark().isBlank());
+        saved.setStatus("已过期");assertThrows(IllegalArgumentException.class,()->service.getApproved(1,new ReservationsEntity()));
+        var rejection=new ReservationsEntity();rejection.setReviewRemark("资料不完整");assertThrows(IllegalArgumentException.class,()->service.getRejected(1,rejection));
     }
 }

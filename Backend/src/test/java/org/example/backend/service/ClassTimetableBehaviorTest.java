@@ -131,6 +131,55 @@ class ClassTimetableBehaviorTest {
         scripts();Process process=mock(Process.class);when(process.waitFor(anyLong(),any(TimeUnit.class))).thenReturn(exit!=-1);when(process.exitValue()).thenReturn(exit);
         try(var construction=mockConstruction(ProcessBuilder.class,(builder,context)->{when(builder.environment()).thenReturn(new HashMap<>());when(builder.start()).thenReturn(process);})){Map<String,Object> result=service.triggerCrawler();assertEquals(exit==-1?"timeout":"failed",result.get("status"));assertEquals(1,construction.constructed().size());assertEquals(false,service.getCrawlerConfig().get("running"));}verify(mapper,never()).deleteBySemester(anyString());if(exit==-1)verify(process).destroyForcibly();
     }
+    @Test void invalidPersistedCronAndAbsentFlagsHaveSafeDisplayDefaults() {
+        assertThrows(IllegalArgumentException.class,()->service.saveCrawlerConfig(null));
+        config.remove("scheduleEnabled");config.put("cron","invalid");
+        assertEquals(true,service.getCrawlerConfig().get("scheduleEnabled"));
+        assertEquals("",service.getCrawlerConfig().get("nextRunAt"));
+        config.put("cron","0 0 0 31 2 *");
+        assertEquals("",service.getCrawlerConfig().get("nextRunAt"));
+        assertThrows(IllegalStateException.class,()->new ClassTimetableServiceImpl(mapper,teaching,environment,scheduler,"dev-secret-".repeat(5)));
+        for(Map<String,String> invalid:List.of(Map.of("username","teacher","password"," "),Map.of("username"," ","password","secret"))) {
+            assertThrows(IllegalArgumentException.class,()->service.saveCrawlerCredential(invalid));
+        }
+    }
+    @Test void missingAndPartialStoredCredentialsDoNotPretendToBeUsable() {
+        credential=new HashMap<>();
+        assertFalse(service.getCrawlerCredential().getConfigured());assertThrows(IllegalArgumentException.class,service::triggerCrawler);
+        credential.put("passwordCipher","invalid");
+        assertTrue(service.getCrawlerCredential().getConfigured());assertFalse(service.getCrawlerCredential().getUsable());
+        assertThrows(IllegalArgumentException.class,service::triggerCrawler);
+    }
+    @Test void missingOrUnreadableLogPathsKeepTaskHistoryAvailable() throws Exception {
+        var persisted=new HashMap<String,Object>(Map.of("output","already stored","logPath",temp.resolve("missing").toString()));
+        var noPath=new HashMap<String,Object>(Map.of("output",""));
+        var missing=new HashMap<String,Object>(Map.of("logPath",temp.resolve("missing").toString()));
+        var directory=new HashMap<String,Object>(Map.of("logPath",temp.toString()));
+        when(mapper.listCrawlerTasks(anyInt())).thenReturn(List.of(persisted,noPath,missing,directory));
+        var history=service.listCrawlerTasks(4);
+        assertEquals("already stored",history.get(0).get("output"));assertEquals("",history.get(1).get("output"));
+        assertEquals("",history.get(2).get("output"));assertEquals("",history.get(3).get("output"));
+    }
+    @Test void defaultSemesterInitializationToleratesMissingOrUnavailableCatalog() {
+        when(mapper.getCrawlerConfig(anyString())).thenReturn(null);
+        when(teaching.listSemesters()).thenReturn(null,List.of()).thenThrow(new IllegalStateException("catalog offline"));
+        for(int attempt=0;attempt<3;attempt++)assertDoesNotThrow(service::getCrawlerConfig);
+        verify(mapper,times(3)).upsertCrawlerConfig("lab-admin-class-timetable",true,"0 0 */6 * * *",null,null);
+    }
+    @Test void concurrentManualAndScheduledCrawlsAreRejectedWithoutStartingAnotherProcess() throws Exception {
+        scripts();config.put("scheduleEnabled",true);service.initializeCrawlerScheduler();
+        var scheduled=ArgumentCaptor.forClass(Runnable.class);verify(scheduler).schedule(scheduled.capture(),any(Trigger.class));
+        Process process=mock(Process.class);when(process.exitValue()).thenReturn(1);
+        when(process.waitFor(anyLong(),any(TimeUnit.class))).thenAnswer(call->{
+            assertTrue(assertThrows(IllegalStateException.class,service::triggerCrawler).getMessage().contains("正在执行"));
+            scheduled.getValue().run();return true;
+        });
+        try(var construction=mockConstruction(ProcessBuilder.class,(builder,context)->{when(builder.environment()).thenReturn(new HashMap<>());when(builder.start()).thenReturn(process);})) {
+            assertEquals("failed",service.triggerCrawler().get("status"));assertEquals(1,construction.constructed().size());
+        }
+        verify(mapper).insertCrawlerTask(argThat(task->"skipped".equals(task.get("status"))));
+        assertEquals(false,service.getCrawlerConfig().get("running"));
+    }
     @Test void missingCsvMarksTaskFailedAndReleasesRunningLock() throws Exception{
         scripts();Process process=mock(Process.class);when(process.waitFor(anyLong(),any(TimeUnit.class))).thenReturn(true);when(process.exitValue()).thenReturn(0);
         try(var construction=mockConstruction(ProcessBuilder.class,(builder,context)->{when(builder.environment()).thenReturn(new HashMap<>());when(builder.start()).thenReturn(process);})){assertThrows(IllegalStateException.class,service::triggerCrawler);assertFalse((Boolean)service.getCrawlerConfig().get("running"));}verify(mapper).updateCrawlerTask(argThat(task->"failed".equals(task.get("status"))&&task.get("error").toString().contains("CSV")));

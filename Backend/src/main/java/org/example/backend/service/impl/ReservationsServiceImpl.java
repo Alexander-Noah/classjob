@@ -350,8 +350,8 @@ public class ReservationsServiceImpl implements ReservationsService {
      */
     private void normalizeReservation(Integer id, ReservationsEntity reservation) {
         normalizeTextFields(reservation);
-        validateApplicantFields(reservation, false);
         validateRequiredFields(reservation);
+        validateApplicantFields(reservation, false);
         resolveReservationLab(reservation);
 
         if ("加签中".equals(reservation.getStatus())) {

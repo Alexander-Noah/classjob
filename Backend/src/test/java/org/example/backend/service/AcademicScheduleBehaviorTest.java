@@ -135,6 +135,44 @@ class AcademicScheduleBehaviorTest {
         verify(credentials, never()).saveCredential(any());
     }
 
+    @Test void academicDomainsRequireDotBoundaryAndNeverAllowCredentialOrProtocolConfusion() {
+        HttpClient client=mock(HttpClient.class);ReflectionTestUtils.setField(service,"httpClient",client);
+        for(String base:new String[]{"https://evilhniu.cn","https://hniu.cn.evil","https://user@jw.hniu.cn","ftp://jw.hniu.cn","https:/invalid"}) {
+            var request=request();request.setBaseUrl(base);request.setCookie("session=test");
+            assertThrows(IllegalArgumentException.class,()->service.fetchSchedule(request));
+            request.setCookie(null);request.setUsername("user");request.setPassword("pass");
+            assertThrows(IllegalArgumentException.class,()->service.fetchSchedule(request));
+        }
+        var request=request();request.setCookie("session=test");request.setSchedulePath("//evil.example/schedule");
+        assertThrows(IllegalArgumentException.class,()->service.fetchSchedule(request));verifyNoInteractions(client);
+    }
+    @Test void rootAndSubdomainUrlsRemainSupportedAndFetchedImportsTruncateRawMetadata() throws Exception {
+        HttpClient client=mock(HttpClient.class);ReflectionTestUtils.setField(service,"httpClient",client);
+        String html="<table><tr><td>第1节 08:30~10:00</td><td>程序设计<br>"+"备注".repeat(120)+"</td></tr></table>";
+        when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenReturn(response(200,html));
+        when(environments.InserterCourseEnvironment(any())).thenAnswer(call->call.getArgument(0));
+        for(String base:new String[]{"https://hniu.cn","http://JW.HNIU.CN"}) {
+            var request=request();request.setBaseUrl(base);request.setCookie("session=test");
+            var saved=service.importSchedule(request);assertEquals(1,saved.size());
+            assertTrue(saved.get(0).getSpecialRequirements().length()<220);assertEquals("任课教师",saved.get(0).getTeacherName());
+        }
+        when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenReturn(response(199,"redirect"));
+        var request=request();request.setCookie("session=test");assertThrows(IllegalStateException.class,()->service.fetchSchedule(request));
+    }
+    @Test void loginNetworkFailuresAndMissingCookiesNeverSaveCredentials() throws Exception {
+        for(int scenario=0;scenario<5;scenario++) {
+            HttpClient client=mock(HttpClient.class);HttpClient.Builder builder=mock(HttpClient.Builder.class,RETURNS_SELF);when(builder.build()).thenReturn(client);
+            if(scenario==0)when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenThrow(new IOException("offline"));
+            else if(scenario==1)when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenThrow(new InterruptedException());
+            else when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenReturn(response(200,"page"),response(200,"{\"data\":\"salt\"}"),response(scenario==2?199:scenario==3?400:200,null));
+            try(var staticClient=mockStatic(HttpClient.class)) {
+                staticClient.when(HttpClient::newBuilder).thenReturn(builder);var request=request();request.setUsername("user");request.setPassword("pass");
+                try {assertThrows(IllegalStateException.class,()->service.fetchSchedule(request));if(scenario==1)assertTrue(Thread.currentThread().isInterrupted());}
+                finally {Thread.interrupted();}
+            }
+        }
+        verify(credentials,never()).saveCredential(any());
+    }
     private AcademicScheduleImportRequest request() { var value = new AcademicScheduleImportRequest(); value.setBaseUrl("https://jw.hniu.cn"); return value; }
     private HttpResponse<String> response(int status, String body) {
         return new HttpResponse<>() {

@@ -361,8 +361,9 @@ const deleteRecord = async (record) => {
 
   await http.delete(`${API_ENDPOINTS.consumables.list}/${record.id}`)
   ElMessage.success('耗材已删除')
-  if (String(selectedId.value) === String(record.id)) selectedId.value = records.value[0]?.id || ''
+  const wasSelected = String(selectedId.value) === String(record.id)
   await loadRecords()
+  if (wasSelected) selectedId.value = records.value[0]?.id || ''
   await loadStockRecords()
 }
 

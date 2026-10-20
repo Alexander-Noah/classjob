@@ -136,3 +136,80 @@ it('mock spreadsheet import maps Chinese columns and export receives the resulti
   await service.export({ keyword: 'NEW' })
   expect(exportTableToExcel).toHaveBeenCalledWith(expect.objectContaining({ rows: [imported] }))
 })
+
+it('corrupt and non-array local caches recover independently for assets and histories', async () => {
+  mode.mock = true
+  for (const broken of ['bad json', '{}', 'null']) {
+    localStorage.setItem('smart-lab:device-assets:records:v1', broken)
+    localStorage.setItem('smart-lab:device-inventory-records', broken)
+    localStorage.setItem('smart-lab:device-transfer-records', broken)
+    expect((await service.list(null)).length).toBeGreaterThan(0)
+    expect(await service.listInventoryRecords()).toEqual([])
+    expect(await service.listTransferRecords()).toEqual([])
+  }
+  expect((await service.page()).total).toBeGreaterThan(0)
+  const generated = await service.create({ deviceName: '新设备' })
+  expect(generated.assetNo).toMatch(/^DEV-/)
+  expect((await service.list({ labId: 999 }))).toEqual([])
+  expect((await service.list({ keyword: 'not found' }))).toEqual([])
+})
+
+it('inventory and transfer preserve caller IDs and default missing device metadata safely', async () => {
+  mode.mock = true
+  await service.createInventoryRecord(2, { id: 'fixed-inventory' })
+  expect(await service.listInventoryRecords()).toMatchObject([{ id: 'fixed-inventory' }])
+  expect(await service.listInventoryRecords({ deviceId: 1 })).toEqual([])
+  const empty = await service.transfer(99)
+  expect(empty.device).toMatchObject({ id: 99, labId: '', labName: '', roomNo: '' })
+  expect(empty.record).toMatchObject({ deviceCode: '', deviceName: '' })
+  const retained = await service.transfer(1, { id: 'fixed-transfer', transferAt: '2026-01-01', currentDevice: { code: 'LEGACY', name: '旧电脑', lab: '旧机房', location: 'A1' } })
+  expect(retained.record).toMatchObject({ id: 'fixed-transfer', deviceCode: 'LEGACY', deviceName: '旧电脑', transferAt: '2026-01-01' })
+  expect(retained.device).toMatchObject({ labName: '旧机房', roomNo: 'A1' })
+  const explicit = await service.transfer(1, { deviceCode: 'EXPLICIT', deviceName: '指定设备', currentDevice: { labId: 7, labName: '机房', roomNo: 'A2', deviceCode: 'FALLBACK' } })
+  expect(explicit.record.deviceCode).toBe('EXPLICIT')
+  expect(explicit.device.labId).toBe(7)
+  expect((await service.transfer(1, { currentDevice: { deviceCode: 'FALLBACK' } })).record.deviceCode).toBe('FALLBACK')
+})
+
+it('spreadsheet aliases preserve explicit English and alternative Chinese fields', async () => {
+  mode.mock = true
+  readSpreadsheetRows.mockResolvedValue([
+    { assetNo: 'ENG', deviceName: '电脑', category: '分类', labName: '机房', roomNo: 'B1', quantity: 3, unit: '套', status: '闲置', specification: 'spec', standardRequirement: 'standard', remark: 'note' },
+    { 资产编号: 'CN', 主要设备名称: '显示器', 所属实验室: '机房', 安装位置: 'B2', 数量: 2, 单位: '台', 状态: '维修中', 规格参数: '规格', 执行标准和数量要求: '标准', 备注: '备注' },
+    { 资产编号: 'CN2', 设备名称: '空调', 设备分类: '环境设备', 实验室名称: '实验室', 地点: 'B3', 主要功能和技术要求: '功能' },
+  ])
+  expect(await service.importFile(new File(['x'], 'aliases.xlsx'))).toEqual({ count: 3 })
+  expect((await service.list({ keyword: 'ENG' }))[0]).toMatchObject({ specification: 'spec', unit: '套', remark: 'note' })
+  expect((await service.list({ keyword: 'CN' }))).toHaveLength(2)
+})
+
+it('missing server envelopes normalize to empty results and fallback mutation records', async () => {
+  for (const response of [null, {}, { data: null }, { data: { items: [{ id: 2 }] } }, { data: { records: [{ id: 3 }] } }, [{ id: 4 }]]) {
+    http.get.mockResolvedValue(response)
+    const page = await service.page()
+    expect(page.total).toBe(page.records.length)
+  }
+  for (const response of [null, {}, { data: { records: 'invalid' } }]) {
+    http.post.mockResolvedValue(response)
+    expect(await service.createInventoryRecord(1, { result: '通过' })).toMatchObject({ device: null, record: { result: '通过' }, records: [] })
+    expect(await service.transfer(1, { toLabId: 2 })).toMatchObject({ device: null, record: { toLabId: 2 }, records: [] })
+  }
+  http.get.mockResolvedValue({ data: 'sheet' })
+  await service.export()
+  expect(URL.revokeObjectURL).toHaveBeenCalled()
+  expect(normalizeDeviceAsset()).toMatchObject({ id: '', assetNo: '', quantity: 1 })
+  expect(normalizeDeviceAsset({ category: '明确分类', lab_id: 3, unit: '组', status: '闲置', source_type: '导入' })).toMatchObject({ category: '明确分类', labId: 3, unit: '组', status: '闲置', sourceType: '导入' })
+})
+
+it('mock services remain usable for server-side rendering without browser storage', async () => {
+  mode.mock = true
+  vi.stubGlobal('window', undefined)
+  try {
+    expect((await service.list()).length).toBeGreaterThan(0)
+    expect(await service.listInventoryRecords()).toEqual([])
+    expect(await service.listTransferRecords()).toEqual([])
+    expect((await service.createInventoryRecord(1)).record.deviceId).toBe(1)
+    expect((await service.transfer(1)).record.deviceId).toBe(1)
+    expect((await service.create({ deviceName: '离线设备' })).deviceName).toBe('离线设备')
+  } finally { vi.unstubAllGlobals() }
+})

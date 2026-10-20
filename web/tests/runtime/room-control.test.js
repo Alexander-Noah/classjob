@@ -11,6 +11,47 @@ vi.mock('../../src/api/services/iot', () => ({ iotService: Object.fromEntries(['
 vi.mock('../../src/api/services/basicResources', () => ({ labResourceService: { list: vi.fn() } }))
 vi.mock('element-plus', () => ({ ElMessage: { success: vi.fn(), warning: vi.fn(), error: vi.fn() }, ElMessageBox: { prompt: vi.fn() } }))
 const wrappers = []
+it('rejects commands without a backend room identity', async () => {
+  labResourceService.list.mockResolvedValue([{labCode:'A101',labName:'无编号机房'}])
+  const state=await setup()
+  await state.handleAccessCommand('远程开门'); await state.handleAccessCredential('card-enroll')
+  await state.handleCameraView(); await state.handleSensorCheck()
+  expect(iotService.controlIotDevice).not.toHaveBeenCalled()
+  expect(ElMessage.error.mock.calls.map(call=>call[0])).toEqual(expect.arrayContaining([
+    '无编号机房缺少后端实验室编号，无法发送门禁网关指令',
+    '无编号机房缺少后端实验室编号，无法下发门禁功能指令',
+    '无编号机房缺少后端实验室编号，无法读取摄像头','实验室缺少后端编号']))
+})
+it('prioritizes environmental and video warnings and surfaces unavailable hardware',async()=>{
+  iotService.listLabIotDevices.mockResolvedValue({devices:devices().map(d=>({...d,protocol:'mqtt',gatewayConfigured:true}))})
+  const state=await setup()
+  expect(state.gatewayModeInfo.value.label).toBe('待配置真实网关')
+  state.selectedLab.value.sensor.statusType='warning';state.selectedLab.value.sensor.smoke=120
+  expect(state.selectedRisk.value).toMatchObject({label:'环境关注',description:expect.stringContaining('120ppm')})
+  state.selectedLab.value.sensor.statusType='success';state.selectedLab.value.door.statusType='success';state.selectedLab.value.camera.statusType='warning'
+  expect(state.selectedRisk.value.label).toBe('视频关注')
+  iotService.listLabIotDevices.mockRejectedValueOnce(Error('not configured'));state.selectLab(state.labs.value[0]);await flushPromises()
+  expect(state.selectedLabDevices.value).toEqual([]);expect(state.selectedLabDeviceLoading.value).toBe(false)
+})
+it('custom capabilities preserve explicit values and configured slider bounds',async()=>{
+  const light={id:4,iotCode:'CUSTOM',deviceType:'light',labId:7,online:true,capabilities:[
+    {key:'voltage',label:'电压',type:'slider',enabled:true,min:12},
+    {key:'current',label:'电流',type:'slider',enabled:true},
+    {key:'mode',label:'模式',type:'select',enabled:true,options:[]},
+    {key:'query',label:'查询',type:'action',enabled:true},
+    {key:'brightness',label:'亮度',type:'slider',enabled:true,value:35}]}
+  iotService.listLabIotDevices.mockResolvedValue({devices:[light]})
+  const state=await setup(),device=state.selectedLabDevices.value[0]
+  expect(state.capabilityState['CUSTOM::voltage'].value).toBe(12)
+  expect(state.capabilityState['CUSTOM::current'].value).toBe(0)
+  expect(state.capabilityState['CUSTOM::mode'].value).toBe('')
+  expect(state.capabilityState['CUSTOM::query'].value).toBe('')
+  expect(state.capabilityState['CUSTOM::brightness'].value).toBe(35)
+  iotService.controlIotDevice.mockResolvedValueOnce({success:false,status:'设备拒绝'})
+  await state.handleDeviceCapability(device,device.capabilities[0])
+  expect(ElMessage.error).toHaveBeenCalledWith('设备拒绝')
+  expect(state.filteredRecords.value[0].status).toBe('失败')
+})
 it('device and event wrapper variants normalize consistently and optional device refresh errors stay visible',async()=>{const state=await setup();const rows=devices();for(const payload of [{records:rows},{data:{devices:rows}},{data:{records:rows}},rows]){iotService.listIotDevices.mockResolvedValueOnce(payload);await state.refreshAll();expect(state.selectedLab.value.deviceCount).toBe(5)}for(const payload of [{logs:[{event:'检测'}]},{data:{records:[{event:'检测'}]}},{data:{logs:[{event:'检测'}]}},[{event:'检测'}],{}]){iotService.listIotCommandLogs.mockResolvedValueOnce(payload);await state.refreshAll();expect(Array.isArray(state.filteredRecords.value)).toBe(true)}iotService.listLabIotDevices.mockRejectedValueOnce(Error('offline'));await state.selectLab(state.labs.value[0]);await flushPromises();expect(state.selectedLabDeviceLoading.value).toBe(false)})
 it('lab status normalization covers maintenance, occupied, reserved and closed rooms',async()=>{labResourceService.list.mockResolvedValue(['维护中','使用中','预约中','已关闭'].map((status,index)=>({id:index+1,labName:`机房${index}`,status})));iotService.listIotDevices.mockResolvedValue({devices:[1,2,3,4].map(id=>({...devices()[0],id,labId:id}))});const state=await setup();expect(state.labs.value.map(lab=>lab.status)).toEqual(['维护中','使用中','预约中','暂停开放']);expect(state.gatewayModeInfo.value).toHaveProperty('label')})
 const devices = () => ['access_control', 'camera', 'sensor', 'light', 'air_conditioner'].map((type, index) => ({
@@ -238,4 +279,3 @@ it('room without devices warns for unsupported operations and retains current vi
   expect(ElMessage.warning).toHaveBeenCalledWith('实验室资源加载失败，已保留当前物联控制页面')
   expect(state.selectedLab.value.name).toBe('机房')
 })
-

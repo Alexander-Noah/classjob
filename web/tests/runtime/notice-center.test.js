@@ -80,3 +80,15 @@ it('optional source failures return empty data without leaving loading state', a
   await vm.loadRecipients(null); expect(vm.recipients).toEqual([]); warn.mockRestore()
 })
 
+
+it('normalizes legacy notices, authoritative metrics and publisher identities',async()=>{
+ route.meta={};api.list.mockResolvedValue([{id:2,type:'系统公告',target:'teacher',publishStatus:'已发布',publishTime:'2026-10-19T09:00:00',recipientCount:3,readCount:2,unreadCount:1},{}]);api.userNotices.mockResolvedValue([{id:2,readStatus:'已读',readTime:'2026-10-19T10:00:00'}]);api.stats.mockResolvedValue({total:9,publishedCount:8,draftCount:1,myUnread:0,myRead:2,deliveryCount:3,readCount:2})
+ const vm=await setup();expect(vm.pageTitle).toBe('通知公告');expect(vm.pageDescription).toContain('实验室');expect(vm.roleScope).toBe('labAdmin');expect(vm.notices[0]).toMatchObject({title:'系统提醒',noticeType:'系统公告',targetRole:'teacher',status:'已发布',publishTimeText:'2026-10-19 09:00'});expect(vm.myNotices[0]).toMatchObject({noticeId:2,readTimeText:'2026-10-19 10:00'});expect(vm.metrics.map(m=>m.value)).toEqual(['9','1','0','3'])
+ for(const [notice,label] of [[{publisherName:'发布人'},'发布人'],[{createdByName:'创建人'},'创建人'],[{createdBy:7},'管理员甲'],[{createdBy:8},'用户 8'],[null,'未记录']]){vm.selectedNotice=notice;expect(vm.publisherLabel).toBe(label)}
+ vm.statusFilter='草稿';expect(vm.filteredNotices).toHaveLength(1);vm.statusFilter='all';vm.keyword='notfound';expect(vm.filteredNotices).toEqual([]);expect(vm.getTargetLabel('custom')).toBe('custom');expect(vm.getStatusType('unknown')).toBe('info');expect(vm.getReadType('unknown')).toBe('info');vm.openCreateDialog();expect(vm.formModel.targetRole).toBe('labAdmin');vm.handleBack();expect(router.push).toHaveBeenCalledWith('/lab-admin');route.meta={roleScope:'systemAdmin'}
+})
+it('publication handles validation rejection and stale selected detail without duplicate reads',async()=>{
+ const vm=await setup();vm.formRef={validate:vi.fn().mockResolvedValue(false)};await vm.publishFromDialog();expect(api.publish).not.toHaveBeenCalled();vm.formRef=null;vm.selectedNotice={id:99};await vm.publishNotice({id:1});expect(api.recipients).not.toHaveBeenCalled();vm.selectedNotice={id:1};api.list.mockResolvedValueOnce([]);await vm.publishNotice({id:1});expect(vm.selectedNotice).toBeNull()
+ await vm.markSelectedRead();vm.selectedNotice={noticeId:1,readStatus:'未读'};vm.submitting=true;await vm.markSelectedRead();expect(api.markRead).not.toHaveBeenCalled();vm.submitting=false;api.markRead.mockRejectedValueOnce(new Error('receipt failed'));await expect(vm.markSelectedRead()).rejects.toThrow('receipt failed');expect(vm.submitting).toBe(false)
+ api.syncBusinessReminders.mockResolvedValueOnce({});await vm.syncBusinessReminders();expect(ElMessage.success).toHaveBeenCalledWith('已同步 0 条业务提醒');api.stats.mockResolvedValueOnce(null);await vm.loadData();expect(vm.stats).toEqual({});await vm.deleteNotice({id:8,title:'其他'});expect(api.remove).toHaveBeenCalledWith(8)
+})

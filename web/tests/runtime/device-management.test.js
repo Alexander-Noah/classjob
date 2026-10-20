@@ -15,6 +15,22 @@ vi.mock('../../src/api/services/lab', () => ({ listLabs: vi.fn() }))
 vi.mock('../../src/api/services/users', () => ({ listUserOptions: vi.fn() }))
 vi.mock('element-plus', () => ({ ElMessage: { success: vi.fn(), warning: vi.fn(), error: vi.fn(), info: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }))
 const scopes = []
+it('unmatched asset lab hints require a meaningful signal and handled option failures stay silent',async()=>{
+ const state=await setup();await state.openEditDialog({})
+ expect(state.formModel.labId).toBe('');expect(ElMessage.info).not.toHaveBeenCalled()
+ await state.openEditDialog({remark:'来源待核实'});expect(state.formModel.labId).toBe('')
+ expect(ElMessage.info).toHaveBeenCalledWith('未自动匹配到实验室，请手动选择所属实验室')
+ listLabs.mockRejectedValueOnce({__handled:true});ElMessage.error.mockClear();await state.loadLabOptions(true)
+ expect(ElMessage.error).not.toHaveBeenCalled();expect(state.labOptions.value).toEqual([])
+})
+it('empty inventory and transfer targets do not send writes, and empty import counts display zero',async()=>{
+ const state=await setup();await state.submitInventory();await state.submitTransfer()
+ expect(service.createInventoryRecord).not.toHaveBeenCalled();expect(service.transfer).not.toHaveBeenCalled()
+ service.importFile.mockResolvedValueOnce(undefined);await state.importDevicesFromFile(new File(['xlsx'],'devices.xlsx'))
+ expect(ElMessage.success).toHaveBeenCalledWith('导入完成，共处理 0 条设备资产')
+ service.stats.mockRejectedValueOnce(Error('offline'));service.page.mockResolvedValueOnce({records:rows(),total:0});await state.search()
+ expect(state.metrics.value[0].value).toBe(2)
+})
 it('asset page connects filter, selection, pagination and dialog state contracts',async()=>{const w=mountPage(Page,{global:{stubs:panelStubs(),directives:{loading:()=>{}}}});try{await flushPromises();expect(w.text()).toContain('设备资产台账');const filters=w.findComponent({name:'DeviceFilterBar'});for(const [key,value] of [['keyword','电脑'],['labFilter','7'],['categoryFilter','计算终端'],['statusFilter','正常']])filters.vm.$emit(`update:${key}`,value);filters.vm.$emit('search');await flushPromises();expect(service.page).toHaveBeenLastCalledWith(expect.objectContaining({keyword:'电脑',labId:'7',category:'计算终端',status:'正常'}));const table=w.findComponent({name:'DeviceListTable'});table.vm.$emit('selectionChange',[rows()[0]]);table.vm.$emit('view',rows()[0]);await flushPromises();expect(w.findComponent({name:'DeviceDetailPanel'}).props('modelValue')).toBe(true);w.findComponent({name:'DeviceDetailPanel'}).vm.$emit('update:modelValue',false);w.findComponent({name:'DeviceManagementHeader'}).vm.$emit('create');await flushPromises();expect(w.findComponent({name:'DeviceEditorDialog'}).props('modelValue')).toBe(true);w.findComponent({name:'DeviceEditorDialog'}).vm.$emit('update:modelValue',false);w.findComponent({name:'DeviceInventoryDialog'}).vm.$emit('update:modelValue',true);w.findComponent({name:'DeviceTransferDialog'}).vm.$emit('update:modelValue',true);await flushPromises();expect(w.findComponent({name:'DeviceTransferDialog'}).props('modelValue')).toBe(true)}finally{w.unmount()}})
 const rows = () => [{ id: 1, assetNo: 'DEV-1', deviceName: '电脑', category: '计算终端', labId: 7, labName: '机房', roomNo: 'A101', quantity: 2, unit: '台', status: '正常' }, { id: 2, deviceName: '交换机', status: '维修中' }]
 beforeEach(() => {
@@ -30,6 +46,61 @@ beforeEach(() => {
 })
 afterEach(() => { for (const scope of scopes.splice(0)) scope.stop(); vi.restoreAllMocks() })
 async function setup() { const scope = effectScope(); scopes.push(scope); const state = scope.run(() => useDeviceManagement()); await flushPromises(); return state }
+
+it('handled and unhandled asset failures preserve state and never leave submission spinners active', async () => {
+  const state = await setup()
+  await state.openCreateDialog(); Object.assign(state.formModel, rows()[0])
+  state.openInventoryDialog(rows()[0]); Object.assign(state.inventoryFormModel, { inspectorName: '盘点员', inspectedAt: '2026-10-18', resultStatus: '正常' })
+  await state.openTransferDialog(rows()[0]); state.transferFormModel.operatorName = '经办人'
+  for (const [serviceMethod, operation, fallback] of [
+    ['create', () => state.submitDevice(), '保存设备资产失败'],
+    ['createInventoryRecord', () => state.submitInventory(), '保存盘点记录失败'],
+    ['transfer', () => state.submitTransfer(), '保存调拨记录失败'],
+    ['importFile', () => state.importDevicesFromFile(new File(['x'], 'x.xlsx')), '导入设备资产失败'],
+    ['export', () => state.exportDevices(), '导出设备资产失败'],
+  ]) {
+    for (const error of [{}, { message: 'specific' }, { __handled: true }]) {
+      ElMessage.error.mockClear(); service[serviceMethod].mockRejectedValueOnce(error)
+      await operation()
+      if (error.__handled) expect(ElMessage.error).not.toHaveBeenCalled()
+      else expect(ElMessage.error).toHaveBeenCalledWith(error.message || fallback)
+    }
+  }
+  expect(state.formSubmitting.value).toBe(false)
+  expect(state.inventorySubmitting.value).toBe(false)
+  expect(state.transferSubmitting.value).toBe(false)
+  expect(state.importingDevices.value).toBe(false)
+})
+
+it('list failures and empty option outages remain retryable and use safe statistics defaults', async () => {
+  service.page.mockRejectedValueOnce({})
+  service.stats.mockResolvedValueOnce({})
+  const state = await setup()
+  expect(ElMessage.error).toHaveBeenCalledWith('加载设备资产列表失败')
+  expect(state.metrics.value.map(item => item.value)).toEqual([0,0,0,0,0])
+  listLabs.mockRejectedValueOnce({}); listUserOptions.mockRejectedValueOnce(new Error('offline'))
+  await state.openCreateDialog()
+  await state.openTransferDialog(rows()[0])
+  expect(state.ownerOptions.value).toEqual([])
+  expect(listUserOptions).toHaveBeenCalled()
+  service.page.mockRejectedValueOnce({ __handled: true })
+  ElMessage.error.mockClear(); await state.search()
+  expect(ElMessage.error).not.toHaveBeenCalled()
+  state.openInventoryDialog(null); await state.openTransferDialog(null)
+})
+
+it('delete failures distinguish cancellation, handled errors and generic server errors', async () => {
+  const state = await setup()
+  state.selectedDevices.value = rows()
+  for (const operation of [() => state.deleteDevice(rows()[0]), () => state.batchDeleteDevices()]) {
+    for (const error of ['cancel', 'close', { __handled: true }, {}, { message: 'specific' }]) {
+      ElMessage.error.mockClear(); ElMessageBox.confirm.mockRejectedValueOnce(error)
+      await operation()
+      if (typeof error === 'string' || error.__handled) expect(ElMessage.error).not.toHaveBeenCalled()
+      else expect(ElMessage.error).toHaveBeenCalledWith(error.message || expect.stringContaining('删除设备资产失败'))
+    }
+  }
+})
 
 it('loads paged assets and statistics and translates filters and page events into query parameters', async () => {
   const state = await setup()
@@ -144,7 +215,3 @@ it('load failures retain an empty page, compute fallback stats and allow lab-opt
   service.page.mockRejectedValueOnce({ __handled: true }); ElMessage.error.mockClear()
   await state.search(); expect(state.loading.value).toBe(false); expect(ElMessage.error).not.toHaveBeenCalled()
 })
-
-
-
-

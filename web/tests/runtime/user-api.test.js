@@ -9,6 +9,66 @@ vi.mock('../../src/api/config', () => ({ get API_USE_MOCK() { return mode.mock }
 vi.mock('../../src/api/http', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }))
 beforeEach(() => { mode.mock = false; localStorage.clear(); vi.resetAllMocks() })
 const user = () => ({ id: 7, username: 'labadmin', realName: '管理员', roleCode: 'labAdmin', department: '实验中心', status: 1 })
+
+it('user shape supports sparse legacy records, unknown roles and inactive accounts', async () => {
+  http.get.mockResolvedValue({ data: [{ id: 1 }, { id: 2, role: '维修人员', enabled: false }, { id: 3, roleName: '外部人员', jobNo: 'JOB', name: '旧姓名', logs: [], permissions: '[]', createdAt: '旧时间', lastLogin: '上次', phone: '123', email: 'a@b', department: '部门' }] })
+  const all = await api.listUserOptions()
+  expect(all[0]).toMatchObject({ username: 'user1', employeeNo: '', realName: '未命名账号', roleCode: 'teacher', roleName: '教师' })
+  expect(all[1]).toMatchObject({ roleName: '维修人员', status: 0, permissions: '[]' })
+  expect(all[2]).toMatchObject({ employeeNo: 'JOB', realName: '旧姓名', roleCode: 'teacher', logs: [] })
+  http.get.mockResolvedValue({ data: null })
+  expect(await api.getUserPage()).toEqual({ records: [], total: 0 })
+})
+
+it('missing server error messages use action-specific defaults', async () => {
+  for (const [name, verb, args, message] of [
+    ['getUserPage','get',[], '获取用户列表失败'], ['listUserOptions','get',[], '获取用户选项失败'],
+    ['createUser','post',[{}], '创建用户失败'], ['updateUser','put',[1,{}], '更新用户失败'],
+    ['deleteUser','delete',[1], '删除用户失败'], ['updateUserStatus','post',[1,true], '更新用户状态失败'],
+    ['resetUserPassword','post',[1], '重置密码失败'], ['importUsers','post',[new File(['x'],'x.csv')], '批量导入失败'],
+    ['uploadUserAvatar','post',[new File(['x'],'x.png')], '头像上传失败'],
+  ]) { http[verb].mockResolvedValueOnce({ data: { code: 500 } }); await expect(api[name](...args)).rejects.toThrow(message) }
+  for (const name of ['importUsers','uploadUserAvatar']) {
+    http.post.mockResolvedValueOnce({ data: { url: '/raw', count: 2 } })
+    expect(await api[name](new File(['x'],'x'))).toEqual({ url: '/raw', count: 2 })
+  }
+  http.post.mockResolvedValueOnce({ data: { id: 1 } })
+  expect(await api.createUser({})).toEqual({ id: 1 })
+  http.post.mockResolvedValueOnce({ data: { data: [] } })
+  await api.batchUpdateRole([1], '外部角色')
+  expect(http.post).toHaveBeenLastCalledWith('/admin/users/batch/role', { ids: [1], role: '外部角色', roleCode: 'teacher' })
+})
+
+it('mock user defaults, alternate pagination and missing update IDs remain deterministic', async () => {
+  mode.mock = true
+  localStorage.setItem(ADMIN_USERS_STORAGE_KEY, '[]')
+  expect(await api.getUserPage()).toEqual({ records: [], total: 0 })
+  const empty = await api.createUser({})
+  expect(empty.username).toMatch(/^user/)
+  expect(empty.roleName).toBe('教师')
+  const custom = await api.createUser({ username: 'custom', role: '自定义', roleCode: 'custom', status: 0, permissions: '[]', createdAt: '旧时间' })
+  expect(custom).toMatchObject({ roleCode: 'custom', status: 0, permissions: '[]', createdAt: '旧时间' })
+  const inserted = await api.updateUser('missing', { roleCode: 'systemAdmin', name: '新名字' })
+  expect(inserted).toMatchObject({ id: 'missing', realName: '新名字' })
+  expect((await api.getUserPage({ currentPage: 1, size: 1, roleName: '全部', department: '全部', status: '全部' })).records).toHaveLength(1)
+  expect(await api.importUsers()).toMatchObject({ fileName: '' })
+})
+
+it('mock avatar read failures reject rather than returning a broken URL', async () => {
+  mode.mock = true
+  class BrokenReader { readAsDataURL() { this.onerror() } }
+  vi.stubGlobal('FileReader', BrokenReader)
+  try { await expect(api.uploadUserAvatar(new File(['x'], 'x.png'))).rejects.toThrow('头像读取失败') } finally { vi.unstubAllGlobals() }
+})
+
+it('mock user reads and writes tolerate absence of browser globals', async () => {
+  mode.mock = true
+  vi.stubGlobal('window', undefined)
+  try {
+    expect((await api.listUserOptions()).length).toBeGreaterThan(0)
+    expect((await api.createUser({ username: 'ssr' })).username).toBe('ssr')
+  } finally { vi.unstubAllGlobals() }
+})
 it.each([[[]],[{ records: [user()] }],[{ data: [user()] }],[{ data: { records: [user()], total: 10 } }]])('user pages unwrap response %j and apply local filters', async data => {
   http.get.mockResolvedValue({ data })
   const result = await api.getUserPage({ keyword: 'admin', role: '实验室管理员', department: '实验中心', status: '启用' })

@@ -13,6 +13,35 @@ vi.mock('../../src/api/services/auth', () => ({ getStoredUser: vi.fn(), updateSt
 vi.mock('../../src/utils/exportExcel', () => ({ exportTableToExcel: vi.fn(() => 2) }))
 vi.mock('element-plus', () => ({ ElMessage: { warning: vi.fn(), success: vi.fn(), error: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }))
 const wrappers = []
+it.each(['cancel','close'])('batch confirmation %s preserves selections and accounts',async(reason)=>{
+  const vm=await setup();const selected=vm.userList[1]
+  for(const handler of ['handleBatchDisable','handleBatchDelete','handleBatchResetPassword']){
+    vm.handleSelectionChange([selected]);ElMessageBox.confirm.mockRejectedValueOnce(reason)
+    await vm[handler]()
+    expect(vm.selectedRows).toHaveLength(1)
+  }
+  expect(api.batchDisableUsers).not.toHaveBeenCalled();expect(api.batchDeleteUsers).not.toHaveBeenCalled();expect(api.resetUserPassword).not.toHaveBeenCalled()
+  expect(ElMessage.error).not.toHaveBeenCalled()
+})
+it('batch failures preserve role, department and reset state with actionable fallbacks',async()=>{
+  const vm=await setup();const original=vm.userList[1]
+  vm.handleSelectionChange([original]);api.resetUserPassword.mockRejectedValueOnce({})
+  await vm.handleBatchResetPassword();expect(ElMessage.error).toHaveBeenCalledWith('批量重置密码失败')
+  vm.openBatchRoleDialog();vm.batchRoleForm.role='系统管理员';api.batchUpdateRole.mockRejectedValueOnce({response:{data:{message:'角色冲突'}}})
+  await vm.submitBatchRole();expect(ElMessage.error).toHaveBeenCalledWith('角色冲突');expect(vm.roleDialogVisible).toBe(true)
+  vm.openBatchDepartmentDialog();vm.batchDepartmentForm.department='信息中心';api.batchUpdateDepartment.mockRejectedValueOnce(new Error('部门不存在'))
+  await vm.submitBatchDepartment();expect(ElMessage.error).toHaveBeenCalledWith('部门不存在');expect(vm.departmentDialogVisible).toBe(true)
+  expect(vm.userList[1]).toEqual(original);expect(vm.selectedRows).toHaveLength(1)
+  vm.openImportDialog();vm.handleImportFileChange(new File(['bad'],'users.xlsx'));api.importUsers.mockRejectedValueOnce({})
+  await vm.submitImportUsers();expect(ElMessage.error).toHaveBeenCalledWith('导入失败');expect(vm.importDialogVisible).toBe(true)
+})
+it('protected accounts are skipped when batch operations include the current administrator',async()=>{
+  const vm=await setup();vm.handleSelectionChange(vm.userList.slice(0,2));await vm.handleBatchDisable()
+  expect(api.batchDisableUsers).toHaveBeenCalledWith([2]);expect(ElMessage.warning).toHaveBeenCalledWith('已跳过 1 个受保护账号')
+  expect(vm.userList[0].enabled).toBe(true)
+  vm.handleSelectionChange(vm.userList.slice(0,2));await vm.handleBatchDelete()
+  expect(api.batchDeleteUsers).toHaveBeenCalledWith([2]);expect(vm.userList.map(user=>user.id)).toContain(1)
+})
 it('rendered batch dialogs bind role and department and submit only selected users',async()=>{const vm=await setup(true),w=wrappers.at(-1);vm.selectedRows=[vm.userList[1]];await flushPromises();const click=async label=>{await w.findAll('button').find(b=>b.text()===label).trigger('click');await flushPromises()};await click('批量分配角色');await w.get('select[aria-label="请选择角色"]').setValue('实验室管理员');await click('确认分配');expect(api.batchUpdateRole).toHaveBeenCalledWith([2],'实验室管理员');vm.selectedRows=[vm.userList[1]];await flushPromises();await click('批量调整部门');await w.get('select[aria-label="请选择部门"]').setValue('实验中心');await click('确认调整');expect(api.batchUpdateDepartment).toHaveBeenCalledWith([2],'实验中心');await click('查看');expect(vm.detailVisible).toBe(true);w.findComponent({name:'PermissionDetailDrawer'}).vm.$emit('update:modelValue',false);expect(vm.detailVisible).toBe(false);await click('编辑');w.findComponent({name:'PermissionUserDialog'}).vm.$emit('update:modelValue',false);expect(vm.userDialogVisible).toBe(false);await click('下载导入模板');expect(exportTableToExcel).toHaveBeenCalled()})
 const records = () => [
   { id: 1, username: 'sysadmin', roleCode: 'systemAdmin', realName: '系统管理员', department: '信息中心', status: 1 },
@@ -219,4 +248,3 @@ it('load failure clears busy state and handled errors do not show duplicate toas
   vm.handleRowCommand('delete', vm.userList[1]); await flushPromises()
   expect(api.deleteUser).toHaveBeenCalledWith(2)
 })
-

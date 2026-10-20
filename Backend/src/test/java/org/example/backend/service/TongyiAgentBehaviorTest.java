@@ -50,4 +50,16 @@ class TongyiAgentBehaviorTest {
     @Test void blankMalformedAndMissingResponseContentFailExplicitly(){for(String payload:Arrays.asList(null," ","bad json","{}","{\"choices\":[{\"message\":{\"content\":\"\"}}]}")){when(response.body(String.class)).thenReturn(payload);assertThrows(IllegalStateException.class,()->service.callAgent("问题",null));}}
     @Test void configurationUpdatesPreserveMaskedKeysAndNeverWriteToRealFilesystem(){Path target=Path.of("data","tongyi-api-config.json");try(var files=mockStatic(Files.class)){Map<String,Object> result=service.updateConfig(Map.of("api_key","******","model","new-file-model","enabled",false));files.verify(()->Files.createDirectories(target.getParent()));files.verify(()->Files.writeString(eq(target),argThat(text->text.toString().contains("file-key")&&text.toString().contains("new-file-model"))));assertEquals(false,result.get("configured"));assertFalse(result.containsKey("api_key"));}}
     @Test void configurationWriteErrorsAreReportedWithoutLeakingCredentials(){Path target=Path.of("data","tongyi-api-config.json");try(var files=mockStatic(Files.class)){files.when(()->Files.createDirectories(target.getParent())).thenThrow(new java.io.IOException("denied"));assertThrows(IllegalStateException.class,()->service.updateConfig(Map.of("model","new-model")));}}
-}
+    @Test void providerResponseShapeFailuresDoNotBecomeSuccessfulText(){
+      for(String payload:List.of("{\"choices\":[]}","{\"choices\":[3]}","{\"choices\":[{\"message\":3}]}","{\"choices\":[{\"message\":{}}]}")){
+        when(response.body(String.class)).thenReturn(payload);assertThrows(IllegalStateException.class,()->service.callAgent("问题",null));
+      }
+    }
+    @Test void replacementApiKeysArePersistedWhileResponsesRemainMasked(){
+      Path target=Path.of("data","tongyi-api-config.json");
+      try(var files=mockStatic(Files.class)){
+        Map<String,Object> result=service.updateConfig(Map.of("api_key","replacement-key"));
+        files.verify(()->Files.writeString(eq(target),argThat(text->text.toString().contains("replacement-key"))));
+        assertFalse(result.toString().contains("replacement-key"));
+      }
+    }}
