@@ -22,3 +22,20 @@ it('lab selection loads normalized asset details and handles empty or failed res
 it('QR links resolve through router and opening an empty lab does nothing',async()=>{const vm=await setup();expect(vm.reservationQrLink).toBe('');vm.handleOpenReservationQr(null);expect(vm.qrDialogVisible).toBe(false);vm.handleOpenReservationQr({id:1,code:'A101'});expect(vm.qrDialogVisible).toBe(true);expect(vm.reservationQrLink).toContain('/scan/reserve?labId=1&code=A101');expect(router.resolve).toHaveBeenCalledWith({path:'/scan/reserve',query:{labId:1,code:'A101'}})})
 it('filter and clock changes rebind availability and unmount releases clock',async()=>{const vm=await setup();state.bindLabSchedules.mockClear();vm.scheduleFilters.section=2;await flushPromises();expect(state.bindLabSchedules).toHaveBeenCalled();vi.setSystemTime(new Date(2026,9,19,12));vi.advanceTimersByTime(60000);await flushPromises();expect(vm.activeTimeUnit).toBe(0);expect(vi.getTimerCount()).toBe(1);wrappers[0].unmount();expect(vi.getTimerCount()).toBe(0)})
 it('failed schedule refresh releases loading and optional semester failure clears options',async()=>{const vm=await setup();timetable.listClassTimetables.mockRejectedValueOnce(new Error('offline'));await expect(vm.loadScheduleRows()).rejects.toThrow('offline');expect(vm.scheduleLoading).toBe(false);timetable.getClassTimetableSemesters.mockRejectedValueOnce(new Error('offline'));await vm.loadSemesters();expect(vm.semesters).toEqual([]);reservationResourceService.list.mockResolvedValueOnce({});await vm.loadScheduleRows();expect(vm.reservationRows).toEqual([])})
+it('sparse imported assets retain valid aliases and malformed collection responses clear previous rows',async()=>{
+ const vm=await setup();getLabDevices.mockResolvedValueOnce([{assetNo:'ASSET',ownerUsername:'legacy'},{}])
+ await vm.loadLabAssets({id:1});expect(vm.labAssets).toEqual([
+  {assetNo:'ASSET',ownerUsername:'legacy',code:'ASSET',name:'',owner:'legacy',inventoryDate:'',online:false},
+  {code:'',name:'',owner:'',inventoryDate:'',online:false},
+ ])
+ getLabDevices.mockResolvedValueOnce({data:[]});await vm.loadLabAssets({id:1});expect(vm.labAssets).toEqual([])
+ await vm.handleViewLabAssets(null);expect(vm.assetDialogVisible).toBe(false)
+})
+it('missing calendar and semester data keep Sunday and optional filters well defined',async()=>{
+ vi.setSystemTime(new Date(2026,9,18,9));timetable.getClassTimetableCrawlerConfig.mockResolvedValueOnce(null)
+ timetable.getClassTimetableSemesters.mockResolvedValueOnce([])
+ const vm=await setup();expect(vm.currentWeekday()).toBe(7);expect(vm.semesterStartDate).toBe('')
+ vm.scheduleFilters.week=0;await vm.loadScheduleRows()
+ expect(timetable.listClassTimetables).toHaveBeenLastCalledWith(expect.objectContaining({semester:undefined,week:undefined}))
+ expect(vm.scheduleLoading).toBe(false)
+})
