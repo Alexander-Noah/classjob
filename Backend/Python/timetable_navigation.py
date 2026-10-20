@@ -91,7 +91,7 @@ def open_portal_app_and_wait(
     )
 
 
-def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1, target_url=None):
+def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1, target_url=None, require_authenticated=False):
     """在所有浏览器窗口中等待目标主机，并将 WebDriver 留在命中的窗口。
 
     Args:
@@ -100,6 +100,7 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1,
         timeout_seconds: 轮询等待上限，单位秒；不覆盖 WebDriver 单次网络命令的超时。
         poll_seconds: 扫描窗口之间的轮询间隔，负值按零处理。
         target_url: 观察到 aTrust 后可再请求一次的目标地址，None 表示不主动重试。
+        require_authenticated: 等待 SSO 完成并出现教务首页或课表页面，暂时登录页不提前返回。
 
     Returns:
         str: 命中目标主机时的 URL。域名匹配仅确认到达入口，不保证已建立教务登录态。
@@ -117,6 +118,7 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1,
     atrust_seen = False
     observed_urls = []
     target_retry_attempted = False
+    academic_login_seen = False
 
     while True:
         for handle in list(driver.window_handles):
@@ -131,12 +133,28 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1,
 
             current_host = _hostname(current_url)
             if _matches_host(current_host, target_host):
-                return current_url
+                if not require_authenticated:
+                    return current_url
+                try:
+                    title = str(driver.title or "").strip()
+                    page_html = str(driver.page_source or "")
+                    ensure_academic_authenticated(current_url, title, page_html)
+                    # SSO 中转页和空白加载页不能作为登录成功的证据。
+                    if title in {"首页", "home", "全校行政班课表"} or (
+                        "/jsxsd/framework/xsmain.htmlx" in current_url.lower()
+                        and title.lower() not in {"", "loading", "loading..."}
+                    ) or 'id="timetable"' in page_html or "id='timetable'" in page_html:
+                        return current_url
+                except AcademicAuthenticationRequired:
+                    academic_login_seen = True
+                except Exception:
+                    # 重定向时窗口或文档可能短暂不可读，下一轮重新观察。
+                    continue
             if _matches_host(current_host, "atrust.hniu.cn"):
                 atrust_seen = True
 
         # 仅在观察到 aTrust 后重试目标一次；持续被拦截则明确要求完成学校授权。
-        if atrust_seen and target_url and not target_retry_attempted:
+        if atrust_seen and target_url and not target_retry_attempted and not require_authenticated:
             target_retry_attempted = True
             try:
                 driver.get(target_url)
@@ -146,6 +164,9 @@ def wait_for_target_window(driver, target_host, timeout_seconds, poll_seconds=1,
         if time.monotonic() >= deadline:
             break
         time.sleep(max(0, float(poll_seconds)))
+
+    if academic_login_seen:
+        raise AcademicAuthenticationRequired("等待门户 SSO 完成超时，教务系统仍未出现已登录首页或课表页")
 
     if atrust_seen:
         raise ATrustAuthenticationRequired(

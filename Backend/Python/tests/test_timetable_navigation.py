@@ -68,6 +68,47 @@ class FakeDriver:
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    def test_sso_waits_past_temporary_login_and_loading_pages(self):
+        navigation = load_navigation_module(self)
+        class SsoDriver(FakeDriver):
+            titles = ["登录", "", "Loading...", "首页"]
+            @property
+            def title(self):
+                self.last_title = self.titles.pop(0) if len(self.titles) > 1 else self.titles[0]
+                return self.last_title
+            @property
+            def page_source(self):
+                return '<form id="loginForm"></form>' if self.last_title == '登录' else '<html></html>'
+        driver = SsoDriver({'sso': 'https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx'})
+        navigation.wait_for_target_window(driver, 'jw.hniu.cn', .1, poll_seconds=.001, require_authenticated=True)
+        self.assertEqual('首页', driver.last_title)
+        self.assertEqual([], driver.requested_urls)
+
+    def test_persistent_login_times_out_instead_of_being_accepted(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'sso': 'https://jw.hniu.cn/jsxsd/'})
+        driver.title = '登录'
+        driver.page_source = '<form id="loginForm"></form>'
+        with self.assertRaises(navigation.AcademicAuthenticationRequired):
+            navigation.wait_for_target_window(driver, 'jw.hniu.cn', .01, poll_seconds=.001, require_authenticated=True)
+
+    def test_authenticated_wait_does_not_interrupt_atrust_redirect(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'sso': ['https://atrust.hniu.cn/portal/', 'https://jw.hniu.cn/jsxsd/framework/xsMain.htmlx']})
+        driver.title = '首页'
+        driver.page_source = '<html></html>'
+        navigation.wait_for_target_window(driver, 'jw.hniu.cn', .1, poll_seconds=.001,
+                                          target_url='https://jw.hniu.cn/jsxsd/kbcx/kbxx_xzb', require_authenticated=True)
+        self.assertEqual([], driver.requested_urls)
+
+    def test_blank_target_page_is_not_authenticated(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'sso': 'https://jw.hniu.cn/jsxsd/'})
+        driver.title = ''
+        driver.page_source = ''
+        with self.assertRaises(navigation.TargetSystemUnavailable):
+            navigation.wait_for_target_window(driver, 'jw.hniu.cn', .01, poll_seconds=.001, require_authenticated=True)
+
     # 验证detectscas身份登录页码。
     def test_detects_cas_identity_login_page(self):
         navigation = load_navigation_module(self)

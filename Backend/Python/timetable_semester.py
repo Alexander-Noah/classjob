@@ -14,7 +14,12 @@ def resolve_semester(configured_semester, timetable_page_html):
         return configured
 
     soup = BeautifulSoup(timetable_page_html or "", "lxml")
-    selector = soup.find(id="xnxq01id") or soup.find(attrs={"name": "xnxq01id"})
+    selector = (
+        soup.find(id="xnxqh")
+        or soup.find(attrs={"name": "xnxqh"})
+        or soup.find(id="xnxq01id")
+        or soup.find(attrs={"name": "xnxq01id"})
+    )
     if selector is not None:
         selected = selector.find("option", selected=True)
         option = selected or selector.find("option", value=True)
