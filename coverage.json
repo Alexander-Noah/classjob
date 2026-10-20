@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "label": "Coverage",
-  "message": "96.01%",
+  "label": "Line coverage",
+  "message": "97.88%",
   "color": "brightgreen",
   "cacheSeconds": 300
 }
