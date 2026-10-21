@@ -9,6 +9,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.example.backend.service.RolePageAccessService;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +21,13 @@ import java.nio.charset.StandardCharsets;
 @Order(Ordered.HIGHEST_PRECEDENCE + 25)
 public class RoleAuthorizationFilter extends OncePerRequestFilter {
     private final SecurityAccessPolicy accessPolicy;
+    private RolePageAccessService pageAccess;
+
+    @Autowired
+    public RoleAuthorizationFilter(ObjectProvider<RolePageAccessService> policies) {
+        this(new SecurityAccessPolicy());
+        this.pageAccess = policies.getIfAvailable();
+    }
 
     /**
      * 构造 RoleAuthorizationFilter，初始化当前实例。
@@ -59,7 +69,8 @@ public class RoleAuthorizationFilter extends OncePerRequestFilter {
             path = request.getRequestURI();
         }
 
-        if (accessPolicy.isAllowed(request.getMethod(), path, roleCode)) {
+        if (accessPolicy.isAllowed(request.getMethod(), path, roleCode)
+                && (pageAccess == null || pageAccess.isApiAllowed(request.getMethod(), path, roleCode))) {
             filterChain.doFilter(request, response);
             return;
         }

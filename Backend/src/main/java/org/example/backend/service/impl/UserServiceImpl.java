@@ -210,7 +210,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity resetUserPassword(Integer id) {
         UserEntity existingUser = requireUser(id);
-        userMapper.updatePassword(id, passwordService.encode("Reset1234"));
+        userMapper.updatePassword(id, passwordService.encode("123456"));
         UserEntity savedUser = userMapper.getUser(id);
         recordUserEvent("reset-password", savedUser == null ? existingUser : savedUser);
         return savedUser;

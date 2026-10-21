@@ -7,6 +7,11 @@ import Layout from '../../src/views/layout/AdminLayout.vue'
 import * as auth from '../../src/api/services/auth'
 import { uploadUserAvatar } from '../../src/api/services/users'
 import { ElMessage } from 'element-plus'
+vi.mock('../../src/api/services/rolePageAccess',async()=>{
+  const {ref}=await import('vue')
+  const {default:pages}=await import('../../../Backend/src/main/resources/security/role-pages.json')
+  return {currentPageAccess:ref({role:'labAdmin',accessiblePaths:pages.filter(p=>p.role==='labAdmin').map(p=>p.path),visiblePaths:pages.filter(p=>p.role==='labAdmin'&&p.menu).map(p=>p.path)})}
+})
 const navigation=vi.hoisted(()=>({push:vi.fn(),replace:vi.fn()}));let route
 vi.mock('vue-router',()=>({useRoute:()=>route,useRouter:()=>navigation}))
 vi.mock('../../src/api/services/auth',()=>({getStoredRole:vi.fn(()=> 'teacher'),getStoredUser:vi.fn(()=>({id:7,username:'teacher',realName:'教师甲',roleName:'教师',department:'计算机',avatarUrl:''})),logout:vi.fn(),updateCurrentUserProfile:vi.fn(),updateStoredUser:vi.fn(user=>user)}))

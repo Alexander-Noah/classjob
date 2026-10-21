@@ -7,6 +7,8 @@ package org.example.backend.websocket;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.service.AiAssistantService;
 import org.example.backend.service.SpeechRecognitionService;
+import org.example.backend.service.RolePageAccessService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -33,6 +35,19 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
     private final AiAssistantService aiAssistantService;
     private final SpeechRecognitionService speechRecognitionService;
     private final ObjectMapper objectMapper;
+    private RolePageAccessService pageAccess;
+
+    @Autowired
+    public void configureRolePageAccess(RolePageAccessService pageAccess) {
+        this.pageAccess = pageAccess;
+    }
+
+    private boolean hasPageAccess(WebSocketSession session) throws Exception {
+        if (pageAccess == null || pageAccess.isApiAllowed("GET", "/ai-assistant/ws", asString(session.getAttributes().get("authRole")))) return true;
+        closeRecognizer(session);
+        session.close(CloseStatus.POLICY_VIOLATION);
+        return false;
+    }
 
     /**
      * 获取Sub协议。
@@ -78,6 +93,7 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        if (!hasPageAccess(session)) return;
         try { org.example.backend.security.RequestInputValidation.websocketText(message.getPayload()); }
         catch (IllegalArgumentException e) {
             sendJson(session, Map.of("type", "error", "text", e.getMessage()));
@@ -125,6 +141,7 @@ public class AiAssistantWebSocketHandler extends AbstractWebSocketHandler implem
      */
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
+        if (!hasPageAccess(session)) return;
         Object recognizerValue = session.getAttributes().get("recognizer");
         if (!(recognizerValue instanceof Recognizer recognizer)) {
             return;

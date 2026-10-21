@@ -192,8 +192,10 @@ it('password reset supports individual and selected accounts with server list re
   const vm = await setup()
   await vm.handleResetPassword(vm.userList[1])
   expect(api.resetUserPassword).toHaveBeenCalledWith(2)
+  expect(ElMessage.success).toHaveBeenCalledWith('密码已重置为 123456')
   vm.handleSelectionChange(vm.userList.slice(1)); await vm.handleBatchResetPassword()
   expect(api.resetUserPassword).toHaveBeenCalledWith(3)
+  expect(ElMessage.success).toHaveBeenCalledWith('批量重置密码完成，默认密码为 123456')
   expect(vm.selectedRows).toEqual([])
   ElMessageBox.confirm.mockRejectedValueOnce('close')
   const calls = api.resetUserPassword.mock.calls.length

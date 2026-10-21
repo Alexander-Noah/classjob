@@ -52,8 +52,8 @@ it('lab selection clears keyword and handles runtime failures without stale term
 it('optional event and activation endpoint failures do not discard runtime data',async()=>{
   listLabActivationBindings.mockRejectedValue(new Error('offline'));listDeviceStatusEvents.mockRejectedValue(new Error('offline'));const vm=await setup();expect(vm.devices).toHaveLength(3);expect(vm.activationCodes).toEqual([]);expect(vm.statusEvents).toEqual([])
 })
-it('primary loading failures show fallback labs and always release loading state',async()=>{
-  labResourceService.list.mockRejectedValue(new Error('offline'));const vm=await setup();expect(vm.labs).toHaveLength(3);expect(vm.devices).toEqual([]);expect(vm.loading).toBe(false);expect(ElMessage.warning).toHaveBeenCalledWith('offline')
+it('primary loading failures clear labs and never expose example or stale data',async()=>{
+  labResourceService.list.mockRejectedValue(new Error('offline'));const vm=await setup();expect(vm.labs).toEqual([]);expect(vm.selectedLabId).toBe('');expect(vm.activationCodes).toEqual([]);expect(vm.devices).toEqual([]);expect(vm.loading).toBe(false);expect(listLabRuntimeStatus).not.toHaveBeenCalled();expect(ElMessage.warning).toHaveBeenCalledWith('offline')
 })
 it('binding validates lab, code and existing activation before posting',async()=>{
   const vm=await setup();await vm.bindActivationCode();expect(bindActivationCodeToLab).not.toHaveBeenCalled();vm.labActivationCode=' CODE ';vm.activationCodes=[binding()];await vm.bindActivationCode();expect(bindActivationCodeToLab).not.toHaveBeenCalled();vm.activationCodes=[];listLabActivationBindings.mockResolvedValueOnce([binding()]);await vm.bindActivationCode();expect(bindActivationCodeToLab).toHaveBeenCalledWith({code:'CODE',labId:1,labCode:'A101',labName:'机房'});expect(vm.labActivationCode).toBe('');expect(vm.bindingActivation).toBe(false)

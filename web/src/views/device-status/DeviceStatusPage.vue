@@ -20,39 +20,6 @@ defineOptions({
   name: 'DeviceStatusPage',
 })
 
-const FALLBACK_LABS = [
-  {
-    id: 1,
-    code: 'A101',
-    name: 'A101 云计算实验室',
-    building: '信息楼 A 区',
-    floor: '1F',
-    room: 'A101',
-    status: '开放',
-    capacity: 72,
-  },
-  {
-    id: 2,
-    code: 'B203',
-    name: 'B203 网络安全实验室',
-    building: '实训楼 B 区',
-    floor: '2F',
-    room: 'B203',
-    status: '开放',
-    capacity: 56,
-  },
-  {
-    id: 3,
-    code: 'C305',
-    name: 'C305 人工智能实验室',
-    building: '创新楼 C 区',
-    floor: '3F',
-    room: 'C305',
-    status: '维护中',
-    capacity: 64,
-  },
-]
-
 const loading = ref(false)
 const bindingActivation = ref(false)
 const unbindingActivation = ref(false)
@@ -386,7 +353,7 @@ const loadData = async () => {
   loading.value = true
   try {
     const [loadedLabs, loadedActivationCodes] = await Promise.all([
-      labResourceService.list({ fallbackRecords: FALLBACK_LABS }),
+      labResourceService.list(),
       listLabActivationBindings().catch(/** 处理异步失败结果。 */ () => []),
     ])
 
@@ -396,10 +363,11 @@ const loadData = async () => {
     await loadRuntimeStatus(selectedLabId.value)
   } catch (error) {
     ElMessage.warning(error?.message || '设备运行状态数据读取失败')
-    labs.value = FALLBACK_LABS.map(normalizeLab)
+    labs.value = []
+    activationCodes.value = []
     devices.value = []
     statusEvents.value = []
-    selectedLabId.value = labs.value[0]?.id || ''
+    selectedLabId.value = ''
   } finally {
     loading.value = false
   }

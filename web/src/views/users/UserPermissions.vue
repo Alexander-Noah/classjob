@@ -468,10 +468,10 @@ const confirmDanger = (message, title = '操作确认') =>
  */
 const handleResetPassword = async (user) => {
   try {
-    await confirmDanger(`确认重置“${user.name}”的登录密码？`, '重置密码')
+    await confirmDanger(`确认将“${user.name}”的登录密码重置为 123456？`, '重置密码')
     await resetUserPassword(user.id)
     await refreshUserList()
-    ElMessage.success('密码已重置')
+    ElMessage.success('密码已重置为 123456')
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       showActionError(error, '重置密码失败')
@@ -611,11 +611,11 @@ const handleBatchResetPassword = async () => {
   if (!selectedRows.value.length) return
 
   try {
-    await confirmDanger(`确认批量重置 ${selectedRows.value.length} 个用户的密码？`, '批量重置密码')
+    await confirmDanger(`确认将 ${selectedRows.value.length} 个用户的密码重置为 123456？`, '批量重置密码')
     await Promise.all(selectedRows.value.map(/** 将当前条目转换为目标结果。 入参：item。 */ (item) => resetUserPassword(item.id)))
     await refreshUserList()
     clearSelection()
-    ElMessage.success('批量重置密码完成')
+    ElMessage.success('批量重置密码完成，默认密码为 123456')
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       showActionError(error, '批量重置密码失败')

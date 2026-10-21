@@ -36,7 +36,7 @@ class UserServiceBehaviorTest {
         UserEntity existing=store.get(1);existing.setDepartment("旧部门");when(mapper.profile("user1")).thenReturn(existing);UserEntity input=new UserEntity();input.setUsername("admin");input.setRoleCode("systemAdmin");input.setPermissions("all");input.setStatus(0);input.setRealName(" 新姓名 ");input.setDepartment(" 新部门 ");input.setPhone(" ");UserEntity result=service.updateProfile("user1",input);assertEquals("user1",result.getUsername());assertEquals("labAdmin",result.getRoleCode());assertEquals("permissions",result.getPermissions());assertEquals(1,result.getStatus());assertEquals("新姓名",result.getRealName());assertEquals("新部门",result.getDepartment());assertEquals("",result.getPhone());assertThrows(IllegalArgumentException.class,()->service.updateProfile("",input));assertThrows(IllegalArgumentException.class,()->service.updateProfile("missing",input));
     }
     @Test void statusResetAndBatchDepartmentUseNormalizedDistinctIdentifiers(){
-        assertEquals(1,service.updateUserStatus(1,null).getStatus());assertEquals(0,service.updateUserStatus(1,0).getStatus());service.resetUserPassword(1);verify(passwords).encode("Reset1234");verify(mapper).updatePassword(1,"encoded:Reset1234");assertEquals(2,service.batchUpdateStatus(List.of(1,2,1),1).size());assertEquals(2,service.batchUpdateDepartment(List.of(1,2),"").size());verify(mapper).updateUserDepartment(1,"未设置");assertThrows(IllegalArgumentException.class,()->service.updateUserStatus(99,1));when(mapper.updateUserDepartment(99,"新部门")).thenReturn(0);assertThrows(IllegalArgumentException.class,()->service.batchUpdateDepartment(List.of(99),"新部门"));assertThrows(IllegalArgumentException.class,()->service.batchUpdateStatus(null,1));assertThrows(IllegalArgumentException.class,()->service.batchDeleteUsers(List.of()));
+        assertEquals(1,service.updateUserStatus(1,null).getStatus());assertEquals(0,service.updateUserStatus(1,0).getStatus());service.resetUserPassword(1);verify(passwords).encode("123456");verify(mapper).updatePassword(1,"encoded:123456");assertEquals(2,service.batchUpdateStatus(List.of(1,2,1),1).size());assertEquals(2,service.batchUpdateDepartment(List.of(1,2),"").size());verify(mapper).updateUserDepartment(1,"未设置");assertThrows(IllegalArgumentException.class,()->service.updateUserStatus(99,1));when(mapper.updateUserDepartment(99,"新部门")).thenReturn(0);assertThrows(IllegalArgumentException.class,()->service.batchUpdateDepartment(List.of(99),"新部门"));assertThrows(IllegalArgumentException.class,()->service.batchUpdateStatus(null,1));assertThrows(IllegalArgumentException.class,()->service.batchDeleteUsers(List.of()));
     }
     @Test void deletionRejectsBuiltInLastAdministratorAndBusinessReferences(){
         UserEntity user=store.get(1);user.setUsername("sysadmin");assertThrows(IllegalArgumentException.class,()->service.deleteUser(1));user.setUsername("user1");user.setRoleCode("systemAdmin");when(mapper.countSystemAdmins()).thenReturn(1);assertThrows(IllegalArgumentException.class,()->service.deleteUser(1));user.setRoleCode("labAdmin");when(mapper.countUserBusinessReferences(1)).thenReturn(1);assertTrue(assertThrows(IllegalArgumentException.class,()->service.deleteUser(1)).getMessage().contains("用户1"));verify(mapper,never()).deleteUser(anyInt());
@@ -109,7 +109,23 @@ class UserServiceBehaviorTest {
         UserEntity existing=store.get(1);
         when(mapper.getUser(1)).thenReturn(existing,null);
         assertNull(service.resetUserPassword(1));
-        verify(mapper).updatePassword(1,"encoded:Reset1234");
+        verify(mapper).updatePassword(1,"encoded:123456");
         verify(loop).recordEvent(eq("user"),eq("reset-password"),eq("用户1"),eq("启用"),anyMap());
+    }
+    @Test void resetDefaultIsHashedAndCanLogInWithoutAcceptingTheOldPassword() {
+        var realPasswords = new PasswordService(120000);
+        var resetService = new UserServiceImpl(mapper, loop, realPasswords);
+        var account = store.get(1);
+        account.setPassword(realPasswords.encode("PreviousPass9"));
+        when(mapper.login("user1")).thenReturn(account);
+        when(mapper.updatePassword(eq(1), anyString())).thenAnswer(call -> {
+            account.setPassword(call.getArgument(1));
+            return 1;
+        });
+        resetService.resetUserPassword(1);
+        assertNotEquals("123456", account.getPassword());
+        assertTrue(account.getPassword().startsWith("pbkdf2$"));
+        assertSame(account, resetService.login("user1", "123456"));
+        assertNull(resetService.login("user1", "PreviousPass9"));
     }
 }

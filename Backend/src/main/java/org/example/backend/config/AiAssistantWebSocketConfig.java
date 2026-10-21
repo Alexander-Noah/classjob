@@ -5,6 +5,8 @@
 package org.example.backend.config;
 
 import org.example.backend.security.JwtService;
+import org.example.backend.service.RolePageAccessService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.example.backend.websocket.AiAssistantWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +31,12 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
     private final AiAssistantWebSocketHandler aiAssistantWebSocketHandler;
     private final JwtService jwtService;
     private final String[] allowedOriginPatterns;
+    private RolePageAccessService pageAccess;
+
+    @Autowired
+    public void configureRolePageAccess(RolePageAccessService pageAccess) {
+        this.pageAccess = pageAccess;
+    }
 
     /**
      * 构造 AiAssistantWebSocketConfig，初始化当前实例。
@@ -53,7 +61,7 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(aiAssistantWebSocketHandler, "/ai-assistant/ws", "/ws/ai-assistant")
-                .addInterceptors(new JwtHandshakeInterceptor(jwtService))
+                .addInterceptors(new JwtHandshakeInterceptor(jwtService, pageAccess))
                 .setAllowedOriginPatterns(allowedOriginPatterns);
     }
 
@@ -71,13 +79,15 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
 
     private static class JwtHandshakeInterceptor implements HandshakeInterceptor {
         private final JwtService jwtService;
+        private final RolePageAccessService pageAccess;
 
         /**
          * 构造 JwtHandshakeInterceptor，初始化当前实例。
          * @param jwtService JWT服务参数。
          */
-        private JwtHandshakeInterceptor(JwtService jwtService) {
+        private JwtHandshakeInterceptor(JwtService jwtService, RolePageAccessService pageAccess) {
             this.jwtService = jwtService;
+            this.pageAccess = pageAccess;
         }
 
         /**
@@ -102,6 +112,7 @@ public class AiAssistantWebSocketConfig implements WebSocketConfigurer {
 
             try {
                 JwtService.JwtClaims claims = jwtService.validateToken(token);
+                if (pageAccess != null && !pageAccess.isApiAllowed("GET", "/ai-assistant/ws", claims.roleCode())) return false;
                 attributes.put("authUsername", claims.username());
                 attributes.put("authRole", claims.roleCode());
                 attributes.put("authUserId", claims.userId());

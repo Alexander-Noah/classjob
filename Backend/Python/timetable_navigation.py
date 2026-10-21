@@ -15,6 +15,36 @@ class TargetSystemUnavailable(RuntimeError):
     pass
 
 
+def wait_for_login_destination(driver, portal_authenticated, portal_url, timeout_seconds=45, poll_seconds=0.5):
+    """跟踪门户登录点击后的所有窗口，保留CAS/已登录门户所在窗口。
+
+    只观察学校正常导航，不构造认证URL、不提交凭据。诊断中去掉query/hash，避免输出ticket。
+    """
+    deadline = time.monotonic() + max(0, float(timeout_seconds))
+    observations = {}
+    portal_host = _hostname(portal_url)
+    while True:
+        # 新窗口优先，避免只盯着点击前仍停在门户的窗口。
+        for handle in reversed(list(driver.window_handles)):
+            try:
+                driver.switch_to.window(handle)
+                url, title = str(driver.current_url or ""), str(driver.title or "")
+                parsed = urlparse(url)
+                observations[handle] = f"{parsed.scheme}://{parsed.netloc}{parsed.path} [{title[:80]}]"
+                if is_identity_login_page(url, title, driver.page_source):
+                    return "identity"
+                if _hostname(url) == portal_host and portal_authenticated(driver):
+                    return "portal"
+            except Exception:
+                # SSO切换或关闭临时窗口时句柄可能失效，下一轮重新枚举。
+                continue
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(max(0, float(poll_seconds)))
+    detail = "; ".join(observations.values()) or "无可读取窗口"
+    raise TargetSystemUnavailable("点击门户登录后未到达统一身份认证页或已登录门户；可能是页面未加载完成、点击未触发或学校认证入口不可达。观察结果：" + detail)
+
+
 # 提取 URL 中的主机名。
 # 入参：url（URL）。
 # 返回：由当前表达式或分支生成的处理结果。

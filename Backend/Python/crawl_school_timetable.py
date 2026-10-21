@@ -23,6 +23,7 @@ from timetable_navigation import (
     ensure_academic_authenticated,
     is_identity_login_page,
     wait_for_target_window,
+    wait_for_login_destination,
 )
 from timetable_browser_profile import (
     AcademicSessionRefreshRequired,
@@ -594,7 +595,19 @@ def login_portal_and_enter_jw(driver):
     if not getattr(driver, "_timetable_headless", HEADLESS):
         driver.maximize_window()
 
-    time.sleep(3)
+    # 等待实际可交互状态，不能只凭固定sleep就点击异步加载中的登录按钮。
+    def portal_ready(current_driver):
+        if current_driver.execute_script("return document.readyState") != "complete" or not str(current_driver.title or "").strip():
+            return False
+        return (
+            is_identity_login_page(current_driver.current_url, current_driver.title, current_driver.page_source)
+            or get_visible_portal_login_button(current_driver) is not None
+            or is_portal_authenticated_for_navigation(current_driver)
+        )
+    try:
+        WebDriverWait(driver, NAVIGATION_TIMEOUT_SECONDS).until(portal_ready)
+    except Exception as error:
+        raise TargetSystemUnavailable("办事大厅未完成加载，尚未检测到可用登录入口或已登录应用") from error
 
     print("当前地址：", driver.current_url)
     print("当前标题：", driver.title)
@@ -607,15 +620,9 @@ def login_portal_and_enter_jw(driver):
             print("检测到门户未登录，先进入统一身份认证...")
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", login_button)
             click_with_pointer(driver, login_button, 0.2)
-            WebDriverWait(driver, 45).until(
-                lambda current_driver: (
-                    is_identity_login_page(
-                        current_driver.current_url,
-                        current_driver.title,
-                        current_driver.page_source,
-                    )
-                    or is_portal_authenticated_for_navigation(current_driver)
-                )
+            wait_for_login_destination(
+                driver, is_portal_authenticated_for_navigation,
+                ACADEMIC_SYSTEM.portal_url, timeout_seconds=NAVIGATION_TIMEOUT_SECONDS,
             )
 
     # 2. 在统一身份认证页输入账号密码；验证码等仍由学校正常验证。

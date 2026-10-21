@@ -229,6 +229,17 @@ export const ROUTE_MODULES = [
     showInMenu: true,
   },
   {
+    path: '/system-admin/role-access',
+    routePath: 'system-admin/role-access',
+    name: 'SystemAdminRolePageAccess',
+    title: '角色菜单权限',
+    menuTitle: '角色菜单权限',
+    description: '统一配置各角色可访问的页面和左侧菜单。',
+    icon: markRaw(Key),
+    roleScope: 'systemAdmin',
+    showInMenu: true,
+  },
+  {
     path: '/system-admin/system',
     routePath: 'system-admin/system',
     name: 'SystemAdminSettings',

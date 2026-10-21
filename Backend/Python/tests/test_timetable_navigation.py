@@ -68,6 +68,39 @@ class FakeDriver:
 
 
 class TimetableNavigationTest(unittest.TestCase):
+    def test_portal_login_follows_new_identity_window(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'portal': 'https://ehall.hniu.cn/new/index.html', 'identity': 'https://authserver.hniu.cn/authserver/login'})
+        driver.title = '统一身份认证'
+        driver.page_source = '<html></html>'
+        self.assertEqual('identity', navigation.wait_for_login_destination(driver, lambda d: False, 'https://ehall.hniu.cn', .02, .001))
+        self.assertEqual('identity', driver.current_handle)
+
+    def test_portal_login_accepts_already_authenticated_portal(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'portal': 'https://ehall.hniu.cn/new/index.html'})
+        driver.title = '网上办事服务大厅'
+        driver.page_source = '<html></html>'
+        self.assertEqual('portal', navigation.wait_for_login_destination(driver, lambda d: True, 'https://ehall.hniu.cn', .02, .001))
+
+    def test_login_timeout_explains_observed_page_without_leaking_ticket(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'portal': 'https://ehall.hniu.cn/new/index.html?ticket=secret#token'})
+        driver.title = '网上办事服务大厅'
+        driver.page_source = '<html></html>'
+        with self.assertRaises(navigation.TargetSystemUnavailable) as failure:
+            navigation.wait_for_login_destination(driver, lambda d: False, 'https://ehall.hniu.cn', .01, .001)
+        self.assertIn('未到达统一身份认证', str(failure.exception))
+        self.assertNotIn('secret', str(failure.exception))
+        self.assertNotIn('#token', str(failure.exception))
+
+    def test_login_waits_for_same_tab_redirect(self):
+        navigation = load_navigation_module(self)
+        driver = FakeDriver({'portal': ['https://ehall.hniu.cn/', 'https://authserver.hniu.cn/authserver/login']})
+        driver.title = '登录跳转中'
+        driver.page_source = '<html></html>'
+        self.assertEqual('identity', navigation.wait_for_login_destination(driver, lambda d: False, 'https://ehall.hniu.cn', .05, .001))
+
     def test_sso_waits_past_temporary_login_and_loading_pages(self):
         navigation = load_navigation_module(self)
         class SsoDriver(FakeDriver):

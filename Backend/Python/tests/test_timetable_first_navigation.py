@@ -14,7 +14,7 @@ class FirstNavigationTest(unittest.TestCase):
         calls = []
         driver = SimpleNamespace(
             _timetable_headless=False, current_url='https://ehall.example/',
-            title='门户', page_source='', get=Mock(), maximize_window=Mock(),
+            title='门户', page_source='', get=Mock(), maximize_window=Mock(), execute_script=Mock(return_value='complete'),
         )
         marker = Mock()
         marker.exists.return_value = False
@@ -27,6 +27,8 @@ class FirstNavigationTest(unittest.TestCase):
             is_identity_login_page=lambda *args: False,
             get_visible_portal_login_button=lambda d: None,
             wait_for_portal_authentication=Mock(),
+            is_portal_authenticated_for_navigation=lambda d: True,
+            WebDriverWait=lambda d, timeout: SimpleNamespace(until=lambda fn: fn(d)),
             should_use_manual_bootstrap=lambda headless, authorized: not headless and not authorized,
             click_portal_app=lambda *args: calls.append('app'),
             click_portal_enter_service=lambda *args, **kwargs: calls.append('service'),

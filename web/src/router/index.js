@@ -16,6 +16,8 @@ import {
   DEFAULT_AUTH_ROLE,
 } from '../constants/auth'
 import { isPathAllowed, parseUserPermissions } from '../constants/permissions'
+import { refreshPageAccess } from '../api/services/rolePageAccess'
+import { canAccessRolePage, isRecoveryPage } from '../constants/rolePageAccess'
 import {
   APP_DOCUMENT_TITLE,
   DEFAULT_ROUTE_PATH,
@@ -40,6 +42,7 @@ const Login = () => import('../views/login/Login.vue')
  * @returns 由当前表达式或分支生成的处理结果。
  */
 const Forbidden = () => import('../views/placeholder/Forbidden.vue')
+const PermissionsUnavailable = () => import('../views/placeholder/PermissionsUnavailable.vue')
 /**
  * Scan预约的处理逻辑。
  * @returns 由当前表达式或分支生成的处理结果。
@@ -81,6 +84,7 @@ const buildRouteMeta = (routeModule) => ({
 
 // 路由元信息来自统一模块表，组件使用懒加载，避免首页下载所有业务页面。
 const routeComponentMap = {
+  SystemAdminRolePageAccess: () => import('../views/users/RolePageAccess.vue'),
   /**
    * 实验室AdminPortal的处理逻辑。
    * @returns 由当前表达式或分支生成的处理结果。
@@ -258,7 +262,13 @@ const routes = [
         redirect: '/lab-admin/maintenance-records',
       },
       {
-        path: 'forbidden',
+          path: 'permissions-unavailable',
+          name: 'PermissionsUnavailable',
+          component: PermissionsUnavailable,
+          meta: { title: '权限服务暂不可用' },
+        },
+        {
+          path: 'forbidden',
         name: 'Forbidden',
         component: Forbidden,
         meta: {
@@ -433,11 +443,27 @@ router.beforeEach(/** 处理 beforeEach 调用中的回调逻辑。 入参：to�
   const storedRole = getStoredRole()
 
   if (isForbiddenRoute) {
+    // 403也需要有效导航，不能因上一次权限请求失败变成无法离开的空壳。
+    try { await refreshPageAccess(storedRole) } catch { /* 保留必要恢复入口。 */ }
+    return true
+  }
+  if (to.name === 'PermissionsUnavailable') {
     return true
   }
 
   if (hasAuth && to.meta?.roleScope && to.meta.roleScope !== storedRole) {
     return '/forbidden'
+  }
+
+  if (hasAuth && !isPublicRoute && to.meta?.roleScope) {
+    try {
+      const policy = await refreshPageAccess(storedRole)
+      if (!canAccessRolePage(policy, to.path)) return '/forbidden'
+    } catch {
+      // 必要入口由服务端固定保留；服务异常时不能把管理员锁在403。
+      if (isRecoveryPage(storedRole, to.path)) return true
+      return { path: '/permissions-unavailable', query: { redirect: to.fullPath } }
+    }
   }
 
   if (!isPublicRoute && to.name && !ROUTE_MODULE_MAP[to.name] && to.path !== '/login' && !isForbiddenRoute) {

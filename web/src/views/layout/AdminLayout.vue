@@ -12,6 +12,8 @@ import { uploadUserAvatar } from '../../api/services/users'
 import { API_BASE_URL } from '../../api/config'
 import { DEFAULT_AUTH_ROLE } from '../../constants/auth'
 import { getRoleLayout, getRoleMenus } from '../../constants/navigation'
+import { currentPageAccess } from '../../api/services/rolePageAccess'
+import { filterRoleMenus, createRecoveryPolicy } from '../../constants/rolePageAccess'
 import { useCurrentTime } from '../../composables/useCurrentTime'
 import { useAdminGlass } from '../../composables/useAdminGlass'
 import { normalizeAvatarUrl } from '../../utils/avatarUrl'
@@ -87,7 +89,10 @@ const handleProfileAvatarPreview = (event) => {
   // 上传控件仍接收自己的点击事件；冒泡到姓名区域后不再触发大图预览。
   if (!event.target.closest('.el-upload')) openAvatarViewer(displayedProfileAvatarUrl.value)
 }
-const navMenus = computed(/** 计算派生状态。 */ () => getRoleMenus(currentRole.value, currentUser.value))
+const navMenus = computed(() => filterRoleMenus(
+  getRoleMenus(currentRole.value, currentUser.value),
+  currentPageAccess.value?.role === currentRole.value ? currentPageAccess.value : createRecoveryPolicy(currentRole.value),
+))
 const defaultOpenMenus = computed(/** 计算派生状态。 */ () => navMenus.value.filter(/** 判断当前条目是否符合筛选条件。 入参：menu。 */ (menu) => menu.children?.length).map(/** 将当前条目转换为目标结果。 入参：menu。 */ (menu) => menu.index))
 const sidebarWidth = computed(/** 计算派生状态。 */ () => (isSidebarCollapsed.value ? '72px' : '236px'))
 const activeMenu = computed(/** 计算派生状态。 */ () => route.meta?.activeMenu || route.path)

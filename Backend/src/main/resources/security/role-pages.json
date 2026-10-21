@@ -1,0 +1,310 @@
+[
+  {
+    "path": "/lab-admin",
+    "role": "labAdmin",
+    "title": "工作台",
+    "menu": true,
+    "locked": true,
+    "api": []
+  },
+  {
+    "path": "/lab-admin/labs",
+    "role": "labAdmin",
+    "title": "实验室资源",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /labs/**"
+    ]
+  },
+  {
+    "path": "/lab-admin/devices",
+    "role": "labAdmin",
+    "title": "设备资产",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /devices/**",
+      "* /device-inventory-records/**",
+      "* /device-transfer-records/**",
+      "GET /labs"
+    ]
+  },
+  {
+    "path": "/lab-admin/environments",
+    "role": "labAdmin",
+    "title": "实验环境",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /environment-templates/**",
+      "* /course-environment-requests/**",
+      "* /lab-software/**",
+      "GET /labs",
+      "GET /class-timetables"
+    ]
+  },
+  {
+    "path": "/lab-admin/reservations",
+    "role": "labAdmin",
+    "title": "预约审批",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /reservations/**",
+      "* /approval-countersigns/**",
+      "* /schedule-adjustments/**",
+      "GET /labs",
+      "GET /class-timetables"
+    ]
+  },
+  {
+    "path": "/lab-admin/maintenance-records",
+    "role": "labAdmin",
+    "title": "维护记录管理",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /maintenance-records/**",
+      "PUT /maintenance-records/**",
+      "DELETE /maintenance-records/**",
+      "* /repairs/**",
+      "GET /labs",
+      "GET /devices"
+    ]
+  },
+  {
+    "path": "/lab-admin/maintenance-records/new",
+    "role": "labAdmin",
+    "title": "维护记录填写",
+    "menu": false,
+    "locked": false,
+    "api": [
+      "POST /maintenance-records",
+      "GET /labs",
+      "GET /devices"
+    ]
+  },
+  {
+    "path": "/lab-admin/consumables",
+    "role": "labAdmin",
+    "title": "耗材库存",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /consumables/**"
+    ]
+  },
+  {
+    "path": "/lab-admin/records",
+    "role": "labAdmin",
+    "title": "使用记录",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /usage-records/**",
+      "GET /labs"
+    ]
+  },
+  {
+    "path": "/lab-admin/statistics",
+    "role": "labAdmin",
+    "title": "统计分析",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /labs",
+      "GET /devices",
+      "GET /reservations",
+      "GET /usage-records",
+      "GET /class-timetables",
+      "GET /class-timetables/crawler-config",
+      "GET /repairs",
+      "GET /course-environment-requests",
+      "GET /environment-templates"
+    ]
+  },
+  {
+    "path": "/lab-admin/ai-assistant",
+    "role": "labAdmin",
+    "title": "智能辅助",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /ai-assistant/**",
+      "* /ws/ai-assistant"
+    ]
+  },
+  {
+    "path": "/lab-admin/notices",
+    "role": "labAdmin",
+    "title": "通知公告",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /notices/**"
+    ]
+  },
+  {
+    "path": "/lab-admin/room-control",
+    "role": "labAdmin",
+    "title": "物联感知",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /iot/**",
+      "GET /labs"
+    ]
+  },
+  {
+    "path": "/lab-admin/device-status",
+    "role": "labAdmin",
+    "title": "设备状态",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /device-status/**",
+      "GET /activation-codes/lab-bindings",
+      "POST /activation-codes/bind-lab",
+      "POST /activation-codes/*/unbind-lab",
+      "GET /labs"
+    ]
+  },
+  {
+    "path": "/lab-admin/class-timetable",
+    "role": "labAdmin",
+    "title": "课表采集",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /class-timetables/crawl",
+      "* /class-timetables/crawler-config",
+      "* /class-timetables/crawler-tasks",
+      "* /class-timetables/credential",
+      "* /academic-schedules/**"
+    ]
+  },
+  {
+    "path": "/lab-admin/class-timetable-data",
+    "role": "labAdmin",
+    "title": "校园课表",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /class-timetables",
+      "GET /class-timetables/summary",
+      "GET /class-timetables/semesters"
+    ]
+  },
+  {
+    "path": "/system-admin",
+    "role": "systemAdmin",
+    "title": "工作台",
+    "menu": true,
+    "locked": true,
+    "api": []
+  },
+  {
+    "path": "/system-admin/users",
+    "role": "systemAdmin",
+    "title": "用户管理",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /users/**",
+      "* /admin/users/**"
+    ]
+  },
+  {
+    "path": "/system-admin/system",
+    "role": "systemAdmin",
+    "title": "系统设置",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /system-settings/**"
+    ]
+  },
+  {
+    "path": "/system-admin/activation-codes",
+    "role": "systemAdmin",
+    "title": "激活管理",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /activation-codes/**",
+      "* /admin/activation-codes/**"
+    ]
+  },
+  {
+    "path": "/system-admin/notices",
+    "role": "systemAdmin",
+    "title": "通知公告",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /notices/**"
+    ]
+  },
+  {
+    "path": "/system-admin/statistics",
+    "role": "systemAdmin",
+    "title": "平台统计",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /admin/users",
+      "GET /notices"
+    ]
+  },
+  {
+    "path": "/teacher",
+    "role": "teacher",
+    "title": "工作台",
+    "menu": true,
+    "locked": true,
+    "api": []
+  },
+  {
+    "path": "/teacher/course-environments",
+    "role": "teacher",
+    "title": "我的课程环境",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "* /course-environment-requests/**"
+    ]
+  },
+  {
+    "path": "/teacher/schedule",
+    "role": "teacher",
+    "title": "我的课表",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /class-timetables/**"
+    ]
+  },
+  {
+    "path": "/teacher/class-timetable-data",
+    "role": "teacher",
+    "title": "校园课表",
+    "menu": true,
+    "locked": false,
+    "api": [
+      "GET /class-timetables",
+      "GET /class-timetables/summary",
+      "GET /class-timetables/semesters"
+    ]
+  },
+  {
+    "path": "/system-admin/role-access",
+    "role": "systemAdmin",
+    "title": "角色菜单权限",
+    "menu": true,
+    "locked": true,
+    "api": [
+      "* /role-page-access/**"
+    ]
+  }
+]

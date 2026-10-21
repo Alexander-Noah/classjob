@@ -10,6 +10,7 @@ public class SecurityAccessPolicy {
     private static final Set<String> COMMON_PREFIXES = Set.of(
             "/ai-assistant",
             "/auth/profile",
+            "/auth/page-access",
             "/auth/logout",
             "/dashboard",
             "/files",
