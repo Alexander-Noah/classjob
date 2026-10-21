@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
   "label": "Line coverage",
-  "message": "97.88%",
+  "message": "97.75%",
   "color": "brightgreen",
   "cacheSeconds": 300,
-  "covered": 20492,
-  "total": 20936,
+  "covered": 20646,
+  "total": 21121,
   "modules": {
     "backend": {
-      "covered": 9097,
-      "total": 9342,
-      "percent": 97.37743523870691
+      "covered": 9175,
+      "total": 9428,
+      "percent": 97.3165040305473
     },
     "frontend": {
-      "covered": 11395,
-      "total": 11594,
-      "percent": 98.28359496291185
+      "covered": 11471,
+      "total": 11693,
+      "percent": 98.10142820490893
     }
   },
-  "commit": "522915a000721b8c906303b6d13e20384c27adf6",
-  "runUrl": "https://github.com/Alexander-Noah/classjob/actions/runs/39426867243"
+  "commit": "e13c60538702b9eb18c0c400037a2d68248ab792",
+  "runUrl": "https://github.com/Alexander-Noah/classjob/actions/runs/39535294145"
 }
